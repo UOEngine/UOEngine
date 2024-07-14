@@ -1,0 +1,19 @@
+<Project>
+
+  <PropertyGroup>
+    <LangVersion>Preview</LangVersion>
+    <TargetFramework>net8.0</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+    <!-- Put all intermediate and binary files under same appropriate folder, not mixed in with source. -->
+  <PropertyGroup>
+    <OutputPath >$(SolutionDir)Binaries\$(Platform)\$(Configuration)</OutputPath>
+    <BaseIntermediateOutputPath>$(SolutionDir)Intermediate\$(Platform)\$(Configuration)\$(MSBuildProjectName)</BaseIntermediateOutputPath>
+  </PropertyGroup>
+
+</Project>
