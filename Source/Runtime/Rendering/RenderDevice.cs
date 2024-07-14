@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 using Silk.NET.Core;
@@ -82,6 +83,7 @@ namespace UOEngine.Runtime.Rendering
             PickPhysicalDevice();
             CreateLogicalDevice(bEnableValidationLayers);
             CreateSwapChain(width, height);
+            CreateImageViews();
         }
 
         public void Draw()
@@ -117,27 +119,36 @@ namespace UOEngine.Runtime.Rendering
         {
             var indices = FindQueueFamilies(physicalDevice);
 
-            DeviceQueueCreateInfo queueCreateInfo = new()
-            {
-                SType = StructureType.DeviceQueueCreateInfo,
-                QueueFamilyIndex = indices.GraphicsFamily!.Value,
-                QueueCount = 1
-            };
+            var uniqueQueueFamilies = new[] { indices.GraphicsFamily!.Value, indices.PresentFamily!.Value };
+            uniqueQueueFamilies = uniqueQueueFamilies.Distinct().ToArray();
+
+            using var mem = GlobalMemory.Allocate(uniqueQueueFamilies.Length * sizeof(DeviceQueueCreateInfo));
+            var queueCreateInfos = (DeviceQueueCreateInfo*)Unsafe.AsPointer(ref mem.GetPinnableReference());
 
             float queuePriority = 1.0f;
-            queueCreateInfo.PQueuePriorities = &queuePriority;
+            for (int i = 0; i < uniqueQueueFamilies.Length; i++)
+            {
+                queueCreateInfos[i] = new()
+                {
+                    SType = StructureType.DeviceQueueCreateInfo,
+                    QueueFamilyIndex = uniqueQueueFamilies[i],
+                    QueueCount = 1,
+                    PQueuePriorities = &queuePriority
+                };
+            }
 
             PhysicalDeviceFeatures deviceFeatures = new();
 
             DeviceCreateInfo createInfo = new()
             {
                 SType = StructureType.DeviceCreateInfo,
-                QueueCreateInfoCount = 1,
-                PQueueCreateInfos = &queueCreateInfo,
+                QueueCreateInfoCount = (uint)uniqueQueueFamilies.Length,
+                PQueueCreateInfos = queueCreateInfos,
 
                 PEnabledFeatures = &deviceFeatures,
 
-                EnabledExtensionCount = 0
+                EnabledExtensionCount = (uint)deviceExtensions.Length,
+                PpEnabledExtensionNames = (byte**)SilkMarshal.StringArrayToPtr(deviceExtensions)
             };
 
             if (bEnableValidationLayers)
@@ -156,11 +167,14 @@ namespace UOEngine.Runtime.Rendering
             }
 
             vk!.GetDeviceQueue(device, indices.GraphicsFamily!.Value, 0, out graphicsQueue);
+            vk!.GetDeviceQueue(device, indices.PresentFamily!.Value, 0, out presentQueue);
 
             if (bEnableValidationLayers)
             {
                 SilkMarshal.Free((nint)createInfo.PpEnabledLayerNames);
             }
+
+            SilkMarshal.Free((nint)createInfo.PpEnabledExtensionNames);
         }
         private unsafe void CreateSurface(IVkSurface vkSurface)
         {
@@ -245,7 +259,10 @@ namespace UOEngine.Runtime.Rendering
 
             swapChainImageFormat = surfaceFormat.Format;
             swapChainExtent = extent;
+        }
 
+        private unsafe void CreateImageViews()
+        {
             swapChainImageViews = new ImageView[swapChainImages!.Length];
 
             for (int i = 0; i < swapChainImages.Length; i++)
@@ -398,6 +415,13 @@ namespace UOEngine.Runtime.Rendering
                     indices.GraphicsFamily = i;
                 }
 
+                khrSurface!.GetPhysicalDeviceSurfaceSupport(device, i, surface, out var presentSupport);
+
+                if (presentSupport)
+                {
+                    indices.PresentFamily = i;
+                }
+
                 if (indices.IsComplete())
                 {
                     break;
@@ -513,11 +537,12 @@ namespace UOEngine.Runtime.Rendering
         private ImageView[]?                swapChainImageViews;
 
         private Queue                       graphicsQueue;
-        //private Queue                       presentQueue;
+        private Queue                       presentQueue;
 
         private DebugUtilsMessengerEXT      debugMessenger;
         private ExtDebugUtils?              debugUtils;
 
-        private readonly string[]           validationLayers = ["VK_LAYER_KHRONOS_validation" ];
+        private readonly string[]           validationLayers = ["VK_LAYER_KHRONOS_validation"];
+        private readonly string[]           deviceExtensions = [KhrSwapchain.ExtensionName];
     }
 }

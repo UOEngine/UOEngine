@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.10.35027.167
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{9A67D154-B795-494E-8D42-C6A2976730D5}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Runtime", "Runtime", "{9A67D154-B795-494E-8D42-C6A2976730D5}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UOEngine.Runtime.Core", "Source\Runtime\Core\UOEngine.Runtime.Core.csproj", "{78725F8E-FF8B-4A3C-A7AD-89DF71731D4D}"
 EndProject
@@ -11,9 +11,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UOEngine.Runtime.Rendering"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UOEngine.Apps.Client", "Source\Apps\Client\UOEngine.Apps.Client.csproj", "{DDC4067C-A4B6-445C-ADDB-AB17AD31E1D1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UOEngine.Apps.Editor", "Source\Apps\Editor\UOEngine.Apps.Editor\UOEngine.Apps.Editor.csproj", "{AE862AE7-C654-4DF3-A90F-2A1C25D551ED}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UOEngine.Apps.Editor", "Source\Apps\Editor\UOEngine.Apps.Editor\UOEngine.Apps.Editor.csproj", "{AE862AE7-C654-4DF3-A90F-2A1C25D551ED}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UOEngine.Apps.Launcher", "Source\Apps\Launcher\UOEngine.Apps.Launcher\UOEngine.Apps.Launcher.csproj", "{50AC61E4-7A48-4547-A225-EE4939367233}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UOEngine.Apps.Launcher", "Source\Apps\Launcher\UOEngine.Apps.Launcher\UOEngine.Apps.Launcher.csproj", "{50AC61E4-7A48-4547-A225-EE4939367233}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Apps", "Apps", "{463677F0-6019-474B-B3B8-8CA03EEA56ED}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UOEngine.Runtime.Math", "Source\Runtime\UOEngine.Runtime.Math\UOEngine.Runtime.Math.csproj", "{6A2704E2-D7A9-4DB5-8E84-E930DBBF9A07}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -63,9 +67,25 @@ Global
 		{50AC61E4-7A48-4547-A225-EE4939367233}.Release|Any CPU.Build.0 = Release|Any CPU
 		{50AC61E4-7A48-4547-A225-EE4939367233}.Release|x64.ActiveCfg = Release|Any CPU
 		{50AC61E4-7A48-4547-A225-EE4939367233}.Release|x64.Build.0 = Release|Any CPU
+		{6A2704E2-D7A9-4DB5-8E84-E930DBBF9A07}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A2704E2-D7A9-4DB5-8E84-E930DBBF9A07}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A2704E2-D7A9-4DB5-8E84-E930DBBF9A07}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{6A2704E2-D7A9-4DB5-8E84-E930DBBF9A07}.Debug|x64.Build.0 = Debug|Any CPU
+		{6A2704E2-D7A9-4DB5-8E84-E930DBBF9A07}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A2704E2-D7A9-4DB5-8E84-E930DBBF9A07}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6A2704E2-D7A9-4DB5-8E84-E930DBBF9A07}.Release|x64.ActiveCfg = Release|Any CPU
+		{6A2704E2-D7A9-4DB5-8E84-E930DBBF9A07}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{78725F8E-FF8B-4A3C-A7AD-89DF71731D4D} = {9A67D154-B795-494E-8D42-C6A2976730D5}
+		{195114EA-3FB5-4755-B0A2-E6657C39C9B6} = {9A67D154-B795-494E-8D42-C6A2976730D5}
+		{DDC4067C-A4B6-445C-ADDB-AB17AD31E1D1} = {463677F0-6019-474B-B3B8-8CA03EEA56ED}
+		{AE862AE7-C654-4DF3-A90F-2A1C25D551ED} = {463677F0-6019-474B-B3B8-8CA03EEA56ED}
+		{50AC61E4-7A48-4547-A225-EE4939367233} = {463677F0-6019-474B-B3B8-8CA03EEA56ED}
+		{6A2704E2-D7A9-4DB5-8E84-E930DBBF9A07} = {9A67D154-B795-494E-8D42-C6A2976730D5}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {43D4B3F7-6189-4AFF-8A65-0DCD9E4B4D75}

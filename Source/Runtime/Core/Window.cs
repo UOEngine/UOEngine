@@ -9,6 +9,8 @@ namespace UOEngine.Runtime.Core
     {
         public Window()
         {
+            Width = 800;
+            Height = 1024;
         }
 
         public void Init()
@@ -16,7 +18,7 @@ namespace UOEngine.Runtime.Core
             //Create a window.
             var options = WindowOptions.DefaultVulkan with
             {
-                Size = new Vector2D<int>(WIDTH, HEIGHT),
+                Size = new Vector2D<int>((int)Width, (int)Height),
                 Title = "ClassicUO2",
             };
 
@@ -35,12 +37,14 @@ namespace UOEngine.Runtime.Core
 
         public IntPtr GetHandle() => _window!.Handle;
 
+        public uint Width { get; private set; }
+        public uint Height { get; private set; }
+
         public IVkSurface? GetSurface() => _window?.VkSurface;
 
         private IWindow? _window;
 
-        const int WIDTH = 800;
-        const int HEIGHT = 600;
+
 
     }
 }
