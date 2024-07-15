@@ -8,7 +8,7 @@ using Silk.NET.Core.Native;
 using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.EXT;
 using Silk.NET.Vulkan.Extensions.KHR;
-using Silk.NET.Windowing;
+using Semaphore = Silk.NET.Vulkan.Semaphore;
 
 namespace UOEngine.Runtime.Rendering
 {
@@ -16,11 +16,14 @@ namespace UOEngine.Runtime.Rendering
     {
         public RenderDevice(RenderDeviceContext renderDeviceContext)
         {
-
+            this.renderDeviceContext = renderDeviceContext;
+            renderDeviceContext.RenderDevice = this;
         }
 
         public unsafe void Initialise(IVkSurface? surface, uint width, uint height, bool bEnableValidationLayers)
         {
+            this.bEnableValidationLayers = bEnableValidationLayers;
+
             if (surface == null)
             {
                 throw new ArgumentNullException("Surface is null.");
@@ -31,9 +34,9 @@ namespace UOEngine.Runtime.Rendering
             ApplicationInfo appInfo = new()
             {
                 SType = StructureType.ApplicationInfo,
-                PApplicationName = (byte*)Marshal.StringToHGlobalAnsi("ClassicUO2.Engine"),
+                PApplicationName = (byte*)Marshal.StringToHGlobalAnsi("UOEngine.App"),
                 ApplicationVersion = new Version32(1, 0, 0),
-                PEngineName = (byte*)Marshal.StringToHGlobalAnsi("ClassicUO2.Engine"),
+                PEngineName = (byte*)Marshal.StringToHGlobalAnsi("UOEngine"),
                 EngineVersion = new Version32(1, 0, 0),
                 ApiVersion = Vk.Version11
             };
@@ -83,16 +86,223 @@ namespace UOEngine.Runtime.Rendering
             PickPhysicalDevice();
             CreateLogicalDevice(bEnableValidationLayers);
             CreateSwapChain(width, height);
+            CreateRenderPass();
             CreateImageViews();
             CreateGraphicsPipeline();
+            CreateFramebuffers();
+            CreateCommandPool();
+            CreateCommandBuffers();
+            CreateSyncObjects();
+
         }
 
-        public void Draw()
+        public unsafe void Shutdown()
         {
+            vk!.DeviceWaitIdle(device);
 
+            for (var i = 0; i < MaxFramesInFlight; i++)
+            {
+                vk.DestroySemaphore(device, renderFinishedSemaphores![i], null);
+                vk!.DestroySemaphore(device, imageAvailableSemaphores![i], null);
+                vk!.DestroyFence(device, inFlightFences![i], null);
+            }
+
+            vk!.DestroyCommandPool(device, commandPool, null);
+
+            foreach (var framebuffer in swapChainFramebuffers!)
+            {
+                vk!.DestroyFramebuffer(device, framebuffer, null);
+            }
+
+            vk!.DestroyPipeline(device, graphicsPipeline, null);
+            vk!.DestroyPipelineLayout(device, pipelineLayout, null);
+            vk!.DestroyRenderPass(device, renderPass, null);
+
+            foreach (var imageView in swapChainImageViews!)
+            {
+                vk!.DestroyImageView(device, imageView, null);
+            }
+
+            khrSwapChain!.DestroySwapchain(device, swapChain, null);
+
+            vk!.DestroyDevice(device, null);
+
+            if (bEnableValidationLayers)
+            {
+                //DestroyDebugUtilsMessenger equivilant to method DestroyDebugUtilsMessengerEXT from original tutorial.
+                debugUtils!.DestroyDebugUtilsMessenger(instance, debugMessenger, null);
+            }
+
+            khrSurface!.DestroySurface(instance, surface, null);
+            vk!.DestroyInstance(instance, null);
+
+            vk!.Dispose();
         }
 
-        public Texture2D CreateTexture2D(uint width, uint height)
+        public void OnFrameBegin()
+        {
+            currentCommandBuffer = commandBuffers![currentFrame];
+
+            vk!.ResetCommandBuffer(currentCommandBuffer, 0);
+
+            CommandBufferBeginInfo beginInfo = new()
+            {
+                SType = StructureType.CommandBufferBeginInfo,
+            };
+
+            if (vk!.BeginCommandBuffer(currentCommandBuffer, ref beginInfo) != Result.Success)
+            {
+                throw new Exception("failed to begin recording command buffer!");
+            }
+        }
+
+        public unsafe void BeginRenderPass()
+        {
+            if(commandBuffers == null)
+            {
+                Debug.Assert(false);
+            }
+
+            if (swapChainFramebuffers == null)
+            {
+                Debug.Assert(false);
+            }
+
+            RenderPassBeginInfo renderPassInfo = new()
+            {
+                SType = StructureType.RenderPassBeginInfo,
+                RenderPass = renderPass,
+                Framebuffer = swapChainFramebuffers[0],
+                RenderArea =
+                {
+                    Offset = { X = 0, Y = 0 },
+                    Extent = swapChainExtent,
+                }
+            };
+
+            ClearValue clearColor = new()
+            {
+                Color = new() { Float32_0 = 0, Float32_1 = 0, Float32_2 = 0, Float32_3 = 1 },
+            };
+
+            renderPassInfo.ClearValueCount = 1;
+            renderPassInfo.PClearValues = &clearColor;
+
+            vk!.CmdBeginRenderPass(currentCommandBuffer, &renderPassInfo, SubpassContents.Inline);
+
+            vk!.CmdBindPipeline(currentCommandBuffer, PipelineBindPoint.Graphics, graphicsPipeline);
+
+            Viewport viewport = new()
+            {
+                X = 0,
+                Y = 0,
+                Width = swapChainExtent.Width,
+                Height = swapChainExtent.Height,
+                MinDepth = 0.0f,
+                MaxDepth = 1.0f
+            };
+
+            vk.CmdSetViewport(currentCommandBuffer, 0, 1, ref viewport);
+
+            Rect2D scissor = new()
+            {
+                Offset = new() { X = 0, Y = 0 },
+                Extent = swapChainExtent
+            };
+
+            vk.CmdSetScissor(currentCommandBuffer, 0, 1, ref scissor);
+        }
+
+        public void EndRenderPass()
+        {
+            vk!.CmdEndRenderPass(currentCommandBuffer);
+        }
+
+        public unsafe void Submit()
+        {
+            if (vk!.EndCommandBuffer(currentCommandBuffer) != Result.Success)
+            {
+                throw new Exception("failed to record command buffer!");
+            }
+
+            var result = vk!.WaitForFences(device, 1, ref inFlightFences![currentFrame], true, ulong.MaxValue);
+
+            uint imageIndex = 0;
+            result = khrSwapChain!.AcquireNextImage(device, swapChain, ulong.MaxValue, imageAvailableSemaphores![currentFrame], default, ref imageIndex);
+
+            if (imagesInFlight![imageIndex].Handle != default)
+            {
+                vk!.WaitForFences(device, 1, ref imagesInFlight[imageIndex], true, ulong.MaxValue);
+            }
+
+            imagesInFlight[imageIndex] = inFlightFences[currentFrame];
+
+            SubmitInfo submitInfo = new()
+            {
+                SType = StructureType.SubmitInfo,
+            };
+
+            var waitSemaphores = stackalloc[] { imageAvailableSemaphores[currentFrame] };
+            var waitStages = stackalloc[] { PipelineStageFlags.ColorAttachmentOutputBit };
+
+            var buffer = commandBuffers![imageIndex];
+
+            submitInfo = submitInfo with
+            {
+                WaitSemaphoreCount = 1,
+                PWaitSemaphores = waitSemaphores,
+                PWaitDstStageMask = waitStages,
+
+                CommandBufferCount = 1,
+                PCommandBuffers = &buffer
+            };
+
+            var signalSemaphores = stackalloc[] { renderFinishedSemaphores![currentFrame] };
+            submitInfo = submitInfo with
+            {
+                SignalSemaphoreCount = 1,
+                PSignalSemaphores = signalSemaphores,
+            };
+
+            vk!.ResetFences(device, 1, ref inFlightFences[currentFrame]);
+
+            if (vk!.QueueSubmit(graphicsQueue, 1, ref submitInfo, inFlightFences[currentFrame]) != Result.Success)
+            {
+                throw new Exception("failed to submit draw command buffer!");
+            }
+
+            var swapChains = stackalloc[] { swapChain };
+
+            PresentInfoKHR presentInfo = new()
+            {
+                SType = StructureType.PresentInfoKhr,
+
+                WaitSemaphoreCount = 1,
+                PWaitSemaphores = signalSemaphores,
+
+                SwapchainCount = 1,
+                PSwapchains = swapChains,
+
+                PImageIndices = &imageIndex
+            };
+
+            result = khrSwapChain.QueuePresent(presentQueue, ref presentInfo);
+
+            if (result == Result.ErrorOutOfDateKhr || result == Result.SuboptimalKhr)// || frameBufferResized)
+            {
+                //frameBufferResized = false;
+
+                RecreateSwapChain();
+            }
+            else if (result != Result.Success)
+            {
+                throw new Exception("failed to present swap chain image!");
+            }
+
+            currentFrame = (currentFrame + 1) % MaxFramesInFlight;
+        }
+
+    public Texture2D CreateTexture2D(uint width, uint height)
         {
             return new Texture2D(width, height);
         }
@@ -329,11 +539,190 @@ namespace UOEngine.Runtime.Rendering
                 fragShaderStageInfo
              };
 
+            PipelineVertexInputStateCreateInfo vertexInputInfo = new()
+            {
+                SType = StructureType.PipelineVertexInputStateCreateInfo,
+                VertexBindingDescriptionCount = 0,
+                VertexAttributeDescriptionCount = 0,
+            };
+
+            PipelineInputAssemblyStateCreateInfo inputAssembly = new()
+            {
+                SType = StructureType.PipelineInputAssemblyStateCreateInfo,
+                Topology = PrimitiveTopology.TriangleList,
+                PrimitiveRestartEnable = false,
+            };
+
+            Viewport viewport = new()
+            {
+                X = 0,
+                Y = 0,
+                Width = swapChainExtent.Width,
+                Height = swapChainExtent.Height,
+                MinDepth = 0,
+                MaxDepth = 1,
+            };
+
+            Rect2D scissor = new()
+            {
+                Offset = { X = 0, Y = 0 },
+                Extent = swapChainExtent,
+            };
+
+            PipelineViewportStateCreateInfo viewportState = new()
+            {
+                SType = StructureType.PipelineViewportStateCreateInfo,
+                ViewportCount = 1,
+                PViewports = &viewport,
+                ScissorCount = 1,
+                PScissors = &scissor,
+            };
+
+            PipelineRasterizationStateCreateInfo rasterizer = new()
+            {
+                SType = StructureType.PipelineRasterizationStateCreateInfo,
+                DepthClampEnable = false,
+                RasterizerDiscardEnable = false,
+                PolygonMode = PolygonMode.Fill,
+                LineWidth = 1,
+                CullMode = CullModeFlags.BackBit,
+                FrontFace = FrontFace.Clockwise,
+                DepthBiasEnable = false,
+            };
+
+            PipelineMultisampleStateCreateInfo multisampling = new()
+            {
+                SType = StructureType.PipelineMultisampleStateCreateInfo,
+                SampleShadingEnable = false,
+                RasterizationSamples = SampleCountFlags.Count1Bit,
+            };
+
+            PipelineColorBlendAttachmentState colorBlendAttachment = new()
+            {
+                ColorWriteMask = ColorComponentFlags.RBit | ColorComponentFlags.GBit | ColorComponentFlags.BBit | ColorComponentFlags.ABit,
+                BlendEnable = false,
+            };
+
+            PipelineColorBlendStateCreateInfo colorBlending = new()
+            {
+                SType = StructureType.PipelineColorBlendStateCreateInfo,
+                LogicOpEnable = false,
+                LogicOp = LogicOp.Copy,
+                AttachmentCount = 1,
+                PAttachments = &colorBlendAttachment,
+            };
+
+            colorBlending.BlendConstants[0] = 0;
+            colorBlending.BlendConstants[1] = 0;
+            colorBlending.BlendConstants[2] = 0;
+            colorBlending.BlendConstants[3] = 0;
+
+            PipelineLayoutCreateInfo pipelineLayoutInfo = new()
+            {
+                SType = StructureType.PipelineLayoutCreateInfo,
+                SetLayoutCount = 0,
+                PushConstantRangeCount = 0,
+            };
+
+            if (vk!.CreatePipelineLayout(device, ref pipelineLayoutInfo, null, out pipelineLayout) != Result.Success)
+            {
+                throw new Exception("failed to create pipeline layout!");
+            }
+
+            GraphicsPipelineCreateInfo pipelineInfo = new()
+            {
+                SType = StructureType.GraphicsPipelineCreateInfo,
+                StageCount = 2,
+                PStages = shaderStages,
+                PVertexInputState = &vertexInputInfo,
+                PInputAssemblyState = &inputAssembly,
+                PViewportState = &viewportState,
+                PRasterizationState = &rasterizer,
+                PMultisampleState = &multisampling,
+                PColorBlendState = &colorBlending,
+                Layout = pipelineLayout,
+                RenderPass = renderPass,
+                Subpass = 0,
+                BasePipelineHandle = default
+            };
+
+            if (vk!.CreateGraphicsPipelines(device, default, 1, ref pipelineInfo, null, out graphicsPipeline) != Result.Success)
+            {
+                throw new Exception("failed to create graphics pipeline!");
+            }
+
             vk!.DestroyShaderModule(device, vertexShaderModule, null);
             vk!.DestroyShaderModule(device, fragmentShaderModule, null);
 
             SilkMarshal.Free((nint)vertShaderStageInfo.PName);
             SilkMarshal.Free((nint)fragShaderStageInfo.PName);
+        }
+
+        private unsafe void CreateRenderPass()
+        {
+            AttachmentDescription colorAttachment = new()
+            {
+                Format = swapChainImageFormat,
+                Samples = SampleCountFlags.Count1Bit,
+                LoadOp = AttachmentLoadOp.Clear,
+                StoreOp = AttachmentStoreOp.Store,
+                StencilLoadOp = AttachmentLoadOp.DontCare,
+                InitialLayout = ImageLayout.Undefined,
+                FinalLayout = ImageLayout.PresentSrcKhr,
+            };
+
+            AttachmentReference colorAttachmentRef = new()
+            {
+                Attachment = 0,
+                Layout = ImageLayout.ColorAttachmentOptimal,
+            };
+
+            SubpassDescription subpass = new()
+            {
+                PipelineBindPoint = PipelineBindPoint.Graphics,
+                ColorAttachmentCount = 1,
+                PColorAttachments = &colorAttachmentRef,
+            };
+
+            RenderPassCreateInfo renderPassInfo = new()
+            {
+                SType = StructureType.RenderPassCreateInfo,
+                AttachmentCount = 1,
+                PAttachments = &colorAttachment,
+                SubpassCount = 1,
+                PSubpasses = &subpass,
+            };
+
+            if (vk!.CreateRenderPass(device, ref renderPassInfo, null, out renderPass) != Result.Success)
+            {
+                throw new Exception("failed to create render pass!");
+            }
+        }
+
+        private unsafe void CreateFramebuffers()
+        {
+            swapChainFramebuffers = new Framebuffer[swapChainImageViews!.Length];
+
+            for (int i = 0; i < swapChainImageViews.Length; i++)
+            {
+                var attachment = swapChainImageViews[i];
+
+                FramebufferCreateInfo framebufferInfo = new()
+                {
+                    SType = StructureType.FramebufferCreateInfo,
+                    RenderPass = renderPass,
+                    AttachmentCount = 1,
+                    PAttachments = &attachment,
+                    Width = swapChainExtent.Width,
+                    Height = swapChainExtent.Height,
+                    Layers = 1,
+                };
+
+                if (vk!.CreateFramebuffer(device, ref framebufferInfo, null, out swapChainFramebuffers[i]) != Result.Success)
+                {
+                    throw new Exception("failed to create framebuffer!");
+                }
+            }
         }
 
         private unsafe ShaderModule CreateShaderModule(byte[] code)
@@ -357,6 +746,30 @@ namespace UOEngine.Runtime.Rendering
             }
 
             return shaderModule;
+        }
+        private void RecreateSwapChain()
+        {
+            Debug.Assert(false);
+            //Vector2D<int> framebufferSize = window!.FramebufferSize;
+
+            //while (framebufferSize.X == 0 || framebufferSize.Y == 0)
+            //{
+            //    framebufferSize = window.FramebufferSize;
+            //    window.DoEvents();
+            //}
+
+            vk!.DeviceWaitIdle(device);
+
+            //CleanUpSwapChain();
+
+            //CreateSwapChain();
+            CreateImageViews();
+            CreateRenderPass();
+            CreateGraphicsPipeline();
+            CreateFramebuffers();
+            CreateCommandBuffers();
+
+            imagesInFlight = new Fence[swapChainImages!.Length];
         }
 
         private SurfaceFormatKHR ChooseSwapSurfaceFormat(IReadOnlyList<SurfaceFormatKHR> availableFormats)
@@ -467,8 +880,8 @@ namespace UOEngine.Runtime.Rendering
                 vk!.GetPhysicalDeviceQueueFamilyProperties(device, ref queueFamilityCount, queueFamiliesPtr);
             }
 
-
             uint i = 0;
+
             foreach (var queueFamily in queueFamilies)
             {
                 if (queueFamily.QueueFlags.HasFlag(QueueFlags.GraphicsBit))
@@ -555,14 +968,85 @@ namespace UOEngine.Runtime.Rendering
 
         private unsafe uint DebugCallback(DebugUtilsMessageSeverityFlagsEXT messageSeverity, DebugUtilsMessageTypeFlagsEXT messageTypes, DebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
         {
-            Console.WriteLine($"validation layer:" + Marshal.PtrToStringAnsi((nint)pCallbackData->PMessage));
+            var message = $"validation layer:" + Marshal.PtrToStringAnsi((nint)pCallbackData->PMessage);
+
+            Console.WriteLine(message);
 
             if(messageSeverity.HasFlag(DebugUtilsMessageSeverityFlagsEXT.ErrorBitExt))
             {
+                Debug.WriteLine(message);
+
                 Debug.Assert(false);
             }
 
             return Vk.False;
+        }
+
+        private unsafe void CreateCommandPool()
+        {
+            var queueFamilyIndices = FindQueueFamilies(physicalDevice);
+
+            CommandPoolCreateInfo poolInfo = new()
+            {
+                SType = StructureType.CommandPoolCreateInfo,
+                QueueFamilyIndex = queueFamilyIndices.GraphicsFamily!.Value,
+                Flags = CommandPoolCreateFlags.ResetCommandBufferBit
+            };
+
+            if (vk!.CreateCommandPool(device, ref poolInfo, null, out commandPool) != Result.Success)
+            {
+                throw new Exception("failed to create command pool!");
+            }
+        }
+
+        private unsafe void CreateCommandBuffers()
+        {
+            commandBuffers = new CommandBuffer[MaxFramesInFlight];
+
+            CommandBufferAllocateInfo allocInfo = new()
+            {
+                SType = StructureType.CommandBufferAllocateInfo,
+                CommandPool = commandPool,
+                Level = CommandBufferLevel.Primary,
+                CommandBufferCount = (uint)commandBuffers.Length,
+            };
+
+            fixed (CommandBuffer* commandBuffersPtr = commandBuffers)
+            {
+                if (vk!.AllocateCommandBuffers(device, ref allocInfo, commandBuffersPtr) != Result.Success)
+                {
+                    throw new Exception("failed to allocate command buffers!");
+                }
+            }
+        }
+
+        private unsafe void CreateSyncObjects()
+        {
+            imageAvailableSemaphores = new Semaphore[MaxFramesInFlight];
+            renderFinishedSemaphores = new Semaphore[MaxFramesInFlight];
+            inFlightFences = new Fence[MaxFramesInFlight];
+            imagesInFlight = new Fence[swapChainImages!.Length];
+
+            SemaphoreCreateInfo semaphoreInfo = new()
+            {
+                SType = StructureType.SemaphoreCreateInfo,
+            };
+
+            FenceCreateInfo fenceInfo = new()
+            {
+                SType = StructureType.FenceCreateInfo,
+                Flags = FenceCreateFlags.SignaledBit,
+            };
+
+            for (var i = 0; i < MaxFramesInFlight; i++)
+            {
+                if (vk!.CreateSemaphore(device, ref semaphoreInfo, null, out imageAvailableSemaphores[i]) != Result.Success ||
+                    vk!.CreateSemaphore(device, ref semaphoreInfo, null, out renderFinishedSemaphores[i]) != Result.Success ||
+                    vk!.CreateFence(device, ref fenceInfo, null, out inFlightFences[i]) != Result.Success)
+                {
+                    throw new Exception("failed to create synchronization objects for a frame!");
+                }
+            }
         }
 
         struct QueueFamilyIndices
@@ -582,6 +1066,8 @@ namespace UOEngine.Runtime.Rendering
             public PresentModeKHR[]         PresentModes;
         }
 
+        private RenderDeviceContext         renderDeviceContext;
+
         private Vk?                         vk;
         private Instance                    instance;
         private PhysicalDevice              physicalDevice;
@@ -596,12 +1082,30 @@ namespace UOEngine.Runtime.Rendering
         private Format                      swapChainImageFormat;
         private Extent2D                    swapChainExtent;
         private ImageView[]?                swapChainImageViews;
+        private Framebuffer[]?              swapChainFramebuffers;  
+        
+        private CommandPool                 commandPool;
+        private CommandBuffer[]?            commandBuffers;
+        private CommandBuffer               currentCommandBuffer;
 
         private Queue                       graphicsQueue;
         private Queue                       presentQueue;
 
+        private PipelineLayout              pipelineLayout;
+        private Pipeline                    graphicsPipeline;
+        private RenderPass                  renderPass;
+
+        private Semaphore[]?                imageAvailableSemaphores;
+        private Semaphore[]?                renderFinishedSemaphores;
+        private Fence[]?                    inFlightFences;
+        private Fence[]?                    imagesInFlight;
+        private int                         currentFrame = 0;
+
+        private bool                        bEnableValidationLayers = false;
         private DebugUtilsMessengerEXT      debugMessenger;
         private ExtDebugUtils?              debugUtils;
+
+        const int                           MaxFramesInFlight = 2;
 
         private readonly string[]           validationLayers = ["VK_LAYER_KHRONOS_validation"];
         private readonly string[]           deviceExtensions = [KhrSwapchain.ExtensionName];

@@ -19,6 +19,11 @@ namespace UOEngine.Runtime.Core
             return true;
         }
 
+        protected virtual void Shutdown(IServiceProvider serviceProvider)
+        {
+
+        }
+
         protected virtual void OnServicesCreated(IServiceProvider serviceProvider)
         {
 
@@ -65,6 +70,8 @@ namespace UOEngine.Runtime.Core
                     tickable.Tick(deltaSeconds);
                 }
             }
+
+            Shutdown(host.Services);
 
             Console.WriteLine("Quitting!");
         }

@@ -16,4 +16,8 @@
     <PackageReference Include="Silk.NET.Windowing" Version="2.21.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Core\UOEngine.Runtime.Core.csproj" />
+  </ItemGroup>
+
 </Project>

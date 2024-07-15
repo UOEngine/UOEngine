@@ -42,5 +42,10 @@ namespace UOEngine.Apps.Client
             renderdevice.Initialise(window.GetSurface(), window.Width, window.Height, bEnableValidationLayers);
         }
 
+        protected override void Shutdown(IServiceProvider serviceProvider)
+        {
+            serviceProvider.GetRequiredService<RenderDevice>().Shutdown();
+        }
+
     }
 }

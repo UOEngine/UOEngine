@@ -2,8 +2,9 @@
 {
     public class Renderer
     {
-        public Renderer(IServiceProvider provider)
-        {
-        }
+        //public Renderer(RenderDevice device, RenderDeviceContext deviceContext)
+        //{
+        //    deviceContext.RenderDevice = device;
+        //}
     }
 }
