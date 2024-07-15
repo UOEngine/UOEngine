@@ -84,6 +84,7 @@ namespace UOEngine.Runtime.Rendering
             CreateLogicalDevice(bEnableValidationLayers);
             CreateSwapChain(width, height);
             CreateImageViews();
+            CreateGraphicsPipeline();
         }
 
         public void Draw()
@@ -296,6 +297,66 @@ namespace UOEngine.Runtime.Rendering
                     throw new Exception("failed to create image views!");
                 }
             }
+        }
+
+        private unsafe void CreateGraphicsPipeline()
+        {
+            var vertShaderCode = File.ReadAllBytes("shaders/vert.spv");
+            var fragShaderCode = File.ReadAllBytes("shaders/frag.spv");
+
+            var vertexShaderModule = CreateShaderModule(vertShaderCode);
+            var fragmentShaderModule = CreateShaderModule(fragShaderCode);
+
+            PipelineShaderStageCreateInfo vertShaderStageInfo = new()
+            {
+                SType = StructureType.PipelineShaderStageCreateInfo,
+                Stage = ShaderStageFlags.VertexBit,
+                Module = vertexShaderModule,
+                PName = (byte*)SilkMarshal.StringToPtr("main")
+            };
+
+            PipelineShaderStageCreateInfo fragShaderStageInfo = new()
+            {
+                SType = StructureType.PipelineShaderStageCreateInfo,
+                Stage = ShaderStageFlags.FragmentBit,
+                Module = fragmentShaderModule,
+                PName = (byte*)SilkMarshal.StringToPtr("main")
+            };
+
+            var shaderStages = stackalloc[]
+            {
+                vertShaderStageInfo,
+                fragShaderStageInfo
+             };
+
+            vk!.DestroyShaderModule(device, vertexShaderModule, null);
+            vk!.DestroyShaderModule(device, fragmentShaderModule, null);
+
+            SilkMarshal.Free((nint)vertShaderStageInfo.PName);
+            SilkMarshal.Free((nint)fragShaderStageInfo.PName);
+        }
+
+        private unsafe ShaderModule CreateShaderModule(byte[] code)
+        {
+            ShaderModuleCreateInfo createInfo = new()
+            {
+                SType = StructureType.ShaderModuleCreateInfo,
+                CodeSize = (nuint)code.Length,
+            };
+
+            ShaderModule shaderModule;
+
+            fixed (byte* codePtr = code)
+            {
+                createInfo.PCode = (uint*)codePtr;
+
+                if (vk!.CreateShaderModule(device, ref createInfo, null, out shaderModule) != Result.Success)
+                {
+                    throw new Exception();
+                }
+            }
+
+            return shaderModule;
         }
 
         private SurfaceFormatKHR ChooseSwapSurfaceFormat(IReadOnlyList<SurfaceFormatKHR> availableFormats)
