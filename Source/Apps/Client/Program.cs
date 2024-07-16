@@ -25,7 +25,9 @@ namespace UOEngine.Apps.Client
 
         protected override void OnServicesCreated(IServiceProvider serviceProvider)
         {
-            bool bEnableValidationLayers = true;
+            bool bEnableValidationLayers = false;
+            
+            bEnableValidationLayers = true;
 
             var window = serviceProvider.GetRequiredService<Window>();
 

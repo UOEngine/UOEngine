@@ -223,13 +223,10 @@ namespace UOEngine.Runtime.Rendering
             }
 
             var result = vk!.WaitForFences(device, 1, ref inFlightFences![currentFrame], true, ulong.MaxValue);
-
             result = vk!.ResetFences(device, 1, ref inFlightFences[currentFrame]);
 
             uint imageIndex = 0;
             result = khrSwapChain!.AcquireNextImage(device, swapChain, ulong.MaxValue, imageAvailableSemaphores![currentFrame], default, ref imageIndex);
-
-            //imagesInFlight[imageIndex] = inFlightFences[currentFrame];
 
             SubmitInfo submitInfo = new()
             {
@@ -257,7 +254,6 @@ namespace UOEngine.Runtime.Rendering
                 SignalSemaphoreCount = 1,
                 PSignalSemaphores = signalSemaphores,
             };
-
 
             if (vk!.QueueSubmit(graphicsQueue, 1, ref submitInfo, inFlightFences[currentFrame]) != Result.Success)
             {
@@ -293,6 +289,8 @@ namespace UOEngine.Runtime.Rendering
             }
 
             currentFrame = (currentFrame + 1) % MaxFramesInFlight;
+
+            vk.DeviceWaitIdle(device);
         }
 
     public Texture2D CreateTexture2D(uint width, uint height)
@@ -403,6 +401,8 @@ namespace UOEngine.Runtime.Rendering
             {
                 imageCount = swapChainSupport.Capabilities.MaxImageCount;
             }
+
+            MaxFramesInFlight = imageCount;
 
             SwapchainCreateInfoKHR createInfo = new()
             {
@@ -783,8 +783,6 @@ namespace UOEngine.Runtime.Rendering
             CreateGraphicsPipeline();
             CreateFramebuffers();
             CreateCommandBuffers();
-
-            imagesInFlight = new Fence[swapChainImages!.Length];
         }
 
         private SurfaceFormatKHR ChooseSwapSurfaceFormat(IReadOnlyList<SurfaceFormatKHR> availableFormats)
@@ -1038,7 +1036,7 @@ namespace UOEngine.Runtime.Rendering
             imageAvailableSemaphores = new Semaphore[MaxFramesInFlight];
             renderFinishedSemaphores = new Semaphore[MaxFramesInFlight];
             inFlightFences = new Fence[MaxFramesInFlight];
-            imagesInFlight = new Fence[swapChainImages!.Length];
+            //imagesInFlight = new Fence[swapChainImages!.Length];
 
             SemaphoreCreateInfo semaphoreInfo = new()
             {
@@ -1111,14 +1109,13 @@ namespace UOEngine.Runtime.Rendering
         private Semaphore[]?                imageAvailableSemaphores;
         private Semaphore[]?                renderFinishedSemaphores;
         private Fence[]?                    inFlightFences;
-        private Fence[]?                    imagesInFlight;
-        private int                         currentFrame = 0;
+        private uint                        currentFrame = 0;
 
         private bool                        bEnableValidationLayers = false;
         private DebugUtilsMessengerEXT      debugMessenger;
         private ExtDebugUtils?              debugUtils;
 
-        const int                           MaxFramesInFlight = 2;
+        private uint                        MaxFramesInFlight = 0;
 
         private readonly string[]           validationLayers = ["VK_LAYER_KHRONOS_validation"];
         private readonly string[]           deviceExtensions = [KhrSwapchain.ExtensionName];
