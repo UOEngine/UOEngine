@@ -39,7 +39,7 @@ namespace UOEngine.Runtime.Core
 
             Initialise();
 
-            builder.Services.AddSingleton<EventLoop>();
+            builder.Services.AddSingleton<GameLoop>();
 
             using IHost host = builder.Build();
 
@@ -47,7 +47,7 @@ namespace UOEngine.Runtime.Core
 
             // ----------------
 
-            var eventLoop = host.Services.GetRequiredService<EventLoop>();
+            var eventLoop = host.Services.GetRequiredService<GameLoop>();
             var tickableServices = new List<ITickable>();
 
             foreach (var tickableServiceType in tickableServiceTypes)

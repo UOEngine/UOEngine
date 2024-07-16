@@ -1,7 +1,7 @@
 ﻿
 namespace UOEngine.Runtime.Core
 {
-    public class EventLoop
+    public class GameLoop
     {
         public class FrameStartedArgs
         {
