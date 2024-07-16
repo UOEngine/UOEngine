@@ -37,9 +37,9 @@ namespace UOEngine.Apps.Client
 
             input.Initialise(window.GetHandle());
 
-            input.MouseMovedEvent += (s, e) => Console.WriteLine($"MouseMoved {e.X}, {e.Y}");
-
             var renderdevice = serviceProvider.GetRequiredService<RenderDevice>();
+
+            renderdevice.SwapchainDirty += (s, e) => renderdevice.SetSurfaceSize(window.Width, window.Height);
 
             renderdevice.Initialise(window.GetSurface(), window.Width, window.Height, bEnableValidationLayers);
         }

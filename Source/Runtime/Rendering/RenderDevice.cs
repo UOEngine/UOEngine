@@ -29,6 +29,9 @@ namespace UOEngine.Runtime.Rendering
                 throw new ArgumentNullException("Surface is null.");
             }
 
+            surfaceWidth = width;
+            surfaceHeight = height;
+
             vk = Vk.GetApi();
 
             ApplicationInfo appInfo = new()
@@ -100,6 +103,8 @@ namespace UOEngine.Runtime.Rendering
         {
             vk!.DeviceWaitIdle(device);
 
+            CleanupSwapchain();
+
             for (var i = 0; i < MaxFramesInFlight; i++)
             {
                 vk.DestroySemaphore(device, renderFinishedSemaphores![i], null);
@@ -123,13 +128,10 @@ namespace UOEngine.Runtime.Rendering
                 vk!.DestroyImageView(device, imageView, null);
             }
 
-            khrSwapChain!.DestroySwapchain(device, swapChain, null);
-
             vk!.DestroyDevice(device, null);
 
             if (bEnableValidationLayers)
             {
-                //DestroyDebugUtilsMessenger equivilant to method DestroyDebugUtilsMessengerEXT from original tutorial.
                 debugUtils!.DestroyDebugUtilsMessenger(instance, debugMessenger, null);
             }
 
@@ -139,6 +141,12 @@ namespace UOEngine.Runtime.Rendering
             vk!.Dispose();
         }
 
+        public void SetSurfaceSize(uint width, uint height)
+        {
+            Console.WriteLine($"SetSurfaceSize: {width} {height}");
+            surfaceWidth = width; 
+            surfaceHeight = height;
+        }
         public void OnFrameBegin()
         {
             Debug.WriteLine($"OnFrameBegin {currentFrame}");
@@ -223,10 +231,24 @@ namespace UOEngine.Runtime.Rendering
             }
 
             var result = vk!.WaitForFences(device, 1, ref inFlightFences![currentFrame], true, ulong.MaxValue);
-            result = vk!.ResetFences(device, 1, ref inFlightFences[currentFrame]);
 
             uint imageIndex = 0;
             result = khrSwapChain!.AcquireNextImage(device, swapChain, ulong.MaxValue, imageAvailableSemaphores![currentFrame], default, ref imageIndex);
+
+            if (result == Result.ErrorOutOfDateKhr || result == Result.SuboptimalKhr)// || frameBufferResized)
+            {
+                //frameBufferResized = false;
+
+                RecreateSwapChain();
+
+                return;
+            }
+            else if (result != Result.Success && result != Result.SuboptimalKhr)
+            {
+                throw new Exception("failed to present swap chain image!");
+            }
+
+            result = vk!.ResetFences(device, 1, ref inFlightFences[currentFrame]);
 
             SubmitInfo submitInfo = new()
             {
@@ -276,17 +298,6 @@ namespace UOEngine.Runtime.Rendering
             };
 
             result = khrSwapChain.QueuePresent(presentQueue, ref presentInfo);
-
-            if (result == Result.ErrorOutOfDateKhr || result == Result.SuboptimalKhr)// || frameBufferResized)
-            {
-                //frameBufferResized = false;
-
-                RecreateSwapChain();
-            }
-            else if (result != Result.Success)
-            {
-                throw new Exception("failed to present swap chain image!");
-            }
 
             currentFrame = (currentFrame + 1) % MaxFramesInFlight;
 
@@ -390,6 +401,8 @@ namespace UOEngine.Runtime.Rendering
 
         private unsafe void CreateSwapChain(uint width, uint height)
         {
+            Console.WriteLine($"CreateSwapChain: {width} {height}");
+
             var swapChainSupport = QuerySwapChainSupport(physicalDevice);
 
             var surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.Formats);
@@ -463,6 +476,21 @@ namespace UOEngine.Runtime.Rendering
 
             swapChainImageFormat = surfaceFormat.Format;
             swapChainExtent = extent;
+        }
+
+        private unsafe void CleanupSwapchain()
+        {
+            for (int i = 0; i < swapChainFramebuffers!.Length; i++)
+            {
+                vk!.DestroyFramebuffer(device, swapChainFramebuffers[i], null);
+            }
+
+            for (int i = 0; i < swapChainImageViews!.Length; i++)
+            {
+                vk!.DestroyImageView(device, swapChainImageViews[i], null);
+            }
+
+            khrSwapChain!.DestroySwapchain(device, swapChain, null);
         }
 
         private unsafe void CreateImageViews()
@@ -764,25 +792,17 @@ namespace UOEngine.Runtime.Rendering
         }
         private void RecreateSwapChain()
         {
-            Debug.Assert(false);
-            //Vector2D<int> framebufferSize = window!.FramebufferSize;
-
-            //while (framebufferSize.X == 0 || framebufferSize.Y == 0)
-            //{
-            //    framebufferSize = window.FramebufferSize;
-            //    window.DoEvents();
-            //}
+            Console.WriteLine("RecreateSwapChain");
 
             vk!.DeviceWaitIdle(device);
 
-            //CleanUpSwapChain();
+            CleanupSwapchain();
 
-            //CreateSwapChain();
+            SwapchainDirty?.Invoke(this, EventArgs.Empty);
+
+            CreateSwapChain(surfaceWidth, surfaceHeight);
             CreateImageViews();
-            CreateRenderPass();
-            CreateGraphicsPipeline();
             CreateFramebuffers();
-            CreateCommandBuffers();
         }
 
         private SurfaceFormatKHR ChooseSwapSurfaceFormat(IReadOnlyList<SurfaceFormatKHR> availableFormats)
@@ -1077,6 +1097,8 @@ namespace UOEngine.Runtime.Rendering
             public PresentModeKHR[]         PresentModes;
         }
 
+        public event EventHandler?          SwapchainDirty;
+
         private RenderDeviceContext         renderDeviceContext;
 
         private Vk?                         vk;
@@ -1086,6 +1108,9 @@ namespace UOEngine.Runtime.Rendering
 
         private KhrSurface?                 khrSurface;
         private SurfaceKHR                  surface;
+
+        private uint                        surfaceWidth = 0;
+        private uint                        surfaceHeight = 0;
 
         private KhrSwapchain?               khrSwapChain;
         private SwapchainKHR                swapChain;
