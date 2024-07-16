@@ -61,7 +61,9 @@ namespace UOEngine.Runtime.Core
 
             while (Running)
             {
-                float deltaSeconds = 0.0f;
+                float deltaSeconds = 0.01f;
+
+                Thread.Sleep((int)(deltaSeconds * 1000.0f));
 
                 eventLoop.OnFrameStarted(deltaSeconds);
 

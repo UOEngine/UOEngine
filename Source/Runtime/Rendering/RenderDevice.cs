@@ -141,6 +141,8 @@ namespace UOEngine.Runtime.Rendering
 
         public void OnFrameBegin()
         {
+            Debug.WriteLine($"OnFrameBegin {currentFrame}");
+
             currentCommandBuffer = commandBuffers![currentFrame];
 
             vk!.ResetCommandBuffer(currentCommandBuffer, 0);
@@ -158,21 +160,11 @@ namespace UOEngine.Runtime.Rendering
 
         public unsafe void BeginRenderPass()
         {
-            if(commandBuffers == null)
-            {
-                Debug.Assert(false);
-            }
-
-            if (swapChainFramebuffers == null)
-            {
-                Debug.Assert(false);
-            }
-
             RenderPassBeginInfo renderPassInfo = new()
             {
                 SType = StructureType.RenderPassBeginInfo,
                 RenderPass = renderPass,
-                Framebuffer = swapChainFramebuffers[0],
+                Framebuffer = swapChainFramebuffers![currentFrame],
                 RenderArea =
                 {
                     Offset = { X = 0, Y = 0 },
@@ -227,15 +219,12 @@ namespace UOEngine.Runtime.Rendering
 
             var result = vk!.WaitForFences(device, 1, ref inFlightFences![currentFrame], true, ulong.MaxValue);
 
+            result = vk!.ResetFences(device, 1, ref inFlightFences[currentFrame]);
+
             uint imageIndex = 0;
             result = khrSwapChain!.AcquireNextImage(device, swapChain, ulong.MaxValue, imageAvailableSemaphores![currentFrame], default, ref imageIndex);
 
-            if (imagesInFlight![imageIndex].Handle != default)
-            {
-                vk!.WaitForFences(device, 1, ref imagesInFlight[imageIndex], true, ulong.MaxValue);
-            }
-
-            imagesInFlight[imageIndex] = inFlightFences[currentFrame];
+            //imagesInFlight[imageIndex] = inFlightFences[currentFrame];
 
             SubmitInfo submitInfo = new()
             {
@@ -245,7 +234,7 @@ namespace UOEngine.Runtime.Rendering
             var waitSemaphores = stackalloc[] { imageAvailableSemaphores[currentFrame] };
             var waitStages = stackalloc[] { PipelineStageFlags.ColorAttachmentOutputBit };
 
-            var buffer = commandBuffers![imageIndex];
+            var buffer = currentCommandBuffer;
 
             submitInfo = submitInfo with
             {
@@ -264,7 +253,6 @@ namespace UOEngine.Runtime.Rendering
                 PSignalSemaphores = signalSemaphores,
             };
 
-            vk!.ResetFences(device, 1, ref inFlightFences[currentFrame]);
 
             if (vk!.QueueSubmit(graphicsQueue, 1, ref submitInfo, inFlightFences[currentFrame]) != Result.Success)
             {
@@ -684,6 +672,16 @@ namespace UOEngine.Runtime.Rendering
                 PColorAttachments = &colorAttachmentRef,
             };
 
+            SubpassDependency dependency = new()
+            {
+                SrcSubpass = Vk.SubpassExternal,
+                DstSubpass = 0,
+                SrcStageMask = PipelineStageFlags.ColorAttachmentOutputBit,
+                SrcAccessMask = 0,
+                DstStageMask = PipelineStageFlags.ColorAttachmentOutputBit,
+                DstAccessMask = AccessFlags.ColorAttachmentWriteBit
+            };
+
             RenderPassCreateInfo renderPassInfo = new()
             {
                 SType = StructureType.RenderPassCreateInfo,
@@ -691,6 +689,8 @@ namespace UOEngine.Runtime.Rendering
                 PAttachments = &colorAttachment,
                 SubpassCount = 1,
                 PSubpasses = &subpass,
+                DependencyCount = 1,
+                PDependencies = &dependency
             };
 
             if (vk!.CreateRenderPass(device, ref renderPassInfo, null, out renderPass) != Result.Success)
