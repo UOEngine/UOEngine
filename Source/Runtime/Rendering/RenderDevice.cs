@@ -210,6 +210,11 @@ namespace UOEngine.Runtime.Rendering
             vk!.CmdEndRenderPass(currentCommandBuffer);
         }
 
+        public void Draw()
+        {
+            vk!.CmdDraw(currentCommandBuffer, 3, 1, 0, 0);
+        }
+
         public unsafe void Submit()
         {
             if (vk!.EndCommandBuffer(currentCommandBuffer) != Result.Success)
@@ -617,6 +622,15 @@ namespace UOEngine.Runtime.Rendering
                 throw new Exception("failed to create pipeline layout!");
             }
 
+            var dynamicStates = stackalloc[] { DynamicState.Viewport, DynamicState.Scissor };
+
+            PipelineDynamicStateCreateInfo dynamicStateCreateInfo = new()
+            {
+                SType = StructureType.PipelineDynamicStateCreateInfo,
+                DynamicStateCount = 2,
+                PDynamicStates = dynamicStates
+            };
+
             GraphicsPipelineCreateInfo pipelineInfo = new()
             {
                 SType = StructureType.GraphicsPipelineCreateInfo,
@@ -630,6 +644,7 @@ namespace UOEngine.Runtime.Rendering
                 PColorBlendState = &colorBlending,
                 Layout = pipelineLayout,
                 RenderPass = renderPass,
+                PDynamicState = &dynamicStateCreateInfo,
                 Subpass = 0,
                 BasePipelineHandle = default
             };
@@ -974,9 +989,7 @@ namespace UOEngine.Runtime.Rendering
 
             if(messageSeverity.HasFlag(DebugUtilsMessageSeverityFlagsEXT.ErrorBitExt))
             {
-                Debug.WriteLine(message);
-
-                Debug.Assert(false);
+                Debug.Assert(false, message);
             }
 
             return Vk.False;

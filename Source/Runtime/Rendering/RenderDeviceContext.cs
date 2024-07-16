@@ -14,6 +14,8 @@ namespace UOEngine.Runtime.Rendering
 
             RenderDevice.BeginRenderPass();
 
+            RenderDevice.Draw();
+
             RenderDevice.EndRenderPass();
 
             RenderDevice.Submit();
