@@ -19,6 +19,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Apps", "Apps", "{463677F0-6
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UOEngine.Runtime.Math", "Source\Runtime\Math\UOEngine.Runtime.Math.csproj", "{97BBD19A-0130-4406-939F-0DFBA679B733}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "UltimaOnline", "UltimaOnline", "{E8FF436F-0A83-47CA-A879-12C42A17236F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UOEngine.UltimaOnline.Assets", "Source\UltimaOnline\UOEngine.Ultima.Assets\UOEngine.UltimaOnline.Assets.csproj", "{FD637BC3-15D4-4D81-8506-4EAAD0CDEBCE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -75,6 +79,14 @@ Global
 		{97BBD19A-0130-4406-939F-0DFBA679B733}.Release|Any CPU.Build.0 = Release|Any CPU
 		{97BBD19A-0130-4406-939F-0DFBA679B733}.Release|x64.ActiveCfg = Release|Any CPU
 		{97BBD19A-0130-4406-939F-0DFBA679B733}.Release|x64.Build.0 = Release|Any CPU
+		{FD637BC3-15D4-4D81-8506-4EAAD0CDEBCE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD637BC3-15D4-4D81-8506-4EAAD0CDEBCE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FD637BC3-15D4-4D81-8506-4EAAD0CDEBCE}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{FD637BC3-15D4-4D81-8506-4EAAD0CDEBCE}.Debug|x64.Build.0 = Debug|Any CPU
+		{FD637BC3-15D4-4D81-8506-4EAAD0CDEBCE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FD637BC3-15D4-4D81-8506-4EAAD0CDEBCE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FD637BC3-15D4-4D81-8506-4EAAD0CDEBCE}.Release|x64.ActiveCfg = Release|Any CPU
+		{FD637BC3-15D4-4D81-8506-4EAAD0CDEBCE}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -86,6 +98,7 @@ Global
 		{AE862AE7-C654-4DF3-A90F-2A1C25D551ED} = {463677F0-6019-474B-B3B8-8CA03EEA56ED}
 		{50AC61E4-7A48-4547-A225-EE4939367233} = {463677F0-6019-474B-B3B8-8CA03EEA56ED}
 		{97BBD19A-0130-4406-939F-0DFBA679B733} = {9A67D154-B795-494E-8D42-C6A2976730D5}
+		{FD637BC3-15D4-4D81-8506-4EAAD0CDEBCE} = {E8FF436F-0A83-47CA-A879-12C42A17236F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {43D4B3F7-6189-4AFF-8A65-0DCD9E4B4D75}

@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+
 using UOEngine.Runtime.Core;
 using UOEngine.Runtime.Rendering;
+using UOEngine.UltimaOnline.Assets;
 
 namespace UOEngine.Apps.Client
 {
@@ -19,6 +21,7 @@ namespace UOEngine.Apps.Client
            RegisterService<Window>();
            RegisterService<RenderDevice>();
            RegisterService<RenderDeviceContext>();
+           RegisterService<UOAssetLoader>();
 
             return true;
         }
@@ -42,6 +45,9 @@ namespace UOEngine.Apps.Client
             renderdevice.SwapchainDirty += (s, e) => renderdevice.SetSurfaceSize(window.Width, window.Height);
 
             renderdevice.Initialise(window.GetSurface(), window.Width, window.Height, bEnableValidationLayers);
+
+            // Fixed dir for now.
+            serviceProvider.GetRequiredService<UOAssetLoader>().LoadAllFiles("C:\\Program Files (x86)\\Electronic Arts\\Ultima Online Classic");
         }
 
         protected override void Shutdown(IServiceProvider serviceProvider)

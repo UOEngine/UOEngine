@@ -1,17 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <PublishAot>true</PublishAot>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\Runtime\Core\UOEngine.Runtime.Core.csproj" />
-    <ProjectReference Include="..\..\Runtime\Rendering\UOEngine.Runtime.Rendering.csproj" />
-    <ProjectReference Include="..\..\UltimaOnline\UOEngine.Ultima.Assets\UOEngine.UltimaOnline.Assets.csproj" />
   </ItemGroup>
 
 </Project>
