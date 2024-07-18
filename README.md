@@ -6,7 +6,9 @@
 
 ## Introduction
 
-UOEngine will be a fully self contained editor with tools and client for creating and editing Ultima Online freeshards. If you are familiar with game engines such as Unreal and Unity, they have their own editor and tools to allow you to build and package a final game. The idea behind UOEngine is similar.  
+UOEngine will be a fully self contained editor with tools and a client for creating and editing Ultima Online freeshards. If you are familiar with game engines such as Unreal and Unity, they have their own editor and tools to allow you to build and package a final game. The idea behind UOEngine is similar.  
+
+The ethos is to write code that is loosely coupled for easy extension and to write it as simply as possible for anyone to pick up quickly. No extravagance or trying to be fancy.
 
 ## Roadmap and Features
 
