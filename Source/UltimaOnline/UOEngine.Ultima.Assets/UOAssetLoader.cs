@@ -4,10 +4,20 @@
     {
         public void LoadAllFiles(string ultimaOnlineDirectory)
         {
-            var GumpAssetFile = new UOFile(Path.Combine(ultimaOnlineDirectory, "gumpartLegacyMUL.uop"));
 
-            GumpAssetFile.Load();
+            LoadGumps(ultimaOnlineDirectory);
+        }
 
+        private void LoadGumps(string ultimaOnlineDirectory)
+        {
+            var gumpAssets = Path.Combine(ultimaOnlineDirectory, "gumpartLegacyMUL.uop");
+
+            var gumpFile = new UOFile();
+
+            gumpFile.Load(gumpAssets, true);
+
+            var loginBackgroundBitmap = gumpFile.GetGump(EGumpTypes.LoginBackground);
+            // gump.def?
         }
     }
 }
