@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -101,34 +102,34 @@ namespace UOEngine.Runtime.Rendering
 
         public unsafe void Shutdown()
         {
-            vk!.DeviceWaitIdle(device);
+            vk!.DeviceWaitIdle(_dev);
 
             CleanupSwapchain();
 
             for (var i = 0; i < MaxFramesInFlight; i++)
             {
-                vk.DestroySemaphore(device, renderFinishedSemaphores![i], null);
-                vk!.DestroySemaphore(device, imageAvailableSemaphores![i], null);
-                vk!.DestroyFence(device, inFlightFences![i], null);
+                vk.DestroySemaphore(_dev, renderFinishedSemaphores![i], null);
+                vk!.DestroySemaphore(_dev, imageAvailableSemaphores![i], null);
+                vk!.DestroyFence(_dev, inFlightFences![i], null);
             }
 
-            vk!.DestroyCommandPool(device, commandPool, null);
+            vk!.DestroyCommandPool(_dev, commandPool, null);
 
             foreach (var framebuffer in swapChainFramebuffers!)
             {
-                vk!.DestroyFramebuffer(device, framebuffer, null);
+                vk!.DestroyFramebuffer(_dev, framebuffer, null);
             }
 
-            vk!.DestroyPipeline(device, graphicsPipeline, null);
-            vk!.DestroyPipelineLayout(device, pipelineLayout, null);
-            vk!.DestroyRenderPass(device, renderPass, null);
+            vk!.DestroyPipeline(_dev, graphicsPipeline, null);
+            vk!.DestroyPipelineLayout(_dev, pipelineLayout, null);
+            vk!.DestroyRenderPass(_dev, renderPass, null);
 
             foreach (var imageView in swapChainImageViews!)
             {
-                vk!.DestroyImageView(device, imageView, null);
+                vk!.DestroyImageView(_dev, imageView, null);
             }
 
-            vk!.DestroyDevice(device, null);
+            vk!.DestroyDevice(_dev, null);
 
             if (bEnableValidationLayers)
             {
@@ -230,10 +231,10 @@ namespace UOEngine.Runtime.Rendering
                 throw new Exception("failed to record command buffer!");
             }
 
-            var result = vk!.WaitForFences(device, 1, ref inFlightFences![currentFrame], true, ulong.MaxValue);
+            var result = vk!.WaitForFences(_dev, 1, ref inFlightFences![currentFrame], true, ulong.MaxValue);
 
             uint imageIndex = 0;
-            result = khrSwapChain!.AcquireNextImage(device, swapChain, ulong.MaxValue, imageAvailableSemaphores![currentFrame], default, ref imageIndex);
+            result = khrSwapChain!.AcquireNextImage(_dev, swapChain, ulong.MaxValue, imageAvailableSemaphores![currentFrame], default, ref imageIndex);
 
             if (result == Result.ErrorOutOfDateKhr || result == Result.SuboptimalKhr)// || frameBufferResized)
             {
@@ -248,7 +249,7 @@ namespace UOEngine.Runtime.Rendering
                 throw new Exception("failed to present swap chain image!");
             }
 
-            result = vk!.ResetFences(device, 1, ref inFlightFences[currentFrame]);
+            result = vk!.ResetFences(_dev, 1, ref inFlightFences[currentFrame]);
 
             SubmitInfo submitInfo = new()
             {
@@ -301,23 +302,28 @@ namespace UOEngine.Runtime.Rendering
 
             currentFrame = (currentFrame + 1) % MaxFramesInFlight;
 
-            vk.DeviceWaitIdle(device);
+            vk.DeviceWaitIdle(_dev);
         }
 
-    public Texture2D CreateTexture2D(uint width, uint height)
+        public RenderTexture2D CreateTexture2D(RenderTexture2DDescription description, byte[] texels)
         {
-            return new Texture2D(width, height);
+            return new RenderTexture2D(description, texels, this);
+        }
+
+        public RenderBuffer CreateRenderBuffer(uint size, ERenderBufferUsageFlags usageFlags, EMemoryPropertyFlags propertyFlags)
+        {
+            return new RenderBuffer(size, usageFlags, propertyFlags, this);
         }
 
         private void PickPhysicalDevice()
         {
             var devices = vk!.GetPhysicalDevices(instance);
 
-            foreach (var device in devices)
+            foreach (var _dev in devices)
             {
-                if (IsDeviceSuitable(device))
+                if (IsDeviceSuitable(_dev))
                 {
-                    physicalDevice = device;
+                    physicalDevice = _dev;
                     break;
                 }
             }
@@ -374,13 +380,13 @@ namespace UOEngine.Runtime.Rendering
                 createInfo.EnabledLayerCount = 0;
             }
 
-            if (vk!.CreateDevice(physicalDevice, in createInfo, null, out device) != Result.Success)
+            if (vk!.CreateDevice(physicalDevice, ref createInfo, null, out _dev) != Result.Success)
             {
                 throw new Exception("failed to create logical device!");
             }
 
-            vk!.GetDeviceQueue(device, indices.GraphicsFamily!.Value, 0, out graphicsQueue);
-            vk!.GetDeviceQueue(device, indices.PresentFamily!.Value, 0, out presentQueue);
+            vk!.GetDeviceQueue(_dev, indices.GraphicsFamily!.Value, 0, out graphicsQueue);
+            vk!.GetDeviceQueue(_dev, indices.PresentFamily!.Value, 0, out presentQueue);
 
             if (bEnableValidationLayers)
             {
@@ -457,21 +463,21 @@ namespace UOEngine.Runtime.Rendering
                 OldSwapchain = default
             };
 
-            if (!vk!.TryGetDeviceExtension(instance, device, out khrSwapChain))
+            if (!vk!.TryGetDeviceExtension(instance, _dev, out khrSwapChain))
             {
                 throw new NotSupportedException("VK_KHR_swapchain extension not found.");
             }
 
-            if (khrSwapChain!.CreateSwapchain(device, ref createInfo, null, out swapChain) != Result.Success)
+            if (khrSwapChain!.CreateSwapchain(_dev, ref createInfo, null, out swapChain) != Result.Success)
             {
                 throw new Exception("failed to create swap chain!");
             }
 
-            khrSwapChain.GetSwapchainImages(device, swapChain, ref imageCount, null);
+            khrSwapChain.GetSwapchainImages(_dev, swapChain, ref imageCount, null);
             swapChainImages = new Image[imageCount];
             fixed (Image* swapChainImagesPtr = swapChainImages)
             {
-                khrSwapChain.GetSwapchainImages(device, swapChain, ref imageCount, swapChainImagesPtr);
+                khrSwapChain.GetSwapchainImages(_dev, swapChain, ref imageCount, swapChainImagesPtr);
             }
 
             swapChainImageFormat = surfaceFormat.Format;
@@ -482,15 +488,15 @@ namespace UOEngine.Runtime.Rendering
         {
             for (int i = 0; i < swapChainFramebuffers!.Length; i++)
             {
-                vk!.DestroyFramebuffer(device, swapChainFramebuffers[i], null);
+                vk!.DestroyFramebuffer(_dev, swapChainFramebuffers[i], null);
             }
 
             for (int i = 0; i < swapChainImageViews!.Length; i++)
             {
-                vk!.DestroyImageView(device, swapChainImageViews[i], null);
+                vk!.DestroyImageView(_dev, swapChainImageViews[i], null);
             }
 
-            khrSwapChain!.DestroySwapchain(device, swapChain, null);
+            khrSwapChain!.DestroySwapchain(_dev, swapChain, null);
         }
 
         private unsafe void CreateImageViews()
@@ -523,7 +529,7 @@ namespace UOEngine.Runtime.Rendering
 
                 };
 
-                if (vk!.CreateImageView(device, ref imageViewCreateInfo, null, out swapChainImageViews[i]) != Result.Success)
+                if (vk!.CreateImageView(_dev, ref imageViewCreateInfo, null, out swapChainImageViews[i]) != Result.Success)
                 {
                     throw new Exception("failed to create image views!");
                 }
@@ -645,7 +651,7 @@ namespace UOEngine.Runtime.Rendering
                 PushConstantRangeCount = 0,
             };
 
-            if (vk!.CreatePipelineLayout(device, ref pipelineLayoutInfo, null, out pipelineLayout) != Result.Success)
+            if (vk!.CreatePipelineLayout(_dev, ref pipelineLayoutInfo, null, out pipelineLayout) != Result.Success)
             {
                 throw new Exception("failed to create pipeline layout!");
             }
@@ -677,13 +683,13 @@ namespace UOEngine.Runtime.Rendering
                 BasePipelineHandle = default
             };
 
-            if (vk!.CreateGraphicsPipelines(device, default, 1, ref pipelineInfo, null, out graphicsPipeline) != Result.Success)
+            if (vk!.CreateGraphicsPipelines(_dev, default, 1, ref pipelineInfo, null, out graphicsPipeline) != Result.Success)
             {
                 throw new Exception("failed to create graphics pipeline!");
             }
 
-            vk!.DestroyShaderModule(device, vertexShaderModule, null);
-            vk!.DestroyShaderModule(device, fragmentShaderModule, null);
+            vk!.DestroyShaderModule(_dev, vertexShaderModule, null);
+            vk!.DestroyShaderModule(_dev, fragmentShaderModule, null);
 
             SilkMarshal.Free((nint)vertShaderStageInfo.PName);
             SilkMarshal.Free((nint)fragShaderStageInfo.PName);
@@ -736,7 +742,7 @@ namespace UOEngine.Runtime.Rendering
                 PDependencies = &dependency
             };
 
-            if (vk!.CreateRenderPass(device, ref renderPassInfo, null, out renderPass) != Result.Success)
+            if (vk!.CreateRenderPass(_dev, ref renderPassInfo, null, out renderPass) != Result.Success)
             {
                 throw new Exception("failed to create render pass!");
             }
@@ -761,7 +767,7 @@ namespace UOEngine.Runtime.Rendering
                     Layers = 1,
                 };
 
-                if (vk!.CreateFramebuffer(device, ref framebufferInfo, null, out swapChainFramebuffers[i]) != Result.Success)
+                if (vk!.CreateFramebuffer(_dev, ref framebufferInfo, null, out swapChainFramebuffers[i]) != Result.Success)
                 {
                     throw new Exception("failed to create framebuffer!");
                 }
@@ -782,7 +788,7 @@ namespace UOEngine.Runtime.Rendering
             {
                 createInfo.PCode = (uint*)codePtr;
 
-                if (vk!.CreateShaderModule(device, ref createInfo, null, out shaderModule) != Result.Success)
+                if (vk!.CreateShaderModule(_dev, ref createInfo, null, out shaderModule) != Result.Success)
                 {
                     throw new Exception();
                 }
@@ -794,7 +800,7 @@ namespace UOEngine.Runtime.Rendering
         {
             Console.WriteLine("RecreateSwapChain");
 
-            vk!.DeviceWaitIdle(device);
+            vk!.DeviceWaitIdle(_dev);
 
             CleanupSwapchain();
 
@@ -940,6 +946,23 @@ namespace UOEngine.Runtime.Rendering
             return indices;
         }
 
+        public uint FindMemoryType(uint typeFilter, MemoryPropertyFlags properties)
+        {
+            vk!.GetPhysicalDeviceMemoryProperties(physicalDevice, out var memoryProperties);
+
+            for (uint i = 0; i < memoryProperties.MemoryTypeCount; i++)
+            {
+                if (((typeFilter & (1 << (int)i)) != 0) && (memoryProperties.MemoryTypes[(int)i].PropertyFlags & properties) == properties)
+                {
+                    return i;
+                }
+            }
+
+            Debug.Assert(false);
+
+            return uint.MaxValue;
+        }
+
         private unsafe void PopulateDebugMessengerCreateInfo(ref DebugUtilsMessengerCreateInfoEXT createInfo)
         {
             createInfo.SType = StructureType.DebugUtilsMessengerCreateInfoExt;
@@ -1024,7 +1047,7 @@ namespace UOEngine.Runtime.Rendering
                 Flags = CommandPoolCreateFlags.ResetCommandBufferBit
             };
 
-            if (vk!.CreateCommandPool(device, ref poolInfo, null, out commandPool) != Result.Success)
+            if (vk!.CreateCommandPool(_dev, ref poolInfo, null, out commandPool) != Result.Success)
             {
                 throw new Exception("failed to create command pool!");
             }
@@ -1044,7 +1067,7 @@ namespace UOEngine.Runtime.Rendering
 
             fixed (CommandBuffer* commandBuffersPtr = commandBuffers)
             {
-                if (vk!.AllocateCommandBuffers(device, ref allocInfo, commandBuffersPtr) != Result.Success)
+                if (vk!.AllocateCommandBuffers(_dev, ref allocInfo, commandBuffersPtr) != Result.Success)
                 {
                     throw new Exception("failed to allocate command buffers!");
                 }
@@ -1071,9 +1094,9 @@ namespace UOEngine.Runtime.Rendering
 
             for (var i = 0; i < MaxFramesInFlight; i++)
             {
-                if (vk!.CreateSemaphore(device, ref semaphoreInfo, null, out imageAvailableSemaphores[i]) != Result.Success ||
-                    vk!.CreateSemaphore(device, ref semaphoreInfo, null, out renderFinishedSemaphores[i]) != Result.Success ||
-                    vk!.CreateFence(device, ref fenceInfo, null, out inFlightFences[i]) != Result.Success)
+                if (vk!.CreateSemaphore(_dev, ref semaphoreInfo, null, out imageAvailableSemaphores[i]) != Result.Success ||
+                    vk!.CreateSemaphore(_dev, ref semaphoreInfo, null, out renderFinishedSemaphores[i]) != Result.Success ||
+                    vk!.CreateFence(_dev, ref fenceInfo, null, out inFlightFences[i]) != Result.Success)
                 {
                     throw new Exception("failed to create synchronization objects for a frame!");
                 }
@@ -1098,13 +1121,15 @@ namespace UOEngine.Runtime.Rendering
         }
 
         public event EventHandler?          SwapchainDirty;
+        public Device                       Device => _dev;
+
+        private Device                       _dev;
 
         private RenderDeviceContext         renderDeviceContext;
 
         private Vk?                         vk;
         private Instance                    instance;
         private PhysicalDevice              physicalDevice;
-        private Device                      device;
 
         private KhrSurface?                 khrSurface;
         private SurfaceKHR                  surface;

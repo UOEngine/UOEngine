@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Runtime\Core\UOEngine.Runtime.Core.csproj" />
+    <ProjectReference Include="..\..\Runtime\Rendering\UOEngine.Runtime.Rendering.csproj" />
   </ItemGroup>
 
 </Project>

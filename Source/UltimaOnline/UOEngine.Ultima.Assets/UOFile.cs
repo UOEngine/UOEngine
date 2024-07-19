@@ -18,20 +18,20 @@ namespace UOEngine.UltimaOnline.Assets
                 _fileIndices.Add(new UOFileIndex());
             }
 
-            FileInfo fileInfo = new FileInfo(filePath);
+            _fileInfo = new FileInfo(filePath);
 
-            if(fileInfo.Extension != ".uop")
+            if(_fileInfo.Extension != ".uop")
             {
                 Debug.Assert(false);
             }
 
-            long size = fileInfo.Length;
+            long size = _fileInfo.Length;
 
             if (size > 0)
             {
                 _file = MemoryMappedFile.CreateFromFile
                 (
-                    File.Open(fileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite),
+                    File.Open(_fileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite),
                     null,
                     0,
                     MemoryMappedFileAccess.Read,
@@ -48,7 +48,7 @@ namespace UOEngine.UltimaOnline.Assets
             
             using(var stream = _file.CreateViewStream(0, size, MemoryMappedFileAccess.Read))
             {
-                string uopPattern = Path.GetFileNameWithoutExtension(fileInfo.Name).ToLowerInvariant();
+                string uopPattern = Path.GetFileNameWithoutExtension(_fileInfo.Name).ToLowerInvariant();
 
                 var reader = new BinaryReader(stream);
 
@@ -116,7 +116,7 @@ namespace UOEngine.UltimaOnline.Assets
                         var fileIndex = new UOFileIndex();
 
                         fileIndex.Length = dataSize;
-                        fileIndex.LookUp = (ulong)offset + (ulong)headerLength;
+                        fileIndex.Offset = offset + headerLength;
 
                         if (bHasExtra)
                         {
@@ -130,10 +130,11 @@ namespace UOEngine.UltimaOnline.Assets
 
                             stream.Seek(curpos, SeekOrigin.Begin);
 
-                            fileIndex.LookUp += 8;
+                            fileIndex.Offset += 8;
                         }
 
                         _fileIndices[idx] = fileIndex;
+                        //_gumpBitmaps[idx] = GetGump(idx);
                     }
 
                     stream.Seek(nextBlock, SeekOrigin.Begin);
@@ -143,23 +144,72 @@ namespace UOEngine.UltimaOnline.Assets
 
         public UOBitmap GetGump(EGumpTypes gumpType)
         {
-            var info = _fileIndices[(int)gumpType];
+            return GetGump((int)gumpType);
+        }
+
+        public unsafe UOBitmap GetGump(int idx)
+        {
+            var info = _fileIndices[idx];
+            var height = (short)info.Height;
+            var width = (short)info.Width;
 
             int[] lookups = new int[info.Height];
 
-            var bitmap = new UOBitmap();
+            UOBitmap? bitmap = null;
 
-            using (var stream = _file!.CreateViewStream(info.Offset, info.Offset + info.Length, MemoryMappedFileAccess.Read))
+            using (var stream = _file!.CreateViewStream(0, _fileInfo!.Length, MemoryMappedFileAccess.Read))
             {
-                using(var reader = new BinaryReader(stream))
+                using (var reader = new BinaryReader(stream))
                 {
+                    stream.Seek(info.Offset, SeekOrigin.Begin);
+
                     for (int i = 0; i < info.Height; ++i)
                     {
-                        lookups[i] = (int)stream.Position + (reader.ReadInt32() * 4);
+                        lookups[i] = reader.ReadInt32();
                     }
+
+                    int shortsToRead = info.Length - (info.Height * 2);
+
+                    var fileData = new ushort[shortsToRead];
+
+                    for(int i = 0; i < shortsToRead; ++i)
+                    {
+                        fileData[i] = reader.ReadUInt16();
+                    }
+
+                    var pixels = new ushort[info.Width * info.Height];
+
+                    fixed (ushort* line = &pixels[0])
+                    {
+                        fixed (ushort* data = &fileData[0])
+                        {
+                            for (int y = 0; y < height; ++y)
+                            {
+                                ushort* dataRef = data + (lookups[y] - height) * 2;
+                                ushort* cur = line + (y * width);
+                                ushort* end = cur + width;
+                                while (cur < end)
+                                {
+                                    ushort color = *dataRef++;
+                                    ushort* next = cur + *dataRef++;
+                                    if (color == 0)
+                                    {
+                                        cur = next;
+                                    }
+                                    else
+                                    {
+                                        color |= 0x8000;
+                                        while (cur < next)
+                                            *cur++ = color;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    bitmap = new UOBitmap((uint)width, (uint)height, pixels);
                 }
             }
-
             return bitmap;
         }
 
@@ -251,7 +301,9 @@ namespace UOEngine.UltimaOnline.Assets
         private const uint          UOFileMagicNumber = 0x50594D;
 
         private List<UOFileIndex>   _fileIndices = [];
+        private List<UOBitmap>      _gumpBitmaps = [];
         private MemoryMappedFile?   _file;
+        private FileInfo?           _fileInfo;
 
     }
 }

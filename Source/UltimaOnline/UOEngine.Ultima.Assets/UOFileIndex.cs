@@ -36,7 +36,7 @@
         public ushort Hue;
         public sbyte AnimOffset;
 
-        public ulong LookUp;
+        //public ulong LookUp;
 
         public static UOFileIndex Invalid = new UOFileIndex
         (
