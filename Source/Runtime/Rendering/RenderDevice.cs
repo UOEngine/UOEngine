@@ -150,8 +150,6 @@ namespace UOEngine.Runtime.Rendering
         }
         public void OnFrameBegin()
         {
-            Debug.WriteLine($"OnFrameBegin {currentFrame}");
-
             CurrentCommandBuffer = commandBuffers![currentFrame];
 
             vk!.ResetCommandBuffer(CurrentCommandBuffer, 0);

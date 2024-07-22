@@ -34,6 +34,8 @@ namespace UOEngine.Runtime.Rendering
             _deviceBuffer = default;
             _deviceBufferMemory = default;
 
+            Length = 0;
+
             //_data = dataToUpload;
 
             _deviceBufferUsage = BufferUsageFlags.None;
@@ -50,7 +52,9 @@ namespace UOEngine.Runtime.Rendering
         {
             ulong sizeOfType = (ulong)Unsafe.SizeOf<T>(); 
 
-            ulong bufferSize = sizeOfType * (ulong)uploadData.Length;
+            var bufferSize = sizeOfType * (ulong)uploadData.Length;
+
+            Length = (uint)uploadData.Length;
 
             CreateBuffer(bufferSize, BufferUsageFlags.TransferSrcBit, MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit, out _stagingBuffer, out _stagingBufferMemory);
 
@@ -110,6 +114,7 @@ namespace UOEngine.Runtime.Rendering
         }
 
         public Buffer                       DeviceBuffer => _deviceBuffer;
+        public uint                         Length { get; private set; }
 
         private Buffer                      _stagingBuffer;
         private DeviceMemory                _stagingBufferMemory;
