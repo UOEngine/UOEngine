@@ -1,13 +1,18 @@
-﻿using Silk.NET.Vulkan;
+﻿using Silk.NET.SDL;
+using Silk.NET.Vulkan;
+using System;
 using System.Diagnostics;
+using System.Drawing;
+using System.Runtime.CompilerServices;
 using Buffer = Silk.NET.Vulkan.Buffer;
 
 namespace UOEngine.Runtime.Rendering
 {
-    [Flags]
-    public enum ERenderBufferUsageFlags
+    public enum ERenderBufferType
     {
         None = 0,
+        Vertex,
+        Index
     }
 
     [Flags]
@@ -18,45 +23,101 @@ namespace UOEngine.Runtime.Rendering
 
     public class RenderBuffer
     {
-        public unsafe RenderBuffer(uint size, ERenderBufferUsageFlags usageFlags, EMemoryPropertyFlags propertyFlags, RenderDevice renderDevice) 
+        public unsafe RenderBuffer(ERenderBufferType bufferType, RenderDevice renderDevice) 
         {
-            BufferUsageFlags bufferusageflags = BufferUsageFlags.None;
+            _renderDevice = renderDevice;
+            _device = renderDevice.Device;
 
+            _stagingBuffer = default;
+            _stagingBufferMemory = default;
+
+            _deviceBuffer = default;
+            _deviceBufferMemory = default;
+
+            //_data = dataToUpload;
+
+            _deviceBufferUsage = BufferUsageFlags.None;
+
+            if(bufferType == ERenderBufferType.Index)
+            {
+                _deviceBufferUsage = BufferUsageFlags.IndexBufferBit;
+            }
+
+            Debug.Assert(_deviceBufferUsage != BufferUsageFlags.None);
+        }
+
+        public unsafe void CopyToDevice<T>(ReadOnlySpan<T> uploadData)
+        {
+            ulong sizeOfType = (ulong)Unsafe.SizeOf<T>(); 
+
+            ulong bufferSize = sizeOfType * (ulong)uploadData.Length;
+
+            CreateBuffer(bufferSize, BufferUsageFlags.TransferSrcBit, MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit, out _stagingBuffer, out _stagingBufferMemory);
+
+            CreateBuffer(bufferSize, BufferUsageFlags.TransferDstBit | _deviceBufferUsage, MemoryPropertyFlags.DeviceLocalBit, out _deviceBuffer, out _deviceBufferMemory);
+
+            void* data;
+
+            Vk.GetApi().MapMemory(_device, _stagingBufferMemory, 0, bufferSize, 0, &data);
+            uploadData.CopyTo(new Span<T>(data, (int)bufferSize));
+            Vk.GetApi().UnmapMemory(_device, _stagingBufferMemory);
+
+            var commandBuffer = _renderDevice.BeginUpload();
+
+            BufferCopy copyRegion = new()
+            {
+                Size = bufferSize,
+            };
+
+            Vk.GetApi().CmdCopyBuffer(commandBuffer, _stagingBuffer, _deviceBuffer, 1, ref copyRegion);
+
+            _renderDevice.EndUpload();
+
+        }
+   
+        private unsafe void CreateBuffer(ulong size, BufferUsageFlags usage, MemoryPropertyFlags properties, out Buffer buffer, out DeviceMemory bufferMemory)
+        {
             BufferCreateInfo bufferCreateInfo = new()
             {
                 SType = StructureType.BufferCreateInfo,
                 Size = size,
-                Usage = bufferusageflags,
+                Usage = usage,
                 SharingMode = SharingMode.Exclusive
             };
 
             var vk = Vk.GetApi();
 
-            var result = vk.CreateBuffer(renderDevice.Device, ref bufferCreateInfo, null, out _hostBuffer);
+            var result = vk.CreateBuffer(_device, ref bufferCreateInfo, null, out buffer);
 
             Debug.Assert(result == Result.Success);
 
-            vk.GetBufferMemoryRequirements(renderDevice.Device, _hostBuffer, out var memoryRequirements);
-
-            MemoryPropertyFlags memoryPropertyFlags = MemoryPropertyFlags.None;
+            vk.GetBufferMemoryRequirements(_device, buffer, out var memoryRequirements);
 
             MemoryAllocateInfo memoryAllocateInfo = new()
             {
                 SType = StructureType.MemoryAllocateInfo,
                 AllocationSize = memoryRequirements.Size,
-                MemoryTypeIndex = renderDevice.FindMemoryType(memoryRequirements.MemoryTypeBits, memoryPropertyFlags)
+                MemoryTypeIndex = _renderDevice.FindMemoryType(memoryRequirements.MemoryTypeBits, properties)
             };
 
-            result = vk.AllocateMemory(renderDevice.Device, ref memoryAllocateInfo, null, out _deviceMemory);
+            result = vk.AllocateMemory(_device, ref memoryAllocateInfo, null, out bufferMemory);
 
             Debug.Assert(result == Result.Success);
 
-            result = vk.BindBufferMemory(renderDevice.Device, _hostBuffer, _deviceMemory, 0);
+            result = vk.BindBufferMemory(_device, buffer, bufferMemory, 0);
 
             Debug.Assert(result == Result.Success);
         }
 
-        private readonly Buffer         _hostBuffer;
-        private readonly DeviceMemory   _deviceMemory;
+        private Buffer                      _stagingBuffer;
+        private DeviceMemory                _stagingBufferMemory;
+
+        private Buffer                      _deviceBuffer;
+        private DeviceMemory                _deviceBufferMemory;
+
+        private readonly Device             _device;
+        private readonly RenderDevice       _renderDevice;
+        private readonly BufferUsageFlags   _deviceBufferUsage;
+        //private readonly IEnumerable<T>     _data;
     }
 }

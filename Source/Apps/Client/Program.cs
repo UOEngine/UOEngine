@@ -48,6 +48,11 @@ namespace UOEngine.Apps.Client
 
             // Fixed dir for now.
             serviceProvider.GetRequiredService<UOAssetLoader>().LoadAllFiles("C:\\Program Files (x86)\\Electronic Arts\\Ultima Online Classic");
+
+            ushort[] quadIndices =  [0, 1, 2, 2, 3, 0];
+
+            renderdevice.CreateRenderBuffer(quadIndices, ERenderBufferType.Index);
+
         }
 
         protected override void Shutdown(IServiceProvider serviceProvider)

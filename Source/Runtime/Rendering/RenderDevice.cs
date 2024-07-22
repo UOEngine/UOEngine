@@ -305,14 +305,72 @@ namespace UOEngine.Runtime.Rendering
             vk.DeviceWaitIdle(_dev);
         }
 
+        public unsafe CommandBuffer BeginUpload()
+        {
+            Debug.Assert(_uploadCommandBuffer == null);
+
+            CommandBufferAllocateInfo allocInfo = new()
+            {
+                SType = StructureType.CommandBufferAllocateInfo,
+                CommandPool = commandPool,
+                Level = CommandBufferLevel.Primary,
+                CommandBufferCount = 1,
+            };
+
+            if (vk!.AllocateCommandBuffers(_dev, ref allocInfo, out var commandBuffer) != Result.Success)
+            {
+                throw new Exception("failed to allocate command buffers!");
+            }
+
+            CommandBufferBeginInfo beginInfo = new()
+            {
+                SType = StructureType.CommandBufferBeginInfo,
+                Flags = CommandBufferUsageFlags.OneTimeSubmitBit,
+            };
+
+            vk!.BeginCommandBuffer(commandBuffer, ref beginInfo);
+
+            _uploadCommandBuffer = commandBuffer;
+
+            return _uploadCommandBuffer.Value;
+        }
+
+        public unsafe void EndUpload()
+        {
+            Debug.Assert(_uploadCommandBuffer != null);
+
+            var commandBuffer = _uploadCommandBuffer.Value;
+
+            vk!.EndCommandBuffer(commandBuffer);
+
+            SubmitInfo submitInfo = new()
+            {
+                SType = StructureType.SubmitInfo,
+                CommandBufferCount = 1,
+                PCommandBuffers = &commandBuffer,
+            };
+
+            vk!.QueueSubmit(graphicsQueue, 1, ref submitInfo, default);
+            vk!.QueueWaitIdle(graphicsQueue);
+
+            vk!.FreeCommandBuffers(_dev, commandPool, 1, ref commandBuffer);
+
+            _uploadCommandBuffer = null;
+
+        }
+
         public RenderTexture2D CreateTexture2D(RenderTexture2DDescription description, byte[] texels)
         {
             return new RenderTexture2D(description, texels, this);
         }
 
-        public RenderBuffer CreateRenderBuffer(uint size, ERenderBufferUsageFlags usageFlags, EMemoryPropertyFlags propertyFlags)
+        public RenderBuffer CreateRenderBuffer<T>(T[] data, ERenderBufferType usageFlags)
         {
-            return new RenderBuffer(size, usageFlags, propertyFlags, this);
+            var renderBuffer = new RenderBuffer(usageFlags, this);
+
+            renderBuffer.CopyToDevice(new ReadOnlySpan<T>(data));
+
+            return renderBuffer;
         }
 
         private void PickPhysicalDevice()
@@ -1148,6 +1206,7 @@ namespace UOEngine.Runtime.Rendering
         private CommandPool                 commandPool;
         private CommandBuffer[]?            commandBuffers;
         private CommandBuffer               currentCommandBuffer;
+        private CommandBuffer?              _uploadCommandBuffer;
 
         private Queue                       graphicsQueue;
         private Queue                       presentQueue;
