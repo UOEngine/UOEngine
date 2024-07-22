@@ -109,6 +109,8 @@ namespace UOEngine.Runtime.Rendering
             Debug.Assert(result == Result.Success);
         }
 
+        public Buffer                       DeviceBuffer => _deviceBuffer;
+
         private Buffer                      _stagingBuffer;
         private DeviceMemory                _stagingBufferMemory;
 

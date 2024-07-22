@@ -1,4 +1,5 @@
-﻿using UOEngine.Runtime.Core;
+﻿using Silk.NET.Vulkan;
+using UOEngine.Runtime.Core;
 
 namespace UOEngine.Runtime.Rendering
 {
@@ -6,6 +7,7 @@ namespace UOEngine.Runtime.Rendering
     {
         public RenderDeviceContext()
         {
+            _vk = Vk.GetApi();
         }
 
         public void Tick(float deltaSeconds)
@@ -14,13 +16,38 @@ namespace UOEngine.Runtime.Rendering
 
             RenderDevice.BeginRenderPass();
 
-            RenderDevice.Draw();
+            if (_bindIndexBuffer)
+            {
+                _vk.CmdBindIndexBuffer(RenderDevice.CurrentCommandBuffer, _indexBuffer!.DeviceBuffer, 0, IndexType.Uint16);
+            }
+
+            _vk!.CmdDrawIndexed(RenderDevice.CurrentCommandBuffer, 6, 1, 0, 0, 0);
 
             RenderDevice.EndRenderPass();
 
             RenderDevice.Submit();
         }
 
-        public RenderDevice? RenderDevice;
+        public void SetIndexBuffer(RenderBuffer indexBuffer)
+        {
+            if(indexBuffer != null)
+            {
+                _bindIndexBuffer = true;
+                _indexBuffer = indexBuffer;
+
+                return;
+            }
+
+            _bindIndexBuffer = false;
+            _indexBuffer = null;
+        }
+
+        public RenderDevice?    RenderDevice;
+
+        public RenderBuffer?    IndexBuffer { get; set; }
+
+        private readonly Vk     _vk;
+        private RenderBuffer?   _indexBuffer;
+        private bool            _bindIndexBuffer = true;
     }
 }

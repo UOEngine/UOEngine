@@ -152,16 +152,16 @@ namespace UOEngine.Runtime.Rendering
         {
             Debug.WriteLine($"OnFrameBegin {currentFrame}");
 
-            currentCommandBuffer = commandBuffers![currentFrame];
+            CurrentCommandBuffer = commandBuffers![currentFrame];
 
-            vk!.ResetCommandBuffer(currentCommandBuffer, 0);
+            vk!.ResetCommandBuffer(CurrentCommandBuffer, 0);
 
             CommandBufferBeginInfo beginInfo = new()
             {
                 SType = StructureType.CommandBufferBeginInfo,
             };
 
-            if (vk!.BeginCommandBuffer(currentCommandBuffer, ref beginInfo) != Result.Success)
+            if (vk!.BeginCommandBuffer(CurrentCommandBuffer, ref beginInfo) != Result.Success)
             {
                 throw new Exception("failed to begin recording command buffer!");
             }
@@ -189,9 +189,9 @@ namespace UOEngine.Runtime.Rendering
             renderPassInfo.ClearValueCount = 1;
             renderPassInfo.PClearValues = &clearColor;
 
-            vk!.CmdBeginRenderPass(currentCommandBuffer, &renderPassInfo, SubpassContents.Inline);
+            vk!.CmdBeginRenderPass(CurrentCommandBuffer, &renderPassInfo, SubpassContents.Inline);
 
-            vk!.CmdBindPipeline(currentCommandBuffer, PipelineBindPoint.Graphics, graphicsPipeline);
+            vk!.CmdBindPipeline(CurrentCommandBuffer, PipelineBindPoint.Graphics, graphicsPipeline);
 
             Viewport viewport = new()
             {
@@ -203,7 +203,7 @@ namespace UOEngine.Runtime.Rendering
                 MaxDepth = 1.0f
             };
 
-            vk.CmdSetViewport(currentCommandBuffer, 0, 1, ref viewport);
+            vk.CmdSetViewport(CurrentCommandBuffer, 0, 1, ref viewport);
 
             Rect2D scissor = new()
             {
@@ -211,22 +211,21 @@ namespace UOEngine.Runtime.Rendering
                 Extent = swapChainExtent
             };
 
-            vk.CmdSetScissor(currentCommandBuffer, 0, 1, ref scissor);
+            vk.CmdSetScissor(CurrentCommandBuffer, 0, 1, ref scissor);
         }
 
         public void EndRenderPass()
         {
-            vk!.CmdEndRenderPass(currentCommandBuffer);
+            vk!.CmdEndRenderPass(CurrentCommandBuffer);
         }
 
         public void Draw()
         {
-            vk!.CmdDraw(currentCommandBuffer, 3, 1, 0, 0);
         }
 
         public unsafe void Submit()
         {
-            if (vk!.EndCommandBuffer(currentCommandBuffer) != Result.Success)
+            if (vk!.EndCommandBuffer(CurrentCommandBuffer) != Result.Success)
             {
                 throw new Exception("failed to record command buffer!");
             }
@@ -259,7 +258,7 @@ namespace UOEngine.Runtime.Rendering
             var waitSemaphores = stackalloc[] { imageAvailableSemaphores[currentFrame] };
             var waitStages = stackalloc[] { PipelineStageFlags.ColorAttachmentOutputBit };
 
-            var buffer = currentCommandBuffer;
+            var buffer = CurrentCommandBuffer;
 
             submitInfo = submitInfo with
             {
@@ -1181,6 +1180,8 @@ namespace UOEngine.Runtime.Rendering
         public event EventHandler?          SwapchainDirty;
         public Device                       Device => _dev;
 
+        public CommandBuffer                CurrentCommandBuffer { get; private set; }
+
         private Device                       _dev;
 
         private RenderDeviceContext         renderDeviceContext;
@@ -1205,7 +1206,6 @@ namespace UOEngine.Runtime.Rendering
         
         private CommandPool                 commandPool;
         private CommandBuffer[]?            commandBuffers;
-        private CommandBuffer               currentCommandBuffer;
         private CommandBuffer?              _uploadCommandBuffer;
 
         private Queue                       graphicsQueue;

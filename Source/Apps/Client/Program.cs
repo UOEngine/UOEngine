@@ -51,7 +51,11 @@ namespace UOEngine.Apps.Client
 
             ushort[] quadIndices =  [0, 1, 2, 2, 3, 0];
 
-            renderdevice.CreateRenderBuffer(quadIndices, ERenderBufferType.Index);
+            RenderBuffer indexBuffer = renderdevice.CreateRenderBuffer(quadIndices, ERenderBufferType.Index);
+
+            var renderdeviceContext = serviceProvider.GetRequiredService<RenderDeviceContext>();
+
+            renderdeviceContext.SetIndexBuffer(indexBuffer);
 
         }
 
