@@ -40,18 +40,33 @@ namespace UOEngine.Apps.Client
 
             input.Initialise(window.GetHandle());
 
-            var renderdevice = serviceProvider.GetRequiredService<RenderDevice>();
+            var renderDevice = serviceProvider.GetRequiredService<RenderDevice>();
 
-            renderdevice.SwapchainDirty += (s, e) => renderdevice.SetSurfaceSize(window.Width, window.Height);
+            renderDevice.SwapchainDirty += (s, e) => renderDevice.SetSurfaceSize(window.Width, window.Height);
 
-            renderdevice.Initialise(window.GetSurface(), window.Width, window.Height, bEnableValidationLayers);
+            renderDevice.Initialise(window.GetSurface(), window.Width, window.Height, bEnableValidationLayers);
 
             // Fixed dir for now.
-            serviceProvider.GetRequiredService<UOAssetLoader>().LoadAllFiles("C:\\Program Files (x86)\\Electronic Arts\\Ultima Online Classic");
+            var assetLoader = serviceProvider.GetRequiredService<UOAssetLoader>();
+            
+            assetLoader.LoadAllFiles("C:\\Program Files (x86)\\Electronic Arts\\Ultima Online Classic");
+
+            var loginBackgroundBitmap = assetLoader.Gumps.GetGump(EGumpTypes.LoginBackground);
+
+            RenderTexture2DDescription description = new RenderTexture2DDescription();
+
+            description.Width = loginBackgroundBitmap.Width;
+            description.Height = loginBackgroundBitmap.Height;
+            description.Format = ERenderTextureFormat.R5G5B5A1;
+
+            var backgroundTexture = renderDevice.CreateTexture2D(description);
+
+            backgroundTexture.Upload(loginBackgroundBitmap.Texels);
+            backgroundTexture.SubresourceTransition(ERenderSubresourceState.ShaderResource);
 
             ushort[] quadIndices =  [0, 1, 2, 2, 3, 0];
 
-            RenderBuffer indexBuffer = renderdevice.CreateRenderBuffer(quadIndices, ERenderBufferType.Index);
+            RenderBuffer indexBuffer = renderDevice.CreateRenderBuffer(quadIndices, ERenderBufferType.Index);
 
             var renderdeviceContext = serviceProvider.GetRequiredService<RenderDeviceContext>();
 

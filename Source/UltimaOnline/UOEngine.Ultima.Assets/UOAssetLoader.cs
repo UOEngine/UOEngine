@@ -1,13 +1,13 @@
-﻿using UOEngine.Runtime.Rendering;
-
+﻿
 namespace UOEngine.UltimaOnline.Assets
 {
     public class UOAssetLoader
     {
-        public UOAssetLoader(RenderDevice renderDevice) 
-        { 
-            _renderDevice = renderDevice;
+        public UOAssetLoader() 
+        {
+            Gumps = new UOFile();
         }
+
         public void LoadAllFiles(string ultimaOnlineDirectory)
         {
 
@@ -18,26 +18,10 @@ namespace UOEngine.UltimaOnline.Assets
         {
             var gumpAssets = Path.Combine(ultimaOnlineDirectory, "gumpartLegacyMUL.uop");
 
-            var gumpFile = new UOFile();
-
-            gumpFile.Load(gumpAssets, true);
-
-            var loginBackgroundBitmap = gumpFile.GetGump(EGumpTypes.LoginBackground);
-
-            RenderTexture2DDescription description = new RenderTexture2DDescription();
-
-            description.Width = loginBackgroundBitmap.Width;
-            description.Height = loginBackgroundBitmap.Height;
-            description.Format = ERenderTextureFormat.R5G5B5A1;
-
-            var texels = new byte[description.Width * description.Height * 2];
-
-            Buffer.BlockCopy(loginBackgroundBitmap.Texels, 0, texels, 0, texels.Length);
-
-            _renderDevice.CreateTexture2D(description, texels);
+            Gumps.Load(gumpAssets, true);
             // gump.def?
         }
 
-        private RenderDevice _renderDevice;
+        public UOFile Gumps { get; private set; }
     }
 }

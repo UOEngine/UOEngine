@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Drawing;
 using System.IO.MemoryMappedFiles;
 
 namespace UOEngine.UltimaOnline.Assets

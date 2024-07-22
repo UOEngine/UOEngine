@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -10,6 +9,7 @@ using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.EXT;
 using Silk.NET.Vulkan.Extensions.KHR;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
+using Buffer = Silk.NET.Vulkan.Buffer;
 
 namespace UOEngine.Runtime.Rendering
 {
@@ -302,7 +302,7 @@ namespace UOEngine.Runtime.Rendering
             vk.DeviceWaitIdle(_dev);
         }
 
-        public unsafe CommandBuffer BeginUpload()
+        public unsafe CommandBuffer BeginRecording()
         {
             Debug.Assert(_uploadCommandBuffer == null);
 
@@ -332,7 +332,7 @@ namespace UOEngine.Runtime.Rendering
             return _uploadCommandBuffer.Value;
         }
 
-        public unsafe void EndUpload()
+        public unsafe void EndRecording()
         {
             Debug.Assert(_uploadCommandBuffer != null);
 
@@ -356,9 +356,9 @@ namespace UOEngine.Runtime.Rendering
 
         }
 
-        public RenderTexture2D CreateTexture2D(RenderTexture2DDescription description, byte[] texels)
+        public RenderTexture2D CreateTexture2D(RenderTexture2DDescription description)
         {
-            return new RenderTexture2D(description, texels, this);
+            return new RenderTexture2D(description, this);
         }
 
         public RenderBuffer CreateRenderBuffer<T>(T[] data, ERenderBufferType usageFlags)
@@ -368,6 +368,40 @@ namespace UOEngine.Runtime.Rendering
             renderBuffer.CopyToDevice(new ReadOnlySpan<T>(data));
 
             return renderBuffer;
+        }
+
+        public unsafe void CreateBuffer(ulong size, BufferUsageFlags usage, MemoryPropertyFlags properties, out Buffer buffer, out DeviceMemory bufferMemory)
+        {
+            BufferCreateInfo bufferCreateInfo = new()
+            {
+                SType = StructureType.BufferCreateInfo,
+                Size = size,
+                Usage = usage,
+                SharingMode = SharingMode.Exclusive
+            };
+
+            var vk = Vk.GetApi();
+
+            var result = vk.CreateBuffer(_dev, ref bufferCreateInfo, null, out buffer);
+
+            Debug.Assert(result == Result.Success);
+
+            vk.GetBufferMemoryRequirements(_dev, buffer, out var memoryRequirements);
+
+            MemoryAllocateInfo memoryAllocateInfo = new()
+            {
+                SType = StructureType.MemoryAllocateInfo,
+                AllocationSize = memoryRequirements.Size,
+                MemoryTypeIndex = FindMemoryType(memoryRequirements.MemoryTypeBits, properties)
+            };
+
+            result = vk.AllocateMemory(_dev, ref memoryAllocateInfo, null, out bufferMemory);
+
+            Debug.Assert(result == Result.Success);
+
+            result = vk.BindBufferMemory(_dev, buffer, bufferMemory, 0);
+
+            Debug.Assert(result == Result.Success);
         }
 
         private void PickPhysicalDevice()

@@ -66,7 +66,7 @@ namespace UOEngine.Runtime.Rendering
             uploadData.CopyTo(new Span<T>(data, (int)bufferSize));
             Vk.GetApi().UnmapMemory(_device, _stagingBufferMemory);
 
-            var commandBuffer = _renderDevice.BeginUpload();
+            var commandBuffer = _renderDevice.BeginRecording();
 
             BufferCopy copyRegion = new()
             {
@@ -75,7 +75,7 @@ namespace UOEngine.Runtime.Rendering
 
             Vk.GetApi().CmdCopyBuffer(commandBuffer, _stagingBuffer, _deviceBuffer, 1, ref copyRegion);
 
-            _renderDevice.EndUpload();
+            _renderDevice.EndRecording();
 
         }
    

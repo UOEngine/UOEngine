@@ -8,21 +8,18 @@ namespace UOEngine.UltimaOnline.Assets
 {
     public class UOBitmap
     {
-        public UOBitmap() 
-        {
-            Texels = [];
-        }
-
         public UOBitmap(uint width, uint  height, ushort[] texels)
         {
             Width = width; 
             Height = height;
-            Texels = texels;
+            _texels = texels;
         }
 
-        public ushort[] Texels { get; private set; }
+        public ReadOnlySpan<ushort> Texels => new ReadOnlySpan<ushort>(_texels);
 
-        public uint Width { get; private set; }
-        public uint Height { get; private set; }
+        public readonly uint Width;
+        public readonly uint Height;
+
+        private ushort[] _texels;
     }
 }
