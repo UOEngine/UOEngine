@@ -302,7 +302,7 @@ namespace UOEngine.Runtime.Rendering
             vk.DeviceWaitIdle(_dev);
         }
 
-        public unsafe CommandBuffer BeginRecording()
+        public unsafe RenderCommandList BeginRecording()
         {
             Debug.Assert(_uploadCommandBuffer == null);
 
@@ -329,7 +329,7 @@ namespace UOEngine.Runtime.Rendering
 
             _uploadCommandBuffer = commandBuffer;
 
-            return _uploadCommandBuffer.Value;
+            return new RenderCommandList(commandBuffer, this);
         }
 
         public unsafe void EndRecording()
@@ -402,6 +402,67 @@ namespace UOEngine.Runtime.Rendering
             result = vk.BindBufferMemory(_dev, buffer, bufferMemory, 0);
 
             Debug.Assert(result == Result.Success);
+        }
+        public ImageView CreateImageView(Image image, Format format)
+        {
+            ImageViewCreateInfo imageViewCreateInfo = new()
+            {
+                SType = StructureType.ImageViewCreateInfo,
+                Image = image,
+                ViewType = ImageViewType.Type2D,
+                Format = format,
+                SubresourceRange = new()
+                {
+                    AspectMask = ImageAspectFlags.ColorBit,
+                    LevelCount = 1,
+                    BaseArrayLayer = 0,
+                    LayerCount = 1
+                }
+            };
+
+            ImageView imageView = default;
+
+            unsafe
+            {
+                vk!.CreateImageView(_dev, ref imageViewCreateInfo, null, out imageView);
+            }
+
+            return imageView;
+
+        }
+
+        public Sampler CreateSampler()
+        {
+            vk!.GetPhysicalDeviceProperties(physicalDevice, out PhysicalDeviceProperties properties);
+
+            SamplerCreateInfo samplerInfo = new()
+            {
+                SType = StructureType.SamplerCreateInfo,
+                MagFilter = Filter.Linear,
+                MinFilter = Filter.Linear,
+                AddressModeU = SamplerAddressMode.Repeat,
+                AddressModeV = SamplerAddressMode.Repeat,
+                AddressModeW = SamplerAddressMode.Repeat,
+                AnisotropyEnable = true,
+                MaxAnisotropy = properties.Limits.MaxSamplerAnisotropy,
+                BorderColor = BorderColor.IntOpaqueBlack,
+                UnnormalizedCoordinates = false,
+                CompareEnable = false,
+                CompareOp = CompareOp.Always,
+                MipmapMode = SamplerMipmapMode.Linear,
+            };
+
+            Sampler sampler = default;
+
+            unsafe
+            {
+                if (vk.CreateSampler(_dev, ref samplerInfo, null, out sampler) != Result.Success)
+                {
+                    throw new Exception("failed to create texture sampler!");
+                }
+            }
+
+            return sampler;
         }
 
         private void PickPhysicalDevice()
@@ -990,6 +1051,13 @@ namespace UOEngine.Runtime.Rendering
         }
         private bool IsDeviceSuitable(PhysicalDevice device)
         {
+            vk!.GetPhysicalDeviceFeatures(device, out var supportedFeatures);
+
+            if(supportedFeatures.SamplerAnisotropy == false)
+            {
+                return false;
+            }
+
             var indices = FindQueueFamilies(device);
 
             return indices.IsComplete();

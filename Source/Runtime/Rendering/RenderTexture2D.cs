@@ -34,7 +34,7 @@ namespace UOEngine.Runtime.Rendering
 
     public class RenderTexture2D
     {
-        public unsafe RenderTexture2D(RenderTexture2DDescription description, RenderDevice renderDevice)
+        public RenderTexture2D(RenderTexture2DDescription description, RenderDevice renderDevice)
         {
             _description = description;
             _renderDevice = renderDevice;
@@ -72,7 +72,12 @@ namespace UOEngine.Runtime.Rendering
 
             var vk = Vk.GetApi();
 
-            var result = vk.CreateImage(renderDevice.Device, ref imageCreateInfo, null, out _image);
+            Result result = Result.Success;
+
+            unsafe
+            {
+                result = vk.CreateImage(renderDevice.Device, ref imageCreateInfo, null, out _image);
+            }
 
             Debug.Assert(result == Result.Success);
 
@@ -85,13 +90,23 @@ namespace UOEngine.Runtime.Rendering
                 MemoryTypeIndex = renderDevice.FindMemoryType(memoryRequirements.MemoryTypeBits, MemoryPropertyFlags.DeviceLocalBit)
             };
 
-            result = vk.AllocateMemory(renderDevice.Device, ref memoryAllocateInfo, null, out var deviceTextureMemory);
+            unsafe
+            {
+                result = vk.AllocateMemory(renderDevice.Device, ref memoryAllocateInfo, null, out var deviceTextureMemory);
+
+                Debug.Assert(result == Result.Success);
+
+                result = vk.BindImageMemory(renderDevice.Device, _image, deviceTextureMemory, 0);
+            }
 
             Debug.Assert(result == Result.Success);
 
-            result = vk.BindImageMemory(renderDevice.Device, _image, deviceTextureMemory, 0);
+            _imageView = renderDevice.CreateImageView(_image, textureFormat);
 
-            Debug.Assert(result == Result.Success);
+        }
+
+        ~RenderTexture2D()
+        {
 
         }
 
@@ -120,40 +135,37 @@ namespace UOEngine.Runtime.Rendering
 
             Vk.GetApi().UnmapMemory(_renderDevice.Device, stagingBufferMemory);
 
-            var commandBuffer = _renderDevice.BeginRecording();
-
-            //Vk.GetApi().CmdCopyBuffer(commandBuffer, stagingBuffer, deviceBuffer, 1, ref copyRegion);
-
-            // buffer to image
-
-            TransitionImageLayout(commandBuffer, ImageLayout.Undefined, ImageLayout.TransferDstOptimal);
-
-            BufferImageCopy bufferImageCopy = new()
+            using (var commandList = _renderDevice.BeginRecording())
             {
-                BufferOffset = 0,
-                BufferRowLength = 0,
-                BufferImageHeight = 0,
-                ImageSubresource = new()
+                // buffer to image
+
+                TransitionImageLayout(commandList.Buffer, ImageLayout.Undefined, ImageLayout.TransferDstOptimal);
+
+                BufferImageCopy bufferImageCopy = new()
                 {
-                    AspectMask = ImageAspectFlags.ColorBit,
-                    MipLevel = 0,
-                    BaseArrayLayer = 0,
-                    LayerCount = 1
-                },
-                ImageOffset = new(0, 0),
-                ImageExtent = new()
-                {
-                    Width = _description.Width,
-                    Height = _description.Height,
-                    Depth = 1
-                }
-            };
+                    BufferOffset = 0,
+                    BufferRowLength = 0,
+                    BufferImageHeight = 0,
+                    ImageSubresource = new()
+                    {
+                        AspectMask = ImageAspectFlags.ColorBit,
+                        MipLevel = 0,
+                        BaseArrayLayer = 0,
+                        LayerCount = 1
+                    },
+                    ImageOffset = new(0, 0),
+                    ImageExtent = new()
+                    {
+                        Width = _description.Width,
+                        Height = _description.Height,
+                        Depth = 1
+                    }
+                };
 
-            vk.CmdCopyBufferToImage(commandBuffer, stagingBuffer, _image, ImageLayout.TransferDstOptimal, 1, ref bufferImageCopy);
+                vk.CmdCopyBufferToImage(commandList.Buffer, stagingBuffer, _image, ImageLayout.TransferDstOptimal, 1, ref bufferImageCopy);
 
-            TransitionImageLayout(commandBuffer, ImageLayout.TransferDstOptimal, ImageLayout.ShaderReadOnlyOptimal);
-
-            _renderDevice.EndRecording();
+                TransitionImageLayout(commandList.Buffer, ImageLayout.TransferDstOptimal, ImageLayout.ShaderReadOnlyOptimal);
+            }
 
             unsafe
             {
@@ -164,14 +176,33 @@ namespace UOEngine.Runtime.Rendering
 
         public void SubresourceTransition(ERenderSubresourceState newState)
         {
-            var commandBuffer = _renderDevice.BeginRecording();
-
-            var vk = Vk.GetApi();
-
-            if((_state == ERenderSubresourceState.Undefined) && (newState == ERenderSubresourceState.ShaderResource))
+            using (var commandBuffer = _renderDevice.BeginRecording())
             {
-                TransitionImageLayout(commandBuffer, ImageLayout.Undefined, ImageLayout.TransferDstOptimal);
+                if ((_state == ERenderSubresourceState.Undefined) && (newState == ERenderSubresourceState.ShaderResource))
+                {
+                    TransitionImageLayout(commandBuffer.Buffer, ImageLayout.Undefined, ImageLayout.TransferDstOptimal);
+                }
             }
+        }
+
+        private void CreateImageView(Image image, Format format)
+        {
+            ImageViewCreateInfo imageViewCreateInfo = new()
+            {
+                SType = StructureType.ImageViewCreateInfo,
+                Image = image,
+                ViewType = ImageViewType.Type2D,
+                Format = format,
+                SubresourceRange = new()
+                {
+                    AspectMask = ImageAspectFlags.ColorBit,
+                    LevelCount = 1,
+                    BaseArrayLayer = 0,
+                    LayerCount = 1
+                }
+            };
+
+
         }
 
         private void TransitionImageLayout(CommandBuffer commandBuffer, ImageLayout oldLayout, ImageLayout newLayout)
@@ -230,7 +261,7 @@ namespace UOEngine.Runtime.Rendering
             }
         }
 
-        //private ImageView?                      _imageView;
+        private ImageView?                                 _imageView;
         private Image                                      _image;
 
         private readonly RenderTexture2DDescription      _description;
