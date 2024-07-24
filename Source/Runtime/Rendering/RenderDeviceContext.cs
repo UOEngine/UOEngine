@@ -21,7 +21,7 @@ namespace UOEngine.Runtime.Rendering
                 _vk.CmdBindIndexBuffer(RenderDevice.CurrentCommandBuffer, _indexBuffer!.DeviceBuffer, 0, IndexType.Uint16);
             }
 
-            _vk!.CmdDrawIndexed(RenderDevice.CurrentCommandBuffer, _indexBuffer!.Length, 1, 0, 0, 0);
+            _vk.CmdDrawIndexed(RenderDevice.CurrentCommandBuffer, _indexBuffer!.Length, 1, 0, 0, 0);
 
             RenderDevice.EndRenderPass();
 
