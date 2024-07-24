@@ -139,7 +139,7 @@ namespace UOEngine.Runtime.Rendering
             {
                 // buffer to image
 
-                TransitionImageLayout(commandList.Buffer, ImageLayout.Undefined, ImageLayout.TransferDstOptimal);
+                TransitionImageLayout(commandList, ImageLayout.Undefined, ImageLayout.TransferDstOptimal);
 
                 BufferImageCopy bufferImageCopy = new()
                 {
@@ -162,9 +162,9 @@ namespace UOEngine.Runtime.Rendering
                     }
                 };
 
-                vk.CmdCopyBufferToImage(commandList.Buffer, stagingBuffer, _image, ImageLayout.TransferDstOptimal, 1, ref bufferImageCopy);
+                commandList.CopyBufferToImage(stagingBuffer, _image, ImageLayout.TransferDstOptimal, 1, bufferImageCopy);
 
-                TransitionImageLayout(commandList.Buffer, ImageLayout.TransferDstOptimal, ImageLayout.ShaderReadOnlyOptimal);
+                TransitionImageLayout(commandList, ImageLayout.TransferDstOptimal, ImageLayout.ShaderReadOnlyOptimal);
             }
 
             unsafe
@@ -180,7 +180,7 @@ namespace UOEngine.Runtime.Rendering
             {
                 if ((_state == ERenderSubresourceState.Undefined) && (newState == ERenderSubresourceState.ShaderResource))
                 {
-                    TransitionImageLayout(commandBuffer.Buffer, ImageLayout.Undefined, ImageLayout.TransferDstOptimal);
+                    TransitionImageLayout(commandBuffer, ImageLayout.Undefined, ImageLayout.TransferDstOptimal);
                 }
             }
         }
@@ -205,7 +205,7 @@ namespace UOEngine.Runtime.Rendering
 
         }
 
-        private void TransitionImageLayout(CommandBuffer commandBuffer, ImageLayout oldLayout, ImageLayout newLayout)
+        private void TransitionImageLayout(RenderCommandList commandBuffer, ImageLayout oldLayout, ImageLayout newLayout)
         {
             var vk = Vk.GetApi();
 
@@ -255,10 +255,7 @@ namespace UOEngine.Runtime.Rendering
                 DstAccessMask = dstAccessMask,
             };
 
-            unsafe
-            {
-                vk.CmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, null, 0, null, 1, ref imageMemoryBarrier);
-            }
+            commandBuffer.PipelineBarrier(sourceStage, destinationStage, imageMemoryBarrier);
         }
 
         private ImageView?                                 _imageView;

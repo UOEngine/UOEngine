@@ -5,7 +5,6 @@ namespace UOEngine.UltimaOnline.Assets
 {
     public class UOFile
     {
-
         public void Load(string filePath, bool bHasExtra)
         {
             const int maxFileIndices = 5000;

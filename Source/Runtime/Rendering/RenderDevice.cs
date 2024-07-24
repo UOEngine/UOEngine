@@ -98,6 +98,9 @@ namespace UOEngine.Runtime.Rendering
             CreateCommandBuffers();
             CreateSyncObjects();
 
+            CreateDescriptorPool();
+            //CreateDescriptorSetLayout();
+
         }
 
         public unsafe void Shutdown()
@@ -142,6 +145,30 @@ namespace UOEngine.Runtime.Rendering
             vk!.Dispose();
         }
 
+        public void RegisterShader<T>() where T: Shader, new()
+        {
+            var shader = new T();
+
+            if(_shaders.ContainsKey(shader.Name))
+            {
+                Debug.Assert(false);
+            }
+
+            shader.Setup();
+
+            foreach(var descriptor in shader.GetVertexShaderDescriptors())
+            {
+                CreateDescriptorSetLayout2(descriptor, true);
+            }
+
+            foreach (var descriptor in shader.GetFragmentShaderDescriptors())
+            {
+                CreateDescriptorSetLayout2(descriptor, false);
+            }
+
+            _shaders.Add(shader.Name, shader);
+
+        }
         public void SetSurfaceSize(uint width, uint height)
         {
             Console.WriteLine($"SetSurfaceSize: {width} {height}");
@@ -632,6 +659,111 @@ namespace UOEngine.Runtime.Rendering
 
             swapChainImageFormat = surfaceFormat.Format;
             swapChainExtent = extent;
+        }
+
+        private unsafe void CreateDescriptorPool()
+        {
+            DescriptorPoolSize poolSize = new()
+            {
+                Type = DescriptorType.CombinedImageSampler,
+                DescriptorCount = (uint)swapChainImages!.Length,
+            };
+
+            DescriptorPoolCreateInfo poolInfo = new()
+            {
+                SType = StructureType.DescriptorPoolCreateInfo,
+                PoolSizeCount = 1,
+                PPoolSizes = &poolSize,
+                MaxSets = (uint)swapChainImages!.Length,
+            };
+
+            fixed (DescriptorPool* descriptorPoolPtr = &_descriptorPools[0])
+            {
+                if (vk!.CreateDescriptorPool(_dev, ref poolInfo, null, descriptorPoolPtr) != Result.Success)
+                {
+                    throw new Exception("failed to create descriptor pool!");
+                }
+
+            }
+        }
+
+        private unsafe void CreateDescriptorSets()
+        {
+            //var layouts = new DescriptorSetLayout[swapChainImages!.Length];
+
+            //Array.Fill(layouts, descriptorSetLayout);
+
+            //fixed (DescriptorSetLayout* layoutsPtr = &_descriptorSetLayouts[0])
+            //{
+            //    DescriptorSetAllocateInfo allocateInfo = new()
+            //    {
+            //        SType = StructureType.DescriptorSetAllocateInfo,
+            //        DescriptorPool = _descriptorPools[0],
+            //        DescriptorSetCount = (uint)swapChainImages!.Length,
+            //        PSetLayouts = layoutsPtr,
+            //    };
+
+            //    descriptorSets = new DescriptorSet[swapChainImages.Length];
+            //    fixed (DescriptorSet* descriptorSetsPtr = &_des)
+            //    {
+            //        if (vk!.AllocateDescriptorSets(_dev, ref allocateInfo, descriptorSetsPtr) != Result.Success)
+            //        {
+            //            throw new Exception("failed to allocate descriptor sets!");
+            //        }
+            //    }
+            //}
+
+            //for (int i = 0; i < swapChainImages.Length; i++)
+            //{
+            //    DescriptorBufferInfo bufferInfo = new()
+            //    {
+            //        Buffer = uniformBuffers![i],
+            //        Offset = 0,
+            //        Range = (ulong)Unsafe.SizeOf<UniformBufferObject>(),
+
+            //    };
+
+            //    WriteDescriptorSet descriptorWrite = new()
+            //    {
+            //        SType = StructureType.WriteDescriptorSet,
+            //        DstSet = descriptorSets[i],
+            //        DstBinding = 0,
+            //        DstArrayElement = 0,
+            //        DescriptorType = DescriptorType.UniformBuffer,
+            //        DescriptorCount = 1,
+            //        PBufferInfo = &bufferInfo,
+            //    };
+
+            //    vk!.UpdateDescriptorSets(device, 1, descriptorWrite, 0, null);
+            //}
+        }
+
+        private unsafe void CreateDescriptorSetLayout2(SetBindingDescription descriptor, bool bVertex)
+        {
+            DescriptorSetLayoutBinding layoutBinding = new()
+            {
+                Binding = 0,
+                DescriptorCount = 1,
+                DescriptorType = GetVulkanDescriptorType(descriptor.DescriptorType),
+                PImmutableSamplers = null,
+                StageFlags = bVertex? ShaderStageFlags.VertexBit : ShaderStageFlags.FragmentBit,
+            };
+
+            DescriptorSetLayoutCreateInfo layoutInfo = new()
+            {
+                SType = StructureType.DescriptorSetLayoutCreateInfo,
+                BindingCount = 1,
+                PBindings = &layoutBinding
+            };
+
+            DescriptorSetLayout descriptorSetLayout;
+
+            if (vk!.CreateDescriptorSetLayout(_dev, ref layoutInfo, null, &descriptorSetLayout) != Result.Success)
+            {
+                throw new Exception("failed to create descriptor set layout!");
+            }
+
+            _descriptorSetLayouts.Add(descriptorSetLayout);
         }
 
         private unsafe void CleanupSwapchain()
@@ -1260,6 +1392,17 @@ namespace UOEngine.Runtime.Rendering
             }
         }
 
+        private DescriptorType GetVulkanDescriptorType(EDescriptorType descriptorType)
+        {
+            switch (descriptorType)
+            {
+                case EDescriptorType.CombinedSampler:
+                    return DescriptorType.CombinedImageSampler;
+            }
+
+            throw new Exception("Can not convert to vulkan descriptor type");
+        }
+
         struct QueueFamilyIndices
         {
             public uint? GraphicsFamily { get; set; }
@@ -1328,5 +1471,10 @@ namespace UOEngine.Runtime.Rendering
 
         private readonly string[]           validationLayers = ["VK_LAYER_KHRONOS_validation"];
         private readonly string[]           deviceExtensions = [KhrSwapchain.ExtensionName];
+
+        private List<DescriptorSetLayout>   _descriptorSetLayouts = [];
+        private DescriptorPool[]            _descriptorPools = new DescriptorPool[1];
+
+        private Dictionary<string, Shader>                _shaders = [];
     }
 }

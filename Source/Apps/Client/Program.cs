@@ -46,6 +46,8 @@ namespace UOEngine.Apps.Client
 
             renderDevice.Initialise(window.GetSurface(), window.Width, window.Height, bEnableValidationLayers);
 
+            renderDevice.RegisterShader<SimpleShader>();
+
             // Fixed dir for now.
             var assetLoader = serviceProvider.GetRequiredService<UOAssetLoader>();
             

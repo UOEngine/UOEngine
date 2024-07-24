@@ -68,13 +68,12 @@ namespace UOEngine.Runtime.Rendering
 
             using (var commandBuffer = _renderDevice.BeginRecording())
             {
-
                 BufferCopy copyRegion = new()
                 {
                     Size = bufferSize,
                 };
 
-                Vk.GetApi().CmdCopyBuffer(commandBuffer.Buffer, _stagingBuffer, _deviceBuffer, 1, ref copyRegion);
+                commandBuffer.CopyBuffer(_stagingBuffer, _deviceBuffer, copyRegion);
             }
         }
    
