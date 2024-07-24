@@ -10,8 +10,8 @@
     {
         public Shader()
         {
-            _vertexShaderPath = "";
-            _fragmentShaderPath = "";
+            _vertexShaderName = "";
+            _fragmentShaderName = "";
             Name = "";
         }
 
@@ -26,6 +26,9 @@
 
         public void Setup()
         {
+            _vertexByteCode = File.ReadAllBytes($"shaders/{_vertexShaderName}");
+            _fragmentByteCode = File.ReadAllBytes($"shaders/{_fragmentShaderName}");
+
             SetupVertexShaderDescriptors(_vertexShaderDescriptors);
             SetupFragmentShaderDescriptors(_fragmentShaderDescriptors);
         }
@@ -35,10 +38,16 @@
         public IReadOnlyList<SetBindingDescription> GetVertexShaderDescriptors() => _vertexShaderDescriptors;
         public IReadOnlyList<SetBindingDescription> GetFragmentShaderDescriptors() => _fragmentShaderDescriptors;
 
+        public ReadOnlySpan<byte> VertexByteCode => _vertexByteCode;
+        public ReadOnlySpan<byte> FragmentByteCode => _fragmentByteCode;
+
         private List<SetBindingDescription> _vertexShaderDescriptors = [];
         private List<SetBindingDescription> _fragmentShaderDescriptors = [];
 
-        protected string _vertexShaderPath;
-        protected string _fragmentShaderPath;
+        protected string                    _vertexShaderName;
+        protected string                    _fragmentShaderName;
+
+        private byte[]                      _vertexByteCode = [];
+        private byte[]                      _fragmentByteCode = [];
     }
 }

@@ -7,6 +7,8 @@ namespace UOEngine.Apps.Client
         public SimpleShader()
         {
             Name = "Simple";
+            _vertexShaderName = "vert.spv";
+            _fragmentShaderName = "frag.spv";
         }
 
         protected override void SetupVertexShaderDescriptors(List<SetBindingDescription> descriptors)

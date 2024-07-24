@@ -92,15 +92,12 @@ namespace UOEngine.Runtime.Rendering
             CreateSwapChain(width, height);
             CreateRenderPass();
             CreateImageViews();
-            CreateGraphicsPipeline();
             CreateFramebuffers();
             CreateCommandPool();
             CreateCommandBuffers();
             CreateSyncObjects();
 
             CreateDescriptorPool();
-            //CreateDescriptorSetLayout();
-
         }
 
         public unsafe void Shutdown()
@@ -165,6 +162,8 @@ namespace UOEngine.Runtime.Rendering
             {
                 CreateDescriptorSetLayout2(descriptor, false);
             }
+
+            CreateGraphicsPipeline(shader);
 
             _shaders.Add(shader.Name, shader);
 
@@ -818,13 +817,10 @@ namespace UOEngine.Runtime.Rendering
             }
         }
 
-        private unsafe void CreateGraphicsPipeline()
+        private unsafe void CreateGraphicsPipeline(Shader shader)
         {
-            var vertShaderCode = File.ReadAllBytes("shaders/vert.spv");
-            var fragShaderCode = File.ReadAllBytes("shaders/frag.spv");
-
-            var vertexShaderModule = CreateShaderModule(vertShaderCode);
-            var fragmentShaderModule = CreateShaderModule(fragShaderCode);
+            var vertexShaderModule = CreateShaderModule(shader.VertexByteCode);
+            var fragmentShaderModule = CreateShaderModule(shader.FragmentByteCode);
 
             PipelineShaderStageCreateInfo vertShaderStageInfo = new()
             {
@@ -1056,7 +1052,7 @@ namespace UOEngine.Runtime.Rendering
             }
         }
 
-        private unsafe ShaderModule CreateShaderModule(byte[] code)
+        private unsafe ShaderModule CreateShaderModule(ReadOnlySpan<byte> code)
         {
             ShaderModuleCreateInfo createInfo = new()
             {
