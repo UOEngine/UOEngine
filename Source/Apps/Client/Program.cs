@@ -46,7 +46,7 @@ namespace UOEngine.Apps.Client
 
             renderDevice.Initialise(window.GetSurface(), window.Width, window.Height, bEnableValidationLayers);
 
-            renderDevice.RegisterShader<SimpleShader>();
+            int shaderId = renderDevice.RegisterShader<SimpleShader>();
 
             // Fixed dir for now.
             var assetLoader = serviceProvider.GetRequiredService<UOAssetLoader>();
@@ -64,7 +64,7 @@ namespace UOEngine.Apps.Client
             var backgroundTexture = renderDevice.CreateTexture2D(description);
 
             backgroundTexture.Upload(loginBackgroundBitmap.Texels);
-            backgroundTexture.SubresourceTransition(ERenderSubresourceState.ShaderResource);
+            //backgroundTexture.SubresourceTransition(ERenderSubresourceState.ShaderResource);
 
             ushort[] quadIndices =  [0, 1, 2, 2, 3, 0];
 
@@ -73,6 +73,8 @@ namespace UOEngine.Apps.Client
             var renderdeviceContext = serviceProvider.GetRequiredService<RenderDeviceContext>();
 
             renderdeviceContext.SetIndexBuffer(indexBuffer);
+            renderdeviceContext.SetShader(shaderId);
+            renderdeviceContext.SetTexture(0, backgroundTexture);
 
         }
 

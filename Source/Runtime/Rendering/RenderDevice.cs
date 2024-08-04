@@ -98,6 +98,8 @@ namespace UOEngine.Runtime.Rendering
             CreateSyncObjects();
 
             CreateDescriptorPool();
+
+            CreateSampler();
         }
 
         public unsafe void Shutdown()
@@ -120,9 +122,8 @@ namespace UOEngine.Runtime.Rendering
                 vk!.DestroyFramebuffer(_dev, framebuffer, null);
             }
 
-            vk!.DestroyPipeline(_dev, graphicsPipeline, null);
-            vk!.DestroyPipelineLayout(_dev, pipelineLayout, null);
-            vk!.DestroyRenderPass(_dev, renderPass, null);
+            Array.ForEach(_pipelineLayouts, pipelineLayout => vk.DestroyPipelineLayout(_dev, pipelineLayout, null));
+            Array.ForEach(_graphicsPipelines, graphicsPipeline => vk.DestroyPipeline(_dev, graphicsPipeline, null));
 
             foreach (var imageView in swapChainImageViews!)
             {
@@ -142,32 +143,43 @@ namespace UOEngine.Runtime.Rendering
             vk!.Dispose();
         }
 
-        public void RegisterShader<T>() where T: Shader, new()
+        public int RegisterShader<T>() where T: Shader, new()
         {
             var shader = new T();
 
-            if(_shaders.ContainsKey(shader.Name))
+            int shaderHash = shader.GetHashCode();
+
+            if (_shaders.ContainsKey(shaderHash))
             {
                 Debug.Assert(false);
             }
 
             shader.Setup();
 
-            foreach(var descriptor in shader.GetVertexShaderDescriptors())
-            {
-                CreateDescriptorSetLayout2(descriptor, true);
-            }
-
-            foreach (var descriptor in shader.GetFragmentShaderDescriptors())
-            {
-                CreateDescriptorSetLayout2(descriptor, false);
-            }
+            int shaderId = _currentNumPipelines;
 
             CreateGraphicsPipeline(shader);
 
-            _shaders.Add(shader.Name, shader);
+            _shaders.Add(shaderHash, shader);
 
+            return shaderId;
         }
+
+        public Pipeline GetPipeline(int shaderId)
+        {
+            return _graphicsPipelines[shaderId];
+        }
+
+        public PipelineLayout GetPipelineLayout(int shaderId)
+        {
+            return _pipelineLayouts[shaderId];
+        }
+
+        public PipelineStateObjectDescription GetPipelineStateObjectDescription(int shaderId)
+        {
+            return _pipelineStateObjectDescriptions[shaderId];
+        }
+
         public void SetSurfaceSize(uint width, uint height)
         {
             Console.WriteLine($"SetSurfaceSize: {width} {height}");
@@ -215,8 +227,6 @@ namespace UOEngine.Runtime.Rendering
 
             vk!.CmdBeginRenderPass(CurrentCommandBuffer, &renderPassInfo, SubpassContents.Inline);
 
-            vk!.CmdBindPipeline(CurrentCommandBuffer, PipelineBindPoint.Graphics, graphicsPipeline);
-
             Viewport viewport = new()
             {
                 X = 0,
@@ -243,9 +253,6 @@ namespace UOEngine.Runtime.Rendering
             vk!.CmdEndRenderPass(CurrentCommandBuffer);
         }
 
-        public void Draw()
-        {
-        }
 
         public unsafe void Submit()
         {
@@ -469,7 +476,8 @@ namespace UOEngine.Runtime.Rendering
                 AddressModeU = SamplerAddressMode.Repeat,
                 AddressModeV = SamplerAddressMode.Repeat,
                 AddressModeW = SamplerAddressMode.Repeat,
-                AnisotropyEnable = true,
+                AnisotropyEnable = false,
+                //AnisotropyEnable = true,
                 MaxAnisotropy = properties.Limits.MaxSamplerAnisotropy,
                 BorderColor = BorderColor.IntOpaqueBlack,
                 UnnormalizedCoordinates = false,
@@ -488,7 +496,35 @@ namespace UOEngine.Runtime.Rendering
                 }
             }
 
+            TextureSampler = sampler;
+
             return sampler;
+        }
+
+        public unsafe void AllocateDescriptorSets(DescriptorSetLayout[] descriptorSetLayouts, out DescriptorSet[] descriptorSets)
+        {
+            fixed (DescriptorSetLayout* desctorSetLayoutsPtr = &descriptorSetLayouts[0])
+            {
+                DescriptorSetAllocateInfo allocateInfo = new()
+                {
+                    SType = StructureType.DescriptorSetAllocateInfo,
+                    DescriptorPool = _descriptorPools[0],
+                    DescriptorSetCount = (uint)descriptorSetLayouts!.Length,
+                    PSetLayouts = desctorSetLayoutsPtr,
+                };
+
+                descriptorSets = new DescriptorSet[descriptorSetLayouts.Length];
+
+                fixed (DescriptorSet* descriptorSetsPtr = descriptorSets)
+                {
+                    var result = vk!.AllocateDescriptorSets(_dev, ref allocateInfo, descriptorSetsPtr);
+
+                    if (result != Result.Success)
+                    {
+                        throw new Exception("failed to allocate descriptor sets!");
+                    }
+                }
+            }
         }
 
         private void PickPhysicalDevice()
@@ -737,15 +773,26 @@ namespace UOEngine.Runtime.Rendering
             //}
         }
 
-        private unsafe void CreateDescriptorSetLayout2(SetBindingDescription descriptor, bool bVertex)
+        private unsafe void CreateDescriptorSetLayout2(SetBindingDescription descriptor)
         {
+            Debug.Assert(descriptor.ShaderType != EShaderType.None);
+            Debug.Assert(descriptor.DescriptorType != EDescriptorType.None);
+
+            int descriptorHash = descriptor.GetHashCode();
+
+            if (_descriptorSetLayouts.ContainsKey(descriptorHash))
+            {
+                return;
+            }
+
             DescriptorSetLayoutBinding layoutBinding = new()
             {
-                Binding = 0,
+                Binding = descriptor.Binding,
                 DescriptorCount = 1,
                 DescriptorType = GetVulkanDescriptorType(descriptor.DescriptorType),
                 PImmutableSamplers = null,
-                StageFlags = bVertex? ShaderStageFlags.VertexBit : ShaderStageFlags.FragmentBit,
+                StageFlags = descriptor.ShaderType == EShaderType.Vertex? ShaderStageFlags.VertexBit : ShaderStageFlags.FragmentBit,
+                
             };
 
             DescriptorSetLayoutCreateInfo layoutInfo = new()
@@ -762,7 +809,7 @@ namespace UOEngine.Runtime.Rendering
                 throw new Exception("failed to create descriptor set layout!");
             }
 
-            _descriptorSetLayouts.Add(descriptorSetLayout);
+            _descriptorSetLayouts.Add(descriptorHash, descriptorSetLayout);
         }
 
         private unsafe void CleanupSwapchain()
@@ -819,6 +866,8 @@ namespace UOEngine.Runtime.Rendering
 
         private unsafe void CreateGraphicsPipeline(Shader shader)
         {
+            int pipelineIndex = _currentNumPipelines;
+
             var vertexShaderModule = CreateShaderModule(shader.VertexByteCode);
             var fragmentShaderModule = CreateShaderModule(shader.FragmentByteCode);
 
@@ -922,16 +971,57 @@ namespace UOEngine.Runtime.Rendering
             colorBlending.BlendConstants[2] = 0;
             colorBlending.BlendConstants[3] = 0;
 
-            PipelineLayoutCreateInfo pipelineLayoutInfo = new()
+            int numDescriptors = shader.GetDescriptors().Count;
+            var descriptorSetLayoutBindings = stackalloc DescriptorSetLayoutBinding[numDescriptors];
+
+            uint numBindings = 0;
+
+            foreach(var descriptorSet in shader.GetDescriptors())
             {
-                SType = StructureType.PipelineLayoutCreateInfo,
-                SetLayoutCount = 0,
-                PushConstantRangeCount = 0,
+                DescriptorSetLayoutBinding layoutBinding = new()
+                {
+                    Binding = descriptorSet.Binding,
+                    DescriptorCount = 1,
+                    DescriptorType = GetVulkanDescriptorType(descriptorSet.DescriptorType),
+                    PImmutableSamplers = null,
+                    StageFlags = descriptorSet.ShaderType == EShaderType.Vertex ? ShaderStageFlags.VertexBit : ShaderStageFlags.FragmentBit,
+                };
+
+                descriptorSetLayoutBindings[numBindings] = layoutBinding;
+
+                numBindings++;
+            }
+
+            DescriptorSetLayoutCreateInfo layoutInfo = new()
+            {
+                SType = StructureType.DescriptorSetLayoutCreateInfo,
+                BindingCount = (uint)numDescriptors,
+                PBindings = &descriptorSetLayoutBindings[0]
             };
 
-            if (vk!.CreatePipelineLayout(_dev, ref pipelineLayoutInfo, null, out pipelineLayout) != Result.Success)
+            var descriptorSetLayouts = new DescriptorSetLayout[numDescriptors];
+
+            PipelineLayout pipelineLayout;
+
+            fixed (DescriptorSetLayout* descriptorSetLayoutsPtr = &descriptorSetLayouts[0])
             {
-                throw new Exception("failed to create pipeline layout!");
+                if (vk!.CreateDescriptorSetLayout(_dev, ref layoutInfo, null, descriptorSetLayoutsPtr) != Result.Success)
+                {
+                    throw new Exception("failed to create descriptor set layout!");
+                }
+
+                PipelineLayoutCreateInfo pipelineLayoutInfo = new()
+                {
+                    SType = StructureType.PipelineLayoutCreateInfo,
+                    SetLayoutCount = (uint)numDescriptors,
+                    PushConstantRangeCount = 0,
+                    PSetLayouts = descriptorSetLayoutsPtr
+                };
+
+                if (vk!.CreatePipelineLayout(_dev, ref pipelineLayoutInfo, null, out pipelineLayout) != Result.Success)
+                {
+                    throw new Exception("failed to create pipeline layout!");
+                }
             }
 
             var dynamicStates = stackalloc[] { DynamicState.Viewport, DynamicState.Scissor };
@@ -961,7 +1051,7 @@ namespace UOEngine.Runtime.Rendering
                 BasePipelineHandle = default
             };
 
-            if (vk!.CreateGraphicsPipelines(_dev, default, 1, ref pipelineInfo, null, out graphicsPipeline) != Result.Success)
+            if (vk!.CreateGraphicsPipelines(_dev, default, 1, ref pipelineInfo, null, out var graphicsPipeline) != Result.Success)
             {
                 throw new Exception("failed to create graphics pipeline!");
             }
@@ -971,6 +1061,15 @@ namespace UOEngine.Runtime.Rendering
 
             SilkMarshal.Free((nint)vertShaderStageInfo.PName);
             SilkMarshal.Free((nint)fragShaderStageInfo.PName);
+
+            _pipelineLayouts[pipelineIndex] = pipelineLayout;
+            _graphicsPipelines[pipelineIndex] = graphicsPipeline;
+
+            PipelineStateObjectDescription p = new PipelineStateObjectDescription(graphicsPipeline, pipelineLayout, descriptorSetLayouts, [.. shader.GetDescriptors()]);
+
+            _pipelineStateObjectDescriptions[pipelineIndex] = p;
+
+            pipelineIndex++;
         }
 
         private unsafe void CreateRenderPass()
@@ -1416,61 +1515,70 @@ namespace UOEngine.Runtime.Rendering
             public PresentModeKHR[]         PresentModes;
         }
 
-        public event EventHandler?          SwapchainDirty;
-        public Device                       Device => _dev;
+        public event EventHandler?                      SwapchainDirty;
+        public Device                                   Device => _dev;
 
-        public CommandBuffer                CurrentCommandBuffer { get; private set; }
+        public CommandBuffer                            CurrentCommandBuffer { get; private set; }
 
-        private Device                       _dev;
+        public Sampler TextureSampler { get; private set; }
 
-        private RenderDeviceContext         renderDeviceContext;
+        private Device                                  _dev;
 
-        private Vk?                         vk;
-        private Instance                    instance;
-        private PhysicalDevice              physicalDevice;
+        private RenderDeviceContext                     renderDeviceContext;
 
-        private KhrSurface?                 khrSurface;
-        private SurfaceKHR                  surface;
+        private Vk?                                     vk;
+        private Instance                                instance;
+        private PhysicalDevice                          physicalDevice;
 
-        private uint                        surfaceWidth = 0;
-        private uint                        surfaceHeight = 0;
+        private KhrSurface?                             khrSurface;
+        private SurfaceKHR                              surface;
 
-        private KhrSwapchain?               khrSwapChain;
-        private SwapchainKHR                swapChain;
-        private Image[]?                    swapChainImages;
-        private Format                      swapChainImageFormat;
-        private Extent2D                    swapChainExtent;
-        private ImageView[]?                swapChainImageViews;
-        private Framebuffer[]?              swapChainFramebuffers;  
+        private uint                                    surfaceWidth = 0;
+        private uint                                    surfaceHeight = 0;
+
+        private KhrSwapchain?                           khrSwapChain;
+        private SwapchainKHR                            swapChain;
+        private Image[]?                                swapChainImages;
+        private Format                                  swapChainImageFormat;
+        private Extent2D                                swapChainExtent;
+        private ImageView[]?                            swapChainImageViews;
+        private Framebuffer[]?                          swapChainFramebuffers;  
         
-        private CommandPool                 commandPool;
-        private CommandBuffer[]?            commandBuffers;
-        private CommandBuffer?              _uploadCommandBuffer;
+        private CommandPool                             commandPool;
+        private CommandBuffer[]?                        commandBuffers;
+        private CommandBuffer?                          _uploadCommandBuffer;
 
-        private Queue                       graphicsQueue;
-        private Queue                       presentQueue;
+        private Queue                                   graphicsQueue;
+        private Queue                                   presentQueue;
 
-        private PipelineLayout              pipelineLayout;
-        private Pipeline                    graphicsPipeline;
-        private RenderPass                  renderPass;
+        const int                                       MaxPipelines = 64;
 
-        private Semaphore[]?                imageAvailableSemaphores;
-        private Semaphore[]?                renderFinishedSemaphores;
-        private Fence[]?                    inFlightFences;
-        private uint                        currentFrame = 0;
+        private int                                     _currentNumPipelines = 0;
+        private PipelineLayout[]                        _pipelineLayouts = new PipelineLayout[MaxPipelines];
+        private Pipeline[]                              _graphicsPipelines = new Pipeline[MaxPipelines];
+        private PipelineStateObjectDescription[]        _pipelineStateObjectDescriptions = new PipelineStateObjectDescription[MaxPipelines];
 
-        private bool                        bEnableValidationLayers = false;
-        private DebugUtilsMessengerEXT      debugMessenger;
-        private ExtDebugUtils?              debugUtils;
+        private RenderPass                              renderPass;
 
-        private uint                        MaxFramesInFlight = 0;
+        private Semaphore[]?                            imageAvailableSemaphores;
+        private Semaphore[]?                            renderFinishedSemaphores;
+        private Fence[]?                                inFlightFences;
+        private uint                                    currentFrame = 0;
 
-        private readonly string[]           validationLayers = ["VK_LAYER_KHRONOS_validation"];
-        private readonly string[]           deviceExtensions = [KhrSwapchain.ExtensionName];
+        private bool                                    bEnableValidationLayers = false;
+        private DebugUtilsMessengerEXT                  debugMessenger;
+        private ExtDebugUtils?                          debugUtils;
 
-        private List<DescriptorSetLayout>   _descriptorSetLayouts = [];
-        private DescriptorPool[]            _descriptorPools = new DescriptorPool[1];
+        private uint                                    MaxFramesInFlight = 0;
 
-        private Dictionary<string, Shader>                _shaders = [];
+        private readonly string[]                       validationLayers = ["VK_LAYER_KHRONOS_validation"];
+        private readonly string[]                       deviceExtensions = [KhrSwapchain.ExtensionName];
+
+        private Dictionary<int, DescriptorSetLayout>    _descriptorSetLayouts = [];
+        private DescriptorPool[]                        _descriptorPools = new DescriptorPool[1];
+        
+        private Dictionary<int, Shader>                 _shaders = [];
+
+
     }
 }

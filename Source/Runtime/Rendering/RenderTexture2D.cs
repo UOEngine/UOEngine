@@ -258,7 +258,7 @@ namespace UOEngine.Runtime.Rendering
             commandBuffer.PipelineBarrier(sourceStage, destinationStage, imageMemoryBarrier);
         }
 
-        private ImageView?                                 _imageView;
+        public ImageView                                   _imageView { get; private set; }
         private Image                                      _image;
 
         private readonly RenderTexture2DDescription      _description;

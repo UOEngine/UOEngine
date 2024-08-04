@@ -9,22 +9,16 @@ namespace UOEngine.Apps.Client
             Name = "Simple";
             _vertexShaderName = "vert.spv";
             _fragmentShaderName = "frag.spv";
-        }
 
-        protected override void SetupVertexShaderDescriptors(List<SetBindingDescription> descriptors)
-        {
-        }
-
-        protected override void SetupFragmentShaderDescriptors(List<SetBindingDescription> descriptors)
-        {
             var uoImage = new SetBindingDescription
             {
                 DescriptorType = EDescriptorType.CombinedSampler,
+                ShaderType = EShaderType.Fragment,
                 Binding = 0,
                 Layout = 0
             };
 
-            descriptors.Add(uoImage);
+            _descriptors.Add(uoImage);
         }
     }
 }
