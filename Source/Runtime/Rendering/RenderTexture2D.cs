@@ -16,7 +16,9 @@ namespace UOEngine.Runtime.Rendering
     public enum ERenderTextureFormat
     {
         None,
-        R5G5B5A1
+        A1R5G5B5,
+        R5G5B5A1,
+        R8G8B8A8
     }
 
     [Flags]
@@ -43,9 +45,9 @@ namespace UOEngine.Runtime.Rendering
 
             switch(description.Format)
             {
-                case ERenderTextureFormat.R5G5B5A1 :
+                case ERenderTextureFormat.A1R5G5B5 :
                     {
-                        textureFormat = Format.R5G5B5A1UnormPack16;
+                        textureFormat = Format.A1R5G5B5UnormPack16;
                         _imageSize = sizeof(ushort) * description.Width * description.Height;
                     }
                     break;
@@ -183,26 +185,6 @@ namespace UOEngine.Runtime.Rendering
                     TransitionImageLayout(commandBuffer, ImageLayout.Undefined, ImageLayout.TransferDstOptimal);
                 }
             }
-        }
-
-        private void CreateImageView(Image image, Format format)
-        {
-            ImageViewCreateInfo imageViewCreateInfo = new()
-            {
-                SType = StructureType.ImageViewCreateInfo,
-                Image = image,
-                ViewType = ImageViewType.Type2D,
-                Format = format,
-                SubresourceRange = new()
-                {
-                    AspectMask = ImageAspectFlags.ColorBit,
-                    LevelCount = 1,
-                    BaseArrayLayer = 0,
-                    LayerCount = 1
-                }
-            };
-
-
         }
 
         private void TransitionImageLayout(RenderCommandList commandBuffer, ImageLayout oldLayout, ImageLayout newLayout)

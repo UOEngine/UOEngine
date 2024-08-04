@@ -444,6 +444,13 @@ namespace UOEngine.Runtime.Rendering
                 Image = image,
                 ViewType = ImageViewType.Type2D,
                 Format = format,
+                Components =
+                {
+                    R = ComponentSwizzle.Identity,
+                    G = ComponentSwizzle.Identity,
+                    B = ComponentSwizzle.Identity,
+                    A = ComponentSwizzle.Identity,
+                },
                 SubresourceRange = new()
                 {
                     AspectMask = ImageAspectFlags.ColorBit,

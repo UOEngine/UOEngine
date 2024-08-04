@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.IO.MemoryMappedFiles;
+using System.Runtime.InteropServices;
 
 namespace UOEngine.UltimaOnline.Assets
 {
@@ -196,7 +197,8 @@ namespace UOEngine.UltimaOnline.Assets
                                     }
                                     else
                                     {
-                                        color |= 0x8000;
+                                        //color ^= 0x8000;
+
                                         while (cur < next)
                                             *cur++ = color;
                                     }
@@ -206,6 +208,11 @@ namespace UOEngine.UltimaOnline.Assets
                     }
 
                     bitmap = new UOBitmap((uint)width, (uint)height, pixels);
+
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    {
+                        //bitmap.DebugDumpAsBitmap("background.bmp");
+                    }
                 }
             }
             return bitmap;

@@ -59,12 +59,11 @@ namespace UOEngine.Apps.Client
 
             description.Width = loginBackgroundBitmap.Width;
             description.Height = loginBackgroundBitmap.Height;
-            description.Format = ERenderTextureFormat.R5G5B5A1;
+            description.Format = ERenderTextureFormat.A1R5G5B5;
 
             var backgroundTexture = renderDevice.CreateTexture2D(description);
 
             backgroundTexture.Upload(loginBackgroundBitmap.Texels);
-            //backgroundTexture.SubresourceTransition(ERenderSubresourceState.ShaderResource);
 
             ushort[] quadIndices =  [0, 1, 2, 2, 3, 0];
 
