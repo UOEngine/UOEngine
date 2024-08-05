@@ -6,7 +6,7 @@ using UOEngine.UltimaOnline.Assets;
 
 namespace UOEngine.Apps.Client
 {
-    internal class ClientProgram: Program
+    public class ClientProgram: Program
     {
         static void Main(string[] args)
         {

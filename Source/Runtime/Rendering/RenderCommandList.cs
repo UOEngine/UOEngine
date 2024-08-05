@@ -16,7 +16,6 @@ namespace UOEngine.Runtime.Rendering
         public void Dispose()
         {
             _renderDevice.EndRecording();
-
         }
 
         public void CopyBuffer(Buffer srcBuffer, Buffer destBuffer, BufferCopy copyRegion)
@@ -35,6 +34,11 @@ namespace UOEngine.Runtime.Rendering
             {
                 _vk.CmdPipelineBarrier(_commandBuffer, sourceStage, destinationStage, 0, 0, null, 0, null, 1, ref imageMemoryBarrier);
             }
+        }
+
+        public void DrawIndexed(uint indexCount, uint instanceCount)
+        {
+            _vk.CmdDrawIndexed(_commandBuffer, indexCount, instanceCount, 0, 0, 0);
         }
 
         private CommandBuffer           _commandBuffer;

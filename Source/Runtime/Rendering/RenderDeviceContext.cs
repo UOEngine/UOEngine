@@ -130,6 +130,8 @@ namespace UOEngine.Runtime.Rendering
         }
 
         public RenderDevice?                 RenderDevice;
+
+        public RenderCommandListImmediate?   ImmediateCommandList { get; private set; }   
                                              
         public int                           ShaderHash { get; set; }
                                              

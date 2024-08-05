@@ -9,4 +9,10 @@
     <InvariantGlobalization>true</InvariantGlobalization>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Runtime\Core\UOEngine.Runtime.Core.csproj" />
+    <ProjectReference Include="..\..\..\ThirdParty\ImGui.NET\src\ImGui.NET\ImGui.NET.csproj" />
+    <ProjectReference Include="..\..\Client\UOEngine.Apps.Client.csproj" />
+  </ItemGroup>
+
 </Project>
