@@ -52,6 +52,13 @@ namespace UOEngine.Runtime.Rendering
                     }
                     break;
 
+                case ERenderTextureFormat.R8G8B8A8:
+                    {
+                        textureFormat = Format.R8G8B8A8Unorm;
+                        _imageSize = sizeof(uint) * description.Width * description.Height;
+                    }
+                    break;
+
                 default:
                     throw new Exception($"RenderTexture2D: Format {description.Format} not added in constructor.");
             }
@@ -173,6 +180,11 @@ namespace UOEngine.Runtime.Rendering
                 vk.DestroyBuffer(_renderDevice.Device, stagingBuffer, null);
                 vk.FreeMemory(_renderDevice.Device, stagingBufferMemory, null);
             }
+        }
+
+        public void Upload(IntPtr texels)
+        {
+            Upload(new ReadOnlySpan<byte>());
         }
 
         public void SubresourceTransition(ERenderSubresourceState newState)
