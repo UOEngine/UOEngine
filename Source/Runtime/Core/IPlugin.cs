@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Microsoft.Extensions.DependencyInjection;
+using System.Diagnostics.CodeAnalysis;
 
-namespace ClassicUO2.Engine
+namespace UOEngine.Runtime.Core
 {
     public abstract class IPlugin
     {
-        abstract public void Initialise();
+        abstract public void Initialise(IServiceProvider services);
     }
 }

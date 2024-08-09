@@ -28,6 +28,16 @@ namespace UOEngine.Runtime.Rendering
             _vk.CmdCopyBufferToImage(_commandBuffer, buffer, image, ImageLayout.TransferDstOptimal, regionCount, ref bufferImageCopy);
         }
 
+        public void BindIndexBuffer(RenderBuffer buffer)
+        {
+            _vk.CmdBindIndexBuffer(_commandBuffer, buffer.DeviceBuffer, 0, IndexType.Uint16);
+        }
+
+        public void BindVertexBuffer(RenderBuffer buffer)
+        {
+            //_vk.CmdBindVertexBuffers(_commandBuffer, 0, 0, ref buffer.DeviceBuffer, 0);
+        }
+
         public void PipelineBarrier(PipelineStageFlags sourceStage, PipelineStageFlags destinationStage, ImageMemoryBarrier imageMemoryBarrier)
         {
             unsafe

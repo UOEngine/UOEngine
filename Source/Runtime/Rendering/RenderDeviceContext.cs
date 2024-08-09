@@ -1,17 +1,16 @@
 ﻿using Silk.NET.Vulkan;
-using UOEngine.Runtime.Core;
 using System.Diagnostics;
 
 namespace UOEngine.Runtime.Rendering
 {
-    public class RenderDeviceContext: ITickable
+    public class RenderDeviceContext
     {
         public RenderDeviceContext()
         {
             _vk = Vk.GetApi();
         }
 
-        public void Tick(float deltaSeconds)
+        public void Tick()
         {
             RenderDevice!.OnFrameBegin();
 

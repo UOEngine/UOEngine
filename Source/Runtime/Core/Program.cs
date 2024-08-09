@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Hosting;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using Thread = System.Threading.Thread;
 
 namespace UOEngine.Runtime.Core
 {
@@ -40,24 +41,23 @@ namespace UOEngine.Runtime.Core
             Initialise();
 
             builder.Services.AddSingleton<GameLoop>();
+            builder.Services.AddSingleton<Input>();
 
             using IHost host = builder.Build();
+
+            foreach (var pluginType in _pluginTypes)
+            {
+                var plugin = host.Services.GetService(pluginType) as IPlugin;
+
+                plugin!.Initialise(host.Services);
+            }
 
             OnServicesCreated(host.Services);
 
             // ----------------
 
             var eventLoop = host.Services.GetRequiredService<GameLoop>();
-            var tickableServices = new List<ITickable>();
-
-            foreach (var tickableServiceType in tickableServiceTypes)
-            {
-                var service = host.Services.GetRequiredService(tickableServiceType) as ITickable;
-
-                Debug.Assert(service != null);
-
-                tickableServices.Add(service);
-            }
+            var input = host.Services.GetRequiredService<Input>();
 
             while (Running)
             {
@@ -65,12 +65,10 @@ namespace UOEngine.Runtime.Core
 
                 Thread.Sleep((int)(deltaSeconds * 1000.0f));
 
-                eventLoop.OnFrameStarted(deltaSeconds);
+                input.Tick(deltaSeconds);
 
-                foreach(var tickable in tickableServices)
-                {
-                    tickable.Tick(deltaSeconds);
-                }
+                eventLoop.OnFrameStarted(deltaSeconds);
+                eventLoop.OnFrameEnded(deltaSeconds);
             }
 
             Shutdown(host.Services);
@@ -80,17 +78,25 @@ namespace UOEngine.Runtime.Core
 
         protected void RegisterService<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>() where T: class
         {
-            serviceCollection?.AddSingleton<T>();
+            serviceCollection!.AddSingleton<T>();
 
-            if(typeof(ITickable).IsAssignableFrom(typeof(T)))
-            {
-                tickableServiceTypes.Add(typeof(T));
-            }
+            //if(typeof(ITickable).IsAssignableFrom(typeof(T)))
+            //{
+            //    tickableServiceTypes.Add(typeof(T));
+            //}
+        }
+
+        protected void RegisterPlugin<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]  T>() where T: IPlugin, new()
+        {
+            _pluginTypes.Add(typeof(T));
+
+            serviceCollection!.AddSingleton<T>();
         }
 
         public bool                 Running { get; set; }
 
         private IServiceCollection? serviceCollection;
-        private List<Type>          tickableServiceTypes = [];
+
+        private List<Type>          _pluginTypes = [];
     }
 }

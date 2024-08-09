@@ -17,11 +17,10 @@ namespace UOEngine.Apps.Client
 
         protected override bool Initialise()
         {
-           RegisterService<Input>();
-           RegisterService<Window>();
-           RegisterService<RenderDevice>();
-           RegisterService<RenderDeviceContext>();
-           RegisterService<UOAssetLoader>();
+            RegisterService<Input>();
+            RegisterService<Window>();
+            RegisterService<UOAssetLoader>();
+            RegisterPlugin<Renderer>();
 
             return true;
         }
@@ -40,13 +39,13 @@ namespace UOEngine.Apps.Client
 
             input.Initialise(window.GetHandle());
 
-            var renderDevice = serviceProvider.GetRequiredService<RenderDevice>();
+            var renderer = serviceProvider.GetRequiredService<Renderer>();
 
-            renderDevice.SwapchainDirty += (s, e) => renderDevice.SetSurfaceSize(window.Width, window.Height);
+            renderer.Device.SwapchainDirty += (s, e) => renderer.Device.SetSurfaceSize(window.Width, window.Height);
 
-            renderDevice.Initialise(window.GetSurface(), window.Width, window.Height, bEnableValidationLayers);
+            renderer.Device.Initialise(window.GetSurface(), window.Width, window.Height, bEnableValidationLayers);
 
-            int shaderId = renderDevice.RegisterShader<SimpleShader>();
+            int shaderId = renderer.Device.RegisterShader<SimpleShader>();
 
             // Fixed dir for now.
             var assetLoader = serviceProvider.GetRequiredService<UOAssetLoader>();
@@ -61,19 +60,17 @@ namespace UOEngine.Apps.Client
             description.Height = loginBackgroundBitmap.Height;
             description.Format = ERenderTextureFormat.A1R5G5B5;
 
-            var backgroundTexture = renderDevice.CreateTexture2D(description);
+            var backgroundTexture = renderer.Device.CreateTexture2D(description);
 
             backgroundTexture.Upload(loginBackgroundBitmap.Texels);
 
             ushort[] quadIndices =  [0, 1, 2, 2, 3, 0];
 
-            RenderBuffer indexBuffer = renderDevice.CreateRenderBuffer(quadIndices, ERenderBufferType.Index);
+            RenderBuffer indexBuffer = renderer.Device.CreateRenderBuffer(quadIndices, ERenderBufferType.Index);
 
-            var renderdeviceContext = serviceProvider.GetRequiredService<RenderDeviceContext>();
-
-            renderdeviceContext.SetIndexBuffer(indexBuffer);
-            renderdeviceContext.SetShader(shaderId);
-            renderdeviceContext.SetTexture(0, backgroundTexture);
+            renderer.Context.SetIndexBuffer(indexBuffer);
+            renderer.Context.SetShader(shaderId);
+            renderer.Context.SetTexture(0, backgroundTexture);
 
         }
 

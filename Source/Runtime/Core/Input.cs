@@ -12,7 +12,7 @@ namespace UOEngine.Runtime.Core
         Quit
     }
 
-    public class Input: ITickable
+    public class Input
     {
         public event MouseMovedEventHandler? MouseMovedEvent;
 

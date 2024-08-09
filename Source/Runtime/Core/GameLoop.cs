@@ -3,18 +3,21 @@ namespace UOEngine.Runtime.Core
 {
     public class GameLoop
     {
-        public class FrameStartedArgs
-        {
-            public float DeltaSeconds;
-        }
-
         internal void OnFrameStarted(float  deltaSeconds)
         {
-            FrameStarted?.Invoke(this, new FrameStartedArgs { DeltaSeconds = deltaSeconds});
+            FrameStarted?.Invoke(deltaSeconds);
         }
 
-        public event FrameStartedEventHandler? FrameStarted;
+        internal void OnFrameEnded(float deltaSeconds)
+        {
+            FrameEnded?.Invoke(deltaSeconds);
+        }
 
-        public delegate void FrameStartedEventHandler(object sender, FrameStartedArgs e);
+        public event FrameStartedEventHandler?  FrameStarted;
+        public delegate void                    FrameStartedEventHandler(float deltaSeconds);
+
+        public event FrameStartedEventHandler?  FrameEnded;
+        public delegate void                    FrameEndedEventHandler(float deltaSeconds);
+
     }
 }

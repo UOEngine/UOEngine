@@ -53,8 +53,7 @@ namespace UOEngine.Runtime.Rendering
                     break;
 
                 default:
-                    Debug.Assert(false);
-                    break;
+                    throw new Exception($"RenderTexture2D: Format {description.Format} not added in constructor.");
             }
 
             ImageCreateInfo imageCreateInfo = new()

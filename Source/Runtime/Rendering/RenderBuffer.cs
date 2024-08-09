@@ -1,6 +1,7 @@
 ﻿using Silk.NET.SDL;
 using Silk.NET.Vulkan;
 using System;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.Runtime.CompilerServices;
@@ -40,12 +41,23 @@ namespace UOEngine.Runtime.Rendering
 
             _deviceBufferUsage = BufferUsageFlags.None;
 
-            if(bufferType == ERenderBufferType.Index)
+            switch(bufferType)
             {
-                _deviceBufferUsage = BufferUsageFlags.IndexBufferBit;
-            }
+                case ERenderBufferType.Vertex:
+                    {
+                        _deviceBufferUsage = BufferUsageFlags.VertexBufferBit;
+                    }
+                    break;
 
-            Debug.Assert(_deviceBufferUsage != BufferUsageFlags.None);
+                case ERenderBufferType.Index:
+                    {
+                        _deviceBufferUsage = BufferUsageFlags.IndexBufferBit;
+                    }
+                    break;
+
+                default:
+                    throw new NotSupportedException();  
+            }
         }
 
         public unsafe void CopyToDevice<T>(ReadOnlySpan<T> uploadData)
@@ -75,6 +87,11 @@ namespace UOEngine.Runtime.Rendering
 
                 commandBuffer.CopyBuffer(_stagingBuffer, _deviceBuffer, copyRegion);
             }
+        }
+
+        private void CopyToDeviceInternal()
+        {
+
         }
    
         private unsafe void CreateBuffer(ulong size, BufferUsageFlags usage, MemoryPropertyFlags properties, out Buffer buffer, out DeviceMemory bufferMemory)

@@ -1,10 +1,11 @@
 ﻿using UOEngine.Runtime.Core;
+using UOEngine.Runtime.Rendering;
 using UOEngine.Apps.Client;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace UOEngine.Apps.Editor
 {
-    internal class UOEngineEditor: Program
+    internal class UOEngineEditor : ClientProgram
     {
         static void Main(string[] args)
         {
@@ -15,7 +16,8 @@ namespace UOEngine.Apps.Editor
 
         protected override bool Initialise()
         {
-            RegisterService<ClientProgram>();
+            base.Initialise();
+
             RegisterService<UOEngineImGui>();
 
             return true;
@@ -23,6 +25,9 @@ namespace UOEngine.Apps.Editor
 
         protected override void OnServicesCreated(IServiceProvider serviceProvider)
         {
+            base.OnServicesCreated(serviceProvider);
+
             serviceProvider.GetRequiredService<UOEngineImGui>().Initialise();
         }
+    }
 }

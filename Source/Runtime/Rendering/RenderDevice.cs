@@ -394,6 +394,13 @@ namespace UOEngine.Runtime.Rendering
             return new RenderTexture2D(description, this);
         }
 
+        public RenderBuffer CreateRenderBuffer(uint size, ERenderBufferType usageFlags)
+        {
+            var renderBuffer = new RenderBuffer(usageFlags, this);
+
+            return renderBuffer;
+        }
+
         public RenderBuffer CreateRenderBuffer<T>(T[] data, ERenderBufferType usageFlags)
         {
             var renderBuffer = new RenderBuffer(usageFlags, this);
