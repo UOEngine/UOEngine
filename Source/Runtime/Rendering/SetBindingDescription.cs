@@ -1,7 +1,7 @@
 ﻿
 namespace UOEngine.Runtime.Rendering
 {
-    public enum EShaderType
+    public enum EShaderStage
     {
         None,
         Vertex,
@@ -12,7 +12,7 @@ namespace UOEngine.Runtime.Rendering
         public EDescriptorType DescriptorType = EDescriptorType.None;
         public uint Binding = uint.MaxValue;
         public uint Layout = uint.MaxValue;
-        public EShaderType ShaderType = EShaderType.None;
+        public EShaderStage ShaderStage = EShaderStage.None;
 
         public SetBindingDescription()
         {

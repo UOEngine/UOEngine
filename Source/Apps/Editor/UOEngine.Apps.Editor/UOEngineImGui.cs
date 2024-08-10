@@ -33,6 +33,8 @@ namespace UOEngine.Apps.Editor
             _vertexBuffer = _renderDevice.CreateRenderBuffer(0, ERenderBufferType.Vertex);
             _indexBuffer = _renderDevice.CreateRenderBuffer(0, ERenderBufferType.Index);
 
+            _imguiShaderId = _renderDevice.RegisterShader<ImGuiShader>();
+
             ImGuiIOPtr io = ImGui.GetIO();
 
             io.Fonts.GetTexDataAsRGBA32(out IntPtr pixels, out var width, out var height, out var bytesPerPixel);
@@ -79,16 +81,16 @@ namespace UOEngine.Apps.Editor
 
             var drawData = ImGui.GetDrawData();
 
-            uint newVertexBufferSize = (uint)(drawData.TotalVtxCount * Unsafe.SizeOf<ImDrawVert>());
-
             if((drawData.DisplaySize.X <= 0.0f) || (drawData.DisplaySize.Y <= 0.0f))
             {
                 return;
             }
 
+            uint newVertexBufferSize = (uint)(drawData.TotalVtxCount * Unsafe.SizeOf<ImDrawVert>());
+
             // TODO - free the buffers
 
-            if(newVertexBufferSize > _vertexBuffer!.Length)
+            if (newVertexBufferSize > _vertexBuffer!.Length)
             {
                 _verts = new ImDrawVert[newVertexBufferSize];
                 _vertexBuffer = _renderDevice.CreateRenderBuffer(newVertexBufferSize, ERenderBufferType.Vertex);
@@ -116,7 +118,7 @@ namespace UOEngine.Apps.Editor
                     uv = cmdList.VtxBuffer[n].uv
                 };
 
-                //_indices[vertexOffsetInVertices++]
+                _indices[vertexOffsetInVertices++] = cmdList.IdxBuffer[n];
 
                 vertexOffsetInVertices += (uint)cmdList.VtxBuffer.Size;
                 indexOffsetInElements += (uint)cmdList.IdxBuffer.Size;
@@ -129,6 +131,7 @@ namespace UOEngine.Apps.Editor
 
             commandList!.BindVertexBuffer(_vertexBuffer);
             commandList.BindIndexBuffer(_indexBuffer);
+            commandList.BindShader(_imguiShaderId);
 
             for (int n = 0; n < drawData.CmdListsCount; n++)
             {
@@ -143,7 +146,7 @@ namespace UOEngine.Apps.Editor
                         continue;
                     }
 
-                    // commandList.DrawIndexed(cmdList.VtxBuffer.Size);
+                    commandList.DrawIndexed(0, 0);
                 }
             }
         }
@@ -165,6 +168,8 @@ namespace UOEngine.Apps.Editor
 
         private ImDrawVert[]            _verts = [];
         private ushort[]                _indices = [];
+
+        private int                     _imguiShaderId = 0xFF;       
 
     }
 }

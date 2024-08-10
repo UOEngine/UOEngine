@@ -19,6 +19,10 @@ namespace UOEngine.Runtime.Rendering
         {
             this.renderDeviceContext = renderDeviceContext;
             renderDeviceContext.RenderDevice = this;
+
+            AddVertexFormat(EVertexFormat.R32G32SignedFloat, Format.R32G32Sfloat);
+            AddVertexFormat(EVertexFormat.R32G32B32A32SignedFloat, Format.R32G32B32A32Sfloat);
+
         }
 
         public unsafe void Initialise(IVkSurface? surface, uint width, uint height, bool bEnableValidationLayers)
@@ -789,7 +793,7 @@ namespace UOEngine.Runtime.Rendering
 
         private unsafe void CreateDescriptorSetLayout2(SetBindingDescription descriptor)
         {
-            Debug.Assert(descriptor.ShaderType != EShaderType.None);
+            Debug.Assert(descriptor.ShaderStage != EShaderStage.None);
             Debug.Assert(descriptor.DescriptorType != EDescriptorType.None);
 
             int descriptorHash = descriptor.GetHashCode();
@@ -805,7 +809,7 @@ namespace UOEngine.Runtime.Rendering
                 DescriptorCount = 1,
                 DescriptorType = GetVulkanDescriptorType(descriptor.DescriptorType),
                 PImmutableSamplers = null,
-                StageFlags = descriptor.ShaderType == EShaderType.Vertex? ShaderStageFlags.VertexBit : ShaderStageFlags.FragmentBit,
+                StageFlags = descriptor.ShaderStage == EShaderStage.Vertex? ShaderStageFlags.VertexBit : ShaderStageFlags.FragmentBit,
                 
             };
 
@@ -905,14 +909,53 @@ namespace UOEngine.Runtime.Rendering
             {
                 vertShaderStageInfo,
                 fragShaderStageInfo
-             };
+            };
+
+            var vertexInputBindingDescriptions = stackalloc VertexInputBindingDescription[shader.VertexBindingDescriptions.Count];
+
+            int i = 0;
+
+            foreach (var bindingDescription in shader.VertexBindingDescriptions)
+            {
+                vertexInputBindingDescriptions[i++] = new()
+                {
+                    Binding = bindingDescription.Binding,
+                    Stride = bindingDescription.Stride,
+                    InputRate = VertexInputRate.Vertex
+                };
+            }
+
+            var vertexAttributeDescriptions = stackalloc VertexInputAttributeDescription[shader.VertexAttributeDescriptions.Count];
+
+            i = 0;
+
+            foreach(var attribute in shader.VertexAttributeDescriptions)
+            {
+                vertexAttributeDescriptions[i++] = new()
+                {
+                    Binding = attribute.Binding,
+                    Location = attribute.Location,
+                    Format = _vertexFormats[(int)attribute.VertexFormat],
+                    Offset = (uint)attribute.Offset
+                };
+            }
 
             PipelineVertexInputStateCreateInfo vertexInputInfo = new()
             {
                 SType = StructureType.PipelineVertexInputStateCreateInfo,
-                VertexBindingDescriptionCount = 0,
-                VertexAttributeDescriptionCount = 0,
+                VertexBindingDescriptionCount = (uint)shader.VertexBindingDescriptions.Count,
+                VertexAttributeDescriptionCount = (uint)shader.VertexAttributeDescriptions.Count
             };
+
+            if(shader.VertexBindingDescriptions.Count > 0)
+            {
+                vertexInputInfo.PVertexBindingDescriptions = vertexInputBindingDescriptions;
+            }
+
+            if(shader.VertexAttributeDescriptions.Count > 0)
+            {
+                vertexInputInfo.PVertexAttributeDescriptions = vertexAttributeDescriptions;
+            }
 
             PipelineInputAssemblyStateCreateInfo inputAssembly = new()
             {
@@ -998,7 +1041,7 @@ namespace UOEngine.Runtime.Rendering
                     DescriptorCount = 1,
                     DescriptorType = GetVulkanDescriptorType(descriptorSet.DescriptorType),
                     PImmutableSamplers = null,
-                    StageFlags = descriptorSet.ShaderType == EShaderType.Vertex ? ShaderStageFlags.VertexBit : ShaderStageFlags.FragmentBit,
+                    StageFlags = descriptorSet.ShaderStage == EShaderStage.Vertex ? ShaderStageFlags.VertexBit : ShaderStageFlags.FragmentBit,
                 };
 
                 descriptorSetLayoutBindings[numBindings] = layoutBinding;
@@ -1010,28 +1053,39 @@ namespace UOEngine.Runtime.Rendering
             {
                 SType = StructureType.DescriptorSetLayoutCreateInfo,
                 BindingCount = (uint)numDescriptors,
-                PBindings = &descriptorSetLayoutBindings[0]
+                PBindings = descriptorSetLayoutBindings
+            };
+
+            PipelineLayout pipelineLayout;
+
+            PipelineLayoutCreateInfo pipelineLayoutInfo = new()
+            {
+                SType = StructureType.PipelineLayoutCreateInfo,
+                PushConstantRangeCount = 0,
+                SetLayoutCount = (uint)numDescriptors,
             };
 
             var descriptorSetLayouts = new DescriptorSetLayout[numDescriptors];
 
-            PipelineLayout pipelineLayout;
-
-            fixed (DescriptorSetLayout* descriptorSetLayoutsPtr = &descriptorSetLayouts[0])
+            if (numDescriptors > 0)
             {
-                if (vk!.CreateDescriptorSetLayout(_dev, ref layoutInfo, null, descriptorSetLayoutsPtr) != Result.Success)
+                fixed (DescriptorSetLayout* descriptorSetLayoutsPtr = &descriptorSetLayouts[0])
                 {
-                    throw new Exception("failed to create descriptor set layout!");
+                    if (vk!.CreateDescriptorSetLayout(_dev, ref layoutInfo, null, descriptorSetLayoutsPtr) != Result.Success)
+                    {
+                        throw new Exception("failed to create descriptor set layout!");
+                    }
+
+                    pipelineLayoutInfo.PSetLayouts = descriptorSetLayoutsPtr;
+
+                    if (vk!.CreatePipelineLayout(_dev, ref pipelineLayoutInfo, null, out pipelineLayout) != Result.Success)
+                    {
+                        throw new Exception("failed to create pipeline layout!");
+                    }
                 }
-
-                PipelineLayoutCreateInfo pipelineLayoutInfo = new()
-                {
-                    SType = StructureType.PipelineLayoutCreateInfo,
-                    SetLayoutCount = (uint)numDescriptors,
-                    PushConstantRangeCount = 0,
-                    PSetLayouts = descriptorSetLayoutsPtr
-                };
-
+            }
+            else
+            {
                 if (vk!.CreatePipelineLayout(_dev, ref pipelineLayoutInfo, null, out pipelineLayout) != Result.Success)
                 {
                     throw new Exception("failed to create pipeline layout!");
@@ -1058,8 +1112,8 @@ namespace UOEngine.Runtime.Rendering
                 PRasterizationState = &rasterizer,
                 PMultisampleState = &multisampling,
                 PColorBlendState = &colorBlending,
-                Layout = pipelineLayout,
                 RenderPass = renderPass,
+                Layout = pipelineLayout,
                 PDynamicState = &dynamicStateCreateInfo,
                 Subpass = 0,
                 BasePipelineHandle = default
@@ -1083,7 +1137,7 @@ namespace UOEngine.Runtime.Rendering
 
             _pipelineStateObjectDescriptions[pipelineIndex] = p;
 
-            pipelineIndex++;
+            _currentNumPipelines++;
         }
 
         private unsafe void CreateRenderPass()
@@ -1507,9 +1561,17 @@ namespace UOEngine.Runtime.Rendering
             {
                 case EDescriptorType.CombinedSampler:
                     return DescriptorType.CombinedImageSampler;
+
+                case EDescriptorType.UniformBuffer:
+                    return DescriptorType.UniformBuffer;
             }
 
             throw new Exception("Can not convert to vulkan descriptor type");
+        }
+
+        private void AddVertexFormat(EVertexFormat vertexFormat, Format vulkanFormat)
+        {
+            _vertexFormats[(int)vertexFormat] = vulkanFormat;
         }
 
         struct QueueFamilyIndices
@@ -1593,6 +1655,6 @@ namespace UOEngine.Runtime.Rendering
         
         private Dictionary<int, Shader>                 _shaders = [];
 
-
+        private Format[]                                _vertexFormats = new Format[(int)Format.Astc12x12SrgbBlock];
     }
 }

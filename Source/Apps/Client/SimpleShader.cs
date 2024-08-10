@@ -7,13 +7,13 @@ namespace UOEngine.Apps.Client
         public SimpleShader()
         {
             Name = "Simple";
-            _vertexShaderName = "vert.spv";
-            _fragmentShaderName = "frag.spv";
+            VertexShaderName = "simple.vert.spv";
+            FragmentShaderName = "simple.frag.spv";
 
             var uoImage = new SetBindingDescription
             {
                 DescriptorType = EDescriptorType.CombinedSampler,
-                ShaderType = EShaderType.Fragment,
+                ShaderStage = EShaderStage.Fragment,
                 Binding = 0,
                 Layout = 0
             };

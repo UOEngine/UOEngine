@@ -10,6 +10,7 @@ namespace UOEngine.Runtime.Rendering
     {
         None,
         Sampler,
-        CombinedSampler
+        CombinedSampler,
+        UniformBuffer
     }
 }

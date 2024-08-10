@@ -19,6 +19,10 @@ namespace UOEngine.Runtime.Rendering
             var gameLoop = services.GetRequiredService<GameLoop>();
 
             gameLoop.FrameEnded += OnFrameEnd;
+
+            var shaderCompiler = new ShaderCompiler();
+
+            shaderCompiler.Compile(Paths.Intermediate + "/Shaders");
         }
 
         public void OnFrameEnd(float deltaSeconds)

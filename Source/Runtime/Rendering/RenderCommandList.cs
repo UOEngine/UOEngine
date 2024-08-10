@@ -51,9 +51,26 @@ namespace UOEngine.Runtime.Rendering
             _vk.CmdDrawIndexed(_commandBuffer, indexCount, instanceCount, 0, 0, 0);
         }
 
+        public void BindShader(Shader shader)
+        {
+            BindShader(shader.GetHashCode());
+        }
+
+        public void BindShader(int shaderId)
+        {
+            _currentShaderId = shaderId;
+
+            PipelineStateObjectDescription pso = _renderDevice.GetPipelineStateObjectDescription(shaderId);
+
+            _vk.CmdBindPipeline(_commandBuffer, PipelineBindPoint.Graphics, pso.PSO);
+        }
+
         private CommandBuffer           _commandBuffer;
         private readonly RenderDevice   _renderDevice;
         private readonly Vk             _vk;
+
+        private int                     _currentShaderId;
+
 
     }
 }
