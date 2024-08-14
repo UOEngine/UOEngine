@@ -14,12 +14,12 @@ namespace UOEngine.Apps.Editor
         public UOEngineImGui(Input input, Renderer renderer, GameLoop gameLoop, Window window) 
         {
             _input = input;
-            _renderDeviceContext = renderer.Context;
+            //_renderDeviceContext = renderer.Context;
             _renderDevice = renderer.Device;
             _window = window;
 
-            gameLoop.FrameStarted += OnFrameStart;
-            renderer.FrameEnd += OnFrameEnd;
+            //gameLoop.FrameStarted += OnFrameStart;
+            //renderer.FrameEnd += OnFrameEnd;
         }
 
         public void Initialise()
@@ -86,6 +86,11 @@ namespace UOEngine.Apps.Editor
                 return;
             }
 
+            if((drawData.TotalVtxCount) == 0 || (drawData.TotalIdxCount == 0))
+            {
+                return;
+            }
+
             uint newVertexBufferSize = (uint)(drawData.TotalVtxCount * Unsafe.SizeOf<ImDrawVert>());
 
             // TODO - free the buffers
@@ -127,7 +132,7 @@ namespace UOEngine.Apps.Editor
             _vertexBuffer.CopyToDevice<ImDrawVert>(_verts);
             _indexBuffer.CopyToDevice<ushort>(_indices);
 
-            var commandList = _renderDeviceContext.ImmediateCommandList;
+            var commandList = _renderDevice.ImmediateCommandList;
 
             commandList!.BindVertexBuffer(_vertexBuffer);
             commandList.BindIndexBuffer(_indexBuffer);
@@ -156,7 +161,6 @@ namespace UOEngine.Apps.Editor
         }
 
         private Input                   _input;
-        private RenderDeviceContext     _renderDeviceContext;
         private RenderDevice            _renderDevice;
         private Window                  _window;
 

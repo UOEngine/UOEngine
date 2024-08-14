@@ -5,145 +5,147 @@ namespace UOEngine.Runtime.Rendering
 {
     public class RenderDeviceContext
     {
-        public RenderDeviceContext()
-        {
-            _vk = Vk.GetApi();
-        }
+        //public RenderDeviceContext()
+        //{
+        //    _vk = Vk.GetApi();
+        //}
 
-        public void Tick()
-        {
-            RenderDevice!.OnFrameBegin();
+        //public void Tick()
+        //{
+        //    RenderDevice!.OnFrameBegin();
 
-            RenderDevice.BeginRenderPass();
+        //    ImmediateCommandList = RenderDevice.CurrentCommandBuffer;
 
-            if (_bindIndexBuffer)
-            {
-                _vk.CmdBindIndexBuffer(RenderDevice.CurrentCommandBuffer, _indexBuffer!.DeviceBuffer, 0, IndexType.Uint16);
-            }
+        //    RenderDevice.BeginRenderPass();
 
-            BindShader();
+        //    if (_bindIndexBuffer)
+        //    {
+        //        _vk.CmdBindIndexBuffer(RenderDevice.CurrentCommandBuffer, _indexBuffer!.DeviceBuffer, 0, IndexType.Uint16);
+        //    }
 
-            _vk.CmdDrawIndexed(RenderDevice.CurrentCommandBuffer, _indexBuffer!.Length, 1, 0, 0, 0);
+        //    BindShader();
 
-            RenderDevice.EndRenderPass();
+        //    _vk.CmdDrawIndexed(RenderDevice.CurrentCommandBuffer, _indexBuffer!.Length, 1, 0, 0, 0);
 
-            RenderDevice.Submit();
-        }
+        //    RenderDevice.EndRenderPass();
 
-        public void SetIndexBuffer(RenderBuffer indexBuffer)
-        {
-            if(indexBuffer != null)
-            {
-                _bindIndexBuffer = true;
-                _indexBuffer = indexBuffer;
+        //    RenderDevice.Submit();
+        //}
 
-                return;
-            }
+        //public void SetIndexBuffer(RenderBuffer indexBuffer)
+        //{
+        //    if(indexBuffer != null)
+        //    {
+        //        _bindIndexBuffer = true;
+        //        _indexBuffer = indexBuffer;
 
-            _bindIndexBuffer = false;
-            _indexBuffer = null;
-        }
+        //        return;
+        //    }
 
-        public void SetTexture(int slot, RenderTexture2D texture)
-        { 
-            _renderTextures[slot] = texture;
-        }
+        //    _bindIndexBuffer = false;
+        //    _indexBuffer = null;
+        //}
 
-        public void SetShader(int shaderId)
-        {
-            if(shaderId == _currentShaderId)
-            {
-                return;
-            }
+        //public void SetTexture(int slot, RenderTexture2D texture)
+        //{ 
+        //    _renderTextures[slot] = texture;
+        //}
 
-            _currentShaderId = shaderId;
-            _shaderDirty = true;
+        //public void SetShader(int shaderId)
+        //{
+        //    if(shaderId == _currentShaderId)
+        //    {
+        //        return;
+        //    }
 
-        }
+        //    _currentShaderId = shaderId;
+        //    _shaderDirty = true;
 
-        private unsafe void BindShader()
-        {
-            PipelineStateObjectDescription pso = RenderDevice!.GetPipelineStateObjectDescription(_currentShaderId);
+        //}
 
-            _vk.CmdBindPipeline(RenderDevice.CurrentCommandBuffer, PipelineBindPoint.Graphics, pso.PSO);
+        //private unsafe void BindShader()
+        //{
+        //    PipelineStateObjectDescription pso = RenderDevice!.GetPipelineStateObjectDescription(_currentShaderId);
 
-            if(_shaderDirty)
-            {
-                RenderDevice.AllocateDescriptorSets(pso.DescriptorSetLayouts, out _descriptorSets);
+        //    _vk.CmdBindPipeline(RenderDevice.CurrentCommandBuffer, PipelineBindPoint.Graphics, pso.PSO);
 
-                const int maxDescriptorImageInfos = 4;
-                int numDescriptorImageInfos = 0;
-                var descriptorImageInfos = stackalloc DescriptorImageInfo[maxDescriptorImageInfos];
+        //    if(_shaderDirty)
+        //    {
+        //        RenderDevice.AllocateDescriptorSets(pso.DescriptorSetLayouts, out _descriptorSets);
 
-                Span<WriteDescriptorSet> descriptorWrites = stackalloc WriteDescriptorSet[_descriptorSets.Length];
+        //        const int maxDescriptorImageInfos = 4;
+        //        int numDescriptorImageInfos = 0;
+        //        var descriptorImageInfos = stackalloc DescriptorImageInfo[maxDescriptorImageInfos];
 
-                int numUpdated = 0;
+        //        Span<WriteDescriptorSet> descriptorWrites = stackalloc WriteDescriptorSet[_descriptorSets.Length];
 
-                foreach (var bindingDescription in pso.BindingDescriptions)
-                {
-                    WriteDescriptorSet writeDescriptorSet = new WriteDescriptorSet();
+        //        int numUpdated = 0;
 
-                    writeDescriptorSet.DstBinding = bindingDescription.Binding;
-                    writeDescriptorSet.SType = StructureType.WriteDescriptorSet;
-                    writeDescriptorSet.DescriptorCount = 1;
-                    writeDescriptorSet.DstSet = _descriptorSets[numUpdated];
+        //        foreach (var bindingDescription in pso.BindingDescriptions)
+        //        {
+        //            WriteDescriptorSet writeDescriptorSet = new WriteDescriptorSet();
 
-                    switch (bindingDescription.DescriptorType)
-                    {
-                        case EDescriptorType.CombinedSampler:
-                            {
-                                DescriptorImageInfo imageInfo = descriptorImageInfos[numDescriptorImageInfos];
+        //            writeDescriptorSet.DstBinding = bindingDescription.Binding;
+        //            writeDescriptorSet.SType = StructureType.WriteDescriptorSet;
+        //            writeDescriptorSet.DescriptorCount = 1;
+        //            writeDescriptorSet.DstSet = _descriptorSets[numUpdated];
 
-                                imageInfo.ImageLayout = ImageLayout.ShaderReadOnlyOptimal;
+        //            switch (bindingDescription.DescriptorType)
+        //            {
+        //                case EDescriptorType.CombinedSampler:
+        //                    {
+        //                        DescriptorImageInfo imageInfo = descriptorImageInfos[numDescriptorImageInfos];
 
-                                imageInfo.ImageView = _renderTextures[bindingDescription.Binding]._imageView;
-                                imageInfo.Sampler = RenderDevice.TextureSampler;
+        //                        imageInfo.ImageLayout = ImageLayout.ShaderReadOnlyOptimal;
 
-                                descriptorImageInfos[numDescriptorImageInfos] = imageInfo;
+        //                        imageInfo.ImageView = _renderTextures[bindingDescription.Binding]._imageView;
+        //                        imageInfo.Sampler = RenderDevice.TextureSampler;
 
-                                writeDescriptorSet.DescriptorType = DescriptorType.CombinedImageSampler;
-                                writeDescriptorSet.PImageInfo = &descriptorImageInfos[numDescriptorImageInfos];
+        //                        descriptorImageInfos[numDescriptorImageInfos] = imageInfo;
 
-                                numDescriptorImageInfos++;
-                            }
-                            break;
+        //                        writeDescriptorSet.DescriptorType = DescriptorType.CombinedImageSampler;
+        //                        writeDescriptorSet.PImageInfo = &descriptorImageInfos[numDescriptorImageInfos];
 
-                        default:
-                            {
-                                Debug.Assert(false);
-                            }
-                            break;
-                    }
+        //                        numDescriptorImageInfos++;
+        //                    }
+        //                    break;
 
-                    descriptorWrites[numUpdated++] = writeDescriptorSet;
-                }
+        //                default:
+        //                    {
+        //                        Debug.Assert(false);
+        //                    }
+        //                    break;
+        //            }
 
-                _vk.UpdateDescriptorSets(RenderDevice.Device, (uint)numUpdated, descriptorWrites, 0, []);
+        //            descriptorWrites[numUpdated++] = writeDescriptorSet;
+        //        }
 
-                _shaderDirty = false;
-            }
+        //        _vk.UpdateDescriptorSets(RenderDevice.Device, (uint)numUpdated, descriptorWrites, 0, []);
+
+        //        _shaderDirty = false;
+        //    }
 
 
-            _vk.CmdBindDescriptorSets(RenderDevice.CurrentCommandBuffer, PipelineBindPoint.Graphics, pso.Layout, 0, _descriptorSets, null);
+        //    _vk.CmdBindDescriptorSets(RenderDevice.CurrentCommandBuffer, PipelineBindPoint.Graphics, pso.Layout, 0, _descriptorSets, null);
 
-        }
+        //}
 
-        public RenderDevice?                 RenderDevice;
+        //public RenderDevice?                 RenderDevice;
 
-        public RenderCommandListImmediate?   ImmediateCommandList { get; private set; }   
+        //public RenderCommandListImmediate?   ImmediateCommandList { get; private set; }   
                                              
-        public int                           ShaderHash { get; set; }
+        //public int                           ShaderHash { get; set; }
                                              
-        private int                          _currentShaderId;
-        private bool                         _shaderDirty = true;     
+        //private int                          _currentShaderId;
+        //private bool                         _shaderDirty = true;     
                                              
-        public RenderBuffer?                 IndexBuffer { get; set; }
+        //public RenderBuffer?                 IndexBuffer { get; set; }
                                              
-        private readonly Vk                  _vk;
-        private RenderBuffer?                _indexBuffer;
-        private bool                         _bindIndexBuffer = false;
-        private readonly RenderTexture2D[]   _renderTextures = new RenderTexture2D[2];
+        //private readonly Vk                  _vk;
+        //private RenderBuffer?                _indexBuffer;
+        //private bool                         _bindIndexBuffer = false;
+        //private readonly RenderTexture2D[]   _renderTextures = new RenderTexture2D[2];
 
-        private DescriptorSet[]?             _descriptorSets;
+        //private DescriptorSet[]?             _descriptorSets;
     }
 }

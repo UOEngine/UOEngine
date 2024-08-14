@@ -28,7 +28,7 @@ namespace UOEngine.Apps.Client
         protected override void OnServicesCreated(IServiceProvider serviceProvider)
         {
             bool bEnableValidationLayers = false;
-            
+
             bEnableValidationLayers = true;
 
             var window = serviceProvider.GetRequiredService<Window>();
@@ -41,9 +41,19 @@ namespace UOEngine.Apps.Client
 
             var renderer = serviceProvider.GetRequiredService<Renderer>();
 
-            renderer.Device.SwapchainDirty += (s, e) => renderer.Device.SetSurfaceSize(window.Width, window.Height);
+            string[] extensions;
 
-            renderer.Device.Initialise(window.GetSurface(), window.Width, window.Height, bEnableValidationLayers);
+            unsafe
+            {
+                var glfwExtensions = window.GetSurface()!.GetRequiredExtensions(out var glfwExtensionCount);
+
+                extensions = Renderer.PtrToStringArray((nint)glfwExtensions, (int)glfwExtensionCount);
+            }
+            
+            renderer.Initialise(serviceProvider);
+
+            renderer.Device.Initialise(extensions, bEnableValidationLayers);
+            var viewport = renderer.CreateViewport(window.GetSurface(), window.Width, window.Height);
 
             int shaderId = renderer.Device.RegisterShader<SimpleShader>();
 
@@ -68,10 +78,12 @@ namespace UOEngine.Apps.Client
 
             RenderBuffer indexBuffer = renderer.Device.CreateRenderBuffer(quadIndices, ERenderBufferType.Index);
 
-            renderer.Context.SetIndexBuffer(indexBuffer);
-            renderer.Context.SetShader(shaderId);
-            renderer.Context.SetTexture(0, backgroundTexture);
-
+            viewport.Rendering += (commandList) =>
+            {
+                commandList!.BindIndexBuffer(indexBuffer);
+                commandList.SetTexture(backgroundTexture, 0);
+                commandList.BindShader(shaderId);
+            };
         }
 
         protected override void Shutdown(IServiceProvider serviceProvider)

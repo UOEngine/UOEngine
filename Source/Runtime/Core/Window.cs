@@ -2,6 +2,7 @@
 using Silk.NET.Maths;
 using Silk.NET.Core.Contexts;
 using Silk.NET.Input;
+using Silk.NET.SDL;
 
 namespace UOEngine.Runtime.Core
 {
@@ -19,7 +20,7 @@ namespace UOEngine.Runtime.Core
             var options = WindowOptions.DefaultVulkan with
             {
                 Size = new Vector2D<int>((int)Width, (int)Height),
-                Title = "ClassicUO2",
+                Title = "UOEngine",
             };
 
             _window = Silk.NET.Windowing.Window.Create(options);
@@ -42,6 +43,7 @@ namespace UOEngine.Runtime.Core
 
         public IVkSurface? GetSurface() => _window?.VkSurface;
 
+ 
         private IWindow? _window;
 
 

@@ -143,7 +143,7 @@ namespace UOEngine.Runtime.Rendering
 
             Vk.GetApi().UnmapMemory(_renderDevice.Device, stagingBufferMemory);
 
-            using (var commandList = _renderDevice.BeginRecording())
+            using (var commandList = _renderDevice.GetUploadCommandList())
             {
                 // buffer to image
 
@@ -189,16 +189,16 @@ namespace UOEngine.Runtime.Rendering
 
         public void SubresourceTransition(ERenderSubresourceState newState)
         {
-            using (var commandBuffer = _renderDevice.BeginRecording())
+            using (var commandList = _renderDevice.GetUploadCommandList())
             {
                 if ((_state == ERenderSubresourceState.Undefined) && (newState == ERenderSubresourceState.ShaderResource))
                 {
-                    TransitionImageLayout(commandBuffer, ImageLayout.Undefined, ImageLayout.TransferDstOptimal);
+                    TransitionImageLayout(commandList, ImageLayout.Undefined, ImageLayout.TransferDstOptimal);
                 }
             }
         }
 
-        private void TransitionImageLayout(RenderCommandList commandBuffer, ImageLayout oldLayout, ImageLayout newLayout)
+        private void TransitionImageLayout(RenderCommandList commandList, ImageLayout oldLayout, ImageLayout newLayout)
         {
             var vk = Vk.GetApi();
 
@@ -248,7 +248,7 @@ namespace UOEngine.Runtime.Rendering
                 DstAccessMask = dstAccessMask,
             };
 
-            commandBuffer.PipelineBarrier(sourceStage, destinationStage, imageMemoryBarrier);
+            commandList.PipelineBarrier(sourceStage, destinationStage, imageMemoryBarrier);
         }
 
         public ImageView                                   _imageView { get; private set; }
