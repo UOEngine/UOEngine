@@ -158,6 +158,10 @@ namespace UOEngine.Runtime.Rendering
         {
             _textures[slot] = texture;
         }
+        public void SetImageLayout()
+        {
+
+        }
 
         public void PipelineBarrier(PipelineStageFlags sourceStage, PipelineStageFlags destinationStage, ImageMemoryBarrier imageMemoryBarrier)
         {

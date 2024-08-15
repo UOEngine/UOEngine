@@ -36,7 +36,7 @@ namespace UOEngine.Runtime.Rendering
 
         public void Render()
         {
-            SwapChain.AcquireImageIndex(out var imagePresentedSemaphore);
+            uint imageIndex = SwapChain.AcquireImageIndex(out var imagePresentedSemaphore);
 
             var commandList = _renderDevice!.ImmediateCommandList;
 
@@ -45,7 +45,7 @@ namespace UOEngine.Runtime.Rendering
 
             commandList!.Begin();
 
-            commandList!.BeginRenderPass(MainRenderPass, _framebuffers![0], SwapChain.Extent);
+            commandList!.BeginRenderPass(MainRenderPass, _framebuffers![imageIndex], SwapChain.Extent);
 
             Rendering?.Invoke(commandList);
 

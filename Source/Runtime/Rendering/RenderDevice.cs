@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 using Silk.NET.Core;
@@ -9,8 +8,6 @@ using Silk.NET.Vulkan.Extensions.EXT;
 using Silk.NET.Vulkan.Extensions.KHR;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
 using Buffer = Silk.NET.Vulkan.Buffer;
-
-using UOEngine.Runtime.Rendering.Resources;
 
 namespace UOEngine.Runtime.Rendering
 {
@@ -83,10 +80,6 @@ namespace UOEngine.Runtime.Rendering
 
             PickPhysicalDevice();
             CreateLogicalDevice(bEnableValidationLayers);
-            //CreateSwapChain(width, height);
-            //CreateRenderPass();
-            //CreateImageViews();
-            //CreateFramebuffers();
             CreateCommandPool();
             CreateCommandBuffers();
             CreateSyncObjects();
@@ -172,12 +165,6 @@ namespace UOEngine.Runtime.Rendering
             return _pipelineStateObjectDescriptions[shaderId];
         }
 
-        public void SetSurfaceSize(uint width, uint height)
-        {
-            Console.WriteLine($"SetSurfaceSize: {width} {height}");
-            //surfaceWidth = width; 
-            //surfaceHeight = height;
-        }
         public void OnFrameBegin()
         {
             ImmediateCommandList = _renderCommandLists![currentFrame];
@@ -201,16 +188,6 @@ namespace UOEngine.Runtime.Rendering
 
             vk!.GetDeviceQueue(_dev, PresentQueueFamilyIndex, 0, out _presentQueue);
         }
-
-        //public unsafe void BeginRenderPass()
-        //{
-        //    ImmediateCommandList.BeginRenderPass(renderPass, _renderSwapChain.CurrentSwapChainFrameBuffer, _renderSwapChain.Extent);
-        //}
-
-        //public void EndRenderPass()
-        //{
-        //    ImmediateCommandList.EndRenderPass();
-        //}
 
         public unsafe void Submit(RenderCommandList renderCommandList)
         {
@@ -259,60 +236,6 @@ namespace UOEngine.Runtime.Rendering
         {
             vk!.DeviceWaitIdle(_dev);
         }
-
-        //public unsafe RenderCommandList BeginRecording()
-        //{
-        //    Debug.Assert(false);
-
-        //    CommandBufferAllocateInfo allocInfo = new()
-        //    {
-        //        SType = StructureType.CommandBufferAllocateInfo,
-        //        CommandPool = commandPool,
-        //        Level = CommandBufferLevel.Primary,
-        //        CommandBufferCount = 1,
-        //    };
-
-        //    if (vk!.AllocateCommandBuffers(_dev, ref allocInfo, out var commandBuffer) != Result.Success)
-        //    {
-        //        throw new Exception("failed to allocate command buffers!");
-        //    }
-
-        //    CommandBufferBeginInfo beginInfo = new()
-        //    {
-        //        SType = StructureType.CommandBufferBeginInfo,
-        //        Flags = CommandBufferUsageFlags.OneTimeSubmitBit,
-        //    };
-
-        //    vk!.BeginCommandBuffer(commandBuffer, ref beginInfo);
-
-        //    _uploadCommandBuffer = commandBuffer;
-
-        //    return new RenderCommandList(commandBuffer, this);
-        //}
-
-        //public unsafe void EndRecording()
-        //{
-        //    Debug.Assert(_uploadCommandBuffer != null);
-
-        //    var commandBuffer = _uploadCommandBuffer.Value;
-
-        //    vk!.EndCommandBuffer(commandBuffer);
-
-        //    SubmitInfo submitInfo = new()
-        //    {
-        //        SType = StructureType.SubmitInfo,
-        //        CommandBufferCount = 1,
-        //        PCommandBuffers = &commandBuffer,
-        //    };
-
-        //    vk!.QueueSubmit(graphicsQueue, 1, ref submitInfo, default);
-        //    vk!.QueueWaitIdle(graphicsQueue);
-
-        //    vk!.FreeCommandBuffers(_dev, commandPool, 1, ref commandBuffer);
-
-        //    _uploadCommandBuffer = null;
-
-        //}
         public RenderCommandList GetUploadCommandList()
         {
             if(_renderCommandListUpload!.State != ERenderCommandListState.Recording)
@@ -450,7 +373,6 @@ namespace UOEngine.Runtime.Rendering
 
         //    return imageView;
         //}
-
 
         public ImageView CreateImageView(Image image, Format format)
         {
@@ -671,97 +593,6 @@ namespace UOEngine.Runtime.Rendering
 
             SilkMarshal.Free((nint)createInfo.PpEnabledExtensionNames);
         }
-        //private unsafe void CreateSurface(IVkSurface vkSurface)
-        //{
-        //    if (!vk!.TryGetInstanceExtension<KhrSurface>(instance, out khrSurface))
-        //    {
-        //        throw new NotSupportedException("KHR_surface extension not found.");
-        //    }
-
-        //    surface = vkSurface.Create<AllocationCallbacks>(instance.ToHandle(), null).ToSurface();
-        //}
-
-        private unsafe void CreateSwapChain(uint width, uint height)
-        {
-            //_renderSwapChain = new RenderSwapChain(this);
-
-            //_renderSwapChain.Setup(width, height);
-
-            //var swapChainSupport = QuerySwapChainSupport(physicalDevice);
-
-            //var surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.Formats);
-            //var presentMode = ChoosePresentMode(swapChainSupport.PresentModes);
-            //var extent = ChooseSwapExtent(swapChainSupport.Capabilities, width, height);
-
-            //var imageCount = swapChainSupport.Capabilities.MinImageCount + 1;
-            //if (swapChainSupport.Capabilities.MaxImageCount > 0 && imageCount > swapChainSupport.Capabilities.MaxImageCount)
-            //{
-            //    imageCount = swapChainSupport.Capabilities.MaxImageCount;
-            //}
-
-            //MaxFramesInFlight = imageCount;
-
-            //SwapchainCreateInfoKHR createInfo = new()
-            //{
-            //    SType = StructureType.SwapchainCreateInfoKhr,
-            //    Surface = surface,
-
-            //    MinImageCount = imageCount,
-            //    ImageFormat = surfaceFormat.Format,
-            //    ImageColorSpace = surfaceFormat.ColorSpace,
-            //    ImageExtent = extent,
-            //    ImageArrayLayers = 1,
-            //    ImageUsage = ImageUsageFlags.ColorAttachmentBit,
-            //};
-
-            //var indices = FindQueueFamilies(physicalDevice);
-            //var queueFamilyIndices = stackalloc[] { indices.GraphicsFamily!.Value, indices.PresentFamily!.Value };
-
-            //if (indices.GraphicsFamily != indices.PresentFamily)
-            //{
-            //    createInfo = createInfo with
-            //    {
-            //        ImageSharingMode = SharingMode.Concurrent,
-            //        QueueFamilyIndexCount = 2,
-            //        PQueueFamilyIndices = queueFamilyIndices,
-            //    };
-            //}
-            //else
-            //{
-            //    createInfo.ImageSharingMode = SharingMode.Exclusive;
-            //}
-
-            //createInfo = createInfo with
-            //{
-            //    PreTransform = swapChainSupport.Capabilities.CurrentTransform,
-            //    CompositeAlpha = CompositeAlphaFlagsKHR.OpaqueBitKhr,
-            //    PresentMode = presentMode,
-            //    Clipped = true,
-
-            //    OldSwapchain = default
-            //};
-
-            //if (!vk!.TryGetDeviceExtension(instance, _dev, out khrSwapChain))
-            //{
-            //    throw new NotSupportedException("VK_KHR_swapchain extension not found.");
-            //}
-
-            //if (khrSwapChain!.CreateSwapchain(_dev, ref createInfo, null, out swapChain) != Result.Success)
-            //{
-            //    throw new Exception("failed to create swap chain!");
-            //}
-
-            //khrSwapChain.GetSwapchainImages(_dev, swapChain, ref imageCount, null);
-            //swapChainImages = new Image[imageCount];
-            //fixed (Image* swapChainImagesPtr = swapChainImages)
-            //{
-            //    khrSwapChain.GetSwapchainImages(_dev, swapChain, ref imageCount, swapChainImagesPtr);
-            //}
-
-            //swapChainImageFormat = surfaceFormat.Format;
-            //swapChainExtent = extent;
-        }
-
         private unsafe void CreateDescriptorPool()
         {
             DescriptorPoolSize poolSize = new()
@@ -877,58 +708,6 @@ namespace UOEngine.Runtime.Rendering
 
             _descriptorSetLayouts.Add(descriptorHash, descriptorSetLayout);
         }
-
-        //private unsafe void CleanupSwapchain()
-        //{
-        //    for (int i = 0; i < swapChainFramebuffers!.Length; i++)
-        //    {
-        //        vk!.DestroyFramebuffer(_dev, swapChainFramebuffers[i], null);
-        //    }
-
-        //    for (int i = 0; i < swapChainImageViews!.Length; i++)
-        //    {
-        //        vk!.DestroyImageView(_dev, swapChainImageViews[i], null);
-        //    }
-
-        //    khrSwapChain!.DestroySwapchain(_dev, swapChain, null);
-        //}
-
-        //private unsafe void CreateImageViews()
-        //{
-        //    swapChainImageViews = new ImageView[swapChainImages!.Length];
-
-        //    for (int i = 0; i < swapChainImages.Length; i++)
-        //    {
-        //        ImageViewCreateInfo imageViewCreateInfo = new()
-        //        {
-        //            SType = StructureType.ImageViewCreateInfo,
-        //            Image = swapChainImages[i],
-        //            ViewType = ImageViewType.Type2D,
-        //            Format = swapChainImageFormat,
-        //            Components =
-        //        {
-        //            R = ComponentSwizzle.Identity,
-        //            G = ComponentSwizzle.Identity,
-        //            B = ComponentSwizzle.Identity,
-        //            A = ComponentSwizzle.Identity,
-        //        },
-        //            SubresourceRange =
-        //        {
-        //            AspectMask = ImageAspectFlags.ColorBit,
-        //            BaseMipLevel = 0,
-        //            LevelCount = 1,
-        //            BaseArrayLayer = 0,
-        //            LayerCount = 1,
-        //        }
-
-        //        };
-
-        //        if (vk!.CreateImageView(_dev, ref imageViewCreateInfo, null, out swapChainImageViews[i]) != Result.Success)
-        //        {
-        //            throw new Exception("failed to create image views!");
-        //        }
-        //    }
-        //}
 
         private unsafe void CreateGraphicsPipeline(Shader shader, Extent2D extent)
         {
@@ -1396,19 +1175,6 @@ namespace UOEngine.Runtime.Rendering
             }
         }
 
-        //private unsafe string[] GetRequiredExtensions(IVkSurface surface, bool bEnableValidationLayers)
-        //{
-        //    var glfwExtensions = surface.GetRequiredExtensions(out var glfwExtensionCount);
-
-        //    string[] extensions = SilkMarshal.PtrToStringArray((nint)glfwExtensions, (int)glfwExtensionCount);
-
-        //    if (bEnableValidationLayers)
-        //    {
-        //        return extensions.Append(ExtDebugUtils.ExtensionName).ToArray();
-        //    }
-
-        //    return extensions;
-        //}
         private unsafe bool CheckValidationLayerSupport()
         {
             uint layerCount = 0;
