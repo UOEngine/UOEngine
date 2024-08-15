@@ -10,6 +10,8 @@ using Silk.NET.Vulkan.Extensions.KHR;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
 using Buffer = Silk.NET.Vulkan.Buffer;
 
+using UOEngine.Runtime.Rendering.Resources;
+
 namespace UOEngine.Runtime.Rendering
 {
     public class RenderDevice
@@ -200,11 +202,6 @@ namespace UOEngine.Runtime.Rendering
             vk!.GetDeviceQueue(_dev, PresentQueueFamilyIndex, 0, out _presentQueue);
         }
 
-        public uint CreateRenderPass(ERenderTextureFormat format)
-        {
-            return 0;
-        }
-
         //public unsafe void BeginRenderPass()
         //{
         //    ImmediateCommandList.BeginRenderPass(renderPass, _renderSwapChain.CurrentSwapChainFrameBuffer, _renderSwapChain.Extent);
@@ -217,33 +214,7 @@ namespace UOEngine.Runtime.Rendering
 
         public unsafe void Submit(RenderCommandList renderCommandList)
         {
-            //var result = vk!.WaitForFences(_dev, 1, ref inFlightFences![currentFrame], true, ulong.MaxValue);
-
-            //uint imageIndex = 0;
-            //result = khrSwapChain!.AcquireNextImage(_dev, swapChain, ulong.MaxValue, imageAvailableSemaphores![currentFrame], default, ref imageIndex);
-
-            //if (result == Result.ErrorOutOfDateKhr || result == Result.SuboptimalKhr)// || frameBufferResized)
-            //{
-            //    //frameBufferResized = false;
-
-            //    RecreateSwapChain();
-
-            //    return;
-            //}
-            //else if (result != Result.Success && result != Result.SuboptimalKhr)
-            //{
-            //    throw new Exception("failed to present swap chain image!");
-            //}
-
-            //result = vk!.ResetFences(_dev, 1, ref inFlightFences[currentFrame]);
-
-            //SubmitInfo submitInfo = new()
-            //{
-            //    SType = StructureType.SubmitInfo,
-            //};
-
-            //var waitSemaphores = stackalloc[] { imageAvailableSemaphores[currentFrame] };
-            //var waitStages = stackalloc[] { PipelineStageFlags.ColorAttachmentOutputBit };
+            renderCommandList.End();
 
             var buffer = renderCommandList.Handle;
 
@@ -254,38 +225,34 @@ namespace UOEngine.Runtime.Rendering
                 PCommandBuffers = &buffer
             };
 
-            //var signalSemaphores = stackalloc[] { renderFinishedSemaphores![currentFrame] };
-            //submitInfo = submitInfo with
-            //{
-            //    SignalSemaphoreCount = 1,
-            //    PSignalSemaphores = signalSemaphores,
-            //};
+            if(renderCommandList.WaitSemaphore != null)
+            {
+                var waitSemaphores = stackalloc[] { renderCommandList.WaitSemaphore.Value };
+                var waitStages = stackalloc[] { renderCommandList.WaitFlags };
+
+                submitInfo = submitInfo with
+                {
+                    PWaitSemaphores = waitSemaphores,
+                    WaitSemaphoreCount = 1,
+                    PWaitDstStageMask = waitStages
+                };
+            }
+
+            if(renderCommandList.IsImmediate)
+            {
+                var semaphores = stackalloc[] { renderCommandList.RenderingCompletedSemaphore };
+
+                submitInfo = submitInfo with
+                {
+                    SignalSemaphoreCount = 1,
+                    PSignalSemaphores = semaphores,
+                };
+            }
 
             if (vk!.QueueSubmit(_graphicsQueue, 1, ref submitInfo, default) != Result.Success)
             {
                 throw new Exception("failed to submit draw command buffer!");
             }
-
-            //var swapChains = stackalloc[] { swapChain };
-
-            //PresentInfoKHR presentInfo = new()
-            //{
-            //    SType = StructureType.PresentInfoKhr,
-
-            //    WaitSemaphoreCount = 1,
-            //    PWaitSemaphores = signalSemaphores,
-
-            //    SwapchainCount = 1,
-            //    PSwapchains = swapChains,
-
-            //    PImageIndices = &imageIndex
-            //};
-
-            //result = khrSwapChain.QueuePresent(presentQueue, ref presentInfo);
-
-            //currentFrame = (currentFrame + 1) % MaxFramesInFlight;
-
-            //WaitUntilIdle();
         }
 
         public void WaitUntilIdle()
@@ -410,6 +377,81 @@ namespace UOEngine.Runtime.Rendering
 
             Debug.Assert(result == Result.Success);
         }
+
+        public unsafe Fence CreateFence()
+        {
+            FenceCreateInfo fenceInfo = new()
+            {
+                SType = StructureType.FenceCreateInfo,
+                Flags = FenceCreateFlags.SignaledBit,
+            };
+
+            if(vk!.CreateFence(_dev, ref fenceInfo, null, out var fence) != Result.Success)
+            {
+                throw new Exception("failed to create synchronization objects for a frame!");
+            }
+
+            return fence;
+        }
+
+        public void WaitForFence(Fence fence)
+        {
+            Debug.Assert(fence.Handle != 0);
+            
+            vk!.WaitForFences(_dev, 1, ref fence, true, ulong.MaxValue);
+            vk.ResetFences(_dev, 1, ref fence);
+        }
+
+        public unsafe Semaphore CreateSemaphore()
+        {
+            SemaphoreCreateInfo semaphoreInfo = new()
+            {
+                SType = StructureType.SemaphoreCreateInfo,
+            };
+
+            if (vk!.CreateSemaphore(_dev, ref semaphoreInfo, null, out var semaphore) != Result.Success)
+            {
+                throw new Exception("failed to create synchronization objects for a frame!");
+            }
+
+            return semaphore;
+        }
+
+        //public RenderShaderResource CreateShaderResourceView(Image image, ERenderTextureFormat format)
+        //{
+        //    ImageViewCreateInfo imageViewCreateInfo = new()
+        //    {
+        //        SType = StructureType.ImageViewCreateInfo,
+        //        Image = image,
+        //        ViewType = ImageViewType.Type2D,
+        //        Format = RenderCommon.TextureFormatToVulkanFormat(format),
+        //        Components =
+        //        {
+        //            R = ComponentSwizzle.Identity,
+        //            G = ComponentSwizzle.Identity,
+        //            B = ComponentSwizzle.Identity,
+        //            A = ComponentSwizzle.Identity,
+        //        },
+        //        SubresourceRange = new()
+        //        {
+        //            AspectMask = ImageAspectFlags.ColorBit,
+        //            LevelCount = 1,
+        //            BaseArrayLayer = 0,
+        //            LayerCount = 1
+        //        }
+        //    };
+
+        //    ImageView imageView = default;
+
+        //    unsafe
+        //    {
+        //        vk!.CreateImageView(_dev, ref imageViewCreateInfo, null, out imageView);
+        //    }
+
+        //    return imageView;
+        //}
+
+
         public ImageView CreateImageView(Image image, Format format)
         {
             ImageViewCreateInfo imageViewCreateInfo = new()
@@ -1107,6 +1149,8 @@ namespace UOEngine.Runtime.Rendering
                 PDynamicStates = dynamicStates
             };
 
+            Debug.Assert(false);
+
             GraphicsPipelineCreateInfo pipelineInfo = new()
             {
                 SType = StructureType.GraphicsPipelineCreateInfo,
@@ -1118,7 +1162,7 @@ namespace UOEngine.Runtime.Rendering
                 PRasterizationState = &rasterizer,
                 PMultisampleState = &multisampling,
                 PColorBlendState = &colorBlending,
-                RenderPass = renderPass,
+               // RenderPass = renderPass,
                 Layout = pipelineLayout,
                 PDynamicState = &dynamicStateCreateInfo,
                 Subpass = 0,
@@ -1146,11 +1190,11 @@ namespace UOEngine.Runtime.Rendering
             _currentNumPipelines++;
         }
 
-        private unsafe void CreateRenderPass(Format format)
+        public unsafe RenderPass CreateRenderPass(ERenderTextureFormat textureFormat)
         {
             AttachmentDescription colorAttachment = new()
             {
-                Format = format,
+                Format = RenderCommon.TextureFormatToVulkanFormat(textureFormat),
                 Samples = SampleCountFlags.Count1Bit,
                 LoadOp = AttachmentLoadOp.Clear,
                 StoreOp = AttachmentStoreOp.Store,
@@ -1193,36 +1237,41 @@ namespace UOEngine.Runtime.Rendering
                 PDependencies = &dependency
             };
 
-            if (vk!.CreateRenderPass(_dev, ref renderPassInfo, null, out renderPass) != Result.Success)
+            if (vk!.CreateRenderPass(_dev, ref renderPassInfo, null, out var renderPass) != Result.Success)
             {
                 throw new Exception("failed to create render pass!");
             }
+
+            uint insertIndex = _currentNumRenderPasses;
+
+            _renderPasses[insertIndex] = renderPass;
+
+            _currentNumRenderPasses++;
+
+            return renderPass;
         }
 
-        private unsafe void CreateFramebuffers(ImageView[] imageViews, uint width, uint height)
+        public unsafe Framebuffer CreateFramebuffer(ImageView imageView, uint width, uint height,  RenderPass renderPass)
         {
-            var framebuffers = new Framebuffer[imageViews.Length];
+            var attachment = imageView;
 
-            for (int i = 0; i < imageViews.Length; i++)
+            FramebufferCreateInfo framebufferInfo = new()
             {
-                var attachment = imageViews[i];
+                SType = StructureType.FramebufferCreateInfo,
+                RenderPass = renderPass,
+                AttachmentCount = 1,
+                PAttachments = &attachment,
+                Width = width,
+                Height = height,
+                Layers = 1,
+            };
 
-                FramebufferCreateInfo framebufferInfo = new()
-                {
-                    SType = StructureType.FramebufferCreateInfo,
-                    RenderPass = renderPass,
-                    AttachmentCount = 1,
-                    PAttachments = &attachment,
-                    Width = width,
-                    Height = height,
-                    Layers = 1,
-                };
-
-                if (vk!.CreateFramebuffer(_dev, ref framebufferInfo, null, out framebuffers[i]) != Result.Success)
-                {
-                    throw new Exception("failed to create framebuffer!");
-                }
+            if (vk!.CreateFramebuffer(_dev, ref framebufferInfo, null, out var framebuffer) != Result.Success)
+            {
+                throw new Exception("failed to create framebuffer!");
             }
+
+            return framebuffer;
         }
 
         private unsafe ShaderModule CreateShaderModule(ReadOnlySpan<byte> code)
@@ -1482,7 +1531,7 @@ namespace UOEngine.Runtime.Rendering
         public PhysicalDevice                           PhysicalHandle => _physicalDevice;
 
         public RenderQueue                              GraphicsQueue { get; private set; }
-        public RenderQueue                              PresentQueue { get; private set; }      
+        public Queue                                    PresentQueue => _presentQueue;      
 
         public Instance                                 Instance => instance;
 
@@ -1496,29 +1545,11 @@ namespace UOEngine.Runtime.Rendering
 
         private Device                                  _dev;
 
-        //private RenderDeviceContext                     renderDeviceContext;
-
         private Vk?                                     vk;
         private Instance                                instance;
         private PhysicalDevice                          _physicalDevice;
 
         private QueueFamilyProperties[]?                _queueFamilyProperties;
-
-        //private KhrSurface?                             khrSurface;
-        //private SurfaceKHR                                surface;
-
-        //private uint                                    surfaceWidth = 0;
-        //private uint                                    surfaceHeight = 0;
-
-        //private KhrSwapchain?                           khrSwapChain;
-        //private SwapchainKHR                            swapChain;
-        //private Image[]?                                swapChainImages;
-        //private Format                                  swapChainImageFormat;
-        //private Extent2D                                swapChainExtent;
-        //private ImageView[]?                            swapChainImageViews;
-        //private Framebuffer[]?                          swapChainFramebuffers;
-        //
-        //private RenderSwapChain                         _renderSwapChain;
 
         private CommandPool                             commandPool;
         //private CommandBuffer[]?                        commandBuffers;
@@ -1536,7 +1567,9 @@ namespace UOEngine.Runtime.Rendering
         private Pipeline[]                              _graphicsPipelines = new Pipeline[MaxPipelines];
         private PipelineStateObjectDescription[]        _pipelineStateObjectDescriptions = new PipelineStateObjectDescription[MaxPipelines];
 
-        private RenderPass                              renderPass;
+        const int                                       MaxRenderPases = 16;
+        private uint                                    _currentNumRenderPasses = 0;                     
+        private RenderPass[]                            _renderPasses = new RenderPass[MaxRenderPases];
 
         private Semaphore[]?                            renderFinishedSemaphores;
         private Fence[]?                                inFlightFences;

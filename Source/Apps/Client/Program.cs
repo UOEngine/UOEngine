@@ -53,7 +53,7 @@ namespace UOEngine.Apps.Client
             renderer.Initialise(serviceProvider);
 
             renderer.Device.Initialise(extensions, bEnableValidationLayers);
-            var viewport = renderer.CreateViewport(window.GetSurface(), window.Width, window.Height);
+            RenderViewport viewport = renderer.CreateViewport(window.GetSurface(), window.Width, window.Height);
 
             int shaderId = renderer.Device.RegisterShader<SimpleShader>();
 
@@ -80,9 +80,9 @@ namespace UOEngine.Apps.Client
 
             viewport.Rendering += (commandList) =>
             {
-                commandList!.BindIndexBuffer(indexBuffer);
-                commandList.SetTexture(backgroundTexture, 0);
-                commandList.BindShader(shaderId);
+                //commandList!.BindIndexBuffer(indexBuffer);
+                //commandList.SetTexture(backgroundTexture, 0);
+                //commandList.BindShader(shaderId);
             };
         }
 

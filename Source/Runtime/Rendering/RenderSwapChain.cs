@@ -9,6 +9,8 @@ namespace UOEngine.Runtime.Rendering
 {
     public class RenderSwapChain
     {
+        public Fence ImagePresentedFence { get; private set; }
+
         public RenderSwapChain(RenderDevice renderDevice)
         {
             _renderDevice = renderDevice;
@@ -16,7 +18,7 @@ namespace UOEngine.Runtime.Rendering
             _vk = Vk.GetApi();
         }
 
-        public unsafe void Setup(IVkSurface vkSurface, uint width, uint height)
+        public unsafe void Setup(IVkSurface vkSurface, uint width, uint height, ERenderTextureFormat pixelFormat)
         {
             Console.WriteLine($"CreateSwapChain: {width} {height}");
 
@@ -29,7 +31,17 @@ namespace UOEngine.Runtime.Rendering
 
             var swapChainSupport = QuerySwapChainSupport(_renderDevice.PhysicalHandle);
 
+            Format vkFormat = RenderCommon.TextureFormatToVulkanFormat(pixelFormat);
+
+            if (swapChainSupport.Formats.Any(x => x.Format == vkFormat) == false)
+            {
+                throw new NotSupportedException("Requested format not supported.");
+            }
+
+            TexFormat = pixelFormat;
+
             var surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.Formats);
+
             var presentMode = ChoosePresentMode(swapChainSupport.PresentModes);
             var extent = ChooseSwapExtent(swapChainSupport.Capabilities, width, height);
 
@@ -41,13 +53,14 @@ namespace UOEngine.Runtime.Rendering
 
            _maxFramesInFlight = imageCount;
 
+
             SwapchainCreateInfoKHR createInfo = new()
             {
                 SType = StructureType.SwapchainCreateInfoKhr,
                 Surface = _surface,
 
                 MinImageCount = imageCount,
-                ImageFormat = surfaceFormat.Format,
+                ImageFormat = vkFormat,
                 ImageColorSpace = surfaceFormat.ColorSpace,
                 ImageExtent = extent,
                 ImageArrayLayers = 1,
@@ -94,50 +107,32 @@ namespace UOEngine.Runtime.Rendering
 
             _khrSwapChain.GetSwapchainImages(_renderDevice.Handle, _swapChain, ref imageCount, null);
 
+            //_swapChainTextures = new RenderTexture2D[imageCount];
+
             _swapChainImages = new Image[imageCount];
+            _swapChainImageViews = new ImageView[imageCount];
             _imageAvailableSemaphores = new Semaphore[imageCount];
 
-            fixed (Image* swapChainImagesPtr = _swapChainImages)
+            fixed (Image* ptr = &_swapChainImages[0])
             {
-                _khrSwapChain.GetSwapchainImages(_renderDevice.Handle, _swapChain, ref imageCount, swapChainImagesPtr);
+                _khrSwapChain.GetSwapchainImages(_renderDevice.Handle, _swapChain, ref imageCount, ptr);
             }
 
             _swapChainImageFormat = surfaceFormat.Format;
             _swapChainExtent = extent;
 
-            _swapChainImageViews = new ImageView[_swapChainImages!.Length];
-
-            for (int i = 0; i < _swapChainImages.Length; i++)
+            for (int i = 0; i < imageCount; i++)
             {
-                ImageViewCreateInfo imageViewCreateInfo = new()
-                {
-                    SType = StructureType.ImageViewCreateInfo,
-                    Image = _swapChainImages[i],
-                    ViewType = ImageViewType.Type2D,
-                    Format = _swapChainImageFormat,
-                    Components =
-                {
-                    R = ComponentSwizzle.Identity,
-                    G = ComponentSwizzle.Identity,
-                    B = ComponentSwizzle.Identity,
-                    A = ComponentSwizzle.Identity,
-                },
-                    SubresourceRange =
-                {
-                    AspectMask = ImageAspectFlags.ColorBit,
-                    BaseMipLevel = 0,
-                    LevelCount = 1,
-                    BaseArrayLayer = 0,
-                    LayerCount = 1,
-                }
-
-                };
-
-                if (_vk.CreateImageView(_renderDevice.Device, ref imageViewCreateInfo, null, out _swapChainImageViews[i]) != Result.Success)
-                {
-                    throw new Exception("failed to create image views!");
-                }
+                _swapChainImageViews[i] = _renderDevice.CreateImageView(_swapChainImages[i], vkFormat);
             }
+
+            _imageAvailableSemaphores = new Semaphore[imageCount];
+
+            for(int i = 0; i < imageCount; i++)
+            {
+                _imageAvailableSemaphores[i] = _renderDevice.CreateSemaphore();
+            }
+
         }
 
         public unsafe void Shutdown()
@@ -158,7 +153,7 @@ namespace UOEngine.Runtime.Rendering
             }
         }
 
-        public int AcquireImageIndex(out Semaphore semaphore)
+        public uint AcquireImageIndex(out Semaphore imagePresentedSemaphore)
         {
             uint imageIndex = 0;
 
@@ -177,17 +172,19 @@ namespace UOEngine.Runtime.Rendering
                 throw new Exception("failed to present swap chain image!");
             }
 
-            _currentFrame = 0;
+            imagePresentedSemaphore = _imageAvailableSemaphores![_currentFrame];
 
-            semaphore = _imageAvailableSemaphores[_currentFrame];
+            //imagePresentedSemaphore = _imageAvailableSemaphores[_currentFrame];
 
-            return (int)imageIndex;
+            return imageIndex;
 
         }
 
-        public unsafe void Present(Queue presentQueue, Semaphore renderingDoneSemaphore)
+        public unsafe void Present(Semaphore renderingDoneSemaphore)
         {
-            var frameIndex = (uint)_currentFrame;
+            // renderingDoneSemaphore = command buffer has drawn all its commands.
+
+            var frameIndex = _currentFrame;
             var swapChains = stackalloc[] { _swapChain };
 
             PresentInfoKHR presentInfo = new()
@@ -200,10 +197,12 @@ namespace UOEngine.Runtime.Rendering
                 SwapchainCount = 1,
                 PSwapchains = swapChains,
 
-                PImageIndices = &frameIndex
+                PImageIndices = &frameIndex,
             };
 
-            var result = _khrSwapChain!.QueuePresent(presentQueue, ref presentInfo);
+            var result = _khrSwapChain!.QueuePresent(_renderDevice!.PresentQueue, ref presentInfo);
+
+            _currentFrame = (_currentFrame + 1) % _maxFramesInFlight;
         }
 
         //public Framebuffer CurrentSwapChainFrameBuffer => _swapChainFramebuffers![_currentFrame];
@@ -323,6 +322,8 @@ namespace UOEngine.Runtime.Rendering
             public PresentModeKHR[] PresentModes;
         }
 
+        public ImageView[]          ShaderResourceViews => _swapChainImageViews!;
+
         private RenderDevice        _renderDevice;
 
         private KhrSwapchain?       _khrSwapChain;
@@ -332,6 +333,7 @@ namespace UOEngine.Runtime.Rendering
         private Extent2D            _swapChainExtent;
         private ImageView[]?        _swapChainImageViews;
         //private Framebuffer[]?      _swapChainFramebuffers;
+        //private RenderTexture2D[]    _swapChainTextures;
 
         private Semaphore[]?        _imageAvailableSemaphores;
 
@@ -340,7 +342,7 @@ namespace UOEngine.Runtime.Rendering
 
         private Vk                  _vk;
 
-        private int                 _currentFrame;
+        private uint                 _currentFrame = 0;
 
         private uint                _maxFramesInFlight = 0;
 

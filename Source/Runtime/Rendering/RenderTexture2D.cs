@@ -18,7 +18,8 @@ namespace UOEngine.Runtime.Rendering
         None,
         A1R5G5B5,
         R5G5B5A1,
-        R8G8B8A8
+        R8G8B8A8,
+        B8G8R8A8
     }
 
     [Flags]
@@ -38,7 +39,7 @@ namespace UOEngine.Runtime.Rendering
     {
         public RenderTexture2D(RenderTexture2DDescription description, RenderDevice renderDevice)
         {
-            _description = description;
+            Description = description;
             _renderDevice = renderDevice;
 
             Format textureFormat = Format.Undefined;
@@ -109,14 +110,22 @@ namespace UOEngine.Runtime.Rendering
 
             Debug.Assert(result == Result.Success);
 
-            _imageView = renderDevice.CreateImageView(_image, textureFormat);
+            ShaderResourceView = renderDevice.CreateImageView(_image, textureFormat);
 
         }
 
-        ~RenderTexture2D()
-        {
+        //public RenderTexture2D(RenderTexture2DDescription description, Image image, RenderDevice renderDevice)
+        //{
+        //    Description = description;
+        //    _renderDevice = renderDevice;
 
-        }
+        //    ShaderResourceView = renderDevice.CreateImageView(_image, description.Format);
+        //}
+
+        //~RenderTexture2D()
+        //{
+
+        //}
 
         public void Upload<T>(ReadOnlySpan<T> texels)
         {
@@ -164,8 +173,8 @@ namespace UOEngine.Runtime.Rendering
                     ImageOffset = new(0, 0),
                     ImageExtent = new()
                     {
-                        Width = _description.Width,
-                        Height = _description.Height,
+                        Width = Description.Width,
+                        Height = Description.Height,
                         Depth = 1
                     }
                 };
@@ -251,10 +260,15 @@ namespace UOEngine.Runtime.Rendering
             commandList.PipelineBarrier(sourceStage, destinationStage, imageMemoryBarrier);
         }
 
-        public ImageView                                   _imageView { get; private set; }
-        private Image                                      _image;
+        //private void CreateShaderResourceView()
+        //{
+        //    ShaderResourceView = _renderDevice.CreateImageView(_image, textureFormat);
+        //}
 
-        private readonly RenderTexture2DDescription      _description;
+        public RenderTexture2DDescription                Description { get;private set; }
+        public ImageView                                 ShaderResourceView { get; private set; }
+        private Image                                    _image;
+
         private RenderDevice                             _renderDevice;
         private readonly uint                            _imageSize;
         private ERenderSubresourceState                  _state = ERenderSubresourceState.Undefined;         

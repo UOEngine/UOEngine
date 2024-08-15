@@ -2,6 +2,8 @@
 
 using Silk.NET.Vulkan;
 using Buffer = Silk.NET.Vulkan.Buffer;
+using VkSemaphore = Silk.NET.Vulkan.Semaphore;
+
 
 namespace UOEngine.Runtime.Rendering
 {
@@ -34,8 +36,6 @@ namespace UOEngine.Runtime.Rendering
         {
             Debug.Assert(IsImmediate == false);
 
-            End();
-
             SubmitAndWaitUntilGPUIdle();
         }
 
@@ -64,6 +64,9 @@ namespace UOEngine.Runtime.Rendering
 
         public void End()
         {
+            Debug.Assert(_bInRenderPass == false);
+            Debug.Assert(State == ERenderCommandListState.Recording);
+
             _vk.EndCommandBuffer(_commandBuffer);
 
             State = ERenderCommandListState.Ended;
@@ -209,7 +212,7 @@ namespace UOEngine.Runtime.Rendering
 
                             imageInfo.ImageLayout = ImageLayout.ShaderReadOnlyOptimal;
 
-                            imageInfo.ImageView = _textures[bindingDescription.Binding]._imageView;
+                            imageInfo.ImageView = _textures[bindingDescription.Binding].ShaderResourceView;
                             imageInfo.Sampler = _renderDevice.TextureSampler;
 
                             descriptorImageInfos[numDescriptorImageInfos] = imageInfo;
@@ -244,6 +247,8 @@ namespace UOEngine.Runtime.Rendering
 
         public void Submit()
         {
+            Debug.Assert(State == ERenderCommandListState.Recording);
+
             _renderDevice.Submit(this);
 
             State = ERenderCommandListState.Submitted;
@@ -252,12 +257,22 @@ namespace UOEngine.Runtime.Rendering
         public unsafe void AllocateCommandBuffer()
         {
             _commandBuffer = _renderDevice.AllocateCommandBuffer();
+
+            RenderingCompletedSemaphore = _renderDevice.CreateSemaphore();
+
             State = ERenderCommandListState.Ready;
         }
 
         public ERenderCommandListState  State { get; private set; } = ERenderCommandListState.Invalid;
         public CommandBuffer            Handle => _commandBuffer;
         public bool                     IsImmediate { get; protected set; } = false;
+
+        public VkSemaphore              RenderingCompletedSemaphore { get; private set; }
+        public VkSemaphore              UploadCompletedSemaphore { get; private set; }
+
+        // Do not start executing this command list until this semaphore is signaled.
+        public VkSemaphore?           WaitSemaphore { get; set; }
+        public PipelineStageFlags       WaitFlags { get; set; }
 
         private CommandBuffer           _commandBuffer;
         private readonly RenderDevice   _renderDevice;
@@ -269,5 +284,7 @@ namespace UOEngine.Runtime.Rendering
         static readonly uint            MaxTextureSlots = 4;
 
         private RenderTexture2D[]       _textures = new RenderTexture2D[MaxTextureSlots];
+
+
     }
 }

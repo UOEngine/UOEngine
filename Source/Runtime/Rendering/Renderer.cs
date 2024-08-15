@@ -44,20 +44,15 @@ namespace UOEngine.Runtime.Rendering
 
         public void RenderFrame(float deltaSeconds)
         {
-            Device.ImmediateCommandList!.Begin();
-
             FrameStart?.Invoke();
 
             foreach (var viewport in _viewports)
             {
-                viewport.Render(Device.ImmediateCommandList!);
-
+                viewport.Render();
+                viewport.Present();
             }
 
             FrameEnd?.Invoke();
-
-            Device.ImmediateCommandList.End();
-            Device.ImmediateCommandList.SubmitAndWaitUntilGPUIdle();
         }
 
         public static string[] PtrToStringArray(nint data, int count)
