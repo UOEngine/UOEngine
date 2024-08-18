@@ -66,7 +66,7 @@ namespace UOEngine.Runtime.Rendering
         public RenderSwapChain                  SwapChain { get; private set; }
         public RenderPass                       MainRenderPass { get; private set; }
 
-        public delegate void                    RenderingEventHandler(RenderCommandListImmediate renderCommandList);
+        public delegate void                    RenderingEventHandler(RenderCommandListContextImmediate renderCommandList);
         public event RenderingEventHandler?     Rendering;
 
         private RenderDevice                    _renderDevice;

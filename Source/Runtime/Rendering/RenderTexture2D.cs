@@ -207,7 +207,7 @@ namespace UOEngine.Runtime.Rendering
             }
         }
 
-        private void TransitionImageLayout(RenderCommandList commandList, ImageLayout oldLayout, ImageLayout newLayout)
+        private void TransitionImageLayout(RenderCommandListContext commandList, ImageLayout oldLayout, ImageLayout newLayout)
         {
             var vk = Vk.GetApi();
 

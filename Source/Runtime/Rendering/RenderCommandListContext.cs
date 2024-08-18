@@ -19,9 +19,9 @@ namespace UOEngine.Runtime.Rendering
         Finished
     }
 
-    public class RenderCommandList: IDisposable
+    public class RenderCommandListContext: IDisposable
     {
-        public RenderCommandList(RenderDevice renderDevice)
+        public RenderCommandListContext(RenderDevice renderDevice)
         {
             _renderDevice = renderDevice;
 
@@ -186,6 +186,8 @@ namespace UOEngine.Runtime.Rendering
             _currentShaderId = shaderId;
 
             PipelineStateObjectDescription pso = _renderDevice.GetPipelineStateObjectDescription(_currentShaderId);
+
+            Debug.Assert(pso.PSO.Handle != 0);
 
             _vk.CmdBindPipeline(_commandBuffer, PipelineBindPoint.Graphics, pso.PSO);
 

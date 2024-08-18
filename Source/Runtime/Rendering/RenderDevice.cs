@@ -162,6 +162,8 @@ namespace UOEngine.Runtime.Rendering
 
         public PipelineStateObjectDescription GetPipelineStateObjectDescription(int shaderId)
         {
+            Debug.Assert(_pipelineStateObjectDescriptions[shaderId].PSO.Handle != 0);
+
             return _pipelineStateObjectDescriptions[shaderId];
         }
 
@@ -189,7 +191,7 @@ namespace UOEngine.Runtime.Rendering
             vk!.GetDeviceQueue(_dev, PresentQueueFamilyIndex, 0, out _presentQueue);
         }
 
-        public unsafe void Submit(RenderCommandList renderCommandList)
+        public unsafe void Submit(RenderCommandListContext renderCommandList)
         {
             renderCommandList.End();
 
@@ -236,7 +238,7 @@ namespace UOEngine.Runtime.Rendering
         {
             vk!.DeviceWaitIdle(_dev);
         }
-        public RenderCommandList GetUploadCommandList()
+        public RenderCommandListContext GetUploadCommandList()
         {
             if(_renderCommandListUpload!.State != ERenderCommandListState.Recording)
             {
@@ -1226,12 +1228,12 @@ namespace UOEngine.Runtime.Rendering
         {
             const int maxFramesInFlight = 3;
 
-            _renderCommandLists = new RenderCommandListImmediate[maxFramesInFlight];
+            _renderCommandLists = new RenderCommandListContextImmediate[maxFramesInFlight];
 
                // Ignoring frames in flight for now.
-            ImmediateCommandList = new RenderCommandListImmediate(this);
+            ImmediateCommandList = new RenderCommandListContextImmediate(this);
 
-            _renderCommandListUpload = new RenderCommandList(this);
+            _renderCommandListUpload = new RenderCommandListContext(this);
         }
 
         private unsafe void CreateSyncObjects()
@@ -1302,7 +1304,7 @@ namespace UOEngine.Runtime.Rendering
         public Instance                                 Instance => instance;
 
         //public CommandBuffer                            CurrentCommandBuffer { private get; private set; }
-        public RenderCommandListImmediate?              ImmediateCommandList { get; private set; }
+        public RenderCommandListContextImmediate?              ImmediateCommandList { get; private set; }
 
         public Sampler                                  TextureSampler { get; private set; }
 
@@ -1319,8 +1321,8 @@ namespace UOEngine.Runtime.Rendering
 
         private CommandPool                             commandPool;
         //private CommandBuffer[]?                        commandBuffers;
-        private RenderCommandListImmediate[]?           _renderCommandLists;
-        private RenderCommandList?                      _renderCommandListUpload;
+        private RenderCommandListContextImmediate[]?           _renderCommandLists;
+        private RenderCommandListContext?                      _renderCommandListUpload;
 
         private Queue                                   _graphicsQueue;
 
