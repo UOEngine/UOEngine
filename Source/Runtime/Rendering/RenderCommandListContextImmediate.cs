@@ -4,7 +4,6 @@
     {
         public RenderCommandListContextImmediate(RenderDevice renderDevice): base(renderDevice)
         {
-            IsImmediate = true;
         }
     }
 }

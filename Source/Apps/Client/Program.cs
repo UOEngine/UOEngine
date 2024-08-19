@@ -80,9 +80,9 @@ namespace UOEngine.Apps.Client
 
             viewport.Rendering += (commandList) =>
             {
-                commandList!.BindIndexBuffer(indexBuffer);
-                commandList.SetTexture(backgroundTexture, 0);
-                commandList.BindShader(shaderId);
+                //commandList!.BindIndexBuffer(indexBuffer);
+                //commandList.SetTexture(backgroundTexture, 0);
+                //commandList.BindShader(shaderId);
             };
         }
 

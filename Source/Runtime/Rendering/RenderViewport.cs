@@ -2,6 +2,8 @@
 
 using Silk.NET.Core.Contexts;
 using Silk.NET.Vulkan;
+using VkSemaphore = Silk.NET.Vulkan.Semaphore;
+
 
 namespace UOEngine.Runtime.Rendering
 {
@@ -38,28 +40,32 @@ namespace UOEngine.Runtime.Rendering
         {
             uint imageIndex = SwapChain.AcquireImageIndex(out var imagePresentedSemaphore);
 
-            var commandList = _renderDevice!.ImmediateCommandList;
+            RenderCommandListContextImmediate context = _renderDevice.ImmediateContext!;
 
-            commandList!.WaitSemaphore = imagePresentedSemaphore;
-            commandList.WaitFlags = PipelineStageFlags.ColorAttachmentOutputBit;
+            RenderCommandBuffer commandBuffer = context!.CommandBufferManager.ActiveCommandBuffer!;
+            
+            commandBuffer.WaitSemaphore = imagePresentedSemaphore;
+            commandBuffer.WaitFlags = PipelineStageFlags.ColorAttachmentOutputBit;
 
-            commandList!.Begin();
+            context!.BeginRenderPass(MainRenderPass, _framebuffers![imageIndex], SwapChain.Extent);
 
-            commandList!.BeginRenderPass(MainRenderPass, _framebuffers![imageIndex], SwapChain.Extent);
+            Rendering?.Invoke(context);
 
-            Rendering?.Invoke(commandList);
-
-            commandList.EndRenderPass();
+            context.EndRenderPass();
         }
 
         public void Present()
         {
-            _renderDevice.ImmediateCommandList!.Submit();
+            VkSemaphore executionComplete = _renderDevice.ImmediateContext!.ActiveCommandBuffer.ExecutionComplete;
 
-            SwapChain.Present(_renderDevice.ImmediateCommandList.RenderingCompletedSemaphore);
+            _renderDevice.ImmediateContext!.Submit();
+
+            SwapChain.Present(executionComplete);
 
             // Wait to be presented..for now.
             _renderDevice.WaitUntilIdle();
+
+            _renderDevice.ImmediateContext.CommandBufferManager.PrepareNewActiveCommandBuffer();
 
         }
 

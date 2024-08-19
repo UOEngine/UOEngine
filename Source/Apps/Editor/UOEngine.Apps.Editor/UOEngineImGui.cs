@@ -132,11 +132,9 @@ namespace UOEngine.Apps.Editor
             _vertexBuffer.CopyToDevice<ImDrawVert>(_verts);
             _indexBuffer.CopyToDevice<ushort>(_indices);
 
-            var commandList = _renderDevice.ImmediateCommandList;
-
-            commandList!.BindVertexBuffer(_vertexBuffer);
-            commandList.BindIndexBuffer(_indexBuffer);
-            commandList.BindShader(_imguiShaderId);
+            //_renderDevice.ImmediateContext!.BindVertexBuffer(_vertexBuffer);
+            //_renderDevice.ImmediateContext.BindIndexBuffer(_indexBuffer);
+            //_renderDevice.ImmediateContext.BindShader(_imguiShaderId);
 
             for (int n = 0; n < drawData.CmdListsCount; n++)
             {
@@ -151,7 +149,7 @@ namespace UOEngine.Apps.Editor
                         continue;
                     }
 
-                    commandList.DrawIndexed(0, 0);
+                    //_renderDevice.ImmediateContext.DrawIndexed(0, 0);
                 }
             }
         }

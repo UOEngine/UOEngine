@@ -82,7 +82,6 @@ namespace UOEngine.Runtime.Rendering
             CreateLogicalDevice(bEnableValidationLayers);
             CreateCommandPool();
             CreateCommandBuffers();
-            CreateSyncObjects();
 
             CreateDescriptorPool();
         }
@@ -91,29 +90,10 @@ namespace UOEngine.Runtime.Rendering
         {
             WaitUntilIdle();
 
-            //CleanupSwapchain();
-
-            for (var i = 0; i < MaxFramesInFlight; i++)
-            {
-                vk!.DestroySemaphore(_dev, renderFinishedSemaphores![i], null);
-                //vk.DestroySemaphore(_dev, imageAvailableSemaphores![i], null);
-                vk.DestroyFence(_dev, inFlightFences![i], null);
-            }
-
             vk!.DestroyCommandPool(_dev, commandPool, null);
-
-            //foreach (var framebuffer in swapChainFramebuffers!)
-            //{
-            //    vk!.DestroyFramebuffer(_dev, framebuffer, null);
-            //}
 
             Array.ForEach(_pipelineLayouts, pipelineLayout => vk.DestroyPipelineLayout(_dev, pipelineLayout, null));
             Array.ForEach(_graphicsPipelines, graphicsPipeline => vk.DestroyPipeline(_dev, graphicsPipeline, null));
-
-            //foreach (var imageView in swapChainImageViews!)
-            //{
-            //    vk!.DestroyImageView(_dev, imageView, null);
-            //}
 
             vk!.DestroyDevice(_dev, null);
 
@@ -167,14 +147,6 @@ namespace UOEngine.Runtime.Rendering
             return _pipelineStateObjectDescriptions[shaderId];
         }
 
-        public void OnFrameBegin()
-        {
-            ImmediateCommandList = _renderCommandLists![currentFrame];
-
-            ImmediateCommandList.Reset();
-            ImmediateCommandList.Begin();
-        }
-
         public void SetupPresentQueue(KhrSurface surface, SurfaceKHR surfaceKHR)
         {
             for(uint i = 0; i < _queueFamilyProperties!.Length; i++)
@@ -191,11 +163,9 @@ namespace UOEngine.Runtime.Rendering
             vk!.GetDeviceQueue(_dev, PresentQueueFamilyIndex, 0, out _presentQueue);
         }
 
-        public unsafe void Submit(RenderCommandListContext renderCommandList)
+        public unsafe void Submit(RenderCommandBuffer commandBuffer)
         {
-            renderCommandList.End();
-
-            var buffer = renderCommandList.Handle;
+            var buffer = commandBuffer.Handle;
 
             SubmitInfo submitInfo = new()
             { 
@@ -204,10 +174,10 @@ namespace UOEngine.Runtime.Rendering
                 PCommandBuffers = &buffer
             };
 
-            if(renderCommandList.WaitSemaphore != null)
+            if(commandBuffer.WaitSemaphore != null)
             {
-                var waitSemaphores = stackalloc[] { renderCommandList.WaitSemaphore.Value };
-                var waitStages = stackalloc[] { renderCommandList.WaitFlags };
+                var waitSemaphores = stackalloc[] { commandBuffer.WaitSemaphore.Value };
+                var waitStages = stackalloc[] { commandBuffer.WaitFlags };
 
                 submitInfo = submitInfo with
                 {
@@ -217,9 +187,9 @@ namespace UOEngine.Runtime.Rendering
                 };
             }
 
-            if(renderCommandList.IsImmediate)
+            if(commandBuffer.IsUploadBuffer == false)
             {
-                var semaphores = stackalloc[] { renderCommandList.RenderingCompletedSemaphore };
+                var semaphores = stackalloc[] { commandBuffer.ExecutionComplete };
 
                 submitInfo = submitInfo with
                 {
@@ -238,14 +208,22 @@ namespace UOEngine.Runtime.Rendering
         {
             vk!.DeviceWaitIdle(_dev);
         }
-        public RenderCommandListContext GetUploadCommandList()
-        {
-            if(_renderCommandListUpload!.State != ERenderCommandListState.Recording)
-            {
-                _renderCommandListUpload.Begin();
-            }
 
-            return _renderCommandListUpload;
+        public bool IsFenceSignaled(Fence fence)
+        {
+            Result result = vk!.GetFenceStatus(_dev, fence);
+
+            switch (result)
+            {
+                case Result.Success:
+                    return true;
+
+                case Result.NotReady:
+                    return false;
+
+                default:
+                    throw new Exception("Unknown state for fence.");
+            }
         }
 
         public RenderTexture2D CreateTexture2D(RenderTexture2DDescription description)
@@ -1078,60 +1056,6 @@ namespace UOEngine.Runtime.Rendering
             return shaderModule;
         }
 
-        //private bool IsDeviceSuitable(PhysicalDevice device)
-        //{
-        //    vk!.GetPhysicalDeviceFeatures(device, out var supportedFeatures);
-
-        //    if(supportedFeatures.SamplerAnisotropy == false)
-        //    {
-        //        return false;
-        //    }
-
-        //    var indices = FindQueueFamilies(device);
-
-        //    return indices.IsComplete();
-        //}
-
-        //private unsafe QueueFamilyIndices FindQueueFamilies(PhysicalDevice device)
-        //{
-        //    var indices = new QueueFamilyIndices();
-
-        //    uint queueFamilityCount = 0;
-        //    vk!.GetPhysicalDeviceQueueFamilyProperties(device, ref queueFamilityCount, null);
-
-        //    var queueFamilies = new QueueFamilyProperties[queueFamilityCount];
-        //    fixed (QueueFamilyProperties* queueFamiliesPtr = queueFamilies)
-        //    {
-        //        vk!.GetPhysicalDeviceQueueFamilyProperties(device, ref queueFamilityCount, queueFamiliesPtr);
-        //    }
-
-        //    uint i = 0;
-
-        //    foreach (var queueFamily in queueFamilies)
-        //    {
-        //        if (queueFamily.QueueFlags.HasFlag(QueueFlags.GraphicsBit))
-        //        {
-        //            indices.GraphicsFamily = i;
-        //        }
-
-        //        khrSurface!.GetPhysicalDeviceSurfaceSupport(device, i, surface, out var presentSupport);
-
-        //        if (presentSupport)
-        //        {
-        //            indices.PresentFamily = i;
-        //        }
-
-        //        if (indices.IsComplete())
-        //        {
-        //            break;
-        //        }
-
-        //        i++;
-        //    }
-
-        //    return indices;
-        //}
-
         public uint FindMemoryType(uint typeFilter, MemoryPropertyFlags properties)
         {
             vk!.GetPhysicalDeviceMemoryProperties(_physicalDevice, out var memoryProperties);
@@ -1226,42 +1150,10 @@ namespace UOEngine.Runtime.Rendering
 
         private unsafe void CreateCommandBuffers()
         {
-            const int maxFramesInFlight = 3;
-
-            _renderCommandLists = new RenderCommandListContextImmediate[maxFramesInFlight];
-
                // Ignoring frames in flight for now.
-            ImmediateCommandList = new RenderCommandListContextImmediate(this);
+            ImmediateContext = new RenderCommandListContextImmediate(this);
 
             _renderCommandListUpload = new RenderCommandListContext(this);
-        }
-
-        private unsafe void CreateSyncObjects()
-        {
-            //imageAvailableSemaphores = new Semaphore[MaxFramesInFlight];
-            renderFinishedSemaphores = new Semaphore[MaxFramesInFlight];
-            inFlightFences = new Fence[MaxFramesInFlight];
-            //imagesInFlight = new Fence[swapChainImages!.Length];
-
-            SemaphoreCreateInfo semaphoreInfo = new()
-            {
-                SType = StructureType.SemaphoreCreateInfo,
-            };
-
-            FenceCreateInfo fenceInfo = new()
-            {
-                SType = StructureType.FenceCreateInfo,
-                Flags = FenceCreateFlags.SignaledBit,
-            };
-
-            for (var i = 0; i < MaxFramesInFlight; i++)
-            {
-                if (vk!.CreateSemaphore(_dev, ref semaphoreInfo, null, out renderFinishedSemaphores[i]) != Result.Success ||
-                    vk!.CreateFence(_dev, ref fenceInfo, null, out inFlightFences[i]) != Result.Success)
-                {
-                    throw new Exception("failed to create synchronization objects for a frame!");
-                }
-            }
         }
 
         private DescriptorType GetVulkanDescriptorType(EDescriptorType descriptorType)
@@ -1298,14 +1190,14 @@ namespace UOEngine.Runtime.Rendering
         public Device                                   Handle { get; private set; }
         public PhysicalDevice                           PhysicalHandle => _physicalDevice;
 
+        public RenderCommandListContextImmediate?       ImmediateContext { get; private set; }
+
+        //public IReadOnlyList<RenderCommandListContext>  CommandListContexts => _commandListContexts;
+
         public RenderQueue                              GraphicsQueue { get; private set; }
         public Queue                                    PresentQueue => _presentQueue;      
 
         public Instance                                 Instance => instance;
-
-        //public CommandBuffer                            CurrentCommandBuffer { private get; private set; }
-        public RenderCommandListContextImmediate?              ImmediateCommandList { get; private set; }
-
         public Sampler                                  TextureSampler { get; private set; }
 
         public uint                                     GraphicsQueueFamilyIndex { get; private set; } = uint.MaxValue;
@@ -1320,9 +1212,10 @@ namespace UOEngine.Runtime.Rendering
         private QueueFamilyProperties[]?                _queueFamilyProperties;
 
         private CommandPool                             commandPool;
-        //private CommandBuffer[]?                        commandBuffers;
-        private RenderCommandListContextImmediate[]?           _renderCommandLists;
-        private RenderCommandListContext?                      _renderCommandListUpload;
+
+        private RenderCommandListContext?               _renderCommandListUpload;
+
+        //private List<RenderCommandListContext>          _commandListContexts = new List<RenderCommandListContext>();
 
         private Queue                                   _graphicsQueue;
 
@@ -1339,15 +1232,9 @@ namespace UOEngine.Runtime.Rendering
         private uint                                    _currentNumRenderPasses = 0;                     
         private RenderPass[]                            _renderPasses = new RenderPass[MaxRenderPases];
 
-        private Semaphore[]?                            renderFinishedSemaphores;
-        private Fence[]?                                inFlightFences;
-        private uint                                    currentFrame = 0;
-
         private bool                                    bEnableValidationLayers = false;
         private DebugUtilsMessengerEXT                  debugMessenger;
         private ExtDebugUtils?                          debugUtils;
-
-        private uint                                    MaxFramesInFlight = 0;
 
         private readonly string[]                       validationLayers = ["VK_LAYER_KHRONOS_validation"];
         private readonly string[]                       deviceExtensions = [KhrSwapchain.ExtensionName];

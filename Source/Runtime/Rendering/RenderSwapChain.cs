@@ -174,8 +174,6 @@ namespace UOEngine.Runtime.Rendering
 
             imagePresentedSemaphore = _imageAvailableSemaphores![_currentFrame];
 
-            //imagePresentedSemaphore = _imageAvailableSemaphores[_currentFrame];
-
             return imageIndex;
 
         }

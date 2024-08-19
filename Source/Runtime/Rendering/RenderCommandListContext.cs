@@ -7,142 +7,50 @@ using VkSemaphore = Silk.NET.Vulkan.Semaphore;
 
 namespace UOEngine.Runtime.Rendering
 {
-    public enum ERenderCommandListState
-    { 
-        Invalid,
-        NotAllocated,
-        Ready,
-        Reset,
-        Recording,
-        Ended,
-        Submitted,
-        Finished
-    }
-
     public class RenderCommandListContext: IDisposable
     {
+        public RenderCommandBufferManager   CommandBufferManager { get; private set; }
+        public RenderCommandBuffer          ActiveCommandBuffer => CommandBufferManager.ActiveCommandBuffer!;
+
         public RenderCommandListContext(RenderDevice renderDevice)
         {
             _renderDevice = renderDevice;
 
+            CommandBufferManager = new RenderCommandBufferManager(renderDevice);
+
+            CommandBufferManager.Initialise();
+
             _vk = Vk.GetApi();
-
-            State = ERenderCommandListState.NotAllocated;
-
-            AllocateCommandBuffer();
         }
 
         public void Dispose()
         {
-            Debug.Assert(IsImmediate == false);
-
             SubmitAndWaitUntilGPUIdle();
         }
 
-        public void Reset()
+        public void BeginRenderPass(RenderPass renderPass, Framebuffer framebuffer, Extent2D extent)
         {
-            Debug.Assert(State == ERenderCommandListState.Finished);
-
-            _vk.ResetCommandBuffer(_commandBuffer, 0);
-            State = ERenderCommandListState.Reset;
-        }
-
-        public void Begin()
-        {
-            CommandBufferBeginInfo beginInfo = new()
-            {
-                SType = StructureType.CommandBufferBeginInfo,
-            };
-
-            if(_vk.BeginCommandBuffer(_commandBuffer, ref beginInfo) != Result.Success)
-            {
-                throw new Exception("failed to begin command buffer!");
-            }
-
-            State = ERenderCommandListState.Recording;
-        }
-
-        public void End()
-        {
-            Debug.Assert(_bInRenderPass == false);
-            Debug.Assert(State == ERenderCommandListState.Recording);
-
-            _vk.EndCommandBuffer(_commandBuffer);
-
-            State = ERenderCommandListState.Ended;
-        }
-
-        public unsafe void BeginRenderPass(RenderPass renderPass, Framebuffer framebuffer, Extent2D extent)
-        {
-            Debug.Assert(_bInRenderPass == false);
-
-            RenderPassBeginInfo renderPassInfo = new()
-            {
-                SType = StructureType.RenderPassBeginInfo,
-                RenderPass = renderPass,
-                Framebuffer = framebuffer,
-                RenderArea =
-                {
-                    Offset = { X = 0, Y = 0 },
-                    Extent = extent,
-                }
-            };
-
-            ClearValue clearColor = new()
-            {
-                Color = new() { Float32_0 = 0, Float32_1 = 0, Float32_2 = 0, Float32_3 = 1 },
-            };
-
-            renderPassInfo.ClearValueCount = 1;
-            renderPassInfo.PClearValues = &clearColor;
-
-            _vk.CmdBeginRenderPass(_commandBuffer, &renderPassInfo, SubpassContents.Inline);
-
-            Viewport viewport = new()
-            {
-                X = 0,
-                Y = 0,
-                Width = extent.Width,
-                Height = extent.Height,
-                MinDepth = 0.0f,
-                MaxDepth = 1.0f
-            };
-
-            _vk.CmdSetViewport(_commandBuffer, 0, 1, ref viewport);
-
-            Rect2D scissor = new()
-            {
-                Offset = new() { X = 0, Y = 0 },
-                Extent = extent
-            };
-
-            _vk.CmdSetScissor(_commandBuffer, 0, 1, ref scissor);
-
-            _bInRenderPass = true;
+            CommandBufferManager.ActiveCommandBuffer!.BeginRenderPass(renderPass, framebuffer, extent);
         }
 
         public void EndRenderPass()
         {
-            Debug.Assert(_bInRenderPass);
-
-            _vk!.CmdEndRenderPass(_commandBuffer);
-
-            _bInRenderPass = false;
+            CommandBufferManager.ActiveCommandBuffer!.EndRenderPass();
         }
 
         public void CopyBuffer(Buffer srcBuffer, Buffer destBuffer, BufferCopy copyRegion)
         {
-            _vk.CmdCopyBuffer(_commandBuffer, srcBuffer, destBuffer, 1, ref copyRegion);
+            _vk.CmdCopyBuffer(CommandBufferManager.ActiveCommandBuffer!.Handle, srcBuffer, destBuffer, 1, ref copyRegion);
 
         }
-        public void CopyBufferToImage(Buffer buffer, Image image, ImageLayout imageLayout, uint regionCount, BufferImageCopy bufferImageCopy)
-        {
-            _vk.CmdCopyBufferToImage(_commandBuffer, buffer, image, ImageLayout.TransferDstOptimal, regionCount, ref bufferImageCopy);
-        }
+        //public void CopyBufferToImage(Buffer buffer, Image image, ImageLayout imageLayout, uint regionCount, BufferImageCopy bufferImageCopy)
+        //{
+        //    _vk.CmdCopyBufferToImage(CommandBufferManager.ActiveCommandBuffer!.Handle, buffer, image, ImageLayout.TransferDstOptimal, regionCount, ref bufferImageCopy);
+        //}
 
         public void BindIndexBuffer(RenderBuffer buffer)
         {
-            _vk.CmdBindIndexBuffer(_commandBuffer, buffer.DeviceBuffer, 0, IndexType.Uint16);
+            _vk.CmdBindIndexBuffer(CommandBufferManager.ActiveCommandBuffer!.Handle, buffer.DeviceBuffer, 0, IndexType.Uint16);
         }
 
         public unsafe void BindVertexBuffer(RenderBuffer buffer)
@@ -163,17 +71,17 @@ namespace UOEngine.Runtime.Rendering
 
         }
 
-        public void PipelineBarrier(PipelineStageFlags sourceStage, PipelineStageFlags destinationStage, ImageMemoryBarrier imageMemoryBarrier)
-        {
-            unsafe
-            {
-                _vk.CmdPipelineBarrier(_commandBuffer, sourceStage, destinationStage, 0, 0, null, 0, null, 1, ref imageMemoryBarrier);
-            }
-        }
+        //public void PipelineBarrier(PipelineStageFlags sourceStage, PipelineStageFlags destinationStage, ImageMemoryBarrier imageMemoryBarrier)
+        //{
+        //    unsafe
+        //    {
+        //        _vk.CmdPipelineBarrier(CommandBufferManager.ActiveCommandBuffer!.Handle, sourceStage, destinationStage, 0, 0, null, 0, null, 1, ref imageMemoryBarrier);
+        //    }
+        //}
 
         public void DrawIndexed(uint indexCount, uint instanceCount)
         {
-            _vk.CmdDrawIndexed(_commandBuffer, indexCount, instanceCount, 0, 0, 0);
+            _vk.CmdDrawIndexed(CommandBufferManager.ActiveCommandBuffer!.Handle, indexCount, instanceCount, 0, 0, 0);
         }
 
         public void BindShader(Shader shader)
@@ -189,7 +97,7 @@ namespace UOEngine.Runtime.Rendering
 
             Debug.Assert(pso.PSO.Handle != 0);
 
-            _vk.CmdBindPipeline(_commandBuffer, PipelineBindPoint.Graphics, pso.PSO);
+            _vk.CmdBindPipeline(CommandBufferManager.ActiveCommandBuffer!.Handle, PipelineBindPoint.Graphics, pso.PSO);
 
             _renderDevice.AllocateDescriptorSets(pso.DescriptorSetLayouts, out var descriptorSets);
 
@@ -253,43 +161,18 @@ namespace UOEngine.Runtime.Rendering
 
         public void Submit()
         {
-            Debug.Assert(State == ERenderCommandListState.Recording);
-
-            _renderDevice.Submit(this);
-
-            State = ERenderCommandListState.Submitted;
+            CommandBufferManager.SubmitActive();
         }
 
-        public unsafe void AllocateCommandBuffer()
-        {
-            _commandBuffer = _renderDevice.AllocateCommandBuffer();
+        private readonly RenderDevice       _renderDevice;
+        private readonly Vk                 _vk;
 
-            RenderingCompletedSemaphore = _renderDevice.CreateSemaphore();
+        private int                         _currentShaderId;
 
-            State = ERenderCommandListState.Ready;
-        }
+        static readonly uint                MaxTextureSlots = 4;
 
-        public ERenderCommandListState  State { get; private set; } = ERenderCommandListState.Invalid;
-        public CommandBuffer            Handle => _commandBuffer;
-        public bool                     IsImmediate { get; protected set; } = false;
+        private RenderTexture2D[]           _textures = new RenderTexture2D[MaxTextureSlots];
 
-        public VkSemaphore              RenderingCompletedSemaphore { get; private set; }
-        public VkSemaphore              UploadCompletedSemaphore { get; private set; }
-
-        // Do not start executing this command list until this semaphore is signaled.
-        public VkSemaphore?           WaitSemaphore { get; set; }
-        public PipelineStageFlags       WaitFlags { get; set; }
-
-        private CommandBuffer           _commandBuffer;
-        private readonly RenderDevice   _renderDevice;
-        private readonly Vk             _vk;
-
-        private int                     _currentShaderId;
-        private bool                    _bInRenderPass = false;
-
-        static readonly uint            MaxTextureSlots = 4;
-
-        private RenderTexture2D[]       _textures = new RenderTexture2D[MaxTextureSlots];
 
 
     }

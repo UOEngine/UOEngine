@@ -152,11 +152,10 @@ namespace UOEngine.Runtime.Rendering
 
             Vk.GetApi().UnmapMemory(_renderDevice.Device, stagingBufferMemory);
 
-            using (var commandList = _renderDevice.GetUploadCommandList())
             {
                 // buffer to image
 
-                TransitionImageLayout(commandList, ImageLayout.Undefined, ImageLayout.TransferDstOptimal);
+                TransitionImageLayout(_renderDevice.ImmediateContext!, ImageLayout.Undefined, ImageLayout.TransferDstOptimal);
 
                 BufferImageCopy bufferImageCopy = new()
                 {
@@ -179,10 +178,20 @@ namespace UOEngine.Runtime.Rendering
                     }
                 };
 
-                commandList.CopyBufferToImage(stagingBuffer, _image, ImageLayout.TransferDstOptimal, 1, bufferImageCopy);
+                vk.CmdCopyBufferToImage(_renderDevice.ImmediateContext!.CommandBufferManager.GetUploadCommandBuffer()!.Handle, 
+                    stagingBuffer, 
+                    _image, 
+                    ImageLayout.TransferDstOptimal, 
+                    1, 
+                    ref bufferImageCopy);
 
-                TransitionImageLayout(commandList, ImageLayout.TransferDstOptimal, ImageLayout.ShaderReadOnlyOptimal);
+                //commandList.CopyBufferToImage(stagingBuffer, _image, ImageLayout.TransferDstOptimal, 1, bufferImageCopy);
+
+                TransitionImageLayout(_renderDevice.ImmediateContext!, ImageLayout.TransferDstOptimal, ImageLayout.ShaderReadOnlyOptimal);
             }
+
+            _renderDevice.ImmediateContext!.CommandBufferManager.SubmitUploadBuffer();
+            _renderDevice.WaitUntilIdle();
 
             unsafe
             {
@@ -196,18 +205,15 @@ namespace UOEngine.Runtime.Rendering
             Upload(new ReadOnlySpan<byte>());
         }
 
-        public void SubresourceTransition(ERenderSubresourceState newState)
-        {
-            using (var commandList = _renderDevice.GetUploadCommandList())
-            {
-                if ((_state == ERenderSubresourceState.Undefined) && (newState == ERenderSubresourceState.ShaderResource))
-                {
-                    TransitionImageLayout(commandList, ImageLayout.Undefined, ImageLayout.TransferDstOptimal);
-                }
-            }
-        }
+        //public void SubresourceTransition(ERenderSubresourceState newState)
+        //{
+        //    if ((_state == ERenderSubresourceState.Undefined) && (newState == ERenderSubresourceState.ShaderResource))
+        //    {
+        //        TransitionImageLayout(_renderDevice.ImmediateContext!, ImageLayout.Undefined, ImageLayout.TransferDstOptimal);
+        //    }
+        //}
 
-        private void TransitionImageLayout(RenderCommandListContext commandList, ImageLayout oldLayout, ImageLayout newLayout)
+        private unsafe void TransitionImageLayout(RenderCommandListContext context, ImageLayout oldLayout, ImageLayout newLayout)
         {
             var vk = Vk.GetApi();
 
@@ -257,7 +263,7 @@ namespace UOEngine.Runtime.Rendering
                 DstAccessMask = dstAccessMask,
             };
 
-            commandList.PipelineBarrier(sourceStage, destinationStage, imageMemoryBarrier);
+            vk.CmdPipelineBarrier(context.CommandBufferManager.GetUploadCommandBuffer()!.Handle, sourceStage, destinationStage, 0, 0, null, 0, null, 1, ref imageMemoryBarrier);
         }
 
         //private void CreateShaderResourceView()
@@ -271,6 +277,6 @@ namespace UOEngine.Runtime.Rendering
 
         private RenderDevice                             _renderDevice;
         private readonly uint                            _imageSize;
-        private ERenderSubresourceState                  _state = ERenderSubresourceState.Undefined;         
+        //private ERenderSubresourceState                  _state = ERenderSubresourceState.Undefined;         
     }
 }
