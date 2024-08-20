@@ -8,6 +8,16 @@ namespace UOEngine.Runtime.Core
 {
     public class Window
     {
+        public event Action<Vector2D<int>>? Resized;
+        public IntPtr GetHandle() => _window!.Handle;
+
+        public uint Width { get; private set; }
+        public uint Height { get; private set; }
+
+        public IVkSurface? GetSurface() => _window?.VkSurface;
+
+        private IWindow? _window;
+
         public Window()
         {
             Width = 800;
@@ -29,24 +39,21 @@ namespace UOEngine.Runtime.Core
             {
                 throw new Exception("Windowing platform doesn't support Vulkan.");
             }
+
+            _window.FramebufferResize += (Vector2D<int> obj) =>
+            {
+                Resized?.Invoke(obj);
+            };
+        }
+
+        private void _window_FramebufferResize(Vector2D<int> obj)
+        {
+            throw new NotImplementedException();
         }
 
         public void Shutdown()
         {
             
         }
-
-        public IntPtr GetHandle() => _window!.Handle;
-
-        public uint Width { get; private set; }
-        public uint Height { get; private set; }
-
-        public IVkSurface? GetSurface() => _window?.VkSurface;
-
- 
-        private IWindow? _window;
-
-
-
     }
 }

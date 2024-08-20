@@ -5,6 +5,9 @@ namespace UOEngine.Runtime.Rendering
     {
         public RenderCommandBuffer?         ActiveCommandBuffer { get; private set; }
 
+        public bool                         HasActiveCommandBuffer => ActiveCommandBuffer != null;
+        public bool                         HasActiveUploadBuffer => _activeUploadBuffer != null;
+
         private List<RenderCommandBuffer>   _commandBuffers = new List<RenderCommandBuffer>(8);
         private RenderDevice                _device;
         private RenderCommandBuffer?        _activeUploadBuffer;

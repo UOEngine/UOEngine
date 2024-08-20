@@ -163,6 +163,21 @@ namespace UOEngine.Runtime.Rendering
             vk!.GetDeviceQueue(_dev, PresentQueueFamilyIndex, 0, out _presentQueue);
         }
 
+        public void SubmitAndFlush()
+        {
+            if(ImmediateContext!.CommandBufferManager.HasActiveCommandBuffer)
+            {
+                ImmediateContext!.CommandBufferManager.SubmitActive();
+            }
+
+            if(ImmediateContext!.CommandBufferManager.HasActiveUploadBuffer)
+            {
+                ImmediateContext!.CommandBufferManager.SubmitUploadBuffer();
+            }
+
+            ImmediateContext!.CommandBufferManager.PrepareNewActiveCommandBuffer();
+        }
+
         public unsafe void Submit(RenderCommandBuffer commandBuffer)
         {
             var buffer = commandBuffer.Handle;
@@ -1031,6 +1046,11 @@ namespace UOEngine.Runtime.Rendering
             }
 
             return framebuffer;
+        }
+
+        public unsafe void DestroyFramebuffer(Framebuffer framebuffer)
+        {
+            vk!.DestroyFramebuffer(_dev, framebuffer, null);
         }
 
         private unsafe ShaderModule CreateShaderModule(ReadOnlySpan<byte> code)

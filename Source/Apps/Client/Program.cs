@@ -55,6 +55,11 @@ namespace UOEngine.Apps.Client
             renderer.Device.Initialise(extensions, bEnableValidationLayers);
             RenderViewport viewport = renderer.CreateViewport(window.GetSurface(), window.Width, window.Height);
 
+            window.Resized += (size) =>
+            {
+                viewport.Resize((uint)size.X, (uint)size.Y);
+            };
+
             int shaderId = renderer.Device.RegisterShader<SimpleShader>();
 
             // Fixed dir for now.

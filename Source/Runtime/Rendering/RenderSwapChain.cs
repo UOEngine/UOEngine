@@ -135,25 +135,22 @@ namespace UOEngine.Runtime.Rendering
 
         }
 
-        public unsafe void Shutdown()
+        public unsafe void Destroy()
         {
-            //foreach (var framebuffer in _swapChainFramebuffers!)
-            //{
-            //    _vk.DestroyFramebuffer(_renderDevice.Handle, framebuffer, null);
-            //}
-
             foreach (var imageView in _swapChainImageViews!)
             {
                 _vk.DestroyImageView(_renderDevice.Handle, imageView, null);
             }
 
-            foreach(var semaphore in _imageAvailableSemaphores!)
-            {
-                _vk.DestroySemaphore(_renderDevice.Handle, semaphore, null);
-            }
+            _khrSwapChain!.DestroySwapchain(_renderDevice.Handle, _swapChain, null);
         }
 
-        public uint AcquireImageIndex(out Semaphore imagePresentedSemaphore)
+        public void Recreate()
+        {
+
+        }
+
+        public int AcquireImageIndex(out Semaphore imagePresentedSemaphore)
         {
             uint imageIndex = 0;
 
@@ -161,11 +158,11 @@ namespace UOEngine.Runtime.Rendering
 
             if (result == Result.ErrorOutOfDateKhr || result == Result.SuboptimalKhr)// || frameBufferResized)
             {
+                imagePresentedSemaphore = _imageAvailableSemaphores![_currentFrame];
                 //frameBufferResized = false;
+                return -1;
 
                 //RecreateSwapChain();
-
-                Debug.Assert(false);
             }
             else if (result != Result.Success && result != Result.SuboptimalKhr)
             {
@@ -174,7 +171,7 @@ namespace UOEngine.Runtime.Rendering
 
             imagePresentedSemaphore = _imageAvailableSemaphores![_currentFrame];
 
-            return imageIndex;
+            return (int)imageIndex;
 
         }
 
@@ -222,6 +219,11 @@ namespace UOEngine.Runtime.Rendering
             }
 
             _khrSwapChain!.DestroySwapchain(_renderDevice.Device, _swapChain, null);
+        }
+
+        private void RecreateSwapChain()
+        {
+            _renderDevice.WaitUntilIdle();
         }
 
         private unsafe SwapChainSupportDetails QuerySwapChainSupport(PhysicalDevice physicalDevice)
