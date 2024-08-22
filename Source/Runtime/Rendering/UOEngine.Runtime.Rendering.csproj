@@ -10,6 +10,7 @@
   <ItemGroup>
     <PackageReference Include="ppy.SDL2-CS" Version="1.0.82" />
     <PackageReference Include="Silk.NET.GLFW" Version="2.21.0" />
+    <PackageReference Include="Silk.NET.SPIRV.Reflect" Version="2.21.0" />
     <PackageReference Include="Silk.NET.Vulkan" Version="2.21.0" />
     <PackageReference Include="Silk.NET.Vulkan.Extensions.EXT" Version="2.21.0" />
     <PackageReference Include="Silk.NET.Vulkan.Extensions.KHR" Version="2.21.0" />

@@ -55,7 +55,7 @@ namespace UOEngine.Runtime.Rendering
 
         public string Name { get; protected set; }
 
-        public IReadOnlyList<SetBindingDescription> GetDescriptors() => _descriptors;
+        //public IReadOnlyList<SetBindingDescription> GetDescriptors() => _descriptors;
 
         public string VertexShaderName { get; protected set; }
         public string FragmentShaderName { get; protected set; }
@@ -67,10 +67,10 @@ namespace UOEngine.Runtime.Rendering
         public ReadOnlySpan<byte>                       VertexByteCode => _vertexByteCode;
         public ReadOnlySpan<byte>                       FragmentByteCode => _fragmentByteCode;
 
-        protected List<VertexAttributeDescription>      _vertexAttributeDescriptions = [];
-        protected List<VertexBindingDescription>        _vertexBindingDescriptions = [];
+        protected List<VertexAttributeDescription> _vertexAttributeDescriptions = [];
+        protected List<VertexBindingDescription> _vertexBindingDescriptions = [];
 
-        protected List<SetBindingDescription>           _descriptors = [];
+        //protected List<SetBindingDescription>           _descriptors = [];
 
         private byte[]                                  _vertexByteCode = [];
         private byte[]                                  _fragmentByteCode = [];

@@ -25,23 +25,23 @@ namespace UOEngine.Apps.Editor
             VertexShaderName = "ImGui.vert.spv";
             FragmentShaderName = "ImGui.frag.spv";
 
-            var projectionMatrix = new SetBindingDescription
-            {
-                DescriptorType = EDescriptorType.UniformBuffer,
-                ShaderStage = EShaderStage.Vertex,
-                Binding = 0,
-                Layout = 0
-            };
+            //var projectionMatrix = new SetBindingDescription
+            //{
+            //    DescriptorType = EDescriptorType.UniformBuffer,
+            //    ShaderStage = EShaderStage.Vertex,
+            //    Binding = 0,
+            //    Layout = 0
+            //};
 
-            _descriptors.Add(projectionMatrix);
+            //_descriptors.Add(projectionMatrix);
 
-            var fontSampler = new SetBindingDescription
-            {
-                DescriptorType = EDescriptorType.CombinedSampler,
-                ShaderStage = EShaderStage.Fragment,
-                Binding = 1,
-                Layout = 0
-            };
+            //var fontSampler = new SetBindingDescription
+            //{
+            //    DescriptorType = EDescriptorType.CombinedSampler,
+            //    ShaderStage = EShaderStage.Fragment,
+            //    Binding = 1,
+            //    Layout = 0
+            //};
 
             //_descriptors.Add(fontSampler);
 

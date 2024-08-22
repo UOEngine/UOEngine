@@ -68,7 +68,7 @@ namespace UOEngine.Runtime.Rendering
         }
         public void SetImageLayout()
         {
-
+            
         }
 
         //public void PipelineBarrier(PipelineStageFlags sourceStage, PipelineStageFlags destinationStage, ImageMemoryBarrier imageMemoryBarrier)

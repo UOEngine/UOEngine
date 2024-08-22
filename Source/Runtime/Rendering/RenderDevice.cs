@@ -8,6 +8,7 @@ using Silk.NET.Vulkan.Extensions.EXT;
 using Silk.NET.Vulkan.Extensions.KHR;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
 using Buffer = Silk.NET.Vulkan.Buffer;
+using UOEngine.Runtime.Rendering.Resources;
 
 namespace UOEngine.Runtime.Rendering
 {
@@ -123,7 +124,7 @@ namespace UOEngine.Runtime.Rendering
 
             int shaderId = _currentNumPipelines;
 
-            //CreateGraphicsPipeline(shader);
+            CreateGraphicsPipeline(shader);
 
             _shaders.Add(shaderHash, shader);
 
@@ -485,7 +486,7 @@ namespace UOEngine.Runtime.Rendering
             return buffer;
         }
 
-        private void PickPhysicalDevice()
+        private unsafe void PickPhysicalDevice()
         {
             var devices = vk!.GetPhysicalDevices(instance);
 
@@ -704,9 +705,13 @@ namespace UOEngine.Runtime.Rendering
             _descriptorSetLayouts.Add(descriptorHash, descriptorSetLayout);
         }
 
-        private unsafe void CreateGraphicsPipeline(Shader shader, Extent2D extent)
+        private unsafe void CreateGraphicsPipeline(Shader shader)
         {
             int pipelineIndex = _currentNumPipelines;
+
+            ShaderResource shaderResource = new ShaderResource(shader.VertexByteCode, shader.FragmentByteCode);
+
+            shaderResource.Generate();
 
             var vertexShaderModule = CreateShaderModule(shader.VertexByteCode);
             var fragmentShaderModule = CreateShaderModule(shader.FragmentByteCode);
@@ -790,8 +795,8 @@ namespace UOEngine.Runtime.Rendering
             {
                 X = 0,
                 Y = 0,
-                Width = extent.Width,
-                Height = extent.Height,
+                Width = 0,
+                Height = 0,
                 MinDepth = 0,
                 MaxDepth = 1,
             };
@@ -799,7 +804,7 @@ namespace UOEngine.Runtime.Rendering
             Rect2D scissor = new()
             {
                 Offset = { X = 0, Y = 0 },
-                Extent = extent,
+                Extent = {Width = 0, Height = 0},
             };
 
             PipelineViewportStateCreateInfo viewportState = new()
@@ -850,23 +855,23 @@ namespace UOEngine.Runtime.Rendering
             colorBlending.BlendConstants[2] = 0;
             colorBlending.BlendConstants[3] = 0;
 
-            int numDescriptors = shader.GetDescriptors().Count;
+            int numDescriptors = shaderResource.DescriptorSetLayouts.Count;
             var descriptorSetLayoutBindings = stackalloc DescriptorSetLayoutBinding[numDescriptors];
 
             uint numBindings = 0;
 
-            foreach(var descriptorSet in shader.GetDescriptors())
+            foreach(var descriptorSetInfo in shaderResource.DescriptorSetLayouts)
             {
-                DescriptorSetLayoutBinding layoutBinding = new()
-                {
-                    Binding = descriptorSet.Binding,
-                    DescriptorCount = 1,
-                    DescriptorType = GetVulkanDescriptorType(descriptorSet.DescriptorType),
-                    PImmutableSamplers = null,
-                    StageFlags = descriptorSet.ShaderStage == EShaderStage.Vertex ? ShaderStageFlags.VertexBit : ShaderStageFlags.FragmentBit,
-                };
+                //DescriptorSetLayoutBinding layoutBinding = new()
+                //{
+                //    Binding = descriptorSet.Binding,
+                //    DescriptorCount = 1,
+                //    DescriptorType = GetVulkanDescriptorType(descriptorSet.DescriptorType),
+                //    PImmutableSamplers = null,
+                //    StageFlags = descriptorSet.ShaderStage == EShaderStage.Vertex ? ShaderStageFlags.VertexBit : ShaderStageFlags.FragmentBit,
+                //};
 
-                descriptorSetLayoutBindings[numBindings] = layoutBinding;
+                descriptorSetLayoutBindings[numBindings] = descriptorSetInfo;
 
                 numBindings++;
             }
@@ -874,7 +879,7 @@ namespace UOEngine.Runtime.Rendering
             DescriptorSetLayoutCreateInfo layoutInfo = new()
             {
                 SType = StructureType.DescriptorSetLayoutCreateInfo,
-                BindingCount = (uint)numDescriptors,
+                BindingCount = (uint)shaderResource.DescriptorSetLayouts.Count,
                 PBindings = descriptorSetLayoutBindings
             };
 
@@ -923,7 +928,6 @@ namespace UOEngine.Runtime.Rendering
                 PDynamicStates = dynamicStates
             };
 
-            Debug.Assert(false);
 
             GraphicsPipelineCreateInfo pipelineInfo = new()
             {
@@ -936,12 +940,14 @@ namespace UOEngine.Runtime.Rendering
                 PRasterizationState = &rasterizer,
                 PMultisampleState = &multisampling,
                 PColorBlendState = &colorBlending,
-               // RenderPass = renderPass,
+                RenderPass = renderPass,
                 Layout = pipelineLayout,
                 PDynamicState = &dynamicStateCreateInfo,
                 Subpass = 0,
                 BasePipelineHandle = default
             };
+
+            Debug.Assert(false);
 
             if (vk!.CreateGraphicsPipelines(_dev, default, 1, ref pipelineInfo, null, out var graphicsPipeline) != Result.Success)
             {
@@ -956,10 +962,6 @@ namespace UOEngine.Runtime.Rendering
 
             _pipelineLayouts[pipelineIndex] = pipelineLayout;
             _graphicsPipelines[pipelineIndex] = graphicsPipeline;
-
-            PipelineStateObjectDescription p = new PipelineStateObjectDescription(graphicsPipeline, pipelineLayout, descriptorSetLayouts, [.. shader.GetDescriptors()]);
-
-            _pipelineStateObjectDescriptions[pipelineIndex] = p;
 
             _currentNumPipelines++;
         }
