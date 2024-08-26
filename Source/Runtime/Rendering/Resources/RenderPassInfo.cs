@@ -1,4 +1,4 @@
-﻿using System.IO.Hashing;
+﻿using UOEngine.Runtime.Core;
 
 namespace UOEngine.Runtime.Rendering.Resources
 {
@@ -10,13 +10,13 @@ namespace UOEngine.Runtime.Rendering.Resources
             TextureFormat = textureFormat;
         }
 
-        //public readonly uint GetHash()
-        //{
-        //    Crc32 crc = new Crc32();
+        public readonly uint GetHash()
+        {
+            Crc32 crc = new();
 
-        //    crc.Append(TextureFormat);
+            crc.Append((uint)TextureFormat);
 
-        //    return crc.GetCurrentHashAsUInt32();
-        //}
+            return crc.GetValue();
+        }
     }
 }

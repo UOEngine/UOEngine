@@ -28,6 +28,8 @@ namespace UOEngine.Runtime.Rendering
                 Layers = 1,
             };
 
+            Console.WriteLine("Creating frame buffer");
+
             Vulkan.VkCreateFrameBuffer(_device.Handle, createInfo, out var framebuffer);
 
             Handle = framebuffer;

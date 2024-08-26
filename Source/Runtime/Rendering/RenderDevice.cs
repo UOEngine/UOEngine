@@ -979,7 +979,7 @@ namespace UOEngine.Runtime.Rendering
                 throw new Exception("failed to create render pass!");
             }
 
-            _renderPasses.Add(renderPass.GetHashCode(), renderPass);
+            _renderPasses.Add(renderPassInfo.GetHashCode(), renderPass);
 
             return renderPass;
         }
@@ -1200,7 +1200,7 @@ namespace UOEngine.Runtime.Rendering
         private Pipeline[]                              _graphicsPipelines = new Pipeline[MaxPipelines];
         private PipelineStateObjectDescription[]        _pipelineStateObjectDescriptions = new PipelineStateObjectDescription[MaxPipelines];
 
-        private Dictionary<int, RenderPass>             _renderPasses = [];
+        private Dictionary<int, RenderPass>            _renderPasses = [];
 
         private Dictionary<int, RenderFramebuffer>     _frameBuffers = [];
 
