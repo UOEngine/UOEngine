@@ -124,7 +124,7 @@ namespace UOEngine.Runtime.Rendering
 
             int shaderId = _currentNumPipelines;
 
-            CreateGraphicsPipeline(shader);
+            //CreateGraphicsPipeline(shader);
 
             _shaders.Add(shaderHash, shader);
 
@@ -244,7 +244,7 @@ namespace UOEngine.Runtime.Rendering
 
         public RenderTexture2D CreateTexture2D(RenderTexture2DDescription description)
         {
-            return new RenderTexture2D(description, this);
+            return new RenderTexture2D(this, description);
         }
 
         public RenderBuffer CreateRenderBuffer(uint size, ERenderBufferType usageFlags)
@@ -589,6 +589,7 @@ namespace UOEngine.Runtime.Rendering
 
             SilkMarshal.Free((nint)createInfo.PpEnabledExtensionNames);
         }
+
         private unsafe void CreateDescriptorPool()
         {
             DescriptorPoolSize poolSize = new()
@@ -613,57 +614,6 @@ namespace UOEngine.Runtime.Rendering
                 }
 
             }
-        }
-
-        private unsafe void CreateDescriptorSets()
-        {
-            //var layouts = new DescriptorSetLayout[swapChainImages!.Length];
-
-            //Array.Fill(layouts, descriptorSetLayout);
-
-            //fixed (DescriptorSetLayout* layoutsPtr = &_descriptorSetLayouts[0])
-            //{
-            //    DescriptorSetAllocateInfo allocateInfo = new()
-            //    {
-            //        SType = StructureType.DescriptorSetAllocateInfo,
-            //        DescriptorPool = _descriptorPools[0],
-            //        DescriptorSetCount = (uint)swapChainImages!.Length,
-            //        PSetLayouts = layoutsPtr,
-            //    };
-
-            //    descriptorSets = new DescriptorSet[swapChainImages.Length];
-            //    fixed (DescriptorSet* descriptorSetsPtr = &_des)
-            //    {
-            //        if (vk!.AllocateDescriptorSets(_dev, ref allocateInfo, descriptorSetsPtr) != Result.Success)
-            //        {
-            //            throw new Exception("failed to allocate descriptor sets!");
-            //        }
-            //    }
-            //}
-
-            //for (int i = 0; i < swapChainImages.Length; i++)
-            //{
-            //    DescriptorBufferInfo bufferInfo = new()
-            //    {
-            //        Buffer = uniformBuffers![i],
-            //        Offset = 0,
-            //        Range = (ulong)Unsafe.SizeOf<UniformBufferObject>(),
-
-            //    };
-
-            //    WriteDescriptorSet descriptorWrite = new()
-            //    {
-            //        SType = StructureType.WriteDescriptorSet,
-            //        DstSet = descriptorSets[i],
-            //        DstBinding = 0,
-            //        DstArrayElement = 0,
-            //        DescriptorType = DescriptorType.UniformBuffer,
-            //        DescriptorCount = 1,
-            //        PBufferInfo = &bufferInfo,
-            //    };
-
-            //    vk!.UpdateDescriptorSets(device, 1, descriptorWrite, 0, null);
-            //}
         }
 
         private unsafe void CreateDescriptorSetLayout2(SetBindingDescription descriptor)
@@ -705,7 +655,7 @@ namespace UOEngine.Runtime.Rendering
             _descriptorSetLayouts.Add(descriptorHash, descriptorSetLayout);
         }
 
-        private unsafe void CreateGraphicsPipeline(Shader shader)
+        private unsafe void CreateGraphicsPipeline(Shader shader, RenderPass renderPass)
         {
             int pipelineIndex = _currentNumPipelines;
 
@@ -928,7 +878,6 @@ namespace UOEngine.Runtime.Rendering
                 PDynamicStates = dynamicStates
             };
 
-
             GraphicsPipelineCreateInfo pipelineInfo = new()
             {
                 SType = StructureType.GraphicsPipelineCreateInfo,
@@ -966,11 +915,23 @@ namespace UOEngine.Runtime.Rendering
             _currentNumPipelines++;
         }
 
-        public unsafe RenderPass CreateRenderPass(ERenderTextureFormat textureFormat)
+        public RenderPass GetOrCreateRenderPass(in RenderPassInfo renderPassInfo)
         {
+            if(_renderPasses.TryGetValue(renderPassInfo.GetHashCode(), out var renderPass))
+            {
+                return renderPass;
+            }
+
+            return CreateRenderPass(renderPassInfo);
+        }
+
+        public unsafe RenderPass CreateRenderPass(in RenderPassInfo renderPassInfo)
+        {
+            Console.WriteLine("Creating render pass");
+
             AttachmentDescription colorAttachment = new()
             {
-                Format = RenderCommon.TextureFormatToVulkanFormat(textureFormat),
+                Format = RenderCommon.TextureFormatToVulkanFormat(renderPassInfo.TextureFormat),
                 Samples = SampleCountFlags.Count1Bit,
                 LoadOp = AttachmentLoadOp.Clear,
                 StoreOp = AttachmentStoreOp.Store,
@@ -1002,7 +963,7 @@ namespace UOEngine.Runtime.Rendering
                 DstAccessMask = AccessFlags.ColorAttachmentWriteBit
             };
 
-            RenderPassCreateInfo renderPassInfo = new()
+            RenderPassCreateInfo renderPassCreateInfo = new()
             {
                 SType = StructureType.RenderPassCreateInfo,
                 AttachmentCount = 1,
@@ -1013,39 +974,28 @@ namespace UOEngine.Runtime.Rendering
                 PDependencies = &dependency
             };
 
-            if (vk!.CreateRenderPass(_dev, ref renderPassInfo, null, out var renderPass) != Result.Success)
+            if (vk!.CreateRenderPass(_dev, ref renderPassCreateInfo, null, out var renderPass) != Result.Success)
             {
                 throw new Exception("failed to create render pass!");
             }
 
-            uint insertIndex = _currentNumRenderPasses;
-
-            _renderPasses[insertIndex] = renderPass;
-
-            _currentNumRenderPasses++;
+            _renderPasses.Add(renderPass.GetHashCode(), renderPass);
 
             return renderPass;
         }
 
-        public unsafe Framebuffer CreateFramebuffer(ImageView imageView, uint width, uint height,  RenderPass renderPass)
+        public RenderFramebuffer GetOrCreateFrameBuffer(in RenderTargetInfo renderTargetInfo, RenderPass renderPass)
         {
-            var attachment = imageView;
+            int hashCode = HashCode.Combine(renderTargetInfo.GetHashCode(), renderPass.GetHashCode());
 
-            FramebufferCreateInfo framebufferInfo = new()
+            if (_frameBuffers.TryGetValue(hashCode, out RenderFramebuffer? framebuffer))
             {
-                SType = StructureType.FramebufferCreateInfo,
-                RenderPass = renderPass,
-                AttachmentCount = 1,
-                PAttachments = &attachment,
-                Width = width,
-                Height = height,
-                Layers = 1,
-            };
-
-            if (vk!.CreateFramebuffer(_dev, ref framebufferInfo, null, out var framebuffer) != Result.Success)
-            {
-                throw new Exception("failed to create framebuffer!");
+                return framebuffer;
             }
+
+            framebuffer = new RenderFramebuffer(this, renderTargetInfo, renderPass);
+
+            _frameBuffers.Add(hashCode, framebuffer);
 
             return framebuffer;
         }
@@ -1250,9 +1200,9 @@ namespace UOEngine.Runtime.Rendering
         private Pipeline[]                              _graphicsPipelines = new Pipeline[MaxPipelines];
         private PipelineStateObjectDescription[]        _pipelineStateObjectDescriptions = new PipelineStateObjectDescription[MaxPipelines];
 
-        const int                                       MaxRenderPases = 16;
-        private uint                                    _currentNumRenderPasses = 0;                     
-        private RenderPass[]                            _renderPasses = new RenderPass[MaxRenderPases];
+        private Dictionary<int, RenderPass>             _renderPasses = [];
+
+        private Dictionary<int, RenderFramebuffer>     _frameBuffers = [];
 
         private bool                                    bEnableValidationLayers = false;
         private DebugUtilsMessengerEXT                  debugMessenger;

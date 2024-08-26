@@ -1,10 +1,9 @@
 ﻿using System.Diagnostics;
 
 using Silk.NET.Core.Contexts;
-using Silk.NET.SDL;
 using Silk.NET.Vulkan;
+using UOEngine.Runtime.Rendering.Resources;
 using VkSemaphore = Silk.NET.Vulkan.Semaphore;
-
 
 namespace UOEngine.Runtime.Rendering
 {
@@ -17,7 +16,6 @@ namespace UOEngine.Runtime.Rendering
         public RenderPass                   MainRenderPass { get; private set; }
 
         private RenderDevice                _renderDevice;
-        private Framebuffer[]?              _framebuffers;
 
         private uint                        _width;
         private uint                        _height;
@@ -25,11 +23,13 @@ namespace UOEngine.Runtime.Rendering
         private IVkSurface?                 _surface;
 
         private ERenderTextureFormat        _pixelFormat = ERenderTextureFormat.B8G8R8A8;
-
+        private RenderPassInfo              _renderPassInfo;   
+        
         public RenderViewport(RenderDevice renderDevice)
         {
             _renderDevice = renderDevice;
         }
+
         public void Initialise(IVkSurface? surface, uint width, uint height)
         {
             if(surface == null)
@@ -43,7 +43,9 @@ namespace UOEngine.Runtime.Rendering
             _height = height;
             _surface = surface;
 
-            MainRenderPass = _renderDevice.CreateRenderPass(_pixelFormat);
+            _renderPassInfo = new RenderPassInfo(ERenderTextureFormat.B8G8R8A8);
+
+            MainRenderPass = _renderDevice.CreateRenderPass(_renderPassInfo);
 
             CreateSwapChain();
         }
@@ -69,7 +71,9 @@ namespace UOEngine.Runtime.Rendering
             commandBuffer.WaitSemaphore = imagePresentedSemaphore;
             commandBuffer.WaitFlags = PipelineStageFlags.ColorAttachmentOutputBit;
 
-            context!.BeginRenderPass(MainRenderPass, _framebuffers![imageIndex], SwapChain.Extent);
+            var renderTargetInfo = new RenderTargetInfo(SwapChain.BackbufferTextures[imageIndex]);
+
+            context!.BeginRenderPass(_renderPassInfo, renderTargetInfo);
 
             Rendering?.Invoke(context);
 
@@ -119,14 +123,6 @@ namespace UOEngine.Runtime.Rendering
             SwapChain = new RenderSwapChain(_renderDevice);
 
             SwapChain.Setup(_surface!, _width, _height, _pixelFormat);
-
-            _framebuffers = new Framebuffer[SwapChain.ShaderResourceViews.Length];
-
-            for (int i = 0; i < _framebuffers.Length; i++)
-            {
-                _framebuffers[i] = _renderDevice.CreateFramebuffer(SwapChain.ShaderResourceViews[i], _width, _height, MainRenderPass);
-            }
-
         }
 
         private void DestroySwapChain()
@@ -135,15 +131,6 @@ namespace UOEngine.Runtime.Rendering
             _renderDevice.WaitUntilIdle();
 
             SwapChain!.Destroy();
-
-            foreach(Framebuffer framebuffer in _framebuffers!)
-            {
-                _renderDevice.DestroyFramebuffer(framebuffer);
-            }
-
-            _framebuffers = [];
-
-            _framebuffers = null;
 
             SwapChain = null;
         }

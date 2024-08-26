@@ -9,7 +9,10 @@ namespace UOEngine.Runtime.Rendering
 {
     public class RenderSwapChain
     {
-        public Fence ImagePresentedFence { get; private set; }
+        public Fence                            ImagePresentedFence { get; private set; }
+        public IReadOnlyList<RenderTexture2D>   BackbufferTextures => _backbufferTextures;
+
+        private RenderTexture2D[]               _backbufferTextures = [];
 
         public RenderSwapChain(RenderDevice renderDevice)
         {
@@ -41,18 +44,17 @@ namespace UOEngine.Runtime.Rendering
             TexFormat = pixelFormat;
 
             var surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.Formats);
-
             var presentMode = ChoosePresentMode(swapChainSupport.PresentModes);
             var extent = ChooseSwapExtent(swapChainSupport.Capabilities, width, height);
 
             var imageCount = swapChainSupport.Capabilities.MinImageCount + 1;
+
             if (swapChainSupport.Capabilities.MaxImageCount > 0 && imageCount > swapChainSupport.Capabilities.MaxImageCount)
             {
                 imageCount = swapChainSupport.Capabilities.MaxImageCount;
             }
 
            _maxFramesInFlight = imageCount;
-
 
             SwapchainCreateInfoKHR createInfo = new()
             {
@@ -107,23 +109,28 @@ namespace UOEngine.Runtime.Rendering
 
             _khrSwapChain.GetSwapchainImages(_renderDevice.Handle, _swapChain, ref imageCount, null);
 
-            //_swapChainTextures = new RenderTexture2D[imageCount];
+            _backbufferTextures = new RenderTexture2D[imageCount];
 
-            _swapChainImages = new Image[imageCount];
-            _swapChainImageViews = new ImageView[imageCount];
+            var swapChainImages = stackalloc Image[(int)imageCount];
+            //var swapChainImageViews = stackalloc ImageView[(int)imageCount];
+
             _imageAvailableSemaphores = new Semaphore[imageCount];
 
-            fixed (Image* ptr = &_swapChainImages[0])
-            {
-                _khrSwapChain.GetSwapchainImages(_renderDevice.Handle, _swapChain, ref imageCount, ptr);
-            }
+            _khrSwapChain.GetSwapchainImages(_renderDevice.Handle, _swapChain, ref imageCount, swapChainImages);
 
             _swapChainImageFormat = surfaceFormat.Format;
             _swapChainExtent = extent;
 
             for (int i = 0; i < imageCount; i++)
             {
-                _swapChainImageViews[i] = _renderDevice.CreateImageView(_swapChainImages[i], vkFormat);
+                RenderTexture2DDescription texDesc = new()
+                {
+                    Format = pixelFormat,
+                    Width = extent.Width,
+                    Height = extent.Height
+                };
+
+                _backbufferTextures[i] = new RenderTexture2D(_renderDevice, texDesc, swapChainImages[i]);
             }
 
             _imageAvailableSemaphores = new Semaphore[imageCount];
@@ -137,12 +144,14 @@ namespace UOEngine.Runtime.Rendering
 
         public unsafe void Destroy()
         {
-            foreach (var imageView in _swapChainImageViews!)
+            _khrSwapChain!.DestroySwapchain(_renderDevice.Handle, _swapChain, null);
+
+            foreach (RenderTexture2D texture in _backbufferTextures)
             {
-                _vk.DestroyImageView(_renderDevice.Handle, imageView, null);
+                texture.DestroyShaderResourceView();
             }
 
-            _khrSwapChain!.DestroySwapchain(_renderDevice.Handle, _swapChain, null);
+            _backbufferTextures = [];
         }
 
         public void Recreate()
@@ -200,26 +209,9 @@ namespace UOEngine.Runtime.Rendering
             _currentFrame = (_currentFrame + 1) % _maxFramesInFlight;
         }
 
-        //public Framebuffer CurrentSwapChainFrameBuffer => _swapChainFramebuffers![_currentFrame];
-
         public Extent2D Extent => _swapChainExtent;
 
         public ERenderTextureFormat TexFormat { get; private set; }
-
-        private unsafe void Cleanup()
-        {
-            //for (int i = 0; i < _swapChainFramebuffers!.Length; i++)
-            //{
-            //    _vk!.DestroyFramebuffer(_renderDevice.Device, _swapChainFramebuffers[i], null);
-            //}
-
-            for (int i = 0; i < _swapChainImageViews!.Length; i++)
-            {
-                _vk.DestroyImageView(_renderDevice.Device, _swapChainImageViews[i], null);
-            }
-
-            _khrSwapChain!.DestroySwapchain(_renderDevice.Device, _swapChain, null);
-        }
 
         private void RecreateSwapChain()
         {
@@ -322,18 +314,13 @@ namespace UOEngine.Runtime.Rendering
             public PresentModeKHR[] PresentModes;
         }
 
-        public ImageView[]          ShaderResourceViews => _swapChainImageViews!;
-
         private RenderDevice        _renderDevice;
 
         private KhrSwapchain?       _khrSwapChain;
         private SwapchainKHR        _swapChain;
-        private Image[]?            _swapChainImages;
+
         private Format              _swapChainImageFormat;
         private Extent2D            _swapChainExtent;
-        private ImageView[]?        _swapChainImageViews;
-        //private Framebuffer[]?      _swapChainFramebuffers;
-        //private RenderTexture2D[]    _swapChainTextures;
 
         private Semaphore[]?        _imageAvailableSemaphores;
 

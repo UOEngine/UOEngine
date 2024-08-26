@@ -90,7 +90,7 @@ namespace UOEngine.Runtime.Rendering
             State = ERenderCommandBufferState.Ended;
         }
 
-        public unsafe void BeginRenderPass(RenderPass renderPass, Framebuffer framebuffer, Extent2D extent)
+        public unsafe void BeginRenderPass(RenderPass renderPass, RenderFramebuffer framebuffer)
         {
             Debug.Assert(IsInsideRenderPass == false);
 
@@ -98,11 +98,11 @@ namespace UOEngine.Runtime.Rendering
             {
                 SType = StructureType.RenderPassBeginInfo,
                 RenderPass = renderPass,
-                Framebuffer = framebuffer,
+                Framebuffer = framebuffer.Handle!.Value,
                 RenderArea =
                 {
                     Offset = { X = 0, Y = 0 },
-                    Extent = extent,
+                    Extent = framebuffer.RenderArea.Extent,
                 }
             };
 
@@ -120,18 +120,18 @@ namespace UOEngine.Runtime.Rendering
             {
                 X = 0,
                 Y = 0,
-                Width = extent.Width,
-                Height = extent.Height,
+                Width = framebuffer.RenderArea.Extent.Width,
+                Height = framebuffer.RenderArea.Extent.Height,
                 MinDepth = 0.0f,
                 MaxDepth = 1.0f
             };
-
+            
             _vk.CmdSetViewport(Handle, 0, 1, ref viewport);
 
             Rect2D scissor = new()
             {
                 Offset = new() { X = 0, Y = 0 },
-                Extent = extent
+                Extent = framebuffer.RenderArea.Extent
             };
 
             _vk.CmdSetScissor(Handle, 0, 1, ref scissor);

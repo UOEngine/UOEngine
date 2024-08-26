@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 
 using Silk.NET.Vulkan;
+using UOEngine.Runtime.Rendering.Resources;
 using Buffer = Silk.NET.Vulkan.Buffer;
 using VkSemaphore = Silk.NET.Vulkan.Semaphore;
 
@@ -11,6 +12,9 @@ namespace UOEngine.Runtime.Rendering
     {
         public RenderCommandBufferManager   CommandBufferManager { get; private set; }
         public RenderCommandBuffer          ActiveCommandBuffer => CommandBufferManager.ActiveCommandBuffer!;
+
+        private RenderPass                  _activeRenderPass;
+        private RenderFramebuffer?          _activeFramebuffer;   
 
         public RenderCommandListContext(RenderDevice renderDevice)
         {
@@ -28,14 +32,26 @@ namespace UOEngine.Runtime.Rendering
             SubmitAndWaitUntilGPUIdle();
         }
 
-        public void BeginRenderPass(RenderPass renderPass, Framebuffer framebuffer, Extent2D extent)
+        public void BeginRenderPass(in RenderPassInfo renderPassInfo, in RenderTargetInfo renderTargetInfo)
         {
-            CommandBufferManager.ActiveCommandBuffer!.BeginRenderPass(renderPass, framebuffer, extent);
+            RenderPass renderPass = _renderDevice.GetOrCreateRenderPass(renderPassInfo);
+
+            RenderFramebuffer framebuffer = _renderDevice.GetOrCreateFrameBuffer(renderTargetInfo, renderPass);
+            
+            CommandBufferManager.ActiveCommandBuffer!.BeginRenderPass(renderPass, framebuffer);
+
+            _activeRenderPass = renderPass;
+            _activeFramebuffer = framebuffer;
         }
 
         public void EndRenderPass()
         {
             CommandBufferManager.ActiveCommandBuffer!.EndRenderPass();
+        }
+
+        public void SetRenderTarget()
+        {
+
         }
 
         public void CopyBuffer(Buffer srcBuffer, Buffer destBuffer, BufferCopy copyRegion)
@@ -126,7 +142,7 @@ namespace UOEngine.Runtime.Rendering
 
                             imageInfo.ImageLayout = ImageLayout.ShaderReadOnlyOptimal;
 
-                            imageInfo.ImageView = _textures[bindingDescription.Binding].ShaderResourceView;
+                            imageInfo.ImageView = _textures[bindingDescription.Binding].ShaderResourceView!.Value;
                             imageInfo.Sampler = _renderDevice.TextureSampler;
 
                             descriptorImageInfos[numDescriptorImageInfos] = imageInfo;

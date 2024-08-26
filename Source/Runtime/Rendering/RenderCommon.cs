@@ -51,5 +51,22 @@ namespace UOEngine.Runtime.Rendering
              return format;
         }
 
+        public static ERenderTextureFormat VulkanFormatToTextureFormat(Format vulkanFormat)
+        {
+            ERenderTextureFormat textureFormat = ERenderTextureFormat.None;
+
+            switch(vulkanFormat)
+            {
+                default:
+                    {
+                        break;
+                    }
+            }
+
+            Debug.Assert(textureFormat != ERenderTextureFormat.None);
+
+            return textureFormat;
+        }
+
     }
 }

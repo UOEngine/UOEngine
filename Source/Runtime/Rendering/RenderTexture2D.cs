@@ -37,7 +37,15 @@ namespace UOEngine.Runtime.Rendering
 
     public class RenderTexture2D
     {
-        public RenderTexture2D(RenderTexture2DDescription description, RenderDevice renderDevice)
+        public RenderTexture2DDescription   Description { get; private set; }
+        public ImageView?                   ShaderResourceView { get; private set; }
+
+        private Image?                      _image;
+
+        private RenderDevice                _renderDevice;
+        private readonly uint               _imageSize;
+
+        public RenderTexture2D(RenderDevice renderDevice, RenderTexture2DDescription description)
         {
             Description = description;
             _renderDevice = renderDevice;
@@ -85,12 +93,14 @@ namespace UOEngine.Runtime.Rendering
 
             unsafe
             {
-                result = vk.CreateImage(renderDevice.Device, ref imageCreateInfo, null, out _image);
+                result = vk.CreateImage(renderDevice.Device, ref imageCreateInfo, null, out Image image);
+
+                _image = image;
             }
 
             Debug.Assert(result == Result.Success);
 
-            vk.GetImageMemoryRequirements(renderDevice.Device, _image, out var memoryRequirements);
+            vk.GetImageMemoryRequirements(renderDevice.Device, _image!.Value, out var memoryRequirements);
 
             MemoryAllocateInfo memoryAllocateInfo = new()
             {
@@ -105,27 +115,43 @@ namespace UOEngine.Runtime.Rendering
 
                 Debug.Assert(result == Result.Success);
 
-                result = vk.BindImageMemory(renderDevice.Device, _image, deviceTextureMemory, 0);
+                result = vk.BindImageMemory(renderDevice.Device, _image.Value, deviceTextureMemory, 0);
             }
 
             Debug.Assert(result == Result.Success);
 
-            ShaderResourceView = renderDevice.CreateImageView(_image, textureFormat);
+            ShaderResourceView = renderDevice.CreateImageView(_image.Value, textureFormat);
 
         }
 
-        //public RenderTexture2D(RenderTexture2DDescription description, Image image, RenderDevice renderDevice)
-        //{
-        //    Description = description;
-        //    _renderDevice = renderDevice;
+        public RenderTexture2D(RenderDevice device, RenderTexture2DDescription description, Image image)
+        {
+            Description = description;
+            _renderDevice = device;
+            _image = image;
 
-        //    ShaderResourceView = renderDevice.CreateImageView(_image, description.Format);
-        //}
+            ShaderResourceView = _renderDevice.CreateImageView(_image.Value, RenderCommon.TextureFormatToVulkanFormat(description.Format));
+        }
 
-        //~RenderTexture2D()
-        //{
+        public void DestroyShaderResourceView()
+        {
+            if (ShaderResourceView != null)
+            {
+                Vulkan.VkDestroyImageView(_renderDevice.Handle, ShaderResourceView.Value);
+                ShaderResourceView = null;
+            }
+        }
+        public void Destroy()
+        {
+            DestroyShaderResourceView();
 
-        //}
+            if(_image != null)
+            {
+                Vulkan.VkDestroyImage(_renderDevice.Handle, _image.Value);
+
+                _image = null;
+            }
+        }
 
         public void Upload<T>(ReadOnlySpan<T> texels)
         {
@@ -180,7 +206,7 @@ namespace UOEngine.Runtime.Rendering
 
                 vk.CmdCopyBufferToImage(_renderDevice.ImmediateContext!.CommandBufferManager.GetUploadCommandBuffer()!.Handle, 
                     stagingBuffer, 
-                    _image, 
+                    _image!.Value, 
                     ImageLayout.TransferDstOptimal, 
                     1, 
                     ref bufferImageCopy);
@@ -250,7 +276,7 @@ namespace UOEngine.Runtime.Rendering
                 NewLayout = newLayout,
                 SrcQueueFamilyIndex = Vk.QueueFamilyIgnored,
                 DstQueueFamilyIndex = Vk.QueueFamilyIgnored,
-                Image = _image,
+                Image = _image!.Value,
                 SubresourceRange = new()
                 {
                     AspectMask = ImageAspectFlags.ColorBit,
@@ -265,18 +291,5 @@ namespace UOEngine.Runtime.Rendering
 
             vk.CmdPipelineBarrier(context.CommandBufferManager.GetUploadCommandBuffer()!.Handle, sourceStage, destinationStage, 0, 0, null, 0, null, 1, ref imageMemoryBarrier);
         }
-
-        //private void CreateShaderResourceView()
-        //{
-        //    ShaderResourceView = _renderDevice.CreateImageView(_image, textureFormat);
-        //}
-
-        public RenderTexture2DDescription                Description { get;private set; }
-        public ImageView                                 ShaderResourceView { get; private set; }
-        private Image                                    _image;
-
-        private RenderDevice                             _renderDevice;
-        private readonly uint                            _imageSize;
-        //private ERenderSubresourceState                  _state = ERenderSubresourceState.Undefined;         
     }
 }
