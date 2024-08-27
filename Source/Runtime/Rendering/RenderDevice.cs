@@ -85,6 +85,8 @@ namespace UOEngine.Runtime.Rendering
             CreateCommandBuffers();
 
             CreateDescriptorPool();
+
+            CreateSampler();
         }
 
         public unsafe void Shutdown()
@@ -103,13 +105,12 @@ namespace UOEngine.Runtime.Rendering
                 debugUtils!.DestroyDebugUtilsMessenger(instance, debugMessenger, null);
             }
 
-            //khrSurface!.DestroySurface(instance, surface, null);
             vk!.DestroyInstance(instance, null);
 
             vk!.Dispose();
         }
 
-        public int RegisterShader<T>() where T: Shader, new()
+        public T RegisterShader<T>() where T: Shader, new()
         {
             var shader = new T();
 
@@ -117,18 +118,14 @@ namespace UOEngine.Runtime.Rendering
 
             if (_shaders.ContainsKey(shaderHash))
             {
-                Debug.Assert(false);
+                return shader;
             }
-
-            shader.Setup();
-
-            int shaderId = _currentNumPipelines;
-
-            //CreateGraphicsPipeline(shader);
 
             _shaders.Add(shaderHash, shader);
 
-            return shaderId;
+            shader.Setup();
+
+            return shader;
         }
 
         public Pipeline GetPipeline(int shaderId)
@@ -141,11 +138,16 @@ namespace UOEngine.Runtime.Rendering
             return _pipelineLayouts[shaderId];
         }
 
-        public PipelineStateObjectDescription GetPipelineStateObjectDescription(int shaderId)
+        public PipelineStateObjectDescription GetOrCreatePipelineStateObject(Shader shader, RenderPass renderPass)
         {
-            Debug.Assert(_pipelineStateObjectDescriptions[shaderId].PSO.Handle != 0);
+            int hash = HashCode.Combine(shader.GetHashCode(), renderPass.GetHashCode());
 
-            return _pipelineStateObjectDescriptions[shaderId];
+            if(_pipelineStateObjectDescriptions.TryGetValue(hash, out var pipelineStateObjectDescription))
+            {
+                return pipelineStateObjectDescription;
+            }
+
+            return CreateGraphicsPipeline(shader, renderPass);
         }
 
         public void SetupPresentQueue(KhrSurface surface, SurfaceKHR surfaceKHR)
@@ -336,40 +338,6 @@ namespace UOEngine.Runtime.Rendering
             return semaphore;
         }
 
-        //public RenderShaderResource CreateShaderResourceView(Image image, ERenderTextureFormat format)
-        //{
-        //    ImageViewCreateInfo imageViewCreateInfo = new()
-        //    {
-        //        SType = StructureType.ImageViewCreateInfo,
-        //        Image = image,
-        //        ViewType = ImageViewType.Type2D,
-        //        Format = RenderCommon.TextureFormatToVulkanFormat(format),
-        //        Components =
-        //        {
-        //            R = ComponentSwizzle.Identity,
-        //            G = ComponentSwizzle.Identity,
-        //            B = ComponentSwizzle.Identity,
-        //            A = ComponentSwizzle.Identity,
-        //        },
-        //        SubresourceRange = new()
-        //        {
-        //            AspectMask = ImageAspectFlags.ColorBit,
-        //            LevelCount = 1,
-        //            BaseArrayLayer = 0,
-        //            LayerCount = 1
-        //        }
-        //    };
-
-        //    ImageView imageView = default;
-
-        //    unsafe
-        //    {
-        //        vk!.CreateImageView(_dev, ref imageViewCreateInfo, null, out imageView);
-        //    }
-
-        //    return imageView;
-        //}
-
         public ImageView CreateImageView(Image image, Format format)
         {
             ImageViewCreateInfo imageViewCreateInfo = new()
@@ -466,6 +434,11 @@ namespace UOEngine.Runtime.Rendering
                     }
                 }
             }
+        }
+
+        public void RecycleDescriptorSets()
+        {
+            Vulkan.VkResetDescriptorPool(_dev, _descriptorPools[0]);
         }
 
         public unsafe CommandBuffer AllocateCommandBuffer()
@@ -655,10 +628,8 @@ namespace UOEngine.Runtime.Rendering
             _descriptorSetLayouts.Add(descriptorHash, descriptorSetLayout);
         }
 
-        private unsafe void CreateGraphicsPipeline(Shader shader, RenderPass renderPass)
+        private unsafe PipelineStateObjectDescription CreateGraphicsPipeline(Shader shader, RenderPass renderPass)
         {
-            int pipelineIndex = _currentNumPipelines;
-
             ShaderResource shaderResource = new ShaderResource(shader.VertexByteCode, shader.FragmentByteCode);
 
             shaderResource.Generate();
@@ -690,32 +661,32 @@ namespace UOEngine.Runtime.Rendering
 
             var vertexInputBindingDescriptions = stackalloc VertexInputBindingDescription[shader.VertexBindingDescriptions.Count];
 
-            int i = 0;
+            //int i = 0;
 
-            foreach (var bindingDescription in shader.VertexBindingDescriptions)
-            {
-                vertexInputBindingDescriptions[i++] = new()
-                {
-                    Binding = bindingDescription.Binding,
-                    Stride = bindingDescription.Stride,
-                    InputRate = VertexInputRate.Vertex
-                };
-            }
+            //foreach (var bindingDescription in shader.VertexBindingDescriptions)
+            //{
+            //    vertexInputBindingDescriptions[i++] = new()
+            //    {
+            //        Binding = bindingDescription.Binding,
+            //        Stride = bindingDescription.Stride,
+            //        InputRate = VertexInputRate.Vertex
+            //    };
+            //}
 
             var vertexAttributeDescriptions = stackalloc VertexInputAttributeDescription[shader.VertexAttributeDescriptions.Count];
 
-            i = 0;
+            //i = 0;
 
-            foreach(var attribute in shader.VertexAttributeDescriptions)
-            {
-                vertexAttributeDescriptions[i++] = new()
-                {
-                    Binding = attribute.Binding,
-                    Location = attribute.Location,
-                    Format = _vertexFormats[(int)attribute.VertexFormat],
-                    Offset = (uint)attribute.Offset
-                };
-            }
+            //foreach(var attribute in shader.VertexAttributeDescriptions)
+            //{
+            //    vertexAttributeDescriptions[i++] = new()
+            //    {
+            //        Binding = attribute.Binding,
+            //        Location = attribute.Location,
+            //        Format = _vertexFormats[(int)attribute.VertexFormat],
+            //        Offset = (uint)attribute.Offset
+            //    };
+            //}
 
             PipelineVertexInputStateCreateInfo vertexInputInfo = new()
             {
@@ -812,15 +783,6 @@ namespace UOEngine.Runtime.Rendering
 
             foreach(var descriptorSetInfo in shaderResource.DescriptorSetLayouts)
             {
-                //DescriptorSetLayoutBinding layoutBinding = new()
-                //{
-                //    Binding = descriptorSet.Binding,
-                //    DescriptorCount = 1,
-                //    DescriptorType = GetVulkanDescriptorType(descriptorSet.DescriptorType),
-                //    PImmutableSamplers = null,
-                //    StageFlags = descriptorSet.ShaderStage == EShaderStage.Vertex ? ShaderStageFlags.VertexBit : ShaderStageFlags.FragmentBit,
-                //};
-
                 descriptorSetLayoutBindings[numBindings] = descriptorSetInfo;
 
                 numBindings++;
@@ -896,8 +858,6 @@ namespace UOEngine.Runtime.Rendering
                 BasePipelineHandle = default
             };
 
-            Debug.Assert(false);
-
             if (vk!.CreateGraphicsPipelines(_dev, default, 1, ref pipelineInfo, null, out var graphicsPipeline) != Result.Success)
             {
                 throw new Exception("failed to create graphics pipeline!");
@@ -909,10 +869,13 @@ namespace UOEngine.Runtime.Rendering
             SilkMarshal.Free((nint)vertShaderStageInfo.PName);
             SilkMarshal.Free((nint)fragShaderStageInfo.PName);
 
-            _pipelineLayouts[pipelineIndex] = pipelineLayout;
-            _graphicsPipelines[pipelineIndex] = graphicsPipeline;
+            int hash = HashCode.Combine(shader, renderPass);
 
-            _currentNumPipelines++;
+            PipelineStateObjectDescription pipelineStateObjectDescription = new(graphicsPipeline, descriptorSetLayouts, shaderResource.DescriptorSetLayouts.ToArray(), pipelineLayout);
+
+            _pipelineStateObjectDescriptions.Add(hash, pipelineStateObjectDescription);
+
+            return pipelineStateObjectDescription;
         }
 
         public RenderPass GetOrCreateRenderPass(in RenderPassInfo renderPassInfo)
@@ -1157,14 +1120,11 @@ namespace UOEngine.Runtime.Rendering
             }
         }
 
-        //public event EventHandler?                      SwapchainDirty;
         public Device                                   Device => _dev;
         public Device                                   Handle { get; private set; }
         public PhysicalDevice                           PhysicalHandle => _physicalDevice;
 
         public RenderCommandListContextImmediate?       ImmediateContext { get; private set; }
-
-        //public IReadOnlyList<RenderCommandListContext>  CommandListContexts => _commandListContexts;
 
         public RenderQueue                              GraphicsQueue { get; private set; }
         public Queue                                    PresentQueue => _presentQueue;      
@@ -1187,18 +1147,17 @@ namespace UOEngine.Runtime.Rendering
 
         private RenderCommandListContext?               _renderCommandListUpload;
 
-        //private List<RenderCommandListContext>          _commandListContexts = new List<RenderCommandListContext>();
-
         private Queue                                   _graphicsQueue;
 
         private Queue                                   _presentQueue;
 
         const int                                       MaxPipelines = 64;
 
-        private int                                     _currentNumPipelines = 0;
         private PipelineLayout[]                        _pipelineLayouts = new PipelineLayout[MaxPipelines];
         private Pipeline[]                              _graphicsPipelines = new Pipeline[MaxPipelines];
-        private PipelineStateObjectDescription[]        _pipelineStateObjectDescriptions = new PipelineStateObjectDescription[MaxPipelines];
+
+        private Dictionary<int, PipelineStateObjectDescription>        
+                                                        _pipelineStateObjectDescriptions = [];
 
         private Dictionary<int, RenderPass>            _renderPasses = [];
 

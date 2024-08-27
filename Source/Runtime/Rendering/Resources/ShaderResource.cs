@@ -16,14 +16,16 @@ namespace UOEngine.Runtime.Rendering.Resources
         }
     }
 
-    internal class ShaderResource
+    public class ShaderResource
     {
         public ReflectShaderModule                      VertexShaderModule { get; private set; }
         public ReflectShaderModule                      FragmentShaderModule { get; private set; }
 
         public IReadOnlyList<DescriptorSetLayoutBinding>   DescriptorSetLayouts => _descriptorSetLayoutsInfo;
 
-        private List<DescriptorSetLayoutBinding>           _descriptorSetLayoutsInfo = [];
+        public ReadOnlySpan<DescriptorSetLayoutBinding>    Test => _descriptorSetLayoutsInfo;
+
+        private DescriptorSetLayoutBinding[]                _descriptorSetLayoutsInfo = [];
 
         public ShaderResource(ReadOnlySpan<byte> vertexByteCode, ReadOnlySpan<byte> fragmentByteCode)
         {
@@ -47,6 +49,10 @@ namespace UOEngine.Runtime.Rendering.Resources
 
             Reflect.GetApi().EnumerateDescriptorSets(&shaderModule, &numDescriptors, &reflectDescriptorSets);
 
+            _descriptorSetLayoutsInfo = new DescriptorSetLayoutBinding[numDescriptors];
+
+            int index = 0;
+
             for (int i = 0; i < numDescriptors; i++)
             {
                 ReflectDescriptorSet set = reflectDescriptorSets[i];
@@ -64,7 +70,7 @@ namespace UOEngine.Runtime.Rendering.Resources
                         StageFlags = (ShaderStageFlags)shaderModule.ShaderStage
                     };
 
-                    _descriptorSetLayoutsInfo.Add(layoutBinding);
+                    _descriptorSetLayoutsInfo[index++] = layoutBinding;
                 }
 
                 //_descriptorSetLayoutsInfo.Add(new(set.Set, layoutBindings));

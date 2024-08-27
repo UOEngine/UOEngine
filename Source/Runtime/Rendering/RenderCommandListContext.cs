@@ -14,7 +14,9 @@ namespace UOEngine.Runtime.Rendering
         public RenderCommandBuffer          ActiveCommandBuffer => CommandBufferManager.ActiveCommandBuffer!;
 
         private RenderPass                  _activeRenderPass;
-        private RenderFramebuffer?          _activeFramebuffer;   
+        private RenderFramebuffer?          _activeFramebuffer;
+
+        private Shader?                     _activeShader;
 
         public RenderCommandListContext(RenderDevice renderDevice)
         {
@@ -100,22 +102,15 @@ namespace UOEngine.Runtime.Rendering
             _vk.CmdDrawIndexed(CommandBufferManager.ActiveCommandBuffer!.Handle, indexCount, instanceCount, 0, 0, 0);
         }
 
-        public void BindShader(Shader shader)
+        public unsafe void BindShader(Shader shader)
         {
-            BindShader(shader.GetHashCode());
-        }
+            _activeShader = shader;
 
-        public unsafe void BindShader(int shaderId)
-        {
-            _currentShaderId = shaderId;
+            PipelineStateObjectDescription pso = _renderDevice.GetOrCreatePipelineStateObject(_activeShader, _activeRenderPass);
 
-            PipelineStateObjectDescription pso = _renderDevice.GetPipelineStateObjectDescription(_currentShaderId);
+            _vk.CmdBindPipeline(CommandBufferManager.ActiveCommandBuffer!.Handle, PipelineBindPoint.Graphics, pso.GraphicsPipeline);
 
-            Debug.Assert(pso.PSO.Handle != 0);
-
-            _vk.CmdBindPipeline(CommandBufferManager.ActiveCommandBuffer!.Handle, PipelineBindPoint.Graphics, pso.PSO);
-
-            _renderDevice.AllocateDescriptorSets(pso.DescriptorSetLayouts, out var descriptorSets);
+            _renderDevice.AllocateDescriptorSets(pso.DescriptorSetLayouts, out DescriptorSet[] descriptorSets);
 
             const int maxDescriptorImageInfos = 4;
             int numDescriptorImageInfos = 0;
@@ -136,7 +131,7 @@ namespace UOEngine.Runtime.Rendering
 
                 switch (bindingDescription.DescriptorType)
                 {
-                    case EDescriptorType.CombinedSampler:
+                    case DescriptorType.CombinedImageSampler:
                         {
                             DescriptorImageInfo imageInfo = descriptorImageInfos[numDescriptorImageInfos];
 
@@ -149,6 +144,7 @@ namespace UOEngine.Runtime.Rendering
 
                             writeDescriptorSet.DescriptorType = DescriptorType.CombinedImageSampler;
                             writeDescriptorSet.PImageInfo = &descriptorImageInfos[numDescriptorImageInfos];
+                            writeDescriptorSet.DstSet = descriptorSets[numUpdated];
 
                             numDescriptorImageInfos++;
                         }
@@ -166,7 +162,9 @@ namespace UOEngine.Runtime.Rendering
 
             _vk.UpdateDescriptorSets(_renderDevice.Device, (uint)numUpdated, descriptorWrites, 0, []);
 
-            }
+            Vulkan.VkCmdBindDescriptorSets(CommandBufferManager.ActiveCommandBuffer!.Handle, PipelineBindPoint.Graphics, pso.Layout, descriptorSets);
+
+        }
 
         public void SubmitAndWaitUntilGPUIdle()
         {
@@ -183,7 +181,6 @@ namespace UOEngine.Runtime.Rendering
         private readonly RenderDevice       _renderDevice;
         private readonly Vk                 _vk;
 
-        private int                         _currentShaderId;
 
         static readonly uint                MaxTextureSlots = 4;
 

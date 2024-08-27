@@ -24,5 +24,19 @@ namespace UOEngine.Runtime.Rendering
         {
             Vk.GetApi().DestroyImage(device, image, null);
         }
+
+        internal static Result VkResetDescriptorPool(Device device, DescriptorPool descriptorPool)
+        {
+            Result result = _vk.ResetDescriptorPool(device, descriptorPool, 0);
+
+            return result;
+        }
+
+        internal static void VkCmdBindDescriptorSets(CommandBuffer buffer, PipelineBindPoint pipelineBindPoint, PipelineLayout layout, ReadOnlySpan<DescriptorSet> descriptorSets)
+        {
+            _vk.CmdBindDescriptorSets(buffer, pipelineBindPoint, layout, 0, descriptorSets, null);
+        }
+
+        static readonly Vk _vk = Vk.GetApi();
     }
 }

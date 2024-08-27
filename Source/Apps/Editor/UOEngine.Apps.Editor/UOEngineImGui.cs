@@ -171,7 +171,7 @@ namespace UOEngine.Apps.Editor
         private ImDrawVert[]            _verts = [];
         private ushort[]                _indices = [];
 
-        private int                     _imguiShaderId = 0xFF;       
+        private ImGuiShader?            _imguiShaderId;       
 
     }
 }

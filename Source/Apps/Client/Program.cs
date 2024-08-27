@@ -60,7 +60,7 @@ namespace UOEngine.Apps.Client
                 viewport.Resize((uint)size.X, (uint)size.Y);
             };
 
-            int shaderId = renderer.Device.RegisterShader<SimpleShader>();
+            Shader simpleShader = renderer.Device.RegisterShader<SimpleShader>();
 
             // Fixed dir for now.
             var assetLoader = serviceProvider.GetRequiredService<UOAssetLoader>();
@@ -87,7 +87,8 @@ namespace UOEngine.Apps.Client
             {
                 commandList!.BindIndexBuffer(indexBuffer);
                 commandList.SetTexture(backgroundTexture, 0);
-                commandList.BindShader(shaderId);
+                commandList.BindShader(simpleShader);
+                commandList.DrawIndexed(6, 1);
             };
         }
 

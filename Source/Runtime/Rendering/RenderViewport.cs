@@ -73,6 +73,8 @@ namespace UOEngine.Runtime.Rendering
 
             var renderTargetInfo = new RenderTargetInfo(SwapChain.BackbufferTextures[imageIndex]);
 
+            _renderDevice.RecycleDescriptorSets(); // temp
+
             context!.BeginRenderPass(_renderPassInfo, renderTargetInfo);
 
             Rendering?.Invoke(context);
@@ -97,6 +99,7 @@ namespace UOEngine.Runtime.Rendering
             _renderDevice.WaitUntilIdle();
 
             _renderDevice.ImmediateContext.CommandBufferManager.PrepareNewActiveCommandBuffer();
+
 
         }
 
