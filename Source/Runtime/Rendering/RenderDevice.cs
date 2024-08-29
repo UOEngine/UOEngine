@@ -661,32 +661,32 @@ namespace UOEngine.Runtime.Rendering
 
             var vertexInputBindingDescriptions = stackalloc VertexInputBindingDescription[shader.VertexBindingDescriptions.Count];
 
-            //int i = 0;
+            int i = 0;
 
-            //foreach (var bindingDescription in shader.VertexBindingDescriptions)
-            //{
-            //    vertexInputBindingDescriptions[i++] = new()
-            //    {
-            //        Binding = bindingDescription.Binding,
-            //        Stride = bindingDescription.Stride,
-            //        InputRate = VertexInputRate.Vertex
-            //    };
-            //}
+            foreach (var bindingDescription in shader.VertexBindingDescriptions)
+            {
+                vertexInputBindingDescriptions[i++] = new()
+                {
+                    Binding = bindingDescription.Binding,
+                    Stride = bindingDescription.Stride,
+                    InputRate = VertexInputRate.Vertex
+                };
+            }
 
             var vertexAttributeDescriptions = stackalloc VertexInputAttributeDescription[shader.VertexAttributeDescriptions.Count];
 
-            //i = 0;
+            i = 0;
 
-            //foreach(var attribute in shader.VertexAttributeDescriptions)
-            //{
-            //    vertexAttributeDescriptions[i++] = new()
-            //    {
-            //        Binding = attribute.Binding,
-            //        Location = attribute.Location,
-            //        Format = _vertexFormats[(int)attribute.VertexFormat],
-            //        Offset = (uint)attribute.Offset
-            //    };
-            //}
+            foreach (var attribute in shader.VertexAttributeDescriptions)
+            {
+                vertexAttributeDescriptions[i++] = new()
+                {
+                    Binding = attribute.Binding,
+                    Location = attribute.Location,
+                    Format = _vertexFormats[(int)attribute.VertexFormat],
+                    Offset = (uint)attribute.Offset
+                };
+            }
 
             PipelineVertexInputStateCreateInfo vertexInputInfo = new()
             {

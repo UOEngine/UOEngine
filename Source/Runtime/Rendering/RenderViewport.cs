@@ -79,6 +79,8 @@ namespace UOEngine.Runtime.Rendering
 
             Rendering?.Invoke(context);
 
+            context.Rendering?.Invoke(context);
+
             context.EndRenderPass();
         }
 

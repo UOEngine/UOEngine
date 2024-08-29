@@ -49,7 +49,7 @@ namespace UOEngine.Runtime.Rendering.Resources
 
             Reflect.GetApi().EnumerateDescriptorSets(&shaderModule, &numDescriptors, &reflectDescriptorSets);
 
-            _descriptorSetLayoutsInfo = new DescriptorSetLayoutBinding[numDescriptors];
+            var descriptorSetLayoutsInfo = new DescriptorSetLayoutBinding[numDescriptors];
 
             int index = 0;
 
@@ -70,12 +70,12 @@ namespace UOEngine.Runtime.Rendering.Resources
                         StageFlags = (ShaderStageFlags)shaderModule.ShaderStage
                     };
 
-                    _descriptorSetLayoutsInfo[index++] = layoutBinding;
+                    descriptorSetLayoutsInfo[index++] = layoutBinding;
                 }
 
                 //_descriptorSetLayoutsInfo.Add(new(set.Set, layoutBindings));
             }
-
+            _descriptorSetLayoutsInfo = [.._descriptorSetLayoutsInfo, ..descriptorSetLayoutsInfo];
         }
 
         private static unsafe ReflectShaderModule Create(ReadOnlySpan<byte> byteCode)

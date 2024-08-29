@@ -10,6 +10,7 @@ namespace UOEngine.Runtime.Rendering
 {
     public class RenderCommandListContext: IDisposable
     {
+        public Action<RenderCommandListContextImmediate>? Rendering;
         public RenderCommandBufferManager   CommandBufferManager { get; private set; }
         public RenderCommandBuffer          ActiveCommandBuffer => CommandBufferManager.ActiveCommandBuffer!;
 
@@ -17,6 +18,16 @@ namespace UOEngine.Runtime.Rendering
         private RenderFramebuffer?          _activeFramebuffer;
 
         private Shader?                     _activeShader;
+
+        private readonly RenderDevice       _renderDevice;
+        private readonly Vk                 _vk;
+
+        static readonly uint                MaxTextureSlots = 4;
+        private RenderTexture2D[]           _textures = new RenderTexture2D[MaxTextureSlots];
+
+        private RenderUniformBuffer[]       _uniformBuffers = new RenderUniformBuffer[MaxTextureSlots];
+
+        private List<RenderResource>        _pendingDeletes = [];
 
         public RenderCommandListContext(RenderDevice renderDevice)
         {
@@ -51,51 +62,31 @@ namespace UOEngine.Runtime.Rendering
             CommandBufferManager.ActiveCommandBuffer!.EndRenderPass();
         }
 
-        public void SetRenderTarget()
-        {
-
-        }
-
         public void CopyBuffer(Buffer srcBuffer, Buffer destBuffer, BufferCopy copyRegion)
         {
             _vk.CmdCopyBuffer(CommandBufferManager.ActiveCommandBuffer!.Handle, srcBuffer, destBuffer, 1, ref copyRegion);
 
         }
-        //public void CopyBufferToImage(Buffer buffer, Image image, ImageLayout imageLayout, uint regionCount, BufferImageCopy bufferImageCopy)
-        //{
-        //    _vk.CmdCopyBufferToImage(CommandBufferManager.ActiveCommandBuffer!.Handle, buffer, image, ImageLayout.TransferDstOptimal, regionCount, ref bufferImageCopy);
-        //}
 
         public void BindIndexBuffer(RenderBuffer buffer)
         {
             _vk.CmdBindIndexBuffer(CommandBufferManager.ActiveCommandBuffer!.Handle, buffer.DeviceBuffer, 0, IndexType.Uint16);
         }
 
-        public unsafe void BindVertexBuffer(RenderBuffer buffer)
+        public void BindVertexBuffer(RenderBuffer buffer)
         {
-            Debug.Assert(false);
-            //fixed (Buffer* vertexBuffersPtr = buffer.DeviceBuffer)
-            //{
-            //    _vk.CmdBindVertexBuffers(_commandBuffer, 0, 0, vertexBuffersPtr, 0);
-            //}
+            Vulkan.VkBindVertexBuffer(CommandBufferManager.ActiveCommandBuffer!.Handle, buffer.DeviceBuffer);
+        }
+
+        public void BindUniformBuffer(RenderUniformBuffer buffer, uint slot)
+        {
+            _uniformBuffers[slot] = buffer;
         }
 
         public void SetTexture(RenderTexture2D texture, uint slot)
         {
             _textures[slot] = texture;
         }
-        public void SetImageLayout()
-        {
-            
-        }
-
-        //public void PipelineBarrier(PipelineStageFlags sourceStage, PipelineStageFlags destinationStage, ImageMemoryBarrier imageMemoryBarrier)
-        //{
-        //    unsafe
-        //    {
-        //        _vk.CmdPipelineBarrier(CommandBufferManager.ActiveCommandBuffer!.Handle, sourceStage, destinationStage, 0, 0, null, 0, null, 1, ref imageMemoryBarrier);
-        //    }
-        //}
 
         public void DrawIndexed(uint indexCount, uint instanceCount)
         {
@@ -112,9 +103,13 @@ namespace UOEngine.Runtime.Rendering
 
             _renderDevice.AllocateDescriptorSets(pso.DescriptorSetLayouts, out DescriptorSet[] descriptorSets);
 
-            const int maxDescriptorImageInfos = 4;
-            int numDescriptorImageInfos = 0;
-            var descriptorImageInfos = stackalloc DescriptorImageInfo[maxDescriptorImageInfos];
+            const int   maxDescriptorImageInfos = 4;
+
+            int         numDescriptorImageInfos = 0;
+            int         numDescriptorBufferInfos = 0;
+
+            var         descriptorImageInfos = stackalloc DescriptorImageInfo[maxDescriptorImageInfos];
+            var         descriptorBufferInfos = stackalloc DescriptorBufferInfo[maxDescriptorImageInfos];
 
             Span<WriteDescriptorSet> descriptorWrites = stackalloc WriteDescriptorSet[descriptorSets.Length];
 
@@ -122,8 +117,8 @@ namespace UOEngine.Runtime.Rendering
 
             foreach (var bindingDescription in pso.BindingDescriptions)
             {
-                WriteDescriptorSet writeDescriptorSet = new WriteDescriptorSet();
-
+                ref WriteDescriptorSet writeDescriptorSet = ref descriptorWrites[numUpdated];
+              
                 writeDescriptorSet.DstBinding = bindingDescription.Binding;
                 writeDescriptorSet.SType = StructureType.WriteDescriptorSet;
                 writeDescriptorSet.DescriptorCount = 1;
@@ -133,31 +128,45 @@ namespace UOEngine.Runtime.Rendering
                 {
                     case DescriptorType.CombinedImageSampler:
                         {
-                            DescriptorImageInfo imageInfo = descriptorImageInfos[numDescriptorImageInfos];
+                            ref DescriptorImageInfo imageInfo = ref descriptorImageInfos[numDescriptorImageInfos];
 
                             imageInfo.ImageLayout = ImageLayout.ShaderReadOnlyOptimal;
-
                             imageInfo.ImageView = _textures[bindingDescription.Binding].ShaderResourceView!.Value;
                             imageInfo.Sampler = _renderDevice.TextureSampler;
 
-                            descriptorImageInfos[numDescriptorImageInfos] = imageInfo;
-
                             writeDescriptorSet.DescriptorType = DescriptorType.CombinedImageSampler;
                             writeDescriptorSet.PImageInfo = &descriptorImageInfos[numDescriptorImageInfos];
-                            writeDescriptorSet.DstSet = descriptorSets[numUpdated];
 
                             numDescriptorImageInfos++;
+
+                            break;
                         }
-                        break;
+
+                    case DescriptorType.UniformBuffer:
+                        {
+                            ref DescriptorBufferInfo descriptorBufferInfo = ref descriptorBufferInfos[numDescriptorBufferInfos];
+
+                            descriptorBufferInfo.Buffer = _uniformBuffers[bindingDescription.Binding].Handle;
+                            descriptorBufferInfo.Offset = 0;
+                            descriptorBufferInfo.Range = _uniformBuffers[bindingDescription.Binding].Size;
+
+                            writeDescriptorSet.DescriptorType = DescriptorType.UniformBuffer;
+                            writeDescriptorSet.PBufferInfo = &descriptorBufferInfos[numDescriptorBufferInfos];
+
+                            numDescriptorBufferInfos++;
+
+                            break;
+                        }
 
                     default:
                         {
                             Debug.Assert(false);
-                        }
-                        break;
-                }
 
-                descriptorWrites[numUpdated++] = writeDescriptorSet;
+                            break;
+                        }
+                }
+                numUpdated++;
+                //descriptorWrites[numUpdated++] = writeDescriptorSet;
             }
 
             _vk.UpdateDescriptorSets(_renderDevice.Device, (uint)numUpdated, descriptorWrites, 0, []);
@@ -178,15 +187,19 @@ namespace UOEngine.Runtime.Rendering
             CommandBufferManager.SubmitActive();
         }
 
-        private readonly RenderDevice       _renderDevice;
-        private readonly Vk                 _vk;
+        public void MarkResourceForDelete(RenderResource resource)
+        {
+            _pendingDeletes.Add(resource);
+        }
 
+        public void FlushPendingDeletes()
+        {
+            foreach(RenderResource resource in _pendingDeletes)
+            {
+                resource.Destroy();
+            }
 
-        static readonly uint                MaxTextureSlots = 4;
-
-        private RenderTexture2D[]           _textures = new RenderTexture2D[MaxTextureSlots];
-
-
-
+            _pendingDeletes.Clear();
+        }
     }
 }

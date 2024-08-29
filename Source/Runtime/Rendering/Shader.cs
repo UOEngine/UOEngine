@@ -25,7 +25,6 @@ namespace UOEngine.Runtime.Rendering
         R32G32B32A32SignedFloat
     }
 
-
     public class Shader
     {
         public Shader()
@@ -53,26 +52,22 @@ namespace UOEngine.Runtime.Rendering
             return File.ReadAllBytes(Path.Combine(shaderDirectory, file));
         }
 
-        public string Name { get; protected set; }
+        public string                                       Name { get; protected set; }
 
-        //public IReadOnlyList<SetBindingDescription> GetDescriptors() => _descriptors;
+        public string                                       VertexShaderName { get; protected set; }
+        public string                                       FragmentShaderName { get; protected set; }
 
-        public string VertexShaderName { get; protected set; }
-        public string FragmentShaderName { get; protected set; }
+        public IReadOnlyList<VertexBindingDescription>      VertexBindingDescriptions => _vertexBindingDescriptions;
 
-        public IReadOnlyList<VertexBindingDescription> VertexBindingDescriptions => _vertexBindingDescriptions;
+        public IReadOnlyList<VertexAttributeDescription>    VertexAttributeDescriptions => _vertexAttributeDescriptions;
 
-        public IReadOnlyList<VertexAttributeDescription> VertexAttributeDescriptions => _vertexAttributeDescriptions;
+        public ReadOnlySpan<byte>                           VertexByteCode => _vertexByteCode;
+        public ReadOnlySpan<byte>                           FragmentByteCode => _fragmentByteCode;
 
-        public ReadOnlySpan<byte>                       VertexByteCode => _vertexByteCode;
-        public ReadOnlySpan<byte>                       FragmentByteCode => _fragmentByteCode;
+        protected List<VertexAttributeDescription>          _vertexAttributeDescriptions = [];
+        protected List<VertexBindingDescription>            _vertexBindingDescriptions = [];
 
-        protected List<VertexAttributeDescription> _vertexAttributeDescriptions = [];
-        protected List<VertexBindingDescription> _vertexBindingDescriptions = [];
-
-        //protected List<SetBindingDescription>           _descriptors = [];
-
-        private byte[]                                  _vertexByteCode = [];
-        private byte[]                                  _fragmentByteCode = [];
+        private byte[]                                      _vertexByteCode = [];
+        private byte[]                                      _fragmentByteCode = [];
     }
 }

@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.Runtime.CompilerServices;
+using UOEngine.Runtime.Rendering.Resources;
 using Buffer = Silk.NET.Vulkan.Buffer;
 
 namespace UOEngine.Runtime.Rendering
@@ -22,8 +23,10 @@ namespace UOEngine.Runtime.Rendering
         None = 0
     }
 
-    public class RenderBuffer
+    public class RenderBuffer: RenderResource
     {
+        public bool IsMarkedForDelete { get; private set; } = false;
+
         public unsafe RenderBuffer(ERenderBufferType bufferType, RenderDevice renderDevice) 
         {
             _renderDevice = renderDevice;
@@ -36,8 +39,6 @@ namespace UOEngine.Runtime.Rendering
             _deviceBufferMemory = default;
 
             Length = 0;
-
-            //_data = dataToUpload;
 
             _deviceBufferUsage = BufferUsageFlags.None;
 
@@ -58,6 +59,30 @@ namespace UOEngine.Runtime.Rendering
                 default:
                     throw new NotSupportedException();  
             }
+        }
+
+        public void MarkForDelete()
+        {
+            _renderDevice.ImmediateContext!.MarkResourceForDelete(this);
+            IsMarkedForDelete = true;
+        }
+
+        public override void Destroy()
+        {
+            Debug.Assert(IsMarkedForDelete);
+
+            Vulkan.VkDestroyBuffer(_renderDevice.Handle, _deviceBuffer);
+
+            _deviceBuffer.Handle = 0;
+
+            Vulkan.VkFreeMemory(_renderDevice.Handle, _stagingBufferMemory);
+            _stagingBufferMemory.Handle = 0;
+
+            Vulkan.VkDestroyBuffer(_renderDevice.Handle, _stagingBuffer);
+            _stagingBuffer.Handle = 0;
+
+            Vulkan.VkFreeMemory(_renderDevice.Handle, _deviceBufferMemory);
+            _deviceBufferMemory.Handle = 0;
         }
 
         public unsafe void CopyToDevice<T>(ReadOnlySpan<T> uploadData)
