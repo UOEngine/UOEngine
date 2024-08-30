@@ -88,9 +88,9 @@ namespace UOEngine.Runtime.Rendering
             _textures[slot] = texture;
         }
 
-        public void DrawIndexed(uint indexCount, uint instanceCount)
+        public void DrawIndexed(uint indexCount, uint instanceCount, uint firstIndex, int vertexOffset, uint instanceOffset)
         {
-            _vk.CmdDrawIndexed(CommandBufferManager.ActiveCommandBuffer!.Handle, indexCount, instanceCount, 0, 0, 0);
+            _vk.CmdDrawIndexed(CommandBufferManager.ActiveCommandBuffer!.Handle, indexCount, instanceCount, firstIndex, vertexOffset, instanceOffset);
         }
 
         public unsafe void BindShader(Shader shader)

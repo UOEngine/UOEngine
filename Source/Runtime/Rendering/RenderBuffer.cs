@@ -93,6 +93,9 @@ namespace UOEngine.Runtime.Rendering
 
             Length = (uint)uploadData.Length;
 
+            //Debug.Assert(_stagingBuffer.Handle == 0);
+            //Debug.Assert(_stagingBufferMemory.Handle == 0);
+
             CreateBuffer(bufferSize, BufferUsageFlags.TransferSrcBit, MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit, out _stagingBuffer, out _stagingBufferMemory);
 
             CreateBuffer(bufferSize, BufferUsageFlags.TransferDstBit | _deviceBufferUsage, MemoryPropertyFlags.DeviceLocalBit, out _deviceBuffer, out _deviceBufferMemory);
@@ -103,16 +106,18 @@ namespace UOEngine.Runtime.Rendering
             uploadData.CopyTo(new Span<T>(data, (int)bufferSize));
             Vk.GetApi().UnmapMemory(_device, _stagingBufferMemory);
 
+            BufferCopy copyRegion = new()
             {
-                BufferCopy copyRegion = new()
-                {
-                    Size = bufferSize,
-                };
+                Size = bufferSize,
+            };
 
-                Vk.GetApi().CmdCopyBuffer(_renderDevice.ImmediateContext!.CommandBufferManager.GetUploadCommandBuffer()!.Handle, _stagingBuffer, _deviceBuffer, 1, ref copyRegion);
-            }
+            Vk.GetApi().CmdCopyBuffer(_renderDevice.ImmediateContext!.CommandBufferManager.GetUploadCommandBuffer()!.Handle, _stagingBuffer, _deviceBuffer, 1, ref copyRegion);
         }
 
+        public void CopyToDevice<T>(IntPtr ptr, int size)
+        {
+
+        }
         private void CopyToDeviceInternal()
         {
 

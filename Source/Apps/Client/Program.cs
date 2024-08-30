@@ -88,7 +88,7 @@ namespace UOEngine.Apps.Client
                 commandList!.BindIndexBuffer(indexBuffer);
                 commandList.SetTexture(backgroundTexture, 0);
                 commandList.BindShader(simpleShader);
-                commandList.DrawIndexed(6, 1);
+                commandList.DrawIndexed(6, 1, 0, 0, 0);
             };
         }
 

@@ -9,6 +9,7 @@ using Silk.NET.Vulkan.Extensions.KHR;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
 using Buffer = Silk.NET.Vulkan.Buffer;
 using UOEngine.Runtime.Rendering.Resources;
+using System.Reflection;
 
 namespace UOEngine.Runtime.Rendering
 {
@@ -565,18 +566,26 @@ namespace UOEngine.Runtime.Rendering
 
         private unsafe void CreateDescriptorPool()
         {
-            DescriptorPoolSize poolSize = new()
+            DescriptorPoolSize* poolSizes = stackalloc[]
             {
-                Type = DescriptorType.CombinedImageSampler,
-                DescriptorCount = 3,
+                new DescriptorPoolSize
+                {
+                    Type = DescriptorType.CombinedImageSampler,
+                    DescriptorCount = 300,
+                },
+                new DescriptorPoolSize
+                {
+                    Type = DescriptorType.UniformBuffer,
+                    DescriptorCount = 300
+                }
             };
 
             DescriptorPoolCreateInfo poolInfo = new()
             {
                 SType = StructureType.DescriptorPoolCreateInfo,
-                PoolSizeCount = 1,
-                PPoolSizes = &poolSize,
-                MaxSets = 3,
+                PoolSizeCount = 2,
+                PPoolSizes = poolSizes,
+                MaxSets = 300,
             };
 
             fixed (DescriptorPool* descriptorPoolPtr = &_descriptorPools[0])
@@ -683,7 +692,7 @@ namespace UOEngine.Runtime.Rendering
                 {
                     Binding = attribute.Binding,
                     Location = attribute.Location,
-                    Format = _vertexFormats[(int)attribute.VertexFormat],
+                    Format = RenderCommon.VertexFormatToVkFormat(attribute.VertexFormat),
                     Offset = (uint)attribute.Offset
                 };
             }

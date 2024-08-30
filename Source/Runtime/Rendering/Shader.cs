@@ -15,14 +15,16 @@ namespace UOEngine.Runtime.Rendering
         public uint             Binding;
         public uint             Location;
         public EVertexFormat    VertexFormat;
-        public int             Offset;
+        public int              Offset;
     }
 
     public enum EVertexFormat
     {
         None,
         R32G32SignedFloat,
-        R32G32B32A32SignedFloat
+        R32G32B32A32SignedFloat,
+        R8G8B8A8UNorm = 37
+
     }
 
     public class Shader

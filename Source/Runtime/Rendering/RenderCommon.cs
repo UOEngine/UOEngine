@@ -68,5 +68,43 @@ namespace UOEngine.Runtime.Rendering
             return textureFormat;
         }
 
+        public static Format VertexFormatToVkFormat(EVertexFormat vertexFormat)
+        {
+            Format vkFormat = Format.Undefined;
+
+            switch (vertexFormat)
+            {
+                case EVertexFormat.R32G32SignedFloat:
+                    {
+                        vkFormat = Format.R32G32Sfloat;
+
+                        break;
+                    }
+
+                case EVertexFormat.R32G32B32A32SignedFloat:
+                    {
+                        vkFormat = Format.R32G32B32A32Sfloat;
+
+                        break;
+                    }
+
+                case EVertexFormat.R8G8B8A8UNorm:
+                    {
+                        vkFormat = Format.R8G8B8A8Unorm;
+
+                        break;
+                    }
+
+                default:
+                    {
+                        break;
+                    }
+            }
+
+            Debug.Assert(vkFormat != Format.Undefined);
+
+            return vkFormat;
+        }
+
     }
 }

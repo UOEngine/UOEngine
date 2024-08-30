@@ -2,23 +2,14 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
+using ImGuiNET;
+
 using UOEngine.Runtime.Rendering;
 
 namespace UOEngine.Apps.Editor
 {
     internal class ImGuiShader : Shader
     {
-        struct Vertex
-        {
-            public Vector2 Position = Vector2.Zero;
-            public Vector2 TexCoord = Vector2.Zero;
-            public Vector4 Colour = Vector4.Zero;
-
-            public Vertex()
-            {
-
-            }
-        }
         public ImGuiShader()
         {
             Name = "ImGuiShader";
@@ -28,7 +19,7 @@ namespace UOEngine.Apps.Editor
             _vertexBindingDescriptions.Add(new()
             {
                 Binding = 0,
-                Stride = GetOffset<Vertex>("Position"),
+                Stride = (uint)Unsafe.SizeOf<ImDrawVert>(),
             });
 
             _vertexAttributeDescriptions.Add(new()
@@ -36,7 +27,7 @@ namespace UOEngine.Apps.Editor
                 Binding = 0,
                 Location = 0,
                 VertexFormat = EVertexFormat.R32G32SignedFloat,
-                Offset = Marshal.OffsetOf<Vertex>("Position").ToInt32(),
+                Offset = Marshal.OffsetOf<ImDrawVert>("pos").ToInt32(),
             });
 
             _vertexAttributeDescriptions.Add(new()
@@ -44,15 +35,15 @@ namespace UOEngine.Apps.Editor
                 Binding = 0,
                 Location = 1,
                 VertexFormat = EVertexFormat.R32G32SignedFloat,
-                Offset = Marshal.OffsetOf<Vertex>("TexCoord").ToInt32(),
+                Offset = Marshal.OffsetOf<ImDrawVert>("uv").ToInt32(),
             });
 
             _vertexAttributeDescriptions.Add(new()
             {
                 Binding = 0,
                 Location = 2,
-                VertexFormat = EVertexFormat.R32G32B32A32SignedFloat,
-                Offset = Marshal.OffsetOf<Vertex>("Colour").ToInt32()
+                VertexFormat = EVertexFormat.R8G8B8A8UNorm,
+                Offset = Marshal.OffsetOf<ImDrawVert>("col").ToInt32()
             });
         }
 

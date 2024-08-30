@@ -13,24 +13,28 @@ namespace UOEngine.Apps.Editor
 {
     public class UOEngineImGui
     {
-        private Input                                   _input;
-        private RenderDevice                            _renderDevice;
-        private Window                                  _window;
+        private Input                   _input;
+        private RenderDevice            _renderDevice;
+        private Window                  _window;
 
-        private IntPtr                                  _fontAtlasID = 1;
-        private RenderTexture2D?                        _fontTexture;
+        private IntPtr                  _fontAtlasID = 1;
+        private RenderTexture2D?        _fontTexture;
 
-        private RenderBuffer?                           _vertexBuffer;
-        private RenderBuffer?                           _indexBuffer;
+        private RenderBuffer?           _vertexBuffer;
+        private RenderBuffer?           _indexBuffer;
 
-        private RenderUniformBuffer?                    _mvpUniform;
+        private RenderUniformBuffer?    _mvpUniform;
 
-        private ImDrawVert[]                            _verts = [];
-        private ushort[]                                _indices = [];
+        private ImDrawVert[]            _verts = [];
+        private ushort[]                _indices = [];
 
-        private ImGuiShader?                            _imguiShader;
+        private ImGuiShader?            _imguiShader;
 
-        public UOEngineImGui(Input input, Renderer renderer, GameLoop gameLoop, Window window) 
+        private ImDrawDataPtr           _drawData;
+        private float                   _width;
+        private float                   _height;
+
+        public UOEngineImGui(Input input, Renderer renderer, GameLoop gameLoop, Window window)
         {
             _input = input;
             _renderDevice = renderer.Device;
@@ -72,6 +76,8 @@ namespace UOEngine.Apps.Editor
 
             _mvpUniform = new RenderUniformBuffer(_renderDevice, (ulong)Marshal.SizeOf(Matrix4X4<float>.Identity));
 
+            _renderDevice.ImmediateContext!.Rendering += Draw;
+
         }
 
         private void SetupInput()
@@ -86,6 +92,9 @@ namespace UOEngine.Apps.Editor
 
             io.DeltaTime = deltaSeconds;
 
+            _width = io.DisplaySize.X;
+            _height = io.DisplaySize.Y;
+
             UpdateInput();
 
             ImGui.NewFrame();
@@ -96,7 +105,13 @@ namespace UOEngine.Apps.Editor
 
             ImGui.Render();
 
-            var drawData = ImGui.GetDrawData();
+            _drawData = ImGui.GetDrawData();
+
+        }
+
+        private unsafe void Draw(RenderCommandListContextImmediate immediateContext)
+        {
+            var drawData = _drawData;
 
             if ((drawData.DisplaySize.X <= 0.0f) || (drawData.DisplaySize.Y <= 0.0f))
             {
@@ -137,32 +152,46 @@ namespace UOEngine.Apps.Editor
             {
                 ImDrawListPtr cmdList = drawData.CmdLists[n];
 
-                _verts[vertexOffsetInVertices++] = new()
+                for(int i  = 0; i < cmdList.VtxBuffer.Size; i++)
                 {
-                    pos = cmdList.VtxBuffer[n].pos,
-                    col = cmdList.VtxBuffer[n].col,
-                    uv = cmdList.VtxBuffer[n].uv
-                };
+                    _verts[vertexOffsetInVertices++] = new()
+                    {
+                        pos = cmdList.VtxBuffer[i].pos,
+                        col = cmdList.VtxBuffer[i].col,
+                        uv = cmdList.VtxBuffer[i].uv
+                    };
+                }
 
-                _indices[vertexOffsetInVertices++] = cmdList.IdxBuffer[n];
+                for(int i = 0; i < cmdList.IdxBuffer.Size; i++)
+                {
+                    _indices[indexOffsetInElements++] = cmdList.IdxBuffer[i];
+                }
+                //_indices[vertexOffsetInVertices++] = cmdList.IdxBuffer[n];
 
-                vertexOffsetInVertices += (uint)cmdList.VtxBuffer.Size;
-                indexOffsetInElements += (uint)cmdList.IdxBuffer.Size;
+                //vertexOffsetInVertices += (uint)cmdList.VtxBuffer.Size;
+                //indexOffsetInElements += (uint)cmdList.IdxBuffer.Size;
             }
 
             _vertexBuffer.CopyToDevice<ImDrawVert>(_verts);
             _indexBuffer.CopyToDevice<ushort>(_indices);
 
-            var mvp = Matrix4X4.CreateOrthographic(io.DisplaySize.X, io.DisplaySize.Y, -1.0f, 1.0f);
+            immediateContext.CommandBufferManager.SubmitUploadBuffer();
+
+            var mvp = Matrix4X4.CreateOrthographic(_width, _height, -1.0f, 1.0f);
 
             _mvpUniform!.Update(mvp);
 
-            _renderDevice.ImmediateContext!.Rendering += (immediateContext) =>
+            //_renderDevice.ImmediateContext!.Rendering += (immediateContext) =>
             {
                 immediateContext.BindVertexBuffer(_vertexBuffer);
                 immediateContext.BindIndexBuffer(_indexBuffer);
                 immediateContext.BindUniformBuffer(_mvpUniform, 0);
                 immediateContext.BindShader(_imguiShader!);
+
+                var l = _renderDevice.ImmediateContext!.Rendering!.GetInvocationList().Length;
+
+                int vertexOffset = 0;
+                int indexOffset = 0;
 
                 for (int n = 0; n < drawData.CmdListsCount; n++)
                 {
@@ -177,8 +206,23 @@ namespace UOEngine.Apps.Editor
                             continue;
                         }
 
-                        //immediateContext.DrawIndexed(drawCmd., 0);
+                        if (drawCmd.TextureId != IntPtr.Zero)
+                        {
+                            if (drawCmd.TextureId == _fontAtlasID)
+                            {
+                                immediateContext.SetTexture(_fontTexture!, 1);
+                            }
+                            else
+                            {
+                                throw new NotImplementedException();
+                            }
+                        }
+
+                        immediateContext.DrawIndexed(drawCmd.ElemCount, 1, drawCmd.IdxOffset + (uint)indexOffset, (int)drawCmd.VtxOffset + vertexOffset, 0);
                     }
+
+                    vertexOffset += cmdList.VtxBuffer.Size;
+                    indexOffset += cmdList.IdxBuffer.Size;
                 }
             };
         }
