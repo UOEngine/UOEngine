@@ -45,6 +45,8 @@ namespace UOEngine.Apps.Editor
                 VertexFormat = EVertexFormat.R8G8B8A8UNorm,
                 Offset = Marshal.OffsetOf<ImDrawVert>("col").ToInt32()
             });
+
+            BlendingDesc = new BlendingDescription(true);
         }
 
     }

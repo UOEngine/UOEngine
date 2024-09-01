@@ -1,4 +1,6 @@
-﻿using Silk.NET.SPIRV.Reflect;
+﻿using System.Diagnostics;
+
+using Silk.NET.SPIRV.Reflect;
 using Silk.NET.Vulkan;
 using System.Collections.Generic;
 
@@ -18,14 +20,16 @@ namespace UOEngine.Runtime.Rendering.Resources
 
     public class ShaderResource
     {
-        public ReflectShaderModule                      VertexShaderModule { get; private set; }
-        public ReflectShaderModule                      FragmentShaderModule { get; private set; }
+        public ReflectShaderModule                          VertexShaderModule { get; private set; }
+        public ReflectShaderModule                          FragmentShaderModule { get; private set; }
 
-        public IReadOnlyList<DescriptorSetLayoutBinding>   DescriptorSetLayouts => _descriptorSetLayoutsInfo;
+        public IReadOnlyList<DescriptorSetLayoutBinding>    DescriptorSetLayouts => _descriptorSetLayoutsInfo;
 
-        public ReadOnlySpan<DescriptorSetLayoutBinding>    Test => _descriptorSetLayoutsInfo;
+        public ReadOnlySpan<DescriptorSetLayoutBinding>     Test => _descriptorSetLayoutsInfo;
 
         private DescriptorSetLayoutBinding[]                _descriptorSetLayoutsInfo = [];
+
+        public  int                                         NumSets { get; private set; }
 
         public ShaderResource(ReadOnlySpan<byte> vertexByteCode, ReadOnlySpan<byte> fragmentByteCode)
         {
@@ -41,19 +45,28 @@ namespace UOEngine.Runtime.Rendering.Resources
 
         public unsafe void Generate(ReflectShaderModule shaderModule)
         {
-            uint numDescriptors = 0;
+            uint numSets = 0;
 
-            Reflect.GetApi().EnumerateDescriptorSets(&shaderModule, &numDescriptors, null);
+            Reflect.GetApi().EnumerateDescriptorSets(&shaderModule, &numSets, null);
 
-            ReflectDescriptorSet* reflectDescriptorSets = stackalloc ReflectDescriptorSet[(int)numDescriptors];
+            Debug.Assert(numSets <= 1);
 
-            Reflect.GetApi().EnumerateDescriptorSets(&shaderModule, &numDescriptors, &reflectDescriptorSets);
+            NumSets = (int)numSets;
 
-            var descriptorSetLayoutsInfo = new DescriptorSetLayoutBinding[numDescriptors];
+            if(NumSets == 0)
+            {
+                return;
+            }
 
-            int index = 0;
+            ReflectDescriptorSet* reflectDescriptorSets = stackalloc ReflectDescriptorSet[NumSets];
 
-            for (int i = 0; i < numDescriptors; i++)
+            Reflect.GetApi().EnumerateDescriptorSets(&shaderModule, &numSets, &reflectDescriptorSets);
+
+            //var descriptorSetLayoutsInfo = new DescriptorSetLayoutBinding[numDescriptors];
+
+            List<DescriptorSetLayoutBinding> descriptorSetLayoutsInfo = [];
+
+            for (int i = 0; i < numSets; i++)
             {
                 ReflectDescriptorSet set = reflectDescriptorSets[i];
 
@@ -70,12 +83,14 @@ namespace UOEngine.Runtime.Rendering.Resources
                         StageFlags = (ShaderStageFlags)shaderModule.ShaderStage
                     };
 
-                    descriptorSetLayoutsInfo[index++] = layoutBinding;
+                    //descriptorSetLayoutsInfo[index++] = layoutBinding;
+
+                    descriptorSetLayoutsInfo.Add(layoutBinding);
                 }
 
                 //_descriptorSetLayoutsInfo.Add(new(set.Set, layoutBindings));
             }
-            _descriptorSetLayoutsInfo = [.._descriptorSetLayoutsInfo, ..descriptorSetLayoutsInfo];
+            _descriptorSetLayoutsInfo = [.._descriptorSetLayoutsInfo, ..descriptorSetLayoutsInfo.ToArray()];
         }
 
         private static unsafe ReflectShaderModule Create(ReadOnlySpan<byte> byteCode)

@@ -18,8 +18,11 @@ namespace UOEngine.Runtime.Core
 
         public delegate void MouseMovedEventHandler(object sender, MouseEventArgs e);
 
-        public Input()
+        private GameLoop _gameLoop;
+
+        public Input(GameLoop gameLoop)
         {
+            _gameLoop = gameLoop;
         }
 
         public void Tick(float deltaSeconds)
@@ -38,7 +41,7 @@ namespace UOEngine.Runtime.Core
                 if (glfw.WindowShouldClose((WindowHandle*)_windowHandle))
                 {
                     events1.Add(EInputEventType.Quit);
-
+                    _gameLoop.IsQuitting = true;
                 }
             }
         }

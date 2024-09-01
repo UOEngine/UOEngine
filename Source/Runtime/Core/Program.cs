@@ -59,7 +59,7 @@ namespace UOEngine.Runtime.Core
             var eventLoop = host.Services.GetRequiredService<GameLoop>();
             var input = host.Services.GetRequiredService<Input>();
 
-            while (Running)
+            while (eventLoop.IsQuitting == false)
             {
                 float deltaSeconds = 0.01f;
 

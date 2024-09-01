@@ -27,6 +27,11 @@ namespace UOEngine.Runtime.Rendering
 
     }
 
+    public readonly struct BlendingDescription(bool enabled)
+    {
+        public readonly bool Enabled = enabled;
+    }
+
     public class Shader
     {
         public Shader()
@@ -58,6 +63,8 @@ namespace UOEngine.Runtime.Rendering
 
         public string                                       VertexShaderName { get; protected set; }
         public string                                       FragmentShaderName { get; protected set; }
+
+        public BlendingDescription                          BlendingDesc { get; protected set; }
 
         public IReadOnlyList<VertexBindingDescription>      VertexBindingDescriptions => _vertexBindingDescriptions;
 

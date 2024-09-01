@@ -50,6 +50,8 @@ namespace UOEngine.Apps.Editor
 
             ImGui.SetCurrentContext(context);
 
+            ImGui.StyleColorsDark();
+
             SetupInput();
 
             _vertexBuffer = _renderDevice.CreateRenderBuffer(0, ERenderBufferType.Vertex);
@@ -68,7 +70,10 @@ namespace UOEngine.Apps.Editor
                 Format = ERenderTextureFormat.R8G8B8A8
             });
 
-            _fontTexture.Upload(pixels);
+            unsafe
+            {
+                _fontTexture.Upload(new ReadOnlySpan<byte>(pixels.ToPointer(), width * height * bytesPerPixel));
+            }
 
             io.Fonts.SetTexID(_fontAtlasID);
 
@@ -186,9 +191,6 @@ namespace UOEngine.Apps.Editor
                 immediateContext.BindVertexBuffer(_vertexBuffer);
                 immediateContext.BindIndexBuffer(_indexBuffer);
                 immediateContext.BindUniformBuffer(_mvpUniform, 0);
-                immediateContext.BindShader(_imguiShader!);
-
-                var l = _renderDevice.ImmediateContext!.Rendering!.GetInvocationList().Length;
 
                 int vertexOffset = 0;
                 int indexOffset = 0;
@@ -217,6 +219,8 @@ namespace UOEngine.Apps.Editor
                                 throw new NotImplementedException();
                             }
                         }
+
+                        immediateContext.BindShader(_imguiShader!);
 
                         immediateContext.DrawIndexed(drawCmd.ElemCount, 1, drawCmd.IdxOffset + (uint)indexOffset, (int)drawCmd.VtxOffset + vertexOffset, 0);
                     }

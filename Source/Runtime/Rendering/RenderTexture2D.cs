@@ -211,8 +211,6 @@ namespace UOEngine.Runtime.Rendering
                     1, 
                     ref bufferImageCopy);
 
-                //commandList.CopyBufferToImage(stagingBuffer, _image, ImageLayout.TransferDstOptimal, 1, bufferImageCopy);
-
                 TransitionImageLayout(_renderDevice.ImmediateContext!, ImageLayout.TransferDstOptimal, ImageLayout.ShaderReadOnlyOptimal);
             }
 
@@ -226,9 +224,13 @@ namespace UOEngine.Runtime.Rendering
             }
         }
 
-        public void Upload(IntPtr texels)
+        public unsafe void Upload(IntPtr texels)
         {
-            Upload(new ReadOnlySpan<byte>());
+            throw new NotImplementedException();
+
+            //uint size = Description.Width * Description.Height * 5;
+
+            //Upload(new ReadOnlySpan<byte>(texels.ToPointer(), (int)size));
         }
 
         //public void SubresourceTransition(ERenderSubresourceState newState)

@@ -413,14 +413,14 @@ namespace UOEngine.Runtime.Rendering
 
         public unsafe void AllocateDescriptorSets(DescriptorSetLayout[] descriptorSetLayouts, out DescriptorSet[] descriptorSets)
         {
-            fixed (DescriptorSetLayout* desctorSetLayoutsPtr = &descriptorSetLayouts[0])
+            fixed (DescriptorSetLayout* descriptorSetLayoutsPtr = &descriptorSetLayouts[0])
             {
                 DescriptorSetAllocateInfo allocateInfo = new()
                 {
                     SType = StructureType.DescriptorSetAllocateInfo,
                     DescriptorPool = _descriptorPools[0],
                     DescriptorSetCount = (uint)descriptorSetLayouts!.Length,
-                    PSetLayouts = desctorSetLayoutsPtr,
+                    PSetLayouts = descriptorSetLayoutsPtr,
                 };
 
                 descriptorSets = new DescriptorSet[descriptorSetLayouts.Length];
@@ -768,8 +768,21 @@ namespace UOEngine.Runtime.Rendering
             PipelineColorBlendAttachmentState colorBlendAttachment = new()
             {
                 ColorWriteMask = ColorComponentFlags.RBit | ColorComponentFlags.GBit | ColorComponentFlags.BBit | ColorComponentFlags.ABit,
-                BlendEnable = false,
+                BlendEnable = shader.BlendingDesc.Enabled,
             };
+
+            if(shader.BlendingDesc.Enabled)
+            {
+                colorBlendAttachment = colorBlendAttachment with
+                {
+                    SrcColorBlendFactor = BlendFactor.SrcAlpha,
+                    DstColorBlendFactor = BlendFactor.OneMinusSrcAlpha,
+                    ColorBlendOp = BlendOp.Add,
+                    SrcAlphaBlendFactor = BlendFactor.One,
+                    DstAlphaBlendFactor = BlendFactor.OneMinusSrcAlpha,
+                    AlphaBlendOp = BlendOp.Add
+                };
+            }
 
             PipelineColorBlendStateCreateInfo colorBlending = new()
             {
@@ -806,14 +819,16 @@ namespace UOEngine.Runtime.Rendering
 
             PipelineLayout pipelineLayout;
 
+            uint numSets = 1;
+
             PipelineLayoutCreateInfo pipelineLayoutInfo = new()
             {
                 SType = StructureType.PipelineLayoutCreateInfo,
                 PushConstantRangeCount = 0,
-                SetLayoutCount = (uint)numDescriptors,
+                SetLayoutCount = numSets, // Not using multiple sets yet
             };
 
-            var descriptorSetLayouts = new DescriptorSetLayout[numDescriptors];
+            Span<DescriptorSetLayout> descriptorSetLayouts = stackalloc DescriptorSetLayout[(int)numSets];
 
             if (numDescriptors > 0)
             {
@@ -880,7 +895,7 @@ namespace UOEngine.Runtime.Rendering
 
             int hash = HashCode.Combine(shader, renderPass);
 
-            PipelineStateObjectDescription pipelineStateObjectDescription = new(graphicsPipeline, descriptorSetLayouts, shaderResource.DescriptorSetLayouts.ToArray(), pipelineLayout);
+            PipelineStateObjectDescription pipelineStateObjectDescription = new(graphicsPipeline, descriptorSetLayouts.ToArray(), shaderResource.DescriptorSetLayouts.ToArray(), pipelineLayout);
 
             _pipelineStateObjectDescriptions.Add(hash, pipelineStateObjectDescription);
 

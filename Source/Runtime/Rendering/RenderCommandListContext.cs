@@ -111,7 +111,7 @@ namespace UOEngine.Runtime.Rendering
             var         descriptorImageInfos = stackalloc DescriptorImageInfo[maxDescriptorImageInfos];
             var         descriptorBufferInfos = stackalloc DescriptorBufferInfo[maxDescriptorImageInfos];
 
-            Span<WriteDescriptorSet> descriptorWrites = stackalloc WriteDescriptorSet[descriptorSets.Length];
+            Span<WriteDescriptorSet> descriptorWrites = stackalloc WriteDescriptorSet[pso.BindingDescriptions.Length];
 
             int numUpdated = 0;
 
@@ -122,7 +122,7 @@ namespace UOEngine.Runtime.Rendering
                 writeDescriptorSet.DstBinding = bindingDescription.Binding;
                 writeDescriptorSet.SType = StructureType.WriteDescriptorSet;
                 writeDescriptorSet.DescriptorCount = 1;
-                writeDescriptorSet.DstSet = descriptorSets[numUpdated];
+                writeDescriptorSet.DstSet = descriptorSets[0];
 
                 switch (bindingDescription.DescriptorType)
                 {
@@ -166,7 +166,6 @@ namespace UOEngine.Runtime.Rendering
                         }
                 }
                 numUpdated++;
-                //descriptorWrites[numUpdated++] = writeDescriptorSet;
             }
 
             _vk.UpdateDescriptorSets(_renderDevice.Device, (uint)numUpdated, descriptorWrites, 0, []);

@@ -106,5 +106,10 @@ namespace UOEngine.Runtime.Rendering
             return vkFormat;
         }
 
+        //public static BlendOp BlendModeToBlendOp(EBlendMode blendMode)
+        //{
+        //    BlendOp blendOp = BlendOp.D
+        //}
+
     }
 }

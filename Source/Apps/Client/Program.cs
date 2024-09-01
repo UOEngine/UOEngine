@@ -94,7 +94,6 @@ namespace UOEngine.Apps.Client
 
         protected override void Shutdown(IServiceProvider serviceProvider)
         {
-            serviceProvider.GetRequiredService<RenderDevice>().Shutdown();
         }
 
     }
