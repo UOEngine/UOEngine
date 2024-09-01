@@ -38,7 +38,7 @@ namespace UOEngine.Runtime.Rendering
             _vk.CmdBindDescriptorSets(buffer, pipelineBindPoint, layout, 0, descriptorSets, null);
         }
 
-        internal static unsafe void VkDestroyBuffer(Device device, Buffer buffer)
+        internal static unsafe void vkDestroyBuffer(Device device, Buffer buffer)
         {
             _vk.DestroyBuffer(device, buffer, null);
         }
@@ -53,9 +53,9 @@ namespace UOEngine.Runtime.Rendering
             _vk.CmdBindVertexBuffers(commandBuffer, 0, [buffer], [0]);
         }
 
-        internal static unsafe Result VkMapMemory(Device device, DeviceMemory memory, ulong offset, ulong size, void** data)
+        internal static unsafe Result VkMapMemory(Device device, DeviceMemory memory, ulong offset, ulong size, MemoryMapFlags flags, void** data)
         {
-            Result result = _vk.MapMemory(device, memory, offset, size, MemoryMapFlags.None, data);
+            Result result = _vk.MapMemory(device, memory, offset, size, flags, data);
 
             return result;
         }
@@ -63,6 +63,16 @@ namespace UOEngine.Runtime.Rendering
         internal static void VkUnmapMemory(Device device, DeviceMemory memory)
         {
             _vk.UnmapMemory(device, memory);
+        }
+
+        internal static void VkGetPhysicalDeviceProperties(PhysicalDevice device, out PhysicalDeviceProperties properties)
+        {
+            _vk.GetPhysicalDeviceProperties(device, out properties);
+        }
+
+        internal static void VkCmdCopyBufferToImage(CommandBuffer commandBuffer, Buffer srcBuffer, Image dstImage, ImageLayout dstImageLayout, uint regionCount, ref readonly BufferImageCopy bufferImageCopy)
+        {
+            _vk.CmdCopyBufferToImage(commandBuffer, srcBuffer, dstImage, dstImageLayout, regionCount, in bufferImageCopy);
         }
 
         static readonly Vk _vk = Vk.GetApi();

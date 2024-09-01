@@ -45,6 +45,8 @@ namespace UOEngine.Runtime.Rendering
         private RenderDevice                _renderDevice;
         private readonly uint               _imageSize;
 
+        private RenderStagingBuffer?        _stagingBuffer; 
+
         public RenderTexture2D(RenderDevice renderDevice, RenderTexture2DDescription description)
         {
             Description = description;
@@ -122,9 +124,11 @@ namespace UOEngine.Runtime.Rendering
 
             ShaderResourceView = renderDevice.CreateImageView(_image.Value, textureFormat);
 
+            _stagingBuffer = new RenderStagingBuffer(renderDevice, _imageSize);
+
         }
 
-        public RenderTexture2D(RenderDevice device, RenderTexture2DDescription description, Image image)
+        public RenderTexture2D(RenderDevice device, RenderTexture2DDescription description, Image image)  
         {
             Description = description;
             _renderDevice = device;
@@ -151,32 +155,36 @@ namespace UOEngine.Runtime.Rendering
 
                 _image = null;
             }
+
+            _stagingBuffer?.Dispose();
         }
 
         public void Upload<T>(ReadOnlySpan<T> texels)
         {
-            ulong bufferSize = _imageSize;
+            //ulong bufferSize = _imageSize;
 
-            _renderDevice.CreateBuffer
-            (
-                bufferSize,
-                BufferUsageFlags.TransferSrcBit,
-                MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit,
-                out var stagingBuffer,
-                out var stagingBufferMemory
-            );
+            //_renderDevice.CreateBuffer
+            //(
+            //    bufferSize,
+            //    BufferUsageFlags.TransferSrcBit,
+            //    MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit,
+            //    out var stagingBuffer,
+            //    out var stagingBufferMemory
+            //);
 
-            var vk = Vk.GetApi();
+            //var vk = Vk.GetApi();
 
-            unsafe
-            {
-                void* data;
+            _stagingBuffer!.Map(texels);
 
-                Vk.GetApi().MapMemory(_renderDevice.Device, stagingBufferMemory, 0, bufferSize, 0, &data);
-                texels.CopyTo(new Span<T>(data, (int)bufferSize));
-            }
+            //unsafe
+            //{
+            //    void* data;
 
-            Vk.GetApi().UnmapMemory(_renderDevice.Device, stagingBufferMemory);
+            //    Vk.GetApi().MapMemory(_renderDevice.Device, stagingBufferMemory, 0, bufferSize, 0, &data);
+            //    texels.CopyTo(new Span<T>(data, (int)bufferSize));
+            //}
+
+            //Vk.GetApi().UnmapMemory(_renderDevice.Device, stagingBufferMemory);
 
             {
                 // buffer to image
@@ -204,8 +212,8 @@ namespace UOEngine.Runtime.Rendering
                     }
                 };
 
-                vk.CmdCopyBufferToImage(_renderDevice.ImmediateContext!.CommandBufferManager.GetUploadCommandBuffer()!.Handle, 
-                    stagingBuffer, 
+                Vulkan.VkCmdCopyBufferToImage(_renderDevice.ImmediateContext!.CommandBufferManager.GetUploadCommandBuffer()!.Handle, 
+                    _stagingBuffer.Handle, 
                     _image!.Value, 
                     ImageLayout.TransferDstOptimal, 
                     1, 
@@ -216,12 +224,6 @@ namespace UOEngine.Runtime.Rendering
 
             _renderDevice.ImmediateContext!.CommandBufferManager.SubmitUploadBuffer();
             _renderDevice.WaitUntilIdle();
-
-            unsafe
-            {
-                vk.DestroyBuffer(_renderDevice.Device, stagingBuffer, null);
-                vk.FreeMemory(_renderDevice.Device, stagingBufferMemory, null);
-            }
         }
 
         public unsafe void Upload(IntPtr texels)

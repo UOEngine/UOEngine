@@ -15,12 +15,13 @@ namespace UOEngine.Runtime.Rendering
 {
     public class RenderDevice
     {
+        private PhysicalDeviceProperties    _physicalDeviceProperties;
+
         public RenderDevice()
         {
             AddVertexFormat(EVertexFormat.R32G32SignedFloat, Format.R32G32Sfloat);
             AddVertexFormat(EVertexFormat.R32G32B32A32SignedFloat, Format.R32G32B32A32Sfloat);
         }
-
         public unsafe void Initialise(string[] extensions, bool bEnableValidationLayers)
         {
             this.bEnableValidationLayers = bEnableValidationLayers;
@@ -376,8 +377,6 @@ namespace UOEngine.Runtime.Rendering
 
         public Sampler CreateSampler()
         {
-            vk!.GetPhysicalDeviceProperties(_physicalDevice, out PhysicalDeviceProperties properties);
-
             SamplerCreateInfo samplerInfo = new()
             {
                 SType = StructureType.SamplerCreateInfo,
@@ -388,7 +387,7 @@ namespace UOEngine.Runtime.Rendering
                 AddressModeW = SamplerAddressMode.Repeat,
                 AnisotropyEnable = false,
                 //AnisotropyEnable = true,
-                MaxAnisotropy = properties.Limits.MaxSamplerAnisotropy,
+                MaxAnisotropy = _physicalDeviceProperties.Limits.MaxSamplerAnisotropy,
                 BorderColor = BorderColor.IntOpaqueBlack,
                 UnnormalizedCoordinates = false,
                 CompareEnable = false,
@@ -400,7 +399,7 @@ namespace UOEngine.Runtime.Rendering
 
             unsafe
             {
-                if (vk.CreateSampler(_dev, ref samplerInfo, null, out sampler) != Result.Success)
+                if (vk!.CreateSampler(_dev, ref samplerInfo, null, out sampler) != Result.Success)
                 {
                     throw new Exception("failed to create texture sampler!");
                 }
@@ -466,8 +465,11 @@ namespace UOEngine.Runtime.Rendering
 
             foreach (var dev in devices)
             {
-                    _physicalDevice = dev;
-                    break;
+                _physicalDevice = dev;
+
+                Vulkan.VkGetPhysicalDeviceProperties(_physicalDevice, out _physicalDeviceProperties);
+
+                break;
             }
 
             if (_physicalDevice.Handle == 0)
@@ -1150,7 +1152,6 @@ namespace UOEngine.Runtime.Rendering
 
         public RenderCommandListContextImmediate?       ImmediateContext { get; private set; }
 
-        public RenderQueue                              GraphicsQueue { get; private set; }
         public Queue                                    PresentQueue => _presentQueue;      
 
         public Instance                                 Instance => instance;

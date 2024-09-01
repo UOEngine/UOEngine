@@ -71,14 +71,14 @@ namespace UOEngine.Runtime.Rendering
         {
             Debug.Assert(IsMarkedForDelete);
 
-            Vulkan.VkDestroyBuffer(_renderDevice.Handle, _deviceBuffer);
+            Vulkan.vkDestroyBuffer(_renderDevice.Handle, _deviceBuffer);
 
             _deviceBuffer.Handle = 0;
 
             Vulkan.VkFreeMemory(_renderDevice.Handle, _stagingBufferMemory);
             _stagingBufferMemory.Handle = 0;
 
-            Vulkan.VkDestroyBuffer(_renderDevice.Handle, _stagingBuffer);
+            Vulkan.vkDestroyBuffer(_renderDevice.Handle, _stagingBuffer);
             _stagingBuffer.Handle = 0;
 
             Vulkan.VkFreeMemory(_renderDevice.Handle, _deviceBufferMemory);
@@ -87,6 +87,8 @@ namespace UOEngine.Runtime.Rendering
 
         public unsafe void CopyToDevice<T>(ReadOnlySpan<T> uploadData)
         {
+            Debug.Assert(IsMarkedForDelete == false);
+
             ulong sizeOfType = (ulong)Unsafe.SizeOf<T>(); 
 
             var bufferSize = sizeOfType * (ulong)uploadData.Length;
@@ -114,15 +116,6 @@ namespace UOEngine.Runtime.Rendering
             Vk.GetApi().CmdCopyBuffer(_renderDevice.ImmediateContext!.CommandBufferManager.GetUploadCommandBuffer()!.Handle, _stagingBuffer, _deviceBuffer, 1, ref copyRegion);
         }
 
-        public void CopyToDevice<T>(IntPtr ptr, int size)
-        {
-
-        }
-        private void CopyToDeviceInternal()
-        {
-
-        }
-   
         private unsafe void CreateBuffer(ulong size, BufferUsageFlags usage, MemoryPropertyFlags properties, out Buffer buffer, out DeviceMemory bufferMemory)
         {
             BufferCreateInfo bufferCreateInfo = new()

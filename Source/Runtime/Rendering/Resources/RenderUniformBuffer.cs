@@ -28,7 +28,7 @@ namespace UOEngine.Runtime.Rendering.Resources
 
         public override void Destroy()
         {
-            Vulkan.VkDestroyBuffer(_device.Handle, _handle);
+            Vulkan.vkDestroyBuffer(_device.Handle, _handle);
 
             _handle.Handle = 0;
 
@@ -42,7 +42,7 @@ namespace UOEngine.Runtime.Rendering.Resources
             Debug.Assert(Marshal.SizeOf(value) == (int)Size);
 
             void* data;
-            Vulkan.VkMapMemory(_device.Handle, _deviceMemory, 0, Size, &data);
+            Vulkan.VkMapMemory(_device.Handle, _deviceMemory, 0, Size, MemoryMapFlags.None, &data);
 
             new Span<T>(data, 1)[0] = value;
 
