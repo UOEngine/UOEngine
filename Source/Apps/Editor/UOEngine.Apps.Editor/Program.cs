@@ -1,7 +1,7 @@
-﻿using UOEngine.Runtime.Core;
-using UOEngine.Runtime.Rendering;
+﻿using Microsoft.Extensions.DependencyInjection;
+
 using UOEngine.Apps.Client;
-using Microsoft.Extensions.DependencyInjection;
+using UOEngine.Runtime.Engine;
 
 namespace UOEngine.Apps.Editor
 {
@@ -19,6 +19,7 @@ namespace UOEngine.Apps.Editor
             base.Initialise();
 
             RegisterService<UOEngineImGui>();
+            RegisterPlugin<EnginePlugin>();
 
             return true;
         }

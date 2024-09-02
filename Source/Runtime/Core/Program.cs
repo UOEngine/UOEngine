@@ -79,11 +79,6 @@ namespace UOEngine.Runtime.Core
         protected void RegisterService<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>() where T: class
         {
             serviceCollection!.AddSingleton<T>();
-
-            //if(typeof(ITickable).IsAssignableFrom(typeof(T)))
-            //{
-            //    tickableServiceTypes.Add(typeof(T));
-            //}
         }
 
         protected void RegisterPlugin<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]  T>() where T: IPlugin, new()

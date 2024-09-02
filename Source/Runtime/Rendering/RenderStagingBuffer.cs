@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
+
 using Silk.NET.Vulkan;
 using VkBuffer = Silk.NET.Vulkan.Buffer;
 
