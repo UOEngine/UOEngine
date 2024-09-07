@@ -14,19 +14,17 @@ namespace UOEngine.Runtime.EntityComponentSystem
             Name = name;
         }
 
-        public Entity Add<T>(in T? component = default) where T: struct
+        public Entity Add<T>(in T component = default) where T: struct
         {
             World.Add(this, component);
 
             return this;
         }
 
-        //public Entity Set<T>() where T: struct
-        //{
-        //    World.Set<T>(this);
-
-        //    return this;
-        //}
+        public T Get<T>() where T : struct
+        {
+            return World.Get<T>(this);
+        }
 
         public Entity Set<T>(T component) where T : struct 
         {

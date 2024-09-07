@@ -1,5 +1,6 @@
 ﻿using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Security.AccessControl;
 
 namespace UOEngine.Runtime.EntityComponentSystem
 {
@@ -86,7 +87,7 @@ namespace UOEngine.Runtime.EntityComponentSystem
         //    return archetype.Get<T>(archetypeRecord.Column, entityRecord.Row);
         //}
 
-        public void Add<T>(Entity entity, in T? component = default) where T: struct
+        public void Add<T>(Entity entity, in T component = default) where T: struct
         {
             ComponentType componentType = Component<T>.ComponentType;
 
@@ -95,7 +96,12 @@ namespace UOEngine.Runtime.EntityComponentSystem
 
             Archetype newArchetype = GetOrCreateArchetype(componentType, oldArchetype);
 
-            MoveEntity(entity, oldArchetype, newArchetype);
+            if(newArchetype != oldArchetype)
+            {
+                MoveEntity(entity, oldArchetype, newArchetype);
+
+                record = _entityRecords[entity];
+            }
 
             newArchetype.Set(record.Row, component);
         }
@@ -105,6 +111,13 @@ namespace UOEngine.Runtime.EntityComponentSystem
             EntityRecord record = _entityRecords[entity];
 
             record.Archetype.Set<T>(record.Row, component);
+        }
+
+        public T Get<T>(Entity entity) where T : struct
+        {
+            EntityRecord record = _entityRecords[entity];
+
+            return record.Archetype.Get<T>(record.Row);
         }
 
         private Archetype GetOrCreateArchetype(in ComponentType componentType, Archetype oldArchetype)
@@ -155,13 +168,18 @@ namespace UOEngine.Runtime.EntityComponentSystem
             EntityRecord    record = _entityRecords[entity];
             int             sourceRow = record.Row;
             Array[]         components = oldArchetype.ComponentData;
+            Array[]         destinationComponents = newArchetype.ComponentData;
 
-            for(int column = 0; column < components.Length; column++)
+            ImmutableSortedSet<ComponentType> componentTypes = oldArchetype.ComponentTypes;
+
+            for (int column = 0; column < components.Length; column++)
             {
-                Array sourceArray = components[column];
-                Type type = sourceArray.GetType();
+                Array           sourceArray = components[column];
+                ComponentType   componentType = componentTypes.ElementAt(column);
+                Array           destinationArray = newArchetype.GetArray(componentType);
 
-                //newArchetype.Set(destinationRow, co)
+                Debug.Assert(newArchetype.HasComponent(componentType));
+                Array.Copy(sourceArray, sourceRow, destinationArray, destinationRow, 1);
             }
 
             EntityRecord newRecord = new(newArchetype, destinationRow);

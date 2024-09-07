@@ -53,10 +53,9 @@ namespace UOEngine.Runtime.EntityComponentSystem
 
             for (int column = 0; column < ComponentData.Length; column++)
             {
-                Array sourceArray = components[column];
-                Type type = sourceArray.GetType();
+                Array componentData = components[column];
 
-                //newArchetype.Set(destinationRow, co)
+                Array.Copy(componentData, lastRow, componentData, row, 1);
             }
 
             _entities[row] = lastEntity;
@@ -64,6 +63,11 @@ namespace UOEngine.Runtime.EntityComponentSystem
             _numEntities--;
 
             return lastEntity;
+        }
+
+        public bool HasComponent(ComponentType component)
+        {
+            return ComponentTypes.Contains(component);
         }
 
         public Archetype? GetAddEdge(ComponentType componentType)
@@ -81,32 +85,33 @@ namespace UOEngine.Runtime.EntityComponentSystem
             _addEdges.Add(componentType, archetype);
         }
 
-        public void Set<T>(int row, in T? component) where T: struct
+        public void Set<T>(int row, in T component) where T: struct
         {
             ulong id = Component<T>.ComponentType.id;
 
-            int index = ComponentTypes.IndexOf(Component<T>.ComponentType);
+            int index = ComponentTypes.IndexOf(Component<T>.ComponentType); // Better way?
 
-            //int dataIndex = _componentIdToArrayIndex[id];
+            T[] compData = Unsafe.As<T[]>(ComponentData[index]);
 
-            //T[] compData = Unsafe.As<T[]>(ComponentData[dataIndex]);
-
-            //compData[row] = component;
+            compData[row] = component;
 
         }
 
-        public T Get<T>(int componentRow, int column)
+        public T Get<T>(int row) where T : struct
         {
-            T[] data = Unsafe.As<T[]>(ComponentData[componentRow]);
+            int index = ComponentTypes.IndexOf(Component<T>.ComponentType); // Better way?
 
-            return data[column];
+            T[] compData = Unsafe.As<T[]>(ComponentData[index]);
+
+            return compData[row];
         }
 
         public Array GetArray(ComponentType componentType)
         {
-            Debug.Assert(false);
+            int index = ComponentTypes.IndexOf(componentType); // Better way?
 
-            return ComponentData[0];
+            return ComponentData[index];
+
         }
     }
 }

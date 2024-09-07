@@ -14,11 +14,16 @@ namespace UOEngine.Runtime.Engine
 
             var entity = world.CreateEntity("TestEntity");
 
-            entity.Add<TransformComponent>(new TransformComponent { Position = { X = 1.0f, Y = 0.1f } });
+            entity.Add(new TransformComponent { Position = { X = 1.0f, Y = 0.1f } });
+
+            TransformComponent value = entity.Get<TransformComponent>();
 
             entity.Add<SpriteComponent>();
 
-            //entity.Set(new TransformComponent { Position = { X = 1.5f, Y = 0.5f } });
+            entity.Set(new TransformComponent { Position = { X = 1.5f, Y = 0.5f } });
+
+            TransformComponent value2 = entity.Get<TransformComponent>();
+
         }
     }
 }
