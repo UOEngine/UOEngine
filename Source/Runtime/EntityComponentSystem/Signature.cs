@@ -19,10 +19,10 @@ namespace UOEngine.Runtime.EntityComponentSystem
         {
             uint mask = 0;
 
-            foreach (var component in Components)
-            {
-                mask |= (uint)(1 << component.id);
-            }
+            //foreach (var component in Components)
+            //{
+            //    mask |= (uint)(1 << component.id);
+            //}
 
             return mask;
         }

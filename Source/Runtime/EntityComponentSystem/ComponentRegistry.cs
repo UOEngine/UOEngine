@@ -29,7 +29,7 @@ namespace UOEngine.Runtime.EntityComponentSystem
                 return component;
             }
 
-            int id = NumComponents + 1;
+            ulong id = EntityPool.Get();
 
             component = new ComponentType(id);
 

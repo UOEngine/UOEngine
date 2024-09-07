@@ -6,66 +6,107 @@ namespace UOEngine.Runtime.EntityComponentSystem
 {
     public class Archetype
     {
-        public ImmutableArray<ComponentType>    Components { get; private set; } = [];
+        public readonly ImmutableSortedSet<ComponentType>   ComponentTypes;
+        public readonly ulong                               Id;
 
-        private const int                       _maxEntities = 1024;
-        private ulong[]                         _entityIds = new ulong[_maxEntities];
-        private int                             _numEntities = 0;
+        public readonly Array[]                             ComponentData = [];
 
-        private readonly int[]                  _componentIdToArrayIndex = [];
-        private Array[]                         _data;
+        private const int                                   _maxEntities = 1024;
+        private Entity[]                                    _entities = new Entity[_maxEntities];
+        private int                                         _numEntities = 0;
 
-        public Archetype(ComponentType[] components) 
+        private Dictionary<ComponentType, Archetype>        _addEdges = [];
+        private Dictionary<ComponentType, Archetype>        _removeEdges = [];
+
+        public Archetype(ImmutableSortedSet<ComponentType> componentTypes, ulong id) 
         {
-            Array.Fill(_entityIds, ulong.MaxValue);
+            Id = id;
+            ComponentTypes = componentTypes;
 
-            Components = components.ToImmutableArray();
-            _componentIdToArrayIndex = Component<int>.ToLookupArray(components);
-
-            _data = new Array[components.Length];
-
-            for (int i = 0; i < components.Length; i++)
+            ComponentData = new Array[componentTypes.Count];
+            
+            for(int i = 0; i < componentTypes.Count; i++)
             {
-                _data[i] = Array.CreateInstance(components[i].Type, _maxEntities);
+                ComponentData[i] = Array.CreateInstance(componentTypes.ElementAt(i).Type, _maxEntities);
             }
         }
 
-        public bool ContainsEntity(ulong entityId)
+        public int AddEntity(Entity entity)
         {
-            return _entityIds.Contains(entityId);
-        }
+            Debug.Assert(_entities.Contains(entity) == false);
 
-        public int AddEntity(ulong entityId)
-        {
-            Debug.Assert(ContainsEntity(entityId) == false);
+            var numEntities = _numEntities;
 
-            _entityIds[_numEntities] = entityId;
+            _entities[numEntities] = entity;
+
             _numEntities++;
 
-            return _numEntities - 1;
+            return numEntities;
         }
 
-        public void RemoveEntity(ulong row)
+        public Entity RemoveEntity(int row)
         {
-            //Debug.Assert(ContainsEntity(entityId));
+            int     lastRow = _numEntities - 1;
+            Entity  lastEntity = _entities[lastRow];
+
+            Array[] components = ComponentData;
+
+            for (int column = 0; column < ComponentData.Length; column++)
+            {
+                Array sourceArray = components[column];
+                Type type = sourceArray.GetType();
+
+                //newArchetype.Set(destinationRow, co)
+            }
+
+            _entities[row] = lastEntity;
+
+            _numEntities--;
+
+            return lastEntity;
+        }
+
+        public Archetype? GetAddEdge(ComponentType componentType)
+        {
+            if(_addEdges.TryGetValue(componentType, out var edge))
+            {
+                return edge;
+            }
+
+            return null;
+        }
+
+        public void AddAddEdge(ComponentType componentType, Archetype archetype)
+        {
+            _addEdges.Add(componentType, archetype);
+        }
+
+        public void Set<T>(int row, in T? component) where T: struct
+        {
+            ulong id = Component<T>.ComponentType.id;
+
+            int index = ComponentTypes.IndexOf(Component<T>.ComponentType);
+
+            //int dataIndex = _componentIdToArrayIndex[id];
+
+            //T[] compData = Unsafe.As<T[]>(ComponentData[dataIndex]);
+
+            //compData[row] = component;
 
         }
-        public void MoveEntityIntoHere(Archetype oldArchetype, ulong entityId)
+
+        public T Get<T>(int componentRow, int column)
         {
-            Debug.Assert(ContainsEntity(entityId) == false);
-            Debug.Assert(oldArchetype.ContainsEntity(entityId));
+            T[] data = Unsafe.As<T[]>(ComponentData[componentRow]);
+
+            return data[column];
         }
 
-        public void Set<T>(int row, in T component)
+        public Array GetArray(ComponentType componentType)
         {
-            int id = Component<T>.ComponentType.id;
+            Debug.Assert(false);
 
-            int dataIndex = _componentIdToArrayIndex[id];
-
-            T[] compData = Unsafe.As<T[]>(_data[dataIndex]);
-
-            compData[row] = component;
-
+            return ComponentData[0];
         }
     }
 }

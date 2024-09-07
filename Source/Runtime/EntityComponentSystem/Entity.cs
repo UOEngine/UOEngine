@@ -1,29 +1,32 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 namespace UOEngine.Runtime.EntityComponentSystem
 {
     public struct Entity
     {
         public ulong        Id;
         public World        World;
-        internal Archetype  Archetype;
-        public int          ArchetypeRow;
+        public string       Name;
 
-        public Entity(ulong id, World world, Archetype archetype)
+        public Entity(ulong id, World world, string name)
         {
             Id = id;
             World = world;
-            Archetype = archetype;
+            Name = name;
         }
 
-        public Entity AddComponent<T>() where T: struct
+        public Entity Add<T>(in T? component = default) where T: struct
         {
+            World.Add(this, component);
+
             return this;
         }
+
+        //public Entity Set<T>() where T: struct
+        //{
+        //    World.Set<T>(this);
+
+        //    return this;
+        //}
 
         public Entity Set<T>(T component) where T : struct 
         {

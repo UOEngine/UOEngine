@@ -1,4 +1,5 @@
 ﻿using Engine.Components;
+using UOEngine.Engine.Components;
 using UOEngine.Runtime.Core;
 
 using UOEngine.Runtime.EntityComponentSystem;
@@ -11,7 +12,13 @@ namespace UOEngine.Runtime.Engine
         {
             var world = new World();
 
-            world.CreateEntity().Set(new TransformComponent { Position = { X = 1.0f, Y = 0.1f } });
+            var entity = world.CreateEntity("TestEntity");
+
+            entity.Add<TransformComponent>(new TransformComponent { Position = { X = 1.0f, Y = 0.1f } });
+
+            entity.Add<SpriteComponent>();
+
+            //entity.Set(new TransformComponent { Position = { X = 1.5f, Y = 0.5f } });
         }
     }
 }

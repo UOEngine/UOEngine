@@ -1,85 +1,176 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Immutable;
+using System.Diagnostics;
 
 namespace UOEngine.Runtime.EntityComponentSystem
 {
     public class World
     {
-        private Entity[]                         _entities = new Entity[_maxEntities];
+        private Entity[]                                            _entities = new Entity[_maxEntities];
 
-        private const int                        _maxEntities = 1024;
+        private const int                                           _maxEntities = 1024;
 
-        private int                              _numEntities = 0;
+        private int                                                 _numEntities = 0;
 
-        private Dictionary<int, Archetype>       _archetypes = [];
-        private int                              _numArchetypes = 0;
-        private const int                        _maxArchetypes = 8;
+        private Dictionary<ulong, Archetype>                        _archetypes = [];
+        private int                                                 _numArchetypesCreated = 0;
 
-        private Archetype                        _defaultArchetype = new([]);
+        private readonly Archetype                                  _defaultArchetype;
 
-        private Archetype?                       _componentArchetype;
+        private Dictionary<Entity, EntityRecord>                    _entityRecords = [];
+        private Dictionary<ulong, Dictionary<ulong, ArchetypeRecord>>   _componentIndices = []; // component_index
 
         public World() 
         {
-        }
+            _defaultArchetype = new Archetype([], EntityPool.Get());
 
-        public void BuildComponentArchetype(object[] components)
-        {
-
+            CreateEntity(_defaultArchetype.Id, "DefaultArchetype");
         }
 
         public ref Entity CreateEntity()
         {
+            var id = EntityPool.Get();
+
+            return ref CreateEntity(id);
+        }
+
+        public ref Entity CreateEntity(string name)
+        {
+            var id = EntityPool.Get();
+
+            return ref CreateEntity(id, name);
+        }
+
+        public ref Entity CreateEntity(ulong id, string name = "")
+        {
             Debug.Assert(_numEntities <= _maxEntities);
 
-            var newId = _numEntities;
+            ref var entity = ref _entities[id];
 
-            ref var entity = ref _entities[newId];
+            entity = new Entity(id, this, name);
 
-            entity = new Entity((ulong)newId, this, _defaultArchetype);
+            int row = _defaultArchetype.AddEntity(entity);
 
-            entity.ArchetypeRow = _defaultArchetype.AddEntity(entity.Id);
+            _entityRecords.Add(entity, new EntityRecord(_defaultArchetype, row));
 
             _numEntities++;
 
             return ref entity;
         }
 
-        private Archetype GetOrCreateArchetype(in Signature signature)
-        {
-            int hash = (int)signature.ToMask();
+        //public bool HasComponent<T>(Entity entity) where T : struct
+        //{
+        //    ComponentType componentType = Component<T>.ComponentType;
 
-            if(_archetypes.TryGetValue(hash, out var archetype))
+        //    Archetype archetype = _entityRecords[entity].Archetype;
+
+        //    return _componentIndices[componentType].ContainsKey(archetype.Id);
+        //}
+
+        //public T? GetComponent<T>(Entity entity) where T: struct
+        //{
+        //    if(HasComponent<T>(entity) == false)
+        //    {
+        //        return null;
+        //    }
+
+        //    ComponentType componentType = Component<T>.ComponentType;
+
+        //    EntityRecord entityRecord = _entityRecords[entity];
+
+        //    Archetype archetype = entityRecord.Archetype;
+
+        //    var archetypes = _componentIndices[componentType];
+
+        //    ArchetypeRecord archetypeRecord = archetypes[archetype.Id];
+
+        //    return archetype.Get<T>(archetypeRecord.Column, entityRecord.Row);
+        //}
+
+        public void Add<T>(Entity entity, in T? component = default) where T: struct
+        {
+            ComponentType componentType = Component<T>.ComponentType;
+
+            EntityRecord record = _entityRecords[entity];
+            Archetype oldArchetype = record.Archetype;
+
+            Archetype newArchetype = GetOrCreateArchetype(componentType, oldArchetype);
+
+            MoveEntity(entity, oldArchetype, newArchetype);
+
+            newArchetype.Set(record.Row, component);
+        }
+
+        public void Set<T>(Entity entity, in T component) where T: struct
+        {
+            EntityRecord record = _entityRecords[entity];
+
+            record.Archetype.Set<T>(record.Row, component);
+        }
+
+        private Archetype GetOrCreateArchetype(in ComponentType componentType, Archetype oldArchetype)
+        {
+            if(_componentIndices.TryGetValue(componentType.Id, out var archetypeMap))
             {
-                return archetype;
+                if(archetypeMap.TryGetValue(oldArchetype.Id, out ArchetypeRecord archetypeRecord))
+                {
+                    return oldArchetype;
+                }
+            }
+            else
+            {
+                _componentIndices.Add(componentType.Id, []);
             }
 
-            archetype = new Archetype(signature.Components);
+            Archetype? archetype = oldArchetype.GetAddEdge(componentType);
 
-            _archetypes.Add(hash, archetype);
+            if (archetype == null)
+            {
+                SortedSet<ComponentType> componentTypes = new(oldArchetype.ComponentTypes)
+                {
+                    componentType,
+                };
+
+                Entity archetypeEntity = CreateEntity($"Archetype_{_numArchetypesCreated++}");
+
+                var componentTypesImmutable = componentTypes.ToImmutableSortedSet();
+
+                archetype = new Archetype(componentTypesImmutable, archetypeEntity.Id);
+
+                ArchetypeRecord archetypeRecord = new(componentTypesImmutable.IndexOf(componentType));
+
+                _componentIndices[componentType.Id].Add(archetype.Id, archetypeRecord);
+
+                _archetypes.Add(archetype.Id, archetype);
+
+                oldArchetype.AddAddEdge(componentType, archetype);
+            }
 
             return archetype;
         }
 
-        public void Set<T>(Entity entity, T component) where T: struct
+        private void MoveEntity(Entity entity, Archetype oldArchetype, Archetype newArchetype)
         {
-            ComponentType componentType = Component<T>.ComponentType;
-            Signature signature = Component<T>.Signature;
+            int             destinationRow = newArchetype.AddEntity(entity);
 
-            // Find an existing archetype to see if it fits.
+            EntityRecord    record = _entityRecords[entity];
+            int             sourceRow = record.Row;
+            Array[]         components = oldArchetype.ComponentData;
 
-            Archetype archetype = GetOrCreateArchetype(signature);
-
-            int row = -1;
-
-            if(archetype.ContainsEntity(entity.Id))
+            for(int column = 0; column < components.Length; column++)
             {
-            }
-            else
-            {
-                row = archetype.AddEntity(entity.Id);
+                Array sourceArray = components[column];
+                Type type = sourceArray.GetType();
+
+                //newArchetype.Set(destinationRow, co)
             }
 
-            archetype.Set(row, component);
+            EntityRecord newRecord = new(newArchetype, destinationRow);
+
+            Entity movedEntity = oldArchetype.RemoveEntity(record.Row);
+            EntityRecord movedEntityRecord = new EntityRecord(oldArchetype, record.Row);
+
+            _entityRecords[movedEntity] = movedEntityRecord;
+            _entityRecords[entity] = newRecord;
         }
     }
 }

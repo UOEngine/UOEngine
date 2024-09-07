@@ -1,48 +1,25 @@
 ﻿namespace UOEngine.Runtime.EntityComponentSystem
 {
-    public readonly record struct ComponentType(int id)
+    public readonly record struct ComponentType(ulong id): IComparer<ComponentType>
     {
-        public readonly int Id = id; // Like a type id.
-        public Type Type => ComponentRegistry.Types[Id];
+        public readonly ulong Id = id;
+        public Type Type => ComponentRegistry.Types[(int)Id];
+
+        public int Compare(ComponentType x, ComponentType y)
+        {
+            throw new NotImplementedException();
+        }
     }
 
-    public static class Component<T>
+
+
+    public static class Component<T> where T: struct
     {
         public static readonly ComponentType ComponentType;
 
-        public static readonly Signature Signature;
         static Component()
         {
             ComponentType = ComponentRegistry.Add<T>();
-            Signature = new Signature([ComponentType]);
-        }
-
-        public static int[] ToLookupArray(ComponentType[] types)
-        {
-            var max = 0;
-
-            foreach (var type in types)
-            {
-                var componentId = type.Id;
-
-                if (componentId >= max)
-                {
-                    max = componentId;
-                }
-            }
-
-            var array = new int[max + 1];
-
-            Array.Fill(array, -1);
-
-            for (var index = 0; index < types.Length; index++)
-            {
-                ref var type = ref types[index];
-                var componentId = type.Id;
-                array[componentId] = index;
-            }
-
-            return array;
         }
     }
 }
