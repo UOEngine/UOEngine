@@ -4,8 +4,20 @@ using System.Runtime.InteropServices;
 
 namespace UOEngine.UltimaOnline.Assets
 {
-    public class UOFile
+    public class UOFile: IDisposable
     {
+        private const uint              UOFileMagicNumber = 0x50594D;
+
+        private List<UOFileIndex>       _fileIndices = [];
+        private List<UOBitmap>          _gumpBitmaps = [];
+        private MemoryMappedFile?       _file;
+        private FileInfo?               _fileInfo;
+
+        public void Dispose()
+        {
+            _file?.Dispose();
+        }
+
         public void Load(string filePath, bool bHasExtra)
         {
             const int maxFileIndices = 5000;
@@ -302,13 +314,5 @@ namespace UOEngine.UltimaOnline.Assets
 
             return ((ulong)esi << 32) | eax;
         }
-
-        private const uint          UOFileMagicNumber = 0x50594D;
-
-        private List<UOFileIndex>   _fileIndices = [];
-        private List<UOBitmap>      _gumpBitmaps = [];
-        private MemoryMappedFile?   _file;
-        private FileInfo?           _fileInfo;
-
     }
 }

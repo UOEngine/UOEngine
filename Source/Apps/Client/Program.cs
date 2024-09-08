@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
 using UOEngine.Runtime.Core;
+using UOEngine.Runtime.Engine;
 using UOEngine.Runtime.Rendering;
 using UOEngine.UltimaOnline.Assets;
 
@@ -17,6 +18,8 @@ namespace UOEngine.Apps.Client
 
         protected override bool Initialise()
         {
+            RegisterPlugin<EnginePlugin>();
+
             RegisterService<Input>();
             RegisterService<Window>();
             RegisterService<UOAssetLoader>();
