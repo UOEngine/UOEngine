@@ -4,6 +4,7 @@ using UOEngine.Runtime.Core;
 using UOEngine.Runtime.Engine;
 using UOEngine.Runtime.Rendering;
 using UOEngine.UltimaOnline.Assets;
+using UOEngine.UltimaOnline.Game;
 
 namespace UOEngine.Apps.Client
 {
@@ -70,7 +71,17 @@ namespace UOEngine.Apps.Client
             
             assetLoader.LoadAllFiles("C:\\Program Files (x86)\\Electronic Arts\\Ultima Online Classic");
 
-            var loginBackgroundBitmap = assetLoader.Gumps.GetGump(EGumpTypes.LoginBackground);
+            int mapIndex = 0;
+
+            assetLoader.MapAssets.LoadMap(mapIndex);
+
+            var map = new UOMap();
+
+            map.Load(assetLoader.MapAssets.BlockData[mapIndex], assetLoader.MapAssets.MapBlocksSize![mapIndex,0], assetLoader.MapAssets.MapBlocksSize[mapIndex,1]);
+
+            Chunk chunk = map.GetChunk(5276, 1164);
+
+            var loginBackgroundBitmap = assetLoader.Gumps!.GetBitmap((int)EGumpTypes.LoginBackground);
 
             RenderTexture2DDescription description = new RenderTexture2DDescription();
 

@@ -13,6 +13,7 @@
     <ProjectReference Include="..\..\Runtime\Engine\UOEngine.Runtime.Engine.csproj" />
     <ProjectReference Include="..\..\Runtime\Rendering\UOEngine.Runtime.Rendering.csproj" />
     <ProjectReference Include="..\..\UltimaOnline\UOEngine.Ultima.Assets\UOEngine.UltimaOnline.Assets.csproj" />
+    <ProjectReference Include="..\..\UltimaOnline\UOEngine.Ultima.Game\UOEngine.UltimaOnline.Game.csproj" />
   </ItemGroup>
 
 </Project>

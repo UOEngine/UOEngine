@@ -1,41 +1,69 @@
 ﻿using System.Diagnostics;
 using System.IO.MemoryMappedFiles;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+
+using UOEngine.Runtime.Core;
 
 namespace UOEngine.UltimaOnline.Assets
 {
+    public static class UOFileExtensionMethods
+    {
+        public static unsafe T Read<T>(this BinaryReader reader) where T : unmanaged
+        {
+            Unsafe.SkipInit<T>(out var value);
+
+            var p = new Span<byte>(&value, sizeof(T));
+
+            reader.Read(p);
+
+            return value;
+        }
+    }
+
     public class UOFile: IDisposable
     {
-        private const uint              UOFileMagicNumber = 0x50594D;
+        public bool                         IsUop { get; private set; }
 
-        private List<UOFileIndex>       _fileIndices = [];
-        private List<UOBitmap>          _gumpBitmaps = [];
-        private MemoryMappedFile?       _file;
-        private FileInfo?               _fileInfo;
+        public ReadOnlySpan<UOFileIndex>    FileIndices => _fileIndices;
+
+        public MemoryMappedViewStream?      Stream { get; private set; }
+
+        public BinaryReader?                Reader { get; private set; }
+
+        private const uint                  UOFileMagicNumber = 0x50594D;
+
+        private UOFileIndex[]               _fileIndices = [];
+        private MemoryMappedFile?           _file;
+        private FileInfo                    _fileInfo;
+        private UOFile?                     _idxFile;
+
+        public UOFile(string path)
+        {
+            _fileInfo = new FileInfo(path);
+
+            UOE.Assert(_fileInfo.Exists);
+
+            IsUop = _fileInfo.Extension == ".uop";
+        }
+
+        public UOFile(string path, string idxFilePath)
+        {
+            _fileInfo = new FileInfo(path);
+            _idxFile = new UOFile(idxFilePath);
+
+            UOE.Assert(_fileInfo.Extension == ".mul");
+            UOE.Assert(idxFilePath.EndsWith(".idx"));
+            UOE.Assert(_fileInfo.Exists);
+        }
 
         public void Dispose()
         {
             _file?.Dispose();
         }
 
-        public void Load(string filePath, bool bHasExtra)
+        public void Load(string packedFilePattern, bool bHasExtra)
         {
-            const int maxFileIndices = 5000;
-
-            _fileIndices = new(maxFileIndices);
-
-            for(int i = 0; i < maxFileIndices; i++)
-            {
-                _fileIndices.Add(new UOFileIndex());
-            }
-
-            _fileInfo = new FileInfo(filePath);
-
-            if(_fileInfo.Extension != ".uop")
-            {
-                Debug.Assert(false);
-            }
-
             long size = _fileInfo.Length;
 
             if (size > 0)
@@ -56,109 +84,41 @@ namespace UOEngine.UltimaOnline.Assets
 
                 return;
             }
-            
-            using(var stream = _file.CreateViewStream(0, size, MemoryMappedFileAccess.Read))
+
+            Stream = _file.CreateViewStream(0, size, MemoryMappedFileAccess.Read);
             {
                 string uopPattern = Path.GetFileNameWithoutExtension(_fileInfo.Name).ToLowerInvariant();
 
-                var reader = new BinaryReader(stream);
+                Reader = new BinaryReader(Stream);
 
-                if (reader.ReadUInt32() != UOFileMagicNumber)
+                if (_fileInfo.Extension == ".mul")
                 {
-                    throw new ArgumentException("Bad UO file");
+                    LoadMulFile(Reader);
+
+                    return;
                 }
 
-                uint version = reader.ReadUInt32();
-                uint signature = reader.ReadUInt32();
-                long nextBlock = reader.ReadInt64();
-                uint blockSize = reader.ReadUInt32();
-                int count = reader.ReadInt32();
-
-                Dictionary<ulong, int> hashes = new Dictionary<ulong, int>();
-
-                for (int i = 0; i < count; i++)
+                if (_fileInfo.Extension == ".uop")
                 {
-                    string entryName = string.Format("build/{0}/{1:D8}{2}", uopPattern, i, ".tga");
-                    ulong hash = CreateHash(entryName);
+                    LoadUopFile(Reader, Stream, packedFilePattern, bHasExtra);
 
-                    if (!hashes.ContainsKey(hash))
-                    {
-                        hashes.Add(hash, i);
-                    }
+                    return;
                 }
-
-                stream.Seek(nextBlock, SeekOrigin.Begin);
-
-                int total = 0;
-                int realTotal = 0;
-
-                while(nextBlock != 0)
-                {
-                    int filesCount = reader.ReadInt32();
-                    nextBlock = reader.ReadInt64();
-
-                    total += filesCount;
-
-                    for (int i = 0; i < filesCount; i++)
-                    {
-                        long offset = reader.ReadInt64();
-                        int headerLength = reader.ReadInt32();
-                        int compressedLength = reader.ReadInt32();
-                        int decompressedLength = reader.ReadInt32();
-                        ulong hash = reader.ReadUInt64();
-                        uint checksumAdler32 = reader.ReadUInt32();
-                        short flag = reader.ReadInt16();
-
-                        int dataSize = flag == 1 ? compressedLength : decompressedLength;
-
-                        if (offset == 0)
-                        {
-                            continue;
-                        }
-
-                        if(hashes.TryGetValue(hash, out int idx) == false)
-                        {
-                            continue;
-                        }
-
-                        realTotal++;
-                        //offset += headerLength;
-
-                        var fileIndex = new UOFileIndex();
-
-                        fileIndex.Length = dataSize;
-                        fileIndex.Offset = offset + headerLength;
-
-                        if (bHasExtra)
-                        {
-                            long curpos = stream.Position;
-
-                            stream.Seek(offset + headerLength, SeekOrigin.Begin);
-
-                            // width and height for gumps.
-                            fileIndex.Width = (short)reader.ReadInt32();
-                            fileIndex.Height = (short)reader.ReadInt32();
-
-                            stream.Seek(curpos, SeekOrigin.Begin);
-
-                            fileIndex.Offset += 8;
-                        }
-
-                        _fileIndices[idx] = fileIndex;
-                        //_gumpBitmaps[idx] = GetGump(idx);
-                    }
-
-                    stream.Seek(nextBlock, SeekOrigin.Begin);
-                } 
             }
         }
 
-        public UOBitmap GetGump(EGumpTypes gumpType)
-        {
-            return GetGump((int)gumpType);
-        }
+        //public unsafe T Read<T>() where T: unmanaged
+        //{
+        //    T value;
+        //   // Unsafe.SkipInit<T>(out var v);
+        //    var p = new Span<byte>(&value, sizeof(T));
 
-        public unsafe UOBitmap GetGump(int idx)
+        //    Reader!.Read(p);
+
+        //    return value;
+        //}
+
+        public unsafe UOBitmap GetBitmap(int idx)
         {
             var info = _fileIndices[idx];
             var height = (short)info.Height;
@@ -168,7 +128,7 @@ namespace UOEngine.UltimaOnline.Assets
 
             UOBitmap? bitmap = null;
 
-            using (var stream = _file!.CreateViewStream(0, _fileInfo!.Length, MemoryMappedFileAccess.Read))
+            using (MemoryMappedViewStream stream = _file!.CreateViewStream(0, _fileInfo!.Length, MemoryMappedFileAccess.Read))
             {
                 using (var reader = new BinaryReader(stream))
                 {
@@ -313,6 +273,129 @@ namespace UOEngine.UltimaOnline.Assets
             }
 
             return ((ulong)esi << 32) | eax;
+        }
+
+        private void LoadMulFile(BinaryReader reader)
+        {
+            UOE.Assert(_fileInfo.Extension == ".mul");
+
+            UOFile file = _idxFile ?? this;
+
+            int count = (int)_fileInfo.Length / 12;
+
+            _fileIndices = new UOFileIndex[count];
+
+            for (int i = 0; i < _fileIndices.Length; i++)
+            {
+                ref UOFileIndex fileIndex = ref _fileIndices[i];
+
+                //fileIndex.File = this;  
+                fileIndex.Offset = reader.ReadUInt32();
+                fileIndex.Length = reader.ReadInt32();  
+                fileIndex.DecompressedLength = 0;  
+
+                int size = reader.ReadInt32();
+
+                if (size > 0)
+                {
+                    fileIndex.Width = (short)(size >> 16);
+                    fileIndex.Height = (short)(size & 0xFFFF);
+                }
+            }
+        }
+
+        private void LoadUopFile(BinaryReader reader, MemoryMappedViewStream stream, string packedFilePattern, bool bHasExtra)
+        {
+            UOE.Assert(_fileInfo.Extension == ".uop");
+
+            _fileIndices = new UOFileIndex[ushort.MaxValue];
+
+            if (reader.ReadUInt32() != UOFileMagicNumber)
+            {
+                throw new ArgumentException("Bad UO file");
+            }
+
+            uint version = reader.ReadUInt32();
+            uint signature = reader.ReadUInt32();
+            long nextBlock = reader.ReadInt64();
+            uint blockSize = reader.ReadUInt32();
+            int count = reader.ReadInt32();
+
+            Dictionary<ulong, int> hashes = new Dictionary<ulong, int>();
+
+            for (int i = 0; i < count; i++)
+            {
+                string entryName = string.Format(packedFilePattern, i);
+                ulong hash = CreateHash(entryName);
+
+                if (!hashes.ContainsKey(hash))
+                {
+                    hashes.Add(hash, i);
+                }
+            }
+
+            stream.Seek(nextBlock, SeekOrigin.Begin);
+
+            int total = 0;
+            int realTotal = 0;
+
+            while (nextBlock != 0)
+            {
+                int filesCount = reader.ReadInt32();
+                nextBlock = reader.ReadInt64();
+
+                total += filesCount;
+
+                for (int i = 0; i < filesCount; i++)
+                {
+                    long offset = reader.ReadInt64();
+                    int headerLength = reader.ReadInt32();
+                    int compressedLength = reader.ReadInt32();
+                    int decompressedLength = reader.ReadInt32();
+                    ulong hash = reader.ReadUInt64();
+                    uint checksumAdler32 = reader.ReadUInt32();
+                    short flag = reader.ReadInt16();
+
+                    int dataSize = flag == 1 ? compressedLength : decompressedLength;
+
+                    if (offset == 0)
+                    {
+                        continue;
+                    }
+
+                    if (hashes.TryGetValue(hash, out int idx) == false)
+                    {
+                        continue;
+                    }
+
+                    realTotal++;
+                    //offset += headerLength;
+
+                    var fileIndex = new UOFileIndex();
+
+                    fileIndex.Length = dataSize;
+                    fileIndex.Offset = offset + headerLength;
+
+                    if (bHasExtra)
+                    {
+                        long curpos = stream.Position;
+
+                        stream.Seek(offset + headerLength, SeekOrigin.Begin);
+
+                        // width and height for gumps.
+                        fileIndex.Width = (short)reader.ReadInt32();
+                        fileIndex.Height = (short)reader.ReadInt32();
+
+                        stream.Seek(curpos, SeekOrigin.Begin);
+
+                        fileIndex.Offset += 8;
+                    }
+
+                    _fileIndices[idx] = fileIndex;
+                }
+
+                stream.Seek(nextBlock, SeekOrigin.Begin);
+            }
         }
     }
 }

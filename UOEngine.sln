@@ -27,9 +27,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ThirdParty", "ThirdParty", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImGui.NET", "Source\ThirdParty\ImGui.NET\src\ImGui.NET\ImGui.NET.csproj", "{E4881A12-C96D-4A44-91F8-507A5BEF253A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UOEngine.Runtime.EntityComponentSystem", "Source\Runtime\EntityComponentSystem\UOEngine.Runtime.EntityComponentSystem.csproj", "{743DEE35-C63C-4013-8EBD-14104E3C64B0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UOEngine.Runtime.EntityComponentSystem", "Source\Runtime\EntityComponentSystem\UOEngine.Runtime.EntityComponentSystem.csproj", "{743DEE35-C63C-4013-8EBD-14104E3C64B0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UOEngine.Runtime.Engine", "Source\Runtime\Engine\UOEngine.Runtime.Engine.csproj", "{77A5A258-B7CE-44BF-B631-E58B3BCC3E7D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UOEngine.Runtime.Engine", "Source\Runtime\Engine\UOEngine.Runtime.Engine.csproj", "{77A5A258-B7CE-44BF-B631-E58B3BCC3E7D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UOEngine.UltimaOnline.Game", "Source\UltimaOnline\UOEngine.Ultima.Game\UOEngine.UltimaOnline.Game.csproj", "{A0456010-5CE8-4E37-BB9E-A97C0CD19D68}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -76,6 +78,10 @@ Global
 		{77A5A258-B7CE-44BF-B631-E58B3BCC3E7D}.Debug|x64.Build.0 = Debug|x64
 		{77A5A258-B7CE-44BF-B631-E58B3BCC3E7D}.Release|x64.ActiveCfg = Release|x64
 		{77A5A258-B7CE-44BF-B631-E58B3BCC3E7D}.Release|x64.Build.0 = Release|x64
+		{A0456010-5CE8-4E37-BB9E-A97C0CD19D68}.Debug|x64.ActiveCfg = Debug|x64
+		{A0456010-5CE8-4E37-BB9E-A97C0CD19D68}.Debug|x64.Build.0 = Debug|x64
+		{A0456010-5CE8-4E37-BB9E-A97C0CD19D68}.Release|x64.ActiveCfg = Release|x64
+		{A0456010-5CE8-4E37-BB9E-A97C0CD19D68}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -91,6 +97,7 @@ Global
 		{E4881A12-C96D-4A44-91F8-507A5BEF253A} = {CFD0600F-816D-4B43-B5FF-9A1B5DCB2BF0}
 		{743DEE35-C63C-4013-8EBD-14104E3C64B0} = {9A67D154-B795-494E-8D42-C6A2976730D5}
 		{77A5A258-B7CE-44BF-B631-E58B3BCC3E7D} = {9A67D154-B795-494E-8D42-C6A2976730D5}
+		{A0456010-5CE8-4E37-BB9E-A97C0CD19D68} = {E8FF436F-0A83-47CA-A879-12C42A17236F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {43D4B3F7-6189-4AFF-8A65-0DCD9E4B4D75}
