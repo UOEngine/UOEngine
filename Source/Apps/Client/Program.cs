@@ -79,7 +79,7 @@ namespace UOEngine.Apps.Client
 
             map.Load(assetLoader.MapAssets.BlockData[mapIndex], assetLoader.MapAssets.MapBlocksSize![mapIndex,0], assetLoader.MapAssets.MapBlocksSize[mapIndex,1]);
 
-            Chunk chunk = map.GetChunk(5276, 1164);
+            UOChunk chunk = map.GetChunk(5276, 1164);
 
             var loginBackgroundBitmap = assetLoader.Gumps!.GetBitmap((int)EGumpTypes.LoginBackground);
 
