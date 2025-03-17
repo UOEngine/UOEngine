@@ -1,0 +1,104 @@
+#include <windows.h>
+
+#include <nethost.h>
+#include <coreclr_delegates.h>
+#include <hostfxr.h>
+
+#include "DotNet.h"
+
+namespace
+{
+	// Globals to hold hostfxr exports
+	hostfxr_initialize_for_dotnet_command_line_fn	InitForCmdLineFunction = nullptr;
+	hostfxr_initialize_for_runtime_config_fn		InitForConfigFunction = nullptr;
+	hostfxr_get_runtime_delegate_fn					HostFxrGetRuntimeFunction = nullptr;
+	hostfxr_run_app_fn								RunAppFunction = nullptr;
+	hostfxr_close_fn								HostFxrCloseFunction = nullptr;
+
+	void* LoadLibrary(const char_t* path)
+	{
+		HMODULE h = ::LoadLibraryW(path);
+
+		return (void*)h;
+	}
+
+	void* GetExport(void* h, const char* name)
+	{
+		void* f = ::GetProcAddress((HMODULE)h, name);
+
+		return f;
+	}
+
+	// Using the nethost library, discover the location of hostfxr and get exports
+	bool LoadHostFxr(const char_t* assembly_path)
+	{
+		get_hostfxr_parameters params{ sizeof(get_hostfxr_parameters), assembly_path, nullptr };
+		// Pre-allocate a large buffer for the path to hostfxr
+		char_t buffer[MAX_PATH];
+		size_t buffer_size = sizeof(buffer) / sizeof(char_t);
+		int rc = get_hostfxr_path(buffer, &buffer_size, &params);
+
+		if (rc != 0)
+			return false;
+
+		// Load hostfxr and get desired exports
+		// NOTE: The .NET Runtime does not support unloading any of its native libraries. Running
+		// dlclose/FreeLibrary on any .NET libraries produces undefined behavior.
+		void* lib = LoadLibrary(buffer);
+
+		InitForCmdLineFunction = (hostfxr_initialize_for_dotnet_command_line_fn)GetExport(lib, "hostfxr_initialize_for_dotnet_command_line");
+		InitForConfigFunction = (hostfxr_initialize_for_runtime_config_fn)GetExport(lib, "hostfxr_initialize_for_runtime_config");
+		HostFxrGetRuntimeFunction = (hostfxr_get_runtime_delegate_fn)GetExport(lib, "hostfxr_get_runtime_delegate");
+		RunAppFunction = (hostfxr_run_app_fn)GetExport(lib, "hostfxr_run_app");
+		HostFxrCloseFunction = (hostfxr_close_fn)GetExport(lib, "hostfxr_close");
+
+		return (InitForConfigFunction && HostFxrGetRuntimeFunction && HostFxrCloseFunction);
+	}
+
+	// Load and initialize .NET Core and get desired function pointer for scenario
+	load_assembly_and_get_function_pointer_fn GetDotNetLoadAssembly(const char_t* config_path)
+	{
+		// Load .NET Core
+		void* load_assembly_and_get_function_pointer = nullptr;
+		hostfxr_handle cxt = nullptr;
+		int rc = InitForConfigFunction(config_path, nullptr, &cxt);
+
+		if (rc != 0 || cxt == nullptr)
+		{
+
+			//std::cerr << "Init failed: " << std::hex << std::showbase << rc << std::endl;
+			HostFxrCloseFunction(cxt);
+			return nullptr;
+		}
+
+		// Get the load assembly function pointer
+		rc = HostFxrGetRuntimeFunction(cxt, hdt_load_assembly_and_get_function_pointer, &load_assembly_and_get_function_pointer);
+		if (rc != 0 || load_assembly_and_get_function_pointer == nullptr)
+		{
+			//std::cerr << "Get delegate failed: " << std::hex << std::showbase << rc << std::endl;
+		}
+
+		HostFxrCloseFunction(cxt);
+
+		return (load_assembly_and_get_function_pointer_fn)load_assembly_and_get_function_pointer;
+	}
+}
+
+bool DotNet::Init()
+{
+	wchar_t buffer[MAX_PATH];
+	// Get the full path of the executable
+	DWORD length = GetModuleFileName(NULL, buffer, MAX_PATH);
+
+	if (LoadHostFxr(buffer) == false)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool DotNet::LoadAssembly()
+{
+	return false;
+}

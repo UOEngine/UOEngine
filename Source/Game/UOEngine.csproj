@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <BaseOutputPath>$(SolutionDir)Binaries\$(Platform)\$(Configuration)\</BaseOutputPath>
+	<OutputPath></OutputPath>
+    <Platforms>x64</Platforms>
+    <PackageOutputPath></PackageOutputPath>
+	<GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+	<BaseIntermediaPath>$(SolutionDir)Intermediate</BaseIntermediaPath>
+	<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+	<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+	<UseCommonOutputDirectory>true</UseCommonOutputDirectory>
+  </PropertyGroup>
+
+</Project>
