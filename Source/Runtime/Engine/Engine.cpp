@@ -13,20 +13,20 @@ Engine::Engine()
 
 bool Engine::Init()
 {
-	//Thread::CreationParameters ThreadCreationParameters;
-
-	//ThreadCreationParameters.Function = &Engine::MessageThread;
-
-	//WindowMessageThread = Thread::Create(ThreadCreationParameters);
-
 	IPlatformWindow::CreateParameters CreateParameters;
 
 	GameWindow = IPlatformWindow::Create(CreateParameters);
 
-	if (GRenderer.Initialise() == false)
+	Renderer::InitParameters RendererParameters = {};
+
+	RendererParameters.WindowHandle = GameWindow->GetHandle();
+
+	if (GRenderer.Initialise(RendererParameters) == false)
 	{
 		GAssert(false);
 	}
+
+	GameWindow->SetVisible(true);
 
 	return true;
 
@@ -37,5 +37,7 @@ void Engine::Run()
 	while (bExitRequested == false)
 	{
 		GameWindow->PollEvents();
+
+		GRenderer.RenderFrame();
 	}
 }

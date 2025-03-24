@@ -25,28 +25,42 @@ public:
 
 		RegisterClassEx(&windowClass);
 
-		RECT windowRect = { 0, 0, static_cast<LONG>(1920), static_cast<LONG>(1080) };
+		int32 ScreenWidth = ::GetSystemMetrics(SM_CXSCREEN);
+		int32 ScreenHeight = ::GetSystemMetrics(SM_CYSCREEN);
+
+		RECT WindowRect = { 0, 0, static_cast<LONG>(1920), static_cast<LONG>(1080) };
 		
-		AdjustWindowRect(&windowRect, WS_OVERLAPPEDWINDOW, FALSE);
+		AdjustWindowRect(&WindowRect, WS_OVERLAPPEDWINDOW, FALSE);
+
+		int32 WindowWidth = WindowRect.right - WindowRect.left;
+		int32 WindowHeight = WindowRect.bottom - WindowRect.top;
+
+		int32 WindowX = (ScreenWidth - WindowWidth) / 2;
+		int32 WindowY = (ScreenHeight - WindowHeight) / 2;
 
 		// Create the window and store a handle to it.
 		Hwnd = CreateWindow(
 			windowClass.lpszClassName,
 			TEXT("UOEngine"),
 			WS_OVERLAPPEDWINDOW,
-			CW_USEDEFAULT,
-			CW_USEDEFAULT,
-			windowRect.right - windowRect.left,
-			windowRect.bottom - windowRect.top,
+			WindowX,
+			WindowY,
+			WindowWidth,
+			WindowHeight,
 			nullptr,
 			nullptr,
 			GetModuleHandle(nullptr),
 			nullptr);
 
-		ShowWindow(Hwnd, true);
-
 		return true;
 	}
+
+	virtual void SetVisible(bool bVisible)
+	{
+		::ShowWindow(Hwnd, bVisible);
+	}
+
+	virtual void* GetHandle() const {return static_cast<void*>(Hwnd);}
 
 	void PollEvents()
 	{

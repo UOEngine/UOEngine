@@ -14,4 +14,6 @@ public:
 	static IPlatformWindow*	Create(const CreateParameters& Parameters);
 
 	virtual void			PollEvents() = 0;
+	virtual void*			GetHandle() const = 0;
+	virtual void			SetVisible(bool bVisible) = 0;
 };
