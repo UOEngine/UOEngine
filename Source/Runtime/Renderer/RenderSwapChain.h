@@ -26,6 +26,8 @@ public:
 
 	void							Resize(int32 Width, int32 Height);
 
+	void							Present();
+
 private:
 
 	IDXGISwapChain1*				SwapChain1;

@@ -24,6 +24,7 @@ function(uoengine_add_executable TARGET)
     file(GLOB_RECURSE source_files
         "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/*.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/*.inl"
     )
 
     add_executable(${TARGET} ${source_files} ${ARGN})
@@ -40,6 +41,8 @@ function(uoengine_add_library TARGET)
     )
 
     add_library(${TARGET} ${UOENGINE_SOURCE_FILES} ${ARGN})
+
+    set_target_properties(${TARGET} PROPERTIES LINKER_LANGUAGE CXX)
 
     uoengine_common(${TARGET})
 

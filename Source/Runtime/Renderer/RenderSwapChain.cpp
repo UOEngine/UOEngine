@@ -6,7 +6,7 @@
 
 #include "Core/Assert.h"
 
-#include "Renderer/RendererDevice.h"
+#include "Renderer/RenderDevice.h"
 
 using Microsoft::WRL::ComPtr;
 
@@ -45,7 +45,7 @@ bool RenderSwapChain::Init(const InitParameters& Parameters)
 
 	HWND WindowHandle = (HWND)Parameters.WindowHandle;
 
-	if (SUCCEEDED(DxgiFactory->CreateSwapChainForHwnd(Parameters.Device->GetGraphicsQueue(), WindowHandle, &SwapChainDesc, nullptr, nullptr, &SwapChain1)) == false)
+	if (SUCCEEDED(DxgiFactory->CreateSwapChainForHwnd(Parameters.GraphicsQueue, WindowHandle, &SwapChainDesc, nullptr, nullptr, &SwapChain1)) == false)
 	{
 		GAssert(false);
 	}
@@ -68,6 +68,11 @@ bool RenderSwapChain::Init(const InitParameters& Parameters)
 }
 
 void RenderSwapChain::Resize(int32 Width, int32 Height)
+{
+
+}
+
+void RenderSwapChain::Present()
 {
 
 }
