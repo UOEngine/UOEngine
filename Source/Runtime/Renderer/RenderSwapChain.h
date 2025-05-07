@@ -1,9 +1,10 @@
 #pragma once
 
 #include "Core/Types.h"
+#include "Renderer/RenderTexture.h"
 
+class RenderCommandQueue;
 class RenderDevice;
-struct ID3D12CommandQueue;
 struct IDXGISwapChain1;
 struct D3D12_CPU_DESCRIPTOR_HANDLE;
 
@@ -18,8 +19,8 @@ public:
 		int32				Width = 0;
 		int32				Height = 0;
 		void*				WindowHandle = nullptr;
-		ID3D12CommandQueue* GraphicsQueue = nullptr;
 		RenderDevice*		Device = nullptr;
+		uint32				BackBufferCount = 0;
 	};
 
 	bool							Init(const InitParameters& Parameters);
@@ -32,8 +33,8 @@ private:
 
 	IDXGISwapChain1*				SwapChain1;
 
-	static const int32				BufferCount = 3;
+	uint32							BackBufferCount;
 
-	D3D12_CPU_DESCRIPTOR_HANDLE*	BackBufferRTVs;
+	RenderTexture*					BackBufferTextures;
 
 };

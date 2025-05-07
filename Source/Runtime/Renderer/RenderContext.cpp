@@ -1,25 +1,58 @@
 #include "Renderer/RenderContext.h"
 
-RenderContext::RenderContext()
+#include "Renderer/RenderCommandList.h"
+#include "Renderer/RenderDevice.h"
+
+RenderCommandContext::RenderCommandContext(RenderDevice* InDevice)
 {
-	GraphicsCommandList = nullptr;
+	Device = InDevice;
+
+	CommandList = nullptr;
+	CommandAllocator = nullptr;
 }
 
-void RenderContext::Begin()
+void RenderCommandContext::Begin()
+{
+	OpenCommandList();
+}
+
+void RenderCommandContext::End()
+{
+	CloseCommandList();
+}
+
+void RenderCommandContext::BeginRenderPass()
+{
+}
+
+void RenderCommandContext::EndRenderPass()
 {
 
 }
 
-void RenderContext::End()
+RenderCommandList* RenderCommandContext::GetCommandList()
 {
+	if (CommandList == nullptr)
+	{
+		OpenCommandList();
+	}
 
+	return CommandList;
 }
 
-void RenderContext::BeginRenderPass()
+void RenderCommandContext::OpenCommandList()
 {
+	if (CommandAllocator == nullptr)
+	{
+		CommandAllocator = Device->ObtainCommandAllocator(QueueType);
+	}
+
+	CommandList = Device->ObtainCommandList(CommandAllocator);
 }
 
-void RenderContext::EndRenderPass()
+void RenderCommandContext::CloseCommandList()
 {
+	CommandList->Close();
 
+	CommandList = nullptr;
 }

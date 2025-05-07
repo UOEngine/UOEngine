@@ -6,13 +6,15 @@
 
 #include "Core/Assert.h"
 
+#include "Renderer/RenderCommandQueue.h"
 #include "Renderer/RenderDevice.h"
 
 using Microsoft::WRL::ComPtr;
 
 RenderSwapChain::RenderSwapChain()
 {
-	BackBufferRTVs = nullptr;
+	BackBufferCount = 0;
+	BackBufferTextures = nullptr;
 }
 
 bool RenderSwapChain::Init(const InitParameters& Parameters)
@@ -24,7 +26,11 @@ bool RenderSwapChain::Init(const InitParameters& Parameters)
 		GAssert(false);
 	}
 
-	BackBufferRTVs = new D3D12_CPU_DESCRIPTOR_HANDLE[BufferCount];
+	BackBufferCount = Parameters.BackBufferCount;
+
+	BackBufferTextures = new RenderTexture[BackBufferCount];
+
+	RenderDevice* Device = Parameters.Device;
 
 	DXGI_SWAP_CHAIN_DESC1	SwapChainDesc = {};
 
@@ -34,7 +40,7 @@ bool RenderSwapChain::Init(const InitParameters& Parameters)
 	SwapChainDesc.Stereo = FALSE;
 	SwapChainDesc.SampleDesc = { 1, 0 };
 	SwapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	SwapChainDesc.BufferCount = BufferCount;
+	SwapChainDesc.BufferCount = BackBufferCount;
 	SwapChainDesc.Scaling = DXGI_SCALING_NONE;
 	SwapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	SwapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
@@ -45,24 +51,28 @@ bool RenderSwapChain::Init(const InitParameters& Parameters)
 
 	HWND WindowHandle = (HWND)Parameters.WindowHandle;
 
-	if (SUCCEEDED(DxgiFactory->CreateSwapChainForHwnd(Parameters.GraphicsQueue, WindowHandle, &SwapChainDesc, nullptr, nullptr, &SwapChain1)) == false)
+	ID3D12CommandQueue* CommandQueue = Device->GetQueue(ERenderQueueType::Direct)->GetQueue();
+
+	if (SUCCEEDED(DxgiFactory->CreateSwapChainForHwnd(CommandQueue, WindowHandle, &SwapChainDesc, nullptr, nullptr, &SwapChain1)) == false)
 	{
 		GAssert(false);
 	}
 
-	for (int32 i = 0; i < BufferCount; i++)
+	RenderTexture::TextureDescription TextureInitParameters;
+
+	TextureInitParameters.Device = Device;
+	TextureInitParameters.Type = RenderTextureType::RenderTarget;
+
+	for (int32 i = 0; i < BackBufferCount; i++)
 	{
 		ComPtr<ID3D12Resource> BackBuffer;
 
 		SwapChain1->GetBuffer(i, IID_PPV_ARGS(&BackBuffer));
 
-		BackBufferRTVs[i] = Parameters.Device->CreateRenderTargetView(BackBuffer.Get());
-	}
+		TextureInitParameters.Resource = BackBuffer.Get();
 
-	//if (SUCCEEDED(DxgiFactory->MakeWindowAssociation(WindowHandle, )) == false)
-	//{
-	//	GAssert(false);
-	//}
+		BackBufferTextures[i].Init(TextureInitParameters);
+	}
 
 	return true;
 }

@@ -1,12 +1,18 @@
 #pragma once
 
-class ID3D12GraphicsCommandList;
+#include "Core/Types.h"
 
-class RenderContext
+class ID3D12GraphicsCommandList;
+class RenderCommandAllocator;
+class RenderCommandList;
+class RenderDevice;
+enum class ERenderQueueType: uint8;
+
+class RenderCommandContext
 {
 public:
 
-								RenderContext();
+								RenderCommandContext(RenderDevice* InDevice);
 
 	void						Begin();
 	void						End();
@@ -14,9 +20,21 @@ public:
 	void						BeginRenderPass();
 	void						EndRenderPass();
 
-private:
 
-	ID3D12GraphicsCommandList* GraphicsCommandList;
+private:
+	RenderCommandList*			GetCommandList();
+
+	void						OpenCommandList();
+	void						CloseCommandList();
+
+	// The active command list.
+	RenderCommandList*			CommandList;
+
+	RenderCommandAllocator*		CommandAllocator;
+
+	RenderDevice*				Device;
+
+	ERenderQueueType			QueueType;
 
 };
 

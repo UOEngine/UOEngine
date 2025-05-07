@@ -5,10 +5,11 @@
 #include "Core/Assert.h"
 #include "Renderer/RenderDevice.h"
 
-RenderCommandQueue::RenderCommandQueue()
+RenderCommandQueue::RenderCommandQueue(ERenderQueueType InQueueType)
 {
 	CommandQueue = nullptr;
 	Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+	Fence = nullptr;
 }
 
 void RenderCommandQueue::Create(RenderDevice* Device, D3D12_COMMAND_LIST_TYPE InType)
@@ -25,6 +26,8 @@ void RenderCommandQueue::Create(RenderDevice* Device, D3D12_COMMAND_LIST_TYPE In
 	{
 		GAssert(false);
 	}
+
+	Fence = Device->CreateFence();
 }
 
 void RenderCommandQueue::WaitUntilIdle()
