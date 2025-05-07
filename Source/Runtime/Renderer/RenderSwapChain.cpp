@@ -53,6 +53,8 @@ bool RenderSwapChain::Init(const InitParameters& Parameters)
 
 	ID3D12CommandQueue* CommandQueue = Device->GetQueue(ERenderQueueType::Direct)->GetQueue();
 
+	GAssert(CommandQueue != nullptr);
+
 	if (SUCCEEDED(DxgiFactory->CreateSwapChainForHwnd(CommandQueue, WindowHandle, &SwapChainDesc, nullptr, nullptr, &SwapChain1)) == false)
 	{
 		GAssert(false);

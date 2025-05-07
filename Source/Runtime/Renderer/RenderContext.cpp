@@ -9,6 +9,10 @@ RenderCommandContext::RenderCommandContext(RenderDevice* InDevice)
 
 	CommandList = nullptr;
 	CommandAllocator = nullptr;
+
+	QueueType = ERenderQueueType::Direct;
+
+	RenderTarget = nullptr;
 }
 
 void RenderCommandContext::Begin()
@@ -28,6 +32,11 @@ void RenderCommandContext::BeginRenderPass()
 void RenderCommandContext::EndRenderPass()
 {
 
+}
+
+void RenderCommandContext::SetRenderTarget(RenderTexture* Texture)
+{
+	RenderTarget = Texture;
 }
 
 RenderCommandList* RenderCommandContext::GetCommandList()

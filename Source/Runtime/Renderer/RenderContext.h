@@ -6,6 +6,7 @@ class ID3D12GraphicsCommandList;
 class RenderCommandAllocator;
 class RenderCommandList;
 class RenderDevice;
+class RenderTexture;
 enum class ERenderQueueType: uint8;
 
 class RenderCommandContext
@@ -20,6 +21,7 @@ public:
 	void						BeginRenderPass();
 	void						EndRenderPass();
 
+	void						SetRenderTarget(RenderTexture* Texture);
 
 private:
 	RenderCommandList*			GetCommandList();
@@ -35,6 +37,8 @@ private:
 	RenderDevice*				Device;
 
 	ERenderQueueType			QueueType;
+
+	RenderTexture*				RenderTarget;
 
 };
 
