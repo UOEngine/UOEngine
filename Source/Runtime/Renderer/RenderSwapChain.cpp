@@ -86,5 +86,7 @@ void RenderSwapChain::Resize(int32 Width, int32 Height)
 
 void RenderSwapChain::Present()
 {
-
+	SetBackBufferIndex(CurrentBackBufferIndex + 1);
 }
+
+

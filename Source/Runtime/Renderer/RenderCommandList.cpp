@@ -62,6 +62,19 @@ RenderCommandList::RenderCommandList(RenderCommandAllocator* InCommandAllocator)
 
 void RenderCommandList::Close()
 {
+}
 
+void RenderCommandList::AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After)
+{
+	D3D12_RESOURCE_BARRIER Barrier = {};
+
+	Barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	Barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	Barrier.Transition.pResource = Resource;
+	Barrier.Transition.StateBefore = Before;
+	Barrier.Transition.StateAfter = After;
+	Barrier.Transition.Subresource = 0;
+
+	CommandList->ResourceBarrier(0, &Barrier);
 }
 
