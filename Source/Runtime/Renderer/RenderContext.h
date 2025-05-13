@@ -24,7 +24,11 @@ public:
 	void						BeginRenderPass();
 	void						EndRenderPass();
 
-	void						SetRenderTarget(D3D12RenderTargetView* View);
+	void						SetRenderTarget(RenderTexture* View);
+
+	void						TransitionResource(ID3D12Resource* Resource, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After);
+
+	void						FlushCommands();
 
 private:
 	RenderCommandList*			GetCommandList();
@@ -34,6 +38,7 @@ private:
 
 	void						AddTransitionBarrier(D3D12RenderTargetView* Texture, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After);
 
+	// Get the raw ID3D12GraphicsCommandList
 	ID3D12GraphicsCommandList*	GetGraphicsCommandList() {return GetCommandList()->GetGraphicsCommandList();}
 
 	// The active command list.
@@ -47,7 +52,7 @@ private:
 
 	// State for drawing.
 
-	D3D12RenderTargetView*			RenderTarget;
+	RenderTexture*				RenderTarget;
 
 };
 

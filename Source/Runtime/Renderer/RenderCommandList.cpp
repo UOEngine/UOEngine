@@ -50,6 +50,10 @@ RenderCommandList::RenderCommandList(RenderCommandAllocator* InCommandAllocator)
 				GAssert(false);
 			}
 
+			bClosed = false;
+
+			Close();
+
 			break;
 		}
 
@@ -62,6 +66,14 @@ RenderCommandList::RenderCommandList(RenderCommandAllocator* InCommandAllocator)
 
 void RenderCommandList::Close()
 {
+	GAssert(IsOpen());
+
+	if (FAILED(CommandList->Close()))
+	{
+		GAssert(false);
+	}
+
+	bClosed = true;
 }
 
 void RenderCommandList::AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After)
@@ -75,6 +87,15 @@ void RenderCommandList::AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RES
 	Barrier.Transition.StateAfter = After;
 	Barrier.Transition.Subresource = 0;
 
-	CommandList->ResourceBarrier(0, &Barrier);
+	CommandList->ResourceBarrier(1, &Barrier);
+}
+
+void RenderCommandList::Reset()
+{
+	GAssert(IsClosed());
+
+	CommandList->Reset(CommandAllocator->GetHandle(), nullptr);
+
+	bClosed = false;
 }
 

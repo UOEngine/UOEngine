@@ -20,7 +20,12 @@ public:
 
 	void						ClearRenderTarget(ID3D12Resource* Resource);
 
-	ID3D12GraphicsCommandList*	GetGraphicsCommandList() const {return CommandList;}
+	bool						IsOpen() const					{return bClosed == false;}
+	bool						IsClosed() const				{return bClosed;}
+
+	void						Reset();
+
+	ID3D12GraphicsCommandList*	GetGraphicsCommandList() const	{return CommandList;}
 
 private:
 
@@ -29,4 +34,6 @@ private:
 	RenderCommandAllocator*		CommandAllocator;
 
 	ID3D12GraphicsCommandList*	CommandList;
+
+	bool						bClosed;
 };

@@ -6,6 +6,7 @@
 
 #include "Core/Assert.h"
 
+#include "Renderer/RenderContext.h"
 #include "Renderer/RenderCommandQueue.h"
 #include "Renderer/RenderDevice.h"
 
@@ -15,6 +16,7 @@ RenderSwapChain::RenderSwapChain()
 {
 	BackBufferCount = 0;
 	BackBufferTextures = nullptr;
+	CurrentBackBufferIndex = 0;
 }
 
 bool RenderSwapChain::Init(const InitParameters& Parameters)
@@ -27,6 +29,8 @@ bool RenderSwapChain::Init(const InitParameters& Parameters)
 	}
 
 	BackBufferCount = Parameters.BackBufferCount;
+
+	SetBackBufferIndex(0);
 
 	BackBufferTextures = new RenderTexture[BackBufferCount];
 
@@ -84,8 +88,16 @@ void RenderSwapChain::Resize(int32 Width, int32 Height)
 
 }
 
-void RenderSwapChain::Present()
+void RenderSwapChain::Present(RenderCommandContext* CommandContext)
 {
+	CommandContext->TransitionResource(GetBackBufferTexture(CurrentBackBufferIndex)->GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+
+	CommandContext->FlushCommands();
+
+	SwapChain1->Present(0, 0);
+
+	// Wait for present to be done.
+	
 	SetBackBufferIndex(CurrentBackBufferIndex + 1);
 }
 

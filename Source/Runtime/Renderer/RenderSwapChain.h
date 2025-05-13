@@ -3,6 +3,7 @@
 #include "Core/Types.h"
 #include "Renderer/RenderTexture.h"
 
+class RenderCommandContext;
 class RenderCommandQueue;
 class RenderDevice;
 struct IDXGISwapChain1;
@@ -30,7 +31,9 @@ public:
 	uint32							GetNextPresentIndex() const					{return CurrentBackBufferIndex;}
 	RenderTexture*					GetBackBufferTexture(uint32 Index) const	{return &BackBufferTextures[Index]; }
 
-	void							Present();
+	void							Present(RenderCommandContext* CommandContext);
+
+	void							FlushCommands();
 
 private:
 

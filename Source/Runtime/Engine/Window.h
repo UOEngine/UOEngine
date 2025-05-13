@@ -16,4 +16,7 @@ public:
 	virtual void			PollEvents() = 0;
 	virtual void*			GetHandle() const = 0;
 	virtual void			SetVisible(bool bVisible) = 0;
+
+	virtual uint32			GetWidth() const = 0;
+	virtual uint32			GetHeight() const = 0;
 };

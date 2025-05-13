@@ -78,6 +78,26 @@ public:
 		}
 	}
 
+	virtual uint32 GetWidth() const 
+	{
+		uint32 Width;
+		uint32 Height;
+
+		GetWindowRect(Width, Height);
+
+		return Width;
+	}
+
+	virtual uint32 GetHeight() const
+	{
+		uint32 Width;
+		uint32 Height;
+
+		GetWindowRect(Width, Height);
+
+		return Height;
+	}
+
 private:
 
 	static LRESULT CALLBACK WindowProc(HWND hwnd, UINT Msg, WPARAM wParam, LPARAM lParam)
@@ -89,6 +109,16 @@ private:
 		}
 
 		return DefWindowProc(hwnd, Msg, wParam, lParam);
+	}
+
+	void	GetWindowRect(uint32& OutWidth, uint32& OutHeight) const
+	{
+		RECT Rect;
+
+		::GetClientRect(Hwnd, &Rect);
+
+		OutWidth = Rect.right - Rect.left;
+		OutHeight = Rect.bottom - Rect.top;
 	}
 
 	HWND Hwnd;

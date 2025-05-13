@@ -2,7 +2,9 @@
 
 #include "Renderer/D3D12RenderTargetView.h"
 #include "Renderer/RenderCommandList.h"
+#include "Renderer/RenderCommandQueue.h"
 #include "Renderer/RenderDevice.h"
+#include "Renderer/RenderTexture.h"
 
 RenderCommandContext::RenderCommandContext(RenderDevice* InDevice)
 {
@@ -35,9 +37,9 @@ void RenderCommandContext::EndRenderPass()
 
 }
 
-void RenderCommandContext::SetRenderTarget(D3D12RenderTargetView* View)
+void RenderCommandContext::SetRenderTarget(RenderTexture* Texture)
 {
-	RenderTarget = View;
+	RenderTarget = Texture;
 
 	GetCommandList()->AddTransitionBarrier(RenderTarget->GetResource(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
@@ -45,7 +47,21 @@ void RenderCommandContext::SetRenderTarget(D3D12RenderTargetView* View)
 	uint32 ClearRectCount = 0;
 	D3D12_RECT* ClearRects = nullptr;
 
-	GetGraphicsCommandList()->ClearRenderTargetView(View->GetDescriptorHandleCPU(), ClearColour, ClearRectCount, ClearRects);
+	GetGraphicsCommandList()->ClearRenderTargetView(RenderTarget->GetRenderTargetViewDescriptor(), ClearColour, ClearRectCount, ClearRects);
+}
+
+void RenderCommandContext::TransitionResource(ID3D12Resource* Resource, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After)
+{
+	GetCommandList()->AddTransitionBarrier(Resource, Before, After);
+}
+
+void RenderCommandContext::FlushCommands()
+{
+	CommandList->Close();
+
+	Device->GetQueue(ERenderQueueType::Direct)->ExecuteCommandList(GetGraphicsCommandList());
+
+	CommandList = nullptr;
 }
 
 RenderCommandList* RenderCommandContext::GetCommandList()
@@ -66,6 +82,8 @@ void RenderCommandContext::OpenCommandList()
 	}
 
 	CommandList = Device->ObtainCommandList(CommandAllocator);
+
+	CommandList->Reset();
 }
 
 void RenderCommandContext::CloseCommandList()
