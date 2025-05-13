@@ -69,7 +69,7 @@ public:
 		int32 MaxToProcess = 100;
 
 		//while (::GetMessage(&msg, NULL, 0, 0))
-		while(MaxToProcess > 0 && PeekMessage(&msg, nullptr, 0, 0, PM_NOREMOVE))
+		while (MaxToProcess > 0 && PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
 			::TranslateMessage(&msg);
 			::DispatchMessage(&msg);
@@ -104,11 +104,32 @@ private:
 	{
 		switch (Msg)
 		{
-			
+			case WM_LBUTTONDOWN:
+			{
+				ReleaseCapture();
+				SendMessage(hwnd, WM_NCLBUTTONDOWN, HTCAPTION, 0);
+				
+				break;
+			}
 
+			case WM_SIZE:
+			{
+				UINT width = LOWORD(lParam);
+				UINT height = HIWORD(lParam);
+
+				if (width > 0 && height > 0)
+				{
+				}
+
+				break;
+			}
+			break;
+
+			default:
+				return DefWindowProc(hwnd, Msg, wParam, lParam);
 		}
 
-		return DefWindowProc(hwnd, Msg, wParam, lParam);
+		return 0;
 	}
 
 	void	GetWindowRect(uint32& OutWidth, uint32& OutHeight) const
