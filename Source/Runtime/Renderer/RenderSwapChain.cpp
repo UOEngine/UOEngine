@@ -34,12 +34,12 @@ bool RenderSwapChain::Init(const InitParameters& Parameters)
 
 	BackBufferTextures = new RenderTexture[BackBufferCount];
 
-	RenderDevice* Device = Parameters.Device;
+	Device = Parameters.Device;
 
 	DXGI_SWAP_CHAIN_DESC1	SwapChainDesc = {};
 
-	SwapChainDesc.Width = Parameters.Width;
-	SwapChainDesc.Height = Parameters.Height;
+	SwapChainDesc.Width = Parameters.Extents.X;
+	SwapChainDesc.Height = Parameters.Extents.Y;
 	SwapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	SwapChainDesc.Stereo = FALSE;
 	SwapChainDesc.SampleDesc = { 1, 0 };
@@ -64,6 +64,58 @@ bool RenderSwapChain::Init(const InitParameters& Parameters)
 		GAssert(false);
 	}
 
+	CreateBackBufferTextures();
+
+	return true;
+}
+
+void RenderSwapChain::Resize(const Vector2D& NewExtents)
+{
+	if (NewExtents == Extents)
+	{
+		return;
+	}
+
+	//RenderFence Fence;
+
+	//Fence.Signal();
+	//Fence.Wait();
+
+	DXGI_SWAP_CHAIN_DESC1	SwapChainDesc = {};
+
+	if (FAILED(SwapChain1->GetDesc1(&SwapChainDesc)))
+	{
+		GAssert(false);
+	}
+
+	if (FAILED(SwapChain1->ResizeBuffers(BackBufferCount, NewExtents.X, NewExtents.Y, SwapChainDesc.Format, SwapChainDesc.Flags)))
+	{
+		GAssert(false);
+	}
+
+	Extents = NewExtents;
+
+	CreateBackBufferTextures();
+}
+
+void RenderSwapChain::Present(RenderCommandContext* CommandContext)
+{
+	CommandContext->TransitionResource(GetBackBufferTexture(CurrentBackBufferIndex)->GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+
+	CommandContext->FlushCommands();
+
+	SwapChain1->Present(0, 0);
+
+	//RenderFence Fence;
+
+	//Fence.Signal();
+	//Fence.Wait();
+	
+	SetBackBufferIndex(CurrentBackBufferIndex + 1);
+}
+
+void RenderSwapChain::CreateBackBufferTextures()
+{
 	RenderTexture::TextureDescription TextureInitParameters;
 
 	TextureInitParameters.Device = Device;
@@ -79,26 +131,5 @@ bool RenderSwapChain::Init(const InitParameters& Parameters)
 
 		BackBufferTextures[i].Init(TextureInitParameters);
 	}
-
-	return true;
 }
-
-void RenderSwapChain::Resize(int32 Width, int32 Height)
-{
-
-}
-
-void RenderSwapChain::Present(RenderCommandContext* CommandContext)
-{
-	CommandContext->TransitionResource(GetBackBufferTexture(CurrentBackBufferIndex)->GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-
-	CommandContext->FlushCommands();
-
-	SwapChain1->Present(0, 0);
-
-	// Wait for present to be done.
-	
-	SetBackBufferIndex(CurrentBackBufferIndex + 1);
-}
-
 

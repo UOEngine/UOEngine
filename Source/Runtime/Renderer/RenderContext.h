@@ -16,43 +16,45 @@ class RenderCommandContext
 {
 public:
 
-								RenderCommandContext(RenderDevice* InDevice);
+									RenderCommandContext(RenderDevice* InDevice);
 
-	void						Begin();
-	void						End();
+	//static RenderCommandContext&	Get()
 
-	void						BeginRenderPass();
-	void						EndRenderPass();
+	void							Begin();
+	void							End();
 
-	void						SetRenderTarget(RenderTexture* View);
+	void							BeginRenderPass();
+	void							EndRenderPass();
 
-	void						TransitionResource(ID3D12Resource* Resource, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After);
+	void							SetRenderTarget(RenderTexture* View);
 
-	void						FlushCommands();
+	void							TransitionResource(ID3D12Resource* Resource, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After);
+
+	void							FlushCommands();
 
 private:
-	RenderCommandList*			GetCommandList();
+	RenderCommandList*				GetCommandList();
 
-	void						OpenCommandList();
-	void						CloseCommandList();
+	void							OpenCommandList();
+	void							CloseCommandList();
 
-	void						AddTransitionBarrier(D3D12RenderTargetView* Texture, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After);
+	void							AddTransitionBarrier(D3D12RenderTargetView* Texture, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After);
 
 	// Get the raw ID3D12GraphicsCommandList
-	ID3D12GraphicsCommandList*	GetGraphicsCommandList() {return GetCommandList()->GetGraphicsCommandList();}
+	ID3D12GraphicsCommandList*		GetGraphicsCommandList() {return GetCommandList()->GetGraphicsCommandList();}
 
 	// The active command list.
-	RenderCommandList*			CommandList;
+	RenderCommandList*				CommandList;
 
-	RenderCommandAllocator*		CommandAllocator;
+	RenderCommandAllocator*			CommandAllocator;
 
-	RenderDevice*				Device;
+	RenderDevice*					Device;
 
-	ERenderQueueType			QueueType;
+	ERenderQueueType				QueueType;
 
 	// State for drawing.
 
-	RenderTexture*				RenderTarget;
+	RenderTexture*					RenderTarget;
 
 };
 

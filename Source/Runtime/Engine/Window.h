@@ -1,5 +1,6 @@
  #pragma once
 
+ #include "Core/Math/Vector2D.h"
  #include "Core/Types.h"
 
 class IPlatformWindow
@@ -17,6 +18,5 @@ public:
 	virtual void*			GetHandle() const = 0;
 	virtual void			SetVisible(bool bVisible) = 0;
 
-	virtual uint32			GetWidth() const = 0;
-	virtual uint32			GetHeight() const = 0;
+	virtual Vector2D		GetExtents() const = 0;
 };

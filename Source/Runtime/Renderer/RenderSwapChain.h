@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Core/Math/Vector2D.h"
 #include "Core/Types.h"
 #include "Renderer/RenderTexture.h"
 
@@ -17,8 +18,7 @@ public:
 
 	struct InitParameters
 	{
-		int32				Width = 0;
-		int32				Height = 0;
+		Vector2D			Extents;
 		void*				WindowHandle = nullptr;
 		RenderDevice*		Device = nullptr;
 		uint32				BackBufferCount = 0;
@@ -26,7 +26,7 @@ public:
 
 	bool							Init(const InitParameters& Parameters);
 
-	void							Resize(int32 Width, int32 Height);
+	void							Resize(const Vector2D& NewExtents);
 
 	uint32							GetNextPresentIndex() const					{return CurrentBackBufferIndex;}
 	RenderTexture*					GetBackBufferTexture(uint32 Index) const	{return &BackBufferTextures[Index]; }
@@ -39,6 +39,8 @@ private:
 
 	void							SetBackBufferIndex(uint32 Index)			{ CurrentBackBufferIndex = Index % BackBufferCount; }
 
+	void							CreateBackBufferTextures();
+
 	IDXGISwapChain1*				SwapChain1;
 
 	uint32							BackBufferCount;
@@ -47,4 +49,7 @@ private:
 
 	uint32							CurrentBackBufferIndex;
 
+	Vector2D						Extents;
+
+	RenderDevice*					Device;
 };

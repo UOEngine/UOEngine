@@ -62,6 +62,11 @@ void RenderCommandContext::FlushCommands()
 	Device->GetQueue(ERenderQueueType::Direct)->ExecuteCommandList(GetGraphicsCommandList());
 
 	CommandList = nullptr;
+
+	//RenderFence Fence;
+
+	//Fence.Signal();
+	//Fence.Wait();
 }
 
 RenderCommandList* RenderCommandContext::GetCommandList()

@@ -19,11 +19,8 @@ bool Engine::Init()
 
 	Renderer::InitParameters RendererParameters = {};
 
-	RendererParameters.WindowHeight = GameWindow->GetHeight();
-	RendererParameters.WindowWidth = GameWindow->GetWidth();
-
+	RendererParameters.ViewportExtents = GameWindow->GetExtents();
 	RendererParameters.WindowHandle = GameWindow->GetHandle();
-	//RendererParameters.WindowHeight = GameWindow->
 
 	if (GRenderer.Initialise(RendererParameters) == false)
 	{
@@ -42,6 +39,6 @@ void Engine::Run()
 	{
 		GameWindow->PollEvents();
 
-		GRenderer.RenderFrame();
+		GRenderer.RenderFrame(GameWindow->GetExtents());
 	}
 }
