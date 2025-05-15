@@ -6,9 +6,12 @@ class ID3D12Fence;
 class RenderCommandAllocator;
 class RenderCommandList;
 class RenderDevice;
+class RenderFence;
 enum class ERenderQueueType: uint8;
 struct ID3D12CommandList;
 struct ID3D12CommandQueue;
+
+using HANDLE = void*;
 
 class RenderCommandQueue
 {
@@ -31,12 +34,15 @@ public:
 private:
 
 	ID3D12CommandQueue*			CommandQueue;
-	ID3D12Fence*				Fence;
 	ERenderQueueType			QueueType;
 
 	RenderDevice*				Device;
 
 	RenderCommandAllocator*		CommandAllocator;
 	RenderCommandList*			CommandList;
+
+	ID3D12Fence*				Fence;
+	uint64						FenceValue;
+	HANDLE						FenceEvent;
 
 };

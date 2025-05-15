@@ -6,14 +6,18 @@
 #include "Renderer/RenderCommandAllocator.h"
 #include "Renderer/RenderCommandList.h"
 #include "Renderer/RenderDevice.h"
+#include "Renderer/RenderFence.h"
 
 RenderCommandQueue::RenderCommandQueue(ERenderQueueType InQueueType)
 {
 	CommandQueue = nullptr;
-	Fence = nullptr;
 	QueueType = InQueueType;
 	CommandAllocator = nullptr;
 	CommandList = nullptr;
+
+	Fence = nullptr;
+	FenceValue = 0;
+	FenceEvent = INVALID_HANDLE_VALUE;
 }
 
 void RenderCommandQueue::Create(RenderDevice* InDevice)
@@ -63,11 +67,23 @@ void RenderCommandQueue::Create(RenderDevice* InDevice)
 	}
 
 	Fence = Device->CreateFence();
+	FenceEvent = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
 }
 
 void RenderCommandQueue::WaitUntilIdle()
 {
+	FenceValue++;
 
+	CommandQueue->Signal(Fence, FenceValue);
+
+	if (Fence->GetCompletedValue() >= FenceValue)
+	{
+		return;
+	}
+
+	Fence->SetEventOnCompletion(FenceValue, FenceEvent);
+
+	WaitForSingleObject(FenceEvent, INFINITE);
 }
 
 void RenderCommandQueue::ExecuteCommandList(ID3D12CommandList* CommandList)

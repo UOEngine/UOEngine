@@ -25,6 +25,7 @@ public:
 	};
 
 	bool							Init(const InitParameters& Parameters);
+	void							Shutdown();
 
 	void							Resize(const Vector2D& NewExtents);
 
@@ -52,4 +53,5 @@ private:
 	Vector2D						Extents;
 
 	RenderDevice*					Device;
+
 };

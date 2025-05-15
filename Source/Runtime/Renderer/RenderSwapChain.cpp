@@ -9,6 +9,7 @@
 #include "Renderer/RenderContext.h"
 #include "Renderer/RenderCommandQueue.h"
 #include "Renderer/RenderDevice.h"
+#include "Renderer/RenderFence.h"
 
 using Microsoft::WRL::ComPtr;
 
@@ -17,6 +18,7 @@ RenderSwapChain::RenderSwapChain()
 	BackBufferCount = 0;
 	BackBufferTextures = nullptr;
 	CurrentBackBufferIndex = 0;
+	Device = nullptr;
 }
 
 bool RenderSwapChain::Init(const InitParameters& Parameters)
@@ -64,9 +66,24 @@ bool RenderSwapChain::Init(const InitParameters& Parameters)
 		GAssert(false);
 	}
 
+	Extents = Parameters.Extents;
+
 	CreateBackBufferTextures();
 
 	return true;
+}
+
+void RenderSwapChain::Shutdown()
+{
+	Device->GetQueue(ERenderQueueType::Direct)->WaitUntilIdle();
+
+	for (int32 i = 0; i < BackBufferCount; i++)
+	{
+		BackBufferTextures[i].Release();
+	}
+
+	SwapChain1->Release();
+	SwapChain1 = nullptr;
 }
 
 void RenderSwapChain::Resize(const Vector2D& NewExtents)
@@ -76,10 +93,7 @@ void RenderSwapChain::Resize(const Vector2D& NewExtents)
 		return;
 	}
 
-	//RenderFence Fence;
-
-	//Fence.Signal();
-	//Fence.Wait();
+	Device->GetQueue(ERenderQueueType::Direct)->WaitUntilIdle();
 
 	DXGI_SWAP_CHAIN_DESC1	SwapChainDesc = {};
 
@@ -120,6 +134,9 @@ void RenderSwapChain::CreateBackBufferTextures()
 
 	TextureInitParameters.Device = Device;
 	TextureInitParameters.Type = RenderTextureType::RenderTarget;
+	TextureInitParameters.Width = Extents.X;
+	TextureInitParameters.Height = Extents.Y;
+	TextureInitParameters.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 
 	for (int32 i = 0; i < BackBufferCount; i++)
 	{
@@ -128,6 +145,8 @@ void RenderSwapChain::CreateBackBufferTextures()
 		SwapChain1->GetBuffer(i, IID_PPV_ARGS(&BackBuffer));
 
 		TextureInitParameters.Resource = BackBuffer.Get();
+
+		BackBufferTextures[i].Release();
 
 		BackBufferTextures[i].Init(TextureInitParameters);
 	}

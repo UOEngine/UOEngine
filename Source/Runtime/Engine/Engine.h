@@ -15,15 +15,11 @@ public:
 
 	void				Run();
 
-	void				RequestExit()	{bExitRequested = true;}
-
 	int					GetReturnCode() {return 0;}
 
 private:
 
 	IPlatformWindow*	GameWindow;
-
-	bool				bExitRequested;
 };
 
 extern Engine GEngine;

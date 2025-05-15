@@ -2,6 +2,8 @@
 
 #include <windows.h>
 
+#include "Engine/EngineGlobals.h"
+
 class Win32Window: public IPlatformWindow
 {
 public:
@@ -99,6 +101,13 @@ private:
 				ReleaseCapture();
 				SendMessage(hwnd, WM_NCLBUTTONDOWN, HTCAPTION, 0);
 				
+				break;
+			}
+
+			case WM_QUIT:
+			{
+				EngineGlobals::RequestExit();
+
 				break;
 			}
 

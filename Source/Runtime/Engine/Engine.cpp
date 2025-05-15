@@ -1,6 +1,7 @@
 #include "Engine.h"
 
 #include "Core/Assert.h"
+#include "Engine/EngineGlobals.h"
 #include "Engine/Window.h"
 #include "Renderer/Renderer.h"
 
@@ -8,7 +9,6 @@ Engine GEngine;
 
 Engine::Engine()
 {
-	bExitRequested = false;
 }
 
 bool Engine::Init()
@@ -35,7 +35,7 @@ bool Engine::Init()
 
 void Engine::Run()
 {
-	while (bExitRequested == false)
+	while (EngineGlobals::IsRequestingExit() == false)
 	{
 		GameWindow->PollEvents();
 
