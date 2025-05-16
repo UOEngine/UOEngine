@@ -41,4 +41,6 @@ void Engine::Run()
 
 		GRenderer.RenderFrame(GameWindow->GetExtents());
 	}
+
+	GRenderer.Shutdown();
 }

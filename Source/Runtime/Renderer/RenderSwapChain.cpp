@@ -80,8 +80,6 @@ bool RenderSwapChain::Init(const InitParameters& Parameters)
 
 void RenderSwapChain::Shutdown()
 {
-	Device->GetQueue(ERenderQueueType::Direct)->WaitUntilIdle();
-
 	for (int32 i = 0; i < BackBufferCount; i++)
 	{
 		BackBufferTextures[i].Release();
@@ -94,6 +92,11 @@ void RenderSwapChain::Shutdown()
 void RenderSwapChain::Resize(const Vector2D& NewExtents)
 {
 	if (NewExtents == Extents)
+	{
+		return;
+	}
+
+	if (NewExtents.X == 0 || NewExtents.Y == 0)
 	{
 		return;
 	}
@@ -129,7 +132,7 @@ void RenderSwapChain::Present(RenderCommandContext* CommandContext)
 
 	CurrentBackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
 
-	Device->GetQueue(ERenderQueueType::Direct)->WaitUntilIdle();
+	Device->WaitForGpuIdle();
 }
 
 void RenderSwapChain::CreateBackBufferTextures()

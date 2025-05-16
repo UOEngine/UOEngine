@@ -104,6 +104,7 @@ private:
 				break;
 			}
 
+			case WM_CLOSE:
 			case WM_QUIT:
 			{
 				EngineGlobals::RequestExit();
