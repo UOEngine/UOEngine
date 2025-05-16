@@ -7,7 +7,7 @@
 class RenderCommandContext;
 class RenderCommandQueue;
 class RenderDevice;
-struct IDXGISwapChain1;
+struct IDXGISwapChain3;
 struct D3D12_CPU_DESCRIPTOR_HANDLE;
 
 class RenderSwapChain
@@ -29,6 +29,8 @@ public:
 
 	void							Resize(const Vector2D& NewExtents);
 
+	RenderTexture*					GetBackBuffer() const						{return &BackBufferTextures[CurrentBackBufferIndex]; }
+
 	uint32							GetNextPresentIndex() const					{return CurrentBackBufferIndex;}
 	RenderTexture*					GetBackBufferTexture(uint32 Index) const	{return &BackBufferTextures[Index]; }
 
@@ -38,11 +40,9 @@ public:
 
 private:
 
-	void							SetBackBufferIndex(uint32 Index)			{ CurrentBackBufferIndex = Index % BackBufferCount; }
-
 	void							CreateBackBufferTextures();
 
-	IDXGISwapChain1*				SwapChain1;
+	IDXGISwapChain3*				SwapChain;
 
 	uint32							BackBufferCount;
 

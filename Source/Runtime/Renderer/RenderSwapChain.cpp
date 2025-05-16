@@ -32,8 +32,6 @@ bool RenderSwapChain::Init(const InitParameters& Parameters)
 
 	BackBufferCount = Parameters.BackBufferCount;
 
-	SetBackBufferIndex(0);
-
 	BackBufferTextures = new RenderTexture[BackBufferCount];
 
 	Device = Parameters.Device;
@@ -61,7 +59,14 @@ bool RenderSwapChain::Init(const InitParameters& Parameters)
 
 	GAssert(CommandQueue != nullptr);
 
+	ComPtr<IDXGISwapChain1> SwapChain1;
+
 	if (SUCCEEDED(DxgiFactory->CreateSwapChainForHwnd(CommandQueue, WindowHandle, &SwapChainDesc, nullptr, nullptr, &SwapChain1)) == false)
+	{
+		GAssert(false);
+	}
+
+	if (FAILED(SwapChain1->QueryInterface(__uuidof(IDXGISwapChain4), (void**)&SwapChain)))
 	{
 		GAssert(false);
 	}
@@ -82,8 +87,8 @@ void RenderSwapChain::Shutdown()
 		BackBufferTextures[i].Release();
 	}
 
-	SwapChain1->Release();
-	SwapChain1 = nullptr;
+	SwapChain->Release();
+	SwapChain = nullptr;
 }
 
 void RenderSwapChain::Resize(const Vector2D& NewExtents)
@@ -97,15 +102,17 @@ void RenderSwapChain::Resize(const Vector2D& NewExtents)
 
 	DXGI_SWAP_CHAIN_DESC1	SwapChainDesc = {};
 
-	if (FAILED(SwapChain1->GetDesc1(&SwapChainDesc)))
+	if (FAILED(SwapChain->GetDesc1(&SwapChainDesc)))
 	{
 		GAssert(false);
 	}
 
-	if (FAILED(SwapChain1->ResizeBuffers(BackBufferCount, NewExtents.X, NewExtents.Y, SwapChainDesc.Format, SwapChainDesc.Flags)))
+	if (FAILED(SwapChain->ResizeBuffers(BackBufferCount, NewExtents.X, NewExtents.Y, SwapChainDesc.Format, SwapChainDesc.Flags)))
 	{
 		GAssert(false);
 	}
+
+	CurrentBackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
 
 	Extents = NewExtents;
 
@@ -118,14 +125,11 @@ void RenderSwapChain::Present(RenderCommandContext* CommandContext)
 
 	CommandContext->FlushCommands();
 
-	SwapChain1->Present(0, 0);
+	SwapChain->Present(0, 0);
 
-	//RenderFence Fence;
+	CurrentBackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
 
-	//Fence.Signal();
-	//Fence.Wait();
-	
-	SetBackBufferIndex(CurrentBackBufferIndex + 1);
+	Device->GetQueue(ERenderQueueType::Direct)->WaitUntilIdle();
 }
 
 void RenderSwapChain::CreateBackBufferTextures()
@@ -142,7 +146,7 @@ void RenderSwapChain::CreateBackBufferTextures()
 	{
 		ComPtr<ID3D12Resource> BackBuffer;
 
-		SwapChain1->GetBuffer(i, IID_PPV_ARGS(&BackBuffer));
+		SwapChain->GetBuffer(i, IID_PPV_ARGS(&BackBuffer));
 
 		TextureInitParameters.Resource = BackBuffer.Get();
 
