@@ -50,7 +50,7 @@ bool RenderSwapChain::Init(const InitParameters& Parameters)
 	SwapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
 
 	// It is recommended to always allow tearing if tearing support is available.
-	SwapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+	//SwapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 	//SwapChainDesc.Flags |= CheckTearingSupport() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 
 	HWND WindowHandle = (HWND)Parameters.WindowHandle;
@@ -89,7 +89,7 @@ void RenderSwapChain::Shutdown()
 	SwapChain = nullptr;
 }
 
-void RenderSwapChain::Resize(const Vector2D& NewExtents)
+void RenderSwapChain::Resize(const IntVector2D& NewExtents)
 {
 	if (NewExtents == Extents)
 	{
@@ -100,6 +100,8 @@ void RenderSwapChain::Resize(const Vector2D& NewExtents)
 	{
 		return;
 	}
+
+	Extents = NewExtents;
 
 	Device->GetQueue(ERenderQueueType::Direct)->WaitUntilIdle();
 
@@ -117,8 +119,6 @@ void RenderSwapChain::Resize(const Vector2D& NewExtents)
 
 	CurrentBackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
 
-	Extents = NewExtents;
-
 	CreateBackBufferTextures();
 }
 
@@ -128,11 +128,9 @@ void RenderSwapChain::Present(RenderCommandContext* CommandContext)
 
 	CommandContext->FlushCommands();
 
-	SwapChain->Present(0, 0);
+	SwapChain->Present(1, 0);
 
 	CurrentBackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
-
-	Device->WaitForGpuIdle();
 }
 
 void RenderSwapChain::CreateBackBufferTextures()
@@ -152,6 +150,8 @@ void RenderSwapChain::CreateBackBufferTextures()
 		SwapChain->GetBuffer(i, IID_PPV_ARGS(&BackBuffer));
 
 		TextureInitParameters.Resource = BackBuffer.Get();
+
+		TextureInitParameters.Resource->SetName(TEXT("BackBuffer"));
 
 		BackBufferTextures[i].Release();
 

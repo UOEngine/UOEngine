@@ -18,6 +18,8 @@ public:
 
 	ID3D12CommandAllocator*	GetHandle() const {return CommandAllocator;}
 
+	void					Reset();
+
 private:
 
 	ERenderQueueType		QueueType;

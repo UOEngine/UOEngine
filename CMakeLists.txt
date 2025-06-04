@@ -6,6 +6,7 @@ project(UOEngine VERSION 0.0
 set(CMAKE_CXX_STANDARD 20)        # Set the standard
 set(CMAKE_CXX_STANDARD_REQUIRED ON)  # Enforce the standard
 
+option(USE_LIVEPP "Enable Live++ support")
 
 cmake_policy(SET CMP0141 NEW)
 

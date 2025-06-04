@@ -80,14 +80,14 @@ public:
 		}
 	}
 
-	virtual Vector2D GetExtents() const 
+	virtual IntVector2D GetExtents() const 
 	{
 		uint32 Width;
 		uint32 Height;
 
 		GetWindowRect(Width, Height);
 
-		return Vector2D(Width, Height);
+		return IntVector2D(Width, Height);
 	}
 
 private:

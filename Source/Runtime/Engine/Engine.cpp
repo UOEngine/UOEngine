@@ -3,6 +3,7 @@
 #include "Core/Assert.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/Window.h"
+#include "LivePP/LivePP.h"
 #include "Renderer/Renderer.h"
 
 Engine GEngine;
@@ -13,6 +14,8 @@ Engine::Engine()
 
 bool Engine::Init()
 {
+	LivePP LivePPInstance;
+
 	IPlatformWindow::CreateParameters CreateParameters;
 
 	GameWindow = IPlatformWindow::Create(CreateParameters);

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Core/Containers/Array.h"
 #include "Core/Types.h"
 
 class ID3D12Fence;
@@ -16,33 +17,42 @@ using HANDLE = void*;
 class RenderCommandQueue
 {
 public:
-								RenderCommandQueue(ERenderQueueType InQueueType);
+											RenderCommandQueue(ERenderQueueType InQueueType);
 
-	void						Create(RenderDevice* Device);
+	void									Create(RenderDevice* Device);
 
-	void						WaitUntilIdle();
+	void									WaitUntilIdle();
 
-	void						ExecuteCommandList(ID3D12CommandList* CommandList);
+	void									ExecuteCommandList();
 
-	ID3D12CommandQueue*			GetQueue() const {return CommandQueue;}
+	ID3D12CommandQueue*						GetQueue() const			{return CommandQueue;}
 
-	RenderDevice*				GetDevice() const {return Device;}
+	RenderDevice*							GetDevice() const			{return Device;}
 
-	RenderCommandAllocator*		GetFreeCommandAllocator();
-	RenderCommandList*			GetFreeCommandList();
+	RenderCommandAllocator*					GetFreeCommandAllocator();
+	RenderCommandList*						GetCommandList() const		{return CommandList;}
 
 private:
 
-	ID3D12CommandQueue*			CommandQueue;
-	ERenderQueueType			QueueType;
+	ID3D12CommandQueue*						CommandQueue;
+	ERenderQueueType						QueueType;
 
-	RenderDevice*				Device;
+	RenderDevice*							Device;
 
-	RenderCommandAllocator*		CommandAllocator;
-	RenderCommandList*			CommandList;
+	struct CommandAllocatorEntry
+	{
+		RenderCommandAllocator*	CommandAllocator = nullptr;
+		ID3D12Fence*			Fence = nullptr;
+		uint64					FenceValue = 0;
+	};
 
-	ID3D12Fence*				Fence;
-	uint64						FenceValue;
-	HANDLE						FenceEvent;
+	TArray<CommandAllocatorEntry>			CommandAllocatorQueue;
+
+	RenderCommandList*						CommandList;
+
+	// Fence for the queue doing work.
+	ID3D12Fence*							Fence;
+	uint64									FenceValue;
+	HANDLE									FenceEvent;
 
 };

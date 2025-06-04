@@ -1,6 +1,7 @@
 #include "Renderer/RenderCommandList.h"
 
 #include "Renderer/RenderCommandAllocator.h"
+#include "Renderer/RenderCommandQueue.h"
 #include "Renderer/RenderDevice.h"
 
 RenderCommandList::RenderCommandList(RenderCommandAllocator* InCommandAllocator)
@@ -57,6 +58,12 @@ RenderCommandList::RenderCommandList(RenderCommandAllocator* InCommandAllocator)
 			break;
 		}
 
+		case ERenderQueueType::Copy:
+		{
+			// Empty for now.
+			break;
+		}
+
 		default:
 		{
 			GAssert(false);
@@ -94,7 +101,13 @@ void RenderCommandList::Reset()
 {
 	GAssert(IsClosed());
 
+	RenderCommandAllocator* FreeAllocator = CommandAllocator->GetDevice()->GetQueue(QueueType)->GetFreeCommandAllocator();
+
+	//CommandList->Reset(FreeAllocator->GetHandle(), nullptr);
+	//CommandAllocator->Reset();
 	CommandList->Reset(CommandAllocator->GetHandle(), nullptr);
+
+	//CommandAllocator = FreeAllocator;
 
 	bClosed = false;
 }

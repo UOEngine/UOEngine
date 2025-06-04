@@ -25,7 +25,9 @@ public:
 
 	void						Reset();
 
-	ID3D12GraphicsCommandList*	GetGraphicsCommandList() const	{return CommandList;}
+	ID3D12GraphicsCommandList*	GetGraphicsCommandList() 	{return CommandList;}
+
+	RenderCommandAllocator*		GetCommandAllocator() const {return CommandAllocator;}
 
 private:
 

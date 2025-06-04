@@ -45,3 +45,8 @@ RenderCommandAllocator::RenderCommandAllocator(RenderDevice* InDevice, ERenderQu
 		GAssert(false);
 	}
 }
+
+void RenderCommandAllocator::Reset()
+{
+	CommandAllocator->Reset();
+}

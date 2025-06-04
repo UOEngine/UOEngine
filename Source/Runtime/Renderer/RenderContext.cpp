@@ -52,21 +52,16 @@ void RenderCommandContext::SetRenderTarget(RenderTexture* Texture)
 
 void RenderCommandContext::TransitionResource(ID3D12Resource* Resource, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After)
 {
+	GAssert(CommandList != nullptr);
+
 	GetCommandList()->AddTransitionBarrier(Resource, Before, After);
 }
 
 void RenderCommandContext::FlushCommands()
 {
-	CommandList->Close();
+	CloseCommandList();
 
-	Device->GetQueue(ERenderQueueType::Direct)->ExecuteCommandList(GetGraphicsCommandList());
-
-	CommandList = nullptr;
-
-	//RenderFence Fence;
-
-	//Fence.Signal();
-	//Fence.Wait();
+	Device->GetQueue(QueueType)->ExecuteCommandList();
 }
 
 RenderCommandList* RenderCommandContext::GetCommandList()
@@ -81,12 +76,7 @@ RenderCommandList* RenderCommandContext::GetCommandList()
 
 void RenderCommandContext::OpenCommandList()
 {
-	if (CommandAllocator == nullptr)
-	{
-		CommandAllocator = Device->ObtainCommandAllocator(QueueType);
-	}
-
-	CommandList = Device->ObtainCommandList(CommandAllocator);
+	CommandList = Device->GetQueue(QueueType)->GetCommandList();
 
 	CommandList->Reset();
 }

@@ -18,7 +18,7 @@ public:
 
 	struct InitParameters
 	{
-		Vector2D			Extents;
+		IntVector2D			Extents;
 		void*				WindowHandle = nullptr;
 		RenderDevice*		Device = nullptr;
 		uint32				BackBufferCount = 0;
@@ -27,7 +27,7 @@ public:
 	bool							Init(const InitParameters& Parameters);
 	void							Shutdown();
 
-	void							Resize(const Vector2D& NewExtents);
+	void							Resize(const IntVector2D& NewExtents);
 
 	RenderTexture*					GetBackBuffer() const						{return &BackBufferTextures[CurrentBackBufferIndex]; }
 
@@ -50,7 +50,7 @@ private:
 
 	uint32							CurrentBackBufferIndex;
 
-	Vector2D						Extents;
+	IntVector2D						Extents;
 
 	RenderDevice*					Device;
 

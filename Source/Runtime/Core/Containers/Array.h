@@ -6,26 +6,32 @@
 class Allocator;
 
 template <typename DataType, class AllocatorType=Allocator>
-class TArray: public TFixedArray<DataType>
+class TArray
 {
+public:
 							TArray();
 
-	DataType				operator[](int32 Index) {return Data[Index]; }
+							TArray(uint32 InitialCapacity);
 
-	int32					Add(int32 Index);
+	DataType&				operator[](int32 Index);
 
-	int32					Capacity() const;
+	int32					Add(const DataType& NewElement);
+
+	uint32					GetCapacity() const { return Capacity;}
 
 	bool					Reserve(int32 MinNumElements);
 
-	void					Resize(int32 NewSizeBytes);
+	void					Resize(uint32 NewSize);
+
+	void					SetNum(uint32 NewSize);
+
+	uint32					Num() const;
 
 private:
 
-	DataType*				Memory;
+	DataType*				Data;
 	int32					NumElements;
-
-	TFixedArray<DataType>	Data;
+	uint32					Capacity;
 };
 
 #include "Core/Containers/Array.inl"
