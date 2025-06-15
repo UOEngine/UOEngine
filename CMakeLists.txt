@@ -40,3 +40,6 @@ foreach(cmake_file IN LISTS cmake_files)
 endforeach()
 
 add_custom_target(CMake SOURCES CMakeLists.txt)
+
+add_subdirectory("${UOENGINE_THIRD_PARTY_DIR}/mimalloc-3.0.1" EXCLUDE_FROM_ALL)
+set_target_properties(mimalloc-static PROPERTIES FOLDER "ThirdParty")

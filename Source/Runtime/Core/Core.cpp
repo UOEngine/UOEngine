@@ -1,4 +1,3 @@
-//#include "DotNet/DotNet.h"
 #include <windows.h>
 #if 0
 #define WIN32_API					__stdcall
@@ -207,7 +206,7 @@ int __cdecl wmain(int argc, wchar_t* argv[])
 {
 	//DotNet dotnet;
 
-	HMODULE Module = GetModuleHandle(nullptr);
+	HMODULE Module = GetModuleHandleA(nullptr);
 
 	MainFunctionPtr MainFunction = (MainFunctionPtr)GetProcAddress(Module, "");
 

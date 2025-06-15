@@ -1,25 +1,38 @@
  
- #include "Memory/Allocator.h"
+ #include "Memory/MemoryAllocator.h"
 
-template <typename DataType, class AllocatorType>
-TArray<DataType, AllocatorType>::TArray()
+template <typename DataType>
+TArray<DataType>::TArray()
 {
 	Data = nullptr;
 	NumElements = 0;
 }
 
-template <typename DataType, class AllocatorType/*=Allocator*/>
-TArray<DataType, AllocatorType>::TArray(uint32 InitialCapacity)
+template <typename DataType>
+TArray<DataType>::TArray(uint32 InitialCapacity)
 {
 	uint32 SizeInBytes = InitialCapacity * sizeof(DataType);
 
-	Data = static_cast<DataType*>(AllocatorType::Allocate(SizeInBytes));
+	Data = (DataType*)MemoryAllocator::Get().Allocate(SizeInBytes);
 	Capacity = InitialCapacity;
 	NumElements = 0;
 }
 
-template <typename DataType, class AllocatorType>
-DataType& TArray<DataType, AllocatorType>::operator[](int32 Index)
+template <typename DataType>
+TArray<DataType>::~TArray()
+{
+	if (Data != nullptr)
+	{
+		MemoryAllocator::Get().Free(Data);
+
+		Data = nullptr;
+		NumElements = 0;
+		Capacity = 0;
+	}
+}
+
+template <typename DataType>
+DataType& TArray<DataType>::operator[](int32 Index)
 {
 	GAssert(Index >= 0);
 	GAssert(Index < NumElements);
@@ -27,14 +40,14 @@ DataType& TArray<DataType, AllocatorType>::operator[](int32 Index)
 	return Data[Index];
 }
 
-template <typename DataType, class AllocatorType>
-int32 TArray<DataType, AllocatorType>::Add(const DataType& NewElement)
+template <typename DataType>
+int32 TArray<DataType>::Add(const DataType& NewElement)
 {
 	if (Capacity == NumElements)
 	{
 		int32 NewSize = 2 * Capacity;
 
-		Resize(NewSize);
+		Reserve(NewSize);
 	}
 
 	Data[NumElements] = NewElement;
@@ -43,34 +56,41 @@ int32 TArray<DataType, AllocatorType>::Add(const DataType& NewElement)
 	return NumElements - 1;
 }
 
-template <typename DataType, class AllocatorType/*=Allocator*/>
-void TArray<DataType, AllocatorType>::Resize(uint32 NewSize)
-{
-	GAssert(false);
-}
-
-template <typename DataType, class AllocatorType>
-bool TArray<DataType, AllocatorType>::Reserve(int32 MinNumElements)
+template <typename DataType>
+bool TArray<DataType>::Reserve(int32 MinNumElements)
 {
 	if (Capacity <= MinNumElements)
 	{
 		return true;
 	}
 
-	void* NewAddress = AllocatorType::Reallocate(Data, MinNumElements);
+	const uint32 NewSize = sizeof(DataType) * MinNumElements;
 
-	Data = NewAddress;
+	Data = (DataType*)MemoryAllocator::Get().Reallocate(Data, NewSize);
 
+	Capacity = MinNumElements;
 }
 
-template <typename DataType, class AllocatorType>
-void TArray<DataType, AllocatorType>::SetNum(uint32 NewSize)
+template <typename DataType>
+void TArray<DataType>::SetNum(uint32 NewSize)
 {
-	Data = static_cast<DataType*>(AllocatorType::Reallocate(Data, sizeof(DataType) * NewSize));
+	const uint32 NewSizeBytes = sizeof(DataType) * NewSize;
+
+	if (Data != nullptr)
+	{
+		Data = (DataType*)MemoryAllocator::Get().Reallocate(Data, NewSizeBytes);
+	}
+	else
+	{
+		Data = (DataType*)MemoryAllocator::Get().Allocate(NewSizeBytes);
+	}
+
+	NumElements = NewSize;
+	Capacity = NumElements;
 }
 
-template <typename DataType, class AllocatorType>
-uint32 TArray<DataType, AllocatorType>::Num() const
+template <typename DataType>
+uint32 TArray<DataType>::Num() const
 {
 	return NumElements;
 }

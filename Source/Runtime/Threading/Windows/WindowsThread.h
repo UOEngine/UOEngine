@@ -2,7 +2,7 @@
 
 #include "Threading/Thread.h"
 
-#include <windows.h>
+#include "Core/Windows/Win32.h"
 
 class WindowsThread: public Thread
 {

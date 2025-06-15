@@ -200,6 +200,8 @@ int __cdecl wmain(int argc, wchar_t* argv[])
 
 #endif
 
+#include "Memory/Memory.h"
+
 #include "Core/Assert.h"
 #include "Engine/Engine.h"
 
