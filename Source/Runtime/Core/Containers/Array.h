@@ -1,5 +1,7 @@
 #pragma once
 
+#include <initializer_list>
+
 #include "Core/Assert.h"
 #include "Core/Types.h"
 
@@ -8,8 +10,10 @@ class TArray
 {
 public:
 							TArray();
+							
+							TArray(std::initializer_list<DataType> InitList);
 
-							TArray(uint32 InitialCapacity);
+							TArray(const DataType* Ptr, uint32 NumToCopy);
 
 							~TArray();
 
@@ -27,11 +31,13 @@ public:
 
 	DataType*				GetData()							{return Data;}
 
+	void					Copy(const DataType* OtherData, uint32 OtherNumElements);
+
 private:
 
-	DataType*				Data;
-	int32					NumElements;
-	uint32					Capacity;
+	DataType*				Data = nullptr;
+	int32					NumElements = 0;
+	uint32					Capacity = 0;
 };
 
 #include "Core/Containers/Array.inl"

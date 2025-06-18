@@ -26,4 +26,6 @@ private:
 
 	EShaderType		Type;
 
+	TArray<uint8>	Dxil;
+
 };

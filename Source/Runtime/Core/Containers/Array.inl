@@ -1,21 +1,22 @@
- 
+ #include "Memory/Memory.h"
  #include "Memory/MemoryAllocator.h"
 
 template <typename DataType>
 TArray<DataType>::TArray()
 {
-	Data = nullptr;
-	NumElements = 0;
+	Reserve(4);
 }
 
 template <typename DataType>
-TArray<DataType>::TArray(uint32 InitialCapacity)
+TArray<DataType>::TArray(std::initializer_list<DataType> InitList)
 {
-	uint32 SizeInBytes = InitialCapacity * sizeof(DataType);
+	Copy(InitList.begin(), InitList.size());
+}
 
-	Data = (DataType*)MemoryAllocator::Get().Allocate(SizeInBytes);
-	Capacity = InitialCapacity;
-	NumElements = 0;
+template <typename DataType>
+TArray<DataType>::TArray(const DataType* Ptr, uint32 NumToCopy)
+{
+	Copy(Ptr, NumToCopy);
 }
 
 template <typename DataType>
@@ -45,7 +46,7 @@ int32 TArray<DataType>::Add(const DataType& NewElement)
 {
 	if (Capacity == NumElements)
 	{
-		int32 NewSize = 2 * Capacity;
+		int32 NewSize = 2 * (Capacity != 0? Capacity: 1);
 
 		Reserve(NewSize);
 	}
@@ -59,16 +60,30 @@ int32 TArray<DataType>::Add(const DataType& NewElement)
 template <typename DataType>
 bool TArray<DataType>::Reserve(int32 MinNumElements)
 {
-	if (Capacity <= MinNumElements)
+	if ((Capacity != 0) && (Capacity <= MinNumElements))
 	{
 		return true;
 	}
 
-	const uint32 NewSize = sizeof(DataType) * MinNumElements;
+	const uint32 NewSizeBytes = sizeof(DataType) * MinNumElements;
 
-	Data = (DataType*)MemoryAllocator::Get().Reallocate(Data, NewSize);
+	if (Data != nullptr)
+	{
+		Data = (DataType*)MemoryAllocator::Get().Reallocate(Data, NewSizeBytes);
+	}
+	else
+	{
+		Data = (DataType*)MemoryAllocator::Get().Allocate(NewSizeBytes);
+	}
+
+	uint32 old_size_bytes = NumElements * sizeof(DataType);
+	uint32 num_bytes_to_zero = NewSizeBytes - old_size_bytes;
+
+	Memory::MemZero(Data + old_size_bytes, num_bytes_to_zero);
 
 	Capacity = MinNumElements;
+
+	return true;
 }
 
 template <typename DataType>
@@ -93,4 +108,15 @@ template <typename DataType>
 uint32 TArray<DataType>::Num() const
 {
 	return NumElements;
+}
+
+template <typename DataType>
+void TArray<DataType>::Copy(const DataType* OtherData, uint32 OtherNumElements)
+{
+	SetNum(OtherNumElements);
+
+	const uint32 SizeInBytes = OtherNumElements * sizeof(DataType);
+
+	Memory::MemCopy((void*)Data, SizeInBytes, (void*)OtherData, SizeInBytes);
+
 }

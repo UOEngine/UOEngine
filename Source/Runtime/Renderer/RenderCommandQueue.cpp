@@ -39,8 +39,6 @@ void RenderCommandQueue::Create(RenderDevice* InDevice)
 
 	CommandQueue->SetName(TEXT("CommandQueue"));
 
-	CommandAllocatorQueue = TArray< CommandAllocatorEntry>(3);
-
 	for (int32 i = 0; i < CommandAllocatorQueue.GetCapacity(); i++)
 	{
 		CommandAllocatorQueue.Add(CommandAllocatorEntry{});
