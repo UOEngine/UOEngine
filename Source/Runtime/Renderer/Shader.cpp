@@ -1,9 +1,9 @@
 #include "Renderer/Shader.h"
 
 #include <wrl/client.h>
+#include <dxcapi.h>
 
 #include "Core/FileReader.h"
-#include <dxcapi.h>
 
 using namespace Microsoft::WRL;
 
@@ -12,7 +12,7 @@ Shader::Shader(EShaderType InType)
 	Type = InType;
 }
 
-void Shader::Load(const String& FilePath)
+bool Shader::Load(const String& FilePath)
 {
 	FileHandle* shader_file = nullptr;
 
@@ -20,14 +20,21 @@ void Shader::Load(const String& FilePath)
 	{
 		GAssert(false);
 
-		return;
+		return false;
 	}
 	
 	TArray<uint8> shader_contents;
 
 	shader_contents.SetNum(shader_file->GetSize());
 
-	FileDevice::Read(shader_file, shader_contents.GetData());
+	if (FileDevice::Read(shader_file, shader_contents.GetData()) == false)
+	{
+		GAssert(false);
+	}
+
+	FileDevice::Close(shader_file);
+
+	GAssert(shader_contents.Num() > 0);
 
 	ComPtr<IDxcUtils>			dxil_utils;
 	ComPtr<IDxcCompiler3>		dxc_compiler;
@@ -45,18 +52,22 @@ void Shader::Load(const String& FilePath)
 
 	DxcBuffer source_buffer;
 
+	GAssert(dxc_source_blob->GetBufferSize() > 0);
+
 	source_buffer.Ptr = dxc_source_blob->GetBufferPointer();
 	source_buffer.Size = dxc_source_blob->GetBufferSize();
 	source_buffer.Encoding = DXC_CP_UTF8;
 
 	ComPtr<IDxcResult> compile_result;
 
+	LPCWSTR type_arg = Type == EShaderType::Vertex? L"vs_6_0" : L"ps_6_0";
+
 	TArray<LPCWSTR> Args = 
 	{
-		L"-E", L"main",           // Entry point
-		L"-T", L"vs_6_0",         // Target profile
-		L"-Zi",                   // Debug info
-		L"-Qembed_debug",         // Embed debug info in shader
+		L"-E", L"main",         // Entry point
+		L"-T", type_arg,		// Target profile
+		L"-Zi",                 // Debug info
+		L"-Qembed_debug",       // Embed debug info in shader
 	};
 	
 	dxc_compiler->Compile(&source_buffer, Args.GetData(), Args.Num(), dxc_include_header.Get(), IID_PPV_ARGS(&compile_result));
@@ -79,7 +90,7 @@ void Shader::Load(const String& FilePath)
 
 		delete[] error_message;
 
-		return;
+		return false;
 	}
 
 	GAssert(compile_result->HasOutput(DXC_OUT_OBJECT));
@@ -91,5 +102,7 @@ void Shader::Load(const String& FilePath)
 	Dxil.SetNum(dxil_blob->GetBufferSize());
 
 	Memory::MemCopy(Dxil.GetData(), Dxil.Num(), dxil_blob->GetBufferPointer(), dxil_blob->GetBufferSize());
+
+	return true;
 
 }

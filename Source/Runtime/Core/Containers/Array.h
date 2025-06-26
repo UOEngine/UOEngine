@@ -30,6 +30,7 @@ public:
 	uint32					Num() const;
 
 	DataType*				GetData()							{return Data;}
+	DataType*				GetData() const						{return Data;}
 
 	void					Copy(const DataType* OtherData, uint32 OtherNumElements);
 

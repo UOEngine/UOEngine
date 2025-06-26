@@ -17,10 +17,11 @@ public:
 
 					Shader(EShaderType InType);
 
-	void			Load(const String& FilePath);
+	bool			Load(const String& FilePath);
 
-	void			Compile(const String& ShaderCode);
+	uint8*			GetBytecode()			const {return Dxil.GetData();}
 
+	uint32			GetBytecodeLength()		const {return Dxil.Num();}
 
 private:
 

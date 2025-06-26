@@ -11,6 +11,8 @@ class RenderTexture;
 enum class ERenderQueueType: uint8;
 enum D3D12_RESOURCE_STATES;
 struct ID3D12GraphicsCommandList;
+struct ID3D12PipelineState;
+struct ID3D12RootSignature;
 
 class RenderCommandContext
 {
@@ -28,9 +30,15 @@ public:
 
 	void							SetRenderTarget(RenderTexture* View);
 
+	void							SetPipelineState(ID3D12PipelineState* PipelineState, ID3D12RootSignature* RootSignature);
+
 	void							TransitionResource(ID3D12Resource* Resource, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After);
 
+	void							SetViewport(uint32 Width, uint32 Height);
+
 	void							FlushCommands();
+
+	void							Draw();
 
 private:
 	RenderCommandList*				GetCommandList();

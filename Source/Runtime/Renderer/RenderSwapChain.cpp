@@ -36,11 +36,13 @@ bool RenderSwapChain::Init(const InitParameters& Parameters)
 
 	Device = Parameters.Device;
 
+	Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+
 	DXGI_SWAP_CHAIN_DESC1	SwapChainDesc = {};
 
 	SwapChainDesc.Width = Parameters.Extents.X;
 	SwapChainDesc.Height = Parameters.Extents.Y;
-	SwapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	SwapChainDesc.Format = Format;
 	SwapChainDesc.Stereo = FALSE;
 	SwapChainDesc.SampleDesc = { 1, 0 };
 	SwapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;

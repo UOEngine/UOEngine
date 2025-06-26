@@ -18,6 +18,11 @@ bool FileDevice::Open(const String& FilePath, FileHandle*& OutFileHandle)
 	return true;
 }
 
+void FileDevice::Close(FileHandle* Handle)
+{
+	CloseHandle(Handle->GetHandle());
+}
+
 bool FileDevice::Read(const FileHandle* Handle, uint8* OutBuffer)
 {
 	DWORD NumberOfBytesRead = 0;

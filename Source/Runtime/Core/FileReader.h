@@ -28,7 +28,7 @@ class FileDevice
 public:
 
 	static bool				Open(const String& FilePath, FileHandle*& OutFileHandle);
-
+	static void				Close(FileHandle* Handle);
 	static bool				Read(const FileHandle* Handle , uint8* OutBuffer);
 
 };
