@@ -4,6 +4,7 @@
 #include "Renderer/RenderCommandList.h"
 #include "Renderer/RenderCommandQueue.h"
 #include "Renderer/RenderDevice.h"
+#include "Renderer/RenderTextureAllocator.h"
 #include "Renderer/RenderTexture.h"
 
 RenderCommandContext::RenderCommandContext(RenderDevice* InDevice)
@@ -25,6 +26,8 @@ void RenderCommandContext::Begin()
 
 void RenderCommandContext::End()
 {
+	Device->GetTextureAllocator()->FlushPendingUploads(this);
+
 	CloseCommandList();
 }
 

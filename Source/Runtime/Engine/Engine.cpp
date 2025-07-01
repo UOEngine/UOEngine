@@ -1,6 +1,7 @@
 #include "Engine.h"
 
 #include "Core/Assert.h"
+#include "DotNet/DotNet.h"
 #include "Engine/EngineGlobals.h"
 #include "Engine/Window.h"
 #include "LivePP/LivePP.h"
@@ -32,6 +33,11 @@ bool Engine::Init()
 
 	GameWindow->SetVisible(true);
 
+	if (DotNet::sGet().Init() == false)
+	{
+		GAssert(false);
+	}
+
 	return true;
 
 }
@@ -41,6 +47,8 @@ void Engine::Run()
 	while (EngineGlobals::IsRequestingExit() == false)
 	{
 		GameWindow->PollEvents();
+
+		DotNet::sGet().ManagedUpdate(0.0f);
 
 		GRenderer.RenderFrame(GameWindow->GetExtents());
 	}

@@ -43,3 +43,6 @@ add_custom_target(CMake SOURCES CMakeLists.txt)
 
 add_subdirectory("${UOENGINE_THIRD_PARTY_DIR}/mimalloc-3.0.1" EXCLUDE_FROM_ALL)
 set_target_properties(mimalloc-static PROPERTIES FOLDER "ThirdParty")
+
+include_external_msproject(UOEngine "${UOENGINE_MAIN_SRC_DIR}/Source/Game/UOEngine.csproj")
+set_target_properties(UOEngine PROPERTIES FOLDER "Game")

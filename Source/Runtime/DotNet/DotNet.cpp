@@ -1,10 +1,12 @@
+#include "DotNet/DotNet.h"
+
 #include <windows.h>
 
 #include <nethost.h>
 #include <coreclr_delegates.h>
 #include <hostfxr.h>
 
-#include "DotNet.h"
+#include "Core/Containers/String.h"
 
 namespace
 {
@@ -56,18 +58,20 @@ namespace
 	}
 
 	// Load and initialize .NET Core and get desired function pointer for scenario
-	load_assembly_and_get_function_pointer_fn GetDotNetLoadAssembly(const char_t* config_path)
+	load_assembly_and_get_function_pointer_fn GetDotNetLoadAssembly(const wchar_t* config_path)
 	{
 		// Load .NET Core
 		void* load_assembly_and_get_function_pointer = nullptr;
 		hostfxr_handle cxt = nullptr;
+
 		int rc = InitForConfigFunction(config_path, nullptr, &cxt);
 
 		if (rc != 0 || cxt == nullptr)
 		{
+			GAssert(false);
 
-			//std::cerr << "Init failed: " << std::hex << std::showbase << rc << std::endl;
 			HostFxrCloseFunction(cxt);
+			
 			return nullptr;
 		}
 
@@ -75,7 +79,7 @@ namespace
 		rc = HostFxrGetRuntimeFunction(cxt, hdt_load_assembly_and_get_function_pointer, &load_assembly_and_get_function_pointer);
 		if (rc != 0 || load_assembly_and_get_function_pointer == nullptr)
 		{
-			//std::cerr << "Get delegate failed: " << std::hex << std::showbase << rc << std::endl;
+			GAssert(false);
 		}
 
 		HostFxrCloseFunction(cxt);
@@ -84,9 +88,17 @@ namespace
 	}
 }
 
+DotNet& DotNet::sGet()
+{
+	static DotNet instance;
+
+	return instance;
+}
+
 bool DotNet::Init()
 {
 	wchar_t buffer[MAX_PATH];
+	
 	// Get the full path of the executable
 	DWORD length = GetModuleFileName(NULL, buffer, MAX_PATH);
 
@@ -95,10 +107,31 @@ bool DotNet::Init()
 		return false;
 	}
 
+	String config_path;
+
+	//load_assembly_and_get_function_pointer_fn LoadAssemblyAndGetFunctionPointerFunction = GetDotNetLoadAssembly(config_path.ToCString());
+
+	//String assembly_path;
+
+	//HRESULT native_initialise_result = LoadAssemblyAndGetFunctionPointerFunction(assembly_path.ToCString(), TEXT("UOEngine.Game, UOEngine"), TEXT("NativeInitialise"), UNMANAGEDCALLERSONLY_METHOD, nullptr, (void**)&mGameInitialise);
+	//HRESULT game_update_result = LoadAssemblyAndGetFunctionPointerFunction(assembly_path.c_str(), TEXT("UOEngine.Game, UOEngine"), TEXT("NativeUpdate"), UNMANAGEDCALLERSONLY_METHOD, nullptr, (void**)&mGameUpdate);
+
+	//mGameInitialise();
+
 	return true;
 }
 
 bool DotNet::LoadAssembly()
 {
 	return false;
+}
+
+void DotNet::ManagedUpdate(float DeltaSeconds)
+{
+	if (mGameUpdate == nullptr)
+	{
+		return;
+	}
+
+	mGameUpdate(DeltaSeconds);
 }

@@ -18,7 +18,9 @@ public:
 
 	void			Copy(const char* Str, uint32 Length);
 
-	const char*		ToCString() const {return Data;}
+	const char*		ToCString() const	{return Data;}
+
+	uint32			Length() const		{return NumCharacters;}
 
 private:
 
@@ -33,12 +35,11 @@ private:
 		char			Data[];
 	};
 
-	Buffer* GetBuffer()			{ return (Buffer*)((uint8*)Data - sizeof(BufferHeader)); }
-	Buffer* GetBuffer() const	{ return (Buffer*)((uint8*)Data - sizeof(BufferHeader)); }
+	Buffer*			GetBuffer()			{ return (Buffer*)((uint8*)Data - sizeof(BufferHeader)); }
+	Buffer*			GetBuffer() const	{ return (Buffer*)((uint8*)Data - sizeof(BufferHeader)); }
 
-	char*	Data;
+	char*			Data;
 
-	uint32 NumCharacters;
+	uint32			NumCharacters;
 
 };
-

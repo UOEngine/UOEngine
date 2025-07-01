@@ -7,7 +7,8 @@
 
 String::String()
 {
-
+	Data = nullptr;
+	NumCharacters = 0;
 }
 
 String::String(char* Str)
@@ -43,6 +44,11 @@ String::String(const String& Other)
 
 String::~String()
 {
+	if (Data == nullptr)
+	{
+		return;
+	}
+
 	GetBuffer()->Header.ReferenceCount--;
 
 	if (GetBuffer()->Header.ReferenceCount == 0)

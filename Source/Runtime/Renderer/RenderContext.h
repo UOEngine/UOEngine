@@ -20,7 +20,7 @@ public:
 
 									RenderCommandContext(RenderDevice* InDevice);
 
-	//static RenderCommandContext&	Get()
+	static RenderCommandContext&	Get();
 
 	void							Begin();
 	void							End();
@@ -36,9 +36,14 @@ public:
 
 	void							SetViewport(uint32 Width, uint32 Height);
 
+	void							CopyTexture();
+
 	void							FlushCommands();
 
 	void							Draw();
+
+	// Get the raw ID3D12GraphicsCommandList
+	ID3D12GraphicsCommandList*		GetGraphicsCommandList() { return GetCommandList()->GetGraphicsCommandList(); }
 
 private:
 	RenderCommandList*				GetCommandList();
@@ -47,9 +52,6 @@ private:
 	void							CloseCommandList();
 
 	void							AddTransitionBarrier(D3D12RenderTargetView* Texture, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After);
-
-	// Get the raw ID3D12GraphicsCommandList
-	ID3D12GraphicsCommandList*		GetGraphicsCommandList() {return GetCommandList()->GetGraphicsCommandList();}
 
 	// The active command list.
 	RenderCommandList*				CommandList;

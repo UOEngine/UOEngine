@@ -4,7 +4,20 @@ class DotNet
 {
 public:
 
-	bool Init();
+	static DotNet&				sGet();
 
-	bool LoadAssembly();
+	bool						Init();
+
+	bool						LoadAssembly();
+
+	void						ManagedUpdate(float DeltaSeconds);
+
+private:
+
+	using GameInitialiseFunction	= bool (*)(void);
+	using GameUpdateFunction		= void (*)(float);
+
+	GameInitialiseFunction		mGameInitialise = nullptr;
+	GameUpdateFunction			mGameUpdate = nullptr;
+	
 };
