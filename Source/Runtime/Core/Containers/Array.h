@@ -18,6 +18,7 @@ public:
 							~TArray();
 
 	DataType&				operator[](int32 Index);
+	const DataType&			operator[](int32 Index) const;
 
 	int32					Add(const DataType& NewElement);
 

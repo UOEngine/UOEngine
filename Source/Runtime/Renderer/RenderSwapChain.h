@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Core/Containers/Array.h"
 #include "Core/Math/Vector2D.h"
 #include "Core/Types.h"
 #include "Renderer/RenderTexture.h"
@@ -30,14 +31,14 @@ public:
 
 	void							Resize(const IntVector2D& NewExtents);
 
-	IntVector2D						GetExtents() const							{return Extents;}
+	IntVector2D						GetExtents() const							{return mExtents;}
 
 	DXGI_FORMAT						GetFormat() const							{return Format;}
 
-	RenderTexture*					GetBackBuffer() const						{return &BackBufferTextures[CurrentBackBufferIndex]; }
+	RenderTexture*					GetBackBuffer() const						{return mBackBufferTextures[mCurrentBackBufferIndex]; }
 
-	uint32							GetNextPresentIndex() const					{return CurrentBackBufferIndex;}
-	RenderTexture*					GetBackBufferTexture(uint32 Index) const	{return &BackBufferTextures[Index]; }
+	uint32							GetNextPresentIndex() const					{return mCurrentBackBufferIndex;}
+	RenderTexture*					GetBackBufferTexture(uint32 Index) const	{return mBackBufferTextures[Index]; }
 
 	void							Present(RenderCommandContext* CommandContext);
 
@@ -49,15 +50,15 @@ private:
 
 	IDXGISwapChain3*				SwapChain;
 
-	uint32							BackBufferCount;
+	uint32							mBackBufferCount;
 
-	RenderTexture*					BackBufferTextures;
+	TArray<RenderTexture*>			mBackBufferTextures;
 
-	uint32							CurrentBackBufferIndex;
+	uint32							mCurrentBackBufferIndex;
 
-	IntVector2D						Extents;
+	IntVector2D						mExtents;
 
-	RenderDevice*					Device;
+	RenderDevice*					mDevice;
 
 	DXGI_FORMAT						Format;
 

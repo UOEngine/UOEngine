@@ -42,6 +42,15 @@ DataType& TArray<DataType>::operator[](int32 Index)
 }
 
 template <typename DataType>
+const DataType& TArray<DataType>::operator[](int32 Index) const
+{
+	GAssert(Index >= 0);
+	GAssert(Index < NumElements);
+
+	return Data[Index];
+}
+
+template <typename DataType>
 int32 TArray<DataType>::Add(const DataType& NewElement)
 {
 	if (Capacity == NumElements)

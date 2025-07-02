@@ -13,10 +13,9 @@
 
 RenderSwapChain::RenderSwapChain()
 {
-	BackBufferCount = 0;
-	BackBufferTextures = nullptr;
-	CurrentBackBufferIndex = 0;
-	Device = nullptr;
+	mBackBufferCount = 0;
+	mCurrentBackBufferIndex = 0;
+	mDevice = nullptr;
 }
 
 bool RenderSwapChain::Init(const InitParameters& Parameters)
@@ -28,11 +27,16 @@ bool RenderSwapChain::Init(const InitParameters& Parameters)
 		GAssert(false);
 	}
 
-	BackBufferCount = Parameters.BackBufferCount;
+	mBackBufferCount = Parameters.BackBufferCount;
 
-	BackBufferTextures = new RenderTexture[BackBufferCount];
+	mBackBufferTextures.SetNum(mBackBufferCount);
 
-	Device = Parameters.Device;
+	for (int32 i = 0; i < mBackBufferCount; i++)
+	{
+		mBackBufferTextures[i] = new RenderTexture();
+	}
+
+	mDevice = Parameters.Device;
 
 	Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 
@@ -44,7 +48,7 @@ bool RenderSwapChain::Init(const InitParameters& Parameters)
 	SwapChainDesc.Stereo = FALSE;
 	SwapChainDesc.SampleDesc = { 1, 0 };
 	SwapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	SwapChainDesc.BufferCount = BackBufferCount;
+	SwapChainDesc.BufferCount = mBackBufferCount;
 	SwapChainDesc.Scaling = DXGI_SCALING_NONE;
 	SwapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	SwapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
@@ -55,7 +59,7 @@ bool RenderSwapChain::Init(const InitParameters& Parameters)
 
 	HWND WindowHandle = (HWND)Parameters.WindowHandle;
 
-	ID3D12CommandQueue* CommandQueue = Device->GetQueue(ERenderQueueType::Direct)->GetQueue();
+	ID3D12CommandQueue* CommandQueue = mDevice->GetQueue(ERenderQueueType::Direct)->GetQueue();
 
 	GAssert(CommandQueue != nullptr);
 
@@ -71,7 +75,7 @@ bool RenderSwapChain::Init(const InitParameters& Parameters)
 		GAssert(false);
 	}
 
-	Extents = Parameters.Extents;
+	mExtents = Parameters.Extents;
 
 	CreateBackBufferTextures();
 
@@ -80,9 +84,9 @@ bool RenderSwapChain::Init(const InitParameters& Parameters)
 
 void RenderSwapChain::Shutdown()
 {
-	for (int32 i = 0; i < BackBufferCount; i++)
+	for (int32 i = 0; i < mBackBufferCount; i++)
 	{
-		BackBufferTextures[i].Release();
+		mBackBufferTextures[i]->Release();
 	}
 
 	SwapChain->Release();
@@ -91,7 +95,7 @@ void RenderSwapChain::Shutdown()
 
 void RenderSwapChain::Resize(const IntVector2D& NewExtents)
 {
-	if (NewExtents == Extents)
+	if (NewExtents == mExtents)
 	{
 		return;
 	}
@@ -101,9 +105,9 @@ void RenderSwapChain::Resize(const IntVector2D& NewExtents)
 		return;
 	}
 
-	Extents = NewExtents;
+	mExtents = NewExtents;
 
-	Device->GetQueue(ERenderQueueType::Direct)->WaitUntilIdle();
+	mDevice->GetQueue(ERenderQueueType::Direct)->WaitUntilIdle();
 
 	DXGI_SWAP_CHAIN_DESC1	SwapChainDesc = {};
 
@@ -112,51 +116,43 @@ void RenderSwapChain::Resize(const IntVector2D& NewExtents)
 		GAssert(false);
 	}
 
-	if (FAILED(SwapChain->ResizeBuffers(BackBufferCount, NewExtents.X, NewExtents.Y, SwapChainDesc.Format, SwapChainDesc.Flags)))
+	for (int32 i = 0; i < mBackBufferCount; i++)
+	{
+		mBackBufferTextures[i]->Release();
+	}
+
+	if (FAILED(SwapChain->ResizeBuffers(mBackBufferCount, NewExtents.X, NewExtents.Y, SwapChainDesc.Format, SwapChainDesc.Flags)))
 	{
 		GAssert(false);
 	}
 
-	CurrentBackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
+	mCurrentBackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
 
 	CreateBackBufferTextures();
 }
 
 void RenderSwapChain::Present(RenderCommandContext* CommandContext)
 {
-	CommandContext->TransitionResource(GetBackBufferTexture(CurrentBackBufferIndex)->GetResource()->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+	CommandContext->TransitionResource(GetBackBufferTexture(mCurrentBackBufferIndex)->GetResource()->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 
 	CommandContext->FlushCommands();
 
 	SwapChain->Present(1, 0);
 
-	CurrentBackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
+	mCurrentBackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
 }
 
 void RenderSwapChain::CreateBackBufferTextures()
 {
-	RenderTexture::TextureDescription TextureInitParameters;
-
-	TextureInitParameters.Device = Device;
-	TextureInitParameters.Type = RenderTextureType::RenderTarget;
-	TextureInitParameters.Width = Extents.X;
-	TextureInitParameters.Height = Extents.Y;
-	TextureInitParameters.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	TextureInitParameters.Resource = new D3D12Resource();
-
-	for (int32 i = 0; i < BackBufferCount; i++)
+	for (int32 i = 0; i < mBackBufferCount; i++)
 	{
 		TComPtr<ID3D12Resource> backbuffer_resource;
 
 		SwapChain->GetBuffer(i, IID_PPV_ARGS(&backbuffer_resource));
 
-		TextureInitParameters.Resource->mResource = backbuffer_resource;
+		backbuffer_resource->SetName(TEXT("BackBuffer"));
 
-		TextureInitParameters.Resource->mResource->SetName(TEXT("BackBuffer"));
-
-		BackBufferTextures[i].Release();
-
-		BackBufferTextures[i].Init(TextureInitParameters);
+		mBackBufferTextures[i]->InitFromExternalResource(mDevice, backbuffer_resource, true);
 
 	}
 }

@@ -103,9 +103,7 @@ void RenderCommandContext::FlushCommands()
 
 void RenderCommandContext::Draw()
 {
-
-
-	GetGraphicsCommandList()->DrawInstanced(4, 1000, 0, 0);
+	GetGraphicsCommandList()->DrawInstanced(4, 1, 0, 0);
 }
 
 RenderCommandList* RenderCommandContext::GetCommandList()
