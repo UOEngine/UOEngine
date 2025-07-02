@@ -29,6 +29,8 @@ public:
 
 	RenderCommandAllocator*		GetCommandAllocator() const {return CommandAllocator;}
 
+	void						CopyTextureRegion();
+
 private:
 
 	ERenderQueueType			QueueType;

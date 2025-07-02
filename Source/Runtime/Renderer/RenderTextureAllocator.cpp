@@ -2,6 +2,7 @@
 
 #include <d3d12.h>
 
+#include "Renderer/D3D12Resource.h"
 #include "Renderer/RenderDevice.h"
 
 RenderTextureAllocator::RenderTextureAllocator(RenderDevice* InRenderDevice)
@@ -9,7 +10,7 @@ RenderTextureAllocator::RenderTextureAllocator(RenderDevice* InRenderDevice)
 	mDevice = InRenderDevice;
 }
 
-TComPtr<ID3D12Resource> RenderTextureAllocator::Allocate(uint32 Width, uint32 Height)
+D3D12Resource* RenderTextureAllocator::Allocate(uint32 Width, uint32 Height)
 {
 	TComPtr<ID3D12Resource> resource;
 
@@ -38,7 +39,12 @@ TComPtr<ID3D12Resource> RenderTextureAllocator::Allocate(uint32 Width, uint32 He
 
 	mTextureResources.Add(resource);
 
-	return resource;
+	D3D12Resource* new_resource = new D3D12Resource();
+
+	new_resource->mResource = resource;
+	new_resource->mDescription = desc;
+
+	return new_resource;
 }
 
 void RenderTextureAllocator::FlushPendingUploads(RenderCommandContext* Context)

@@ -13,6 +13,9 @@ public:
 
 	uint8*					Allocate(uint64 Size);
 
+	TComPtr<ID3D12Resource> GetResource() const {return mResource;}
+
+	void					TempUnmap();
 private:
 
 	void					Flush();

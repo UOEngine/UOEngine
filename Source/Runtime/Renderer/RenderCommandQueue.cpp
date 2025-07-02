@@ -13,7 +13,7 @@ RenderCommandQueue::RenderCommandQueue(ERenderQueueType InQueueType)
 {
 	CommandQueue = nullptr;
 	QueueType = InQueueType;
-	CommandList = nullptr;
+	mCommandList = nullptr;
 
 	Fence = nullptr;
 	FenceValue = 0;
@@ -47,28 +47,28 @@ void RenderCommandQueue::Create(RenderDevice* InDevice)
 	Fence = Device->CreateFence();
 	FenceEvent = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
 
-	CommandList = new RenderCommandList(GetFreeCommandAllocator());
+	mCommandList = new RenderCommandList(GetFreeCommandAllocator());
 }
 
 void RenderCommandQueue::WaitUntilIdle()
 {
 	// Dirty but for now ...
 
-	ID3D12Fence* WaitUntilIdleFence =  Device->CreateFence();
+	TComPtr<ID3D12Fence> wait_until_idle_fence =  Device->CreateFence();
 
-	CommandQueue->Signal(WaitUntilIdleFence, 1);
+	CommandQueue->Signal(wait_until_idle_fence, 1);
 
-	while (WaitUntilIdleFence->GetCompletedValue() < 1)
+	while (wait_until_idle_fence->GetCompletedValue() < 1)
 	{
 		
 	}
-
-	WaitUntilIdleFence->Release();
 }
 
 void RenderCommandQueue::ExecuteCommandList()
 {
-	ID3D12CommandList* const CommandLists[] = {CommandList->GetGraphicsCommandList()};
+	GAssert(mCommandList->IsClosed());
+
+	ID3D12CommandList* const CommandLists[] = {mCommandList->GetGraphicsCommandList()};
 
 	CommandQueue->ExecuteCommandLists(1, CommandLists);
 
@@ -80,7 +80,7 @@ void RenderCommandQueue::ExecuteCommandList()
 	{
 		CommandAllocatorEntry& Entry = CommandAllocatorQueue[i];
 
-		if (Entry.CommandAllocator == CommandList->GetCommandAllocator())
+		if (Entry.CommandAllocator == mCommandList->GetCommandAllocator())
 		{
 			Entry.FenceValue = FenceValue;
 		}
@@ -116,4 +116,9 @@ RenderCommandAllocator* RenderCommandQueue::GetFreeCommandAllocator()
 	GAssert(false);
 
 	return nullptr;
+}
+
+RenderCommandList* RenderCommandQueue::GetCommandList()
+{
+	return mCommandList;
 }

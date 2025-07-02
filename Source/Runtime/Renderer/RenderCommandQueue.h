@@ -30,7 +30,7 @@ public:
 	RenderDevice*							GetDevice() const			{return Device;}
 
 	RenderCommandAllocator*					GetFreeCommandAllocator();
-	RenderCommandList*						GetCommandList() const		{return CommandList;}
+	RenderCommandList*						GetCommandList();
 
 private:
 
@@ -48,7 +48,7 @@ private:
 
 	TArray<CommandAllocatorEntry>			CommandAllocatorQueue;
 
-	RenderCommandList*						CommandList;
+	RenderCommandList*						mCommandList;
 
 	// Fence for the queue doing work.
 	ID3D12Fence*							Fence;

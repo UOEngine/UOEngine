@@ -7,6 +7,8 @@
 RenderCommandList::RenderCommandList(RenderCommandAllocator* InCommandAllocator)
 {
 	CommandAllocator = InCommandAllocator;
+	CommandList = nullptr;
+	bClosed = true;
 
 	QueueType = CommandAllocator->GetQueueType();
 
@@ -45,6 +47,7 @@ RenderCommandList::RenderCommandList(RenderCommandAllocator* InCommandAllocator)
 	{
 		case ERenderQueueType::Direct:
 		case ERenderQueueType::Async:
+		case ERenderQueueType::Copy:
 		{
 			if (FAILED(CommandAllocator->GetDevice()->GetDevice()->CreateCommandList(0, Type, CommandAllocator->GetHandle(), nullptr, IID_PPV_ARGS(&CommandList))))
 			{
@@ -55,12 +58,6 @@ RenderCommandList::RenderCommandList(RenderCommandAllocator* InCommandAllocator)
 
 			Close();
 
-			break;
-		}
-
-		case ERenderQueueType::Copy:
-		{
-			// Empty for now.
 			break;
 		}
 
@@ -110,5 +107,10 @@ void RenderCommandList::Reset()
 	//CommandAllocator = FreeAllocator;
 
 	bClosed = false;
+}
+
+void RenderCommandList::CopyTextureRegion()
+{
+	GAssert(IsOpen());
 }
 

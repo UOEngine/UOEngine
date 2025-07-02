@@ -23,15 +23,20 @@ public:
 		mPtr->AddRef();
 	}
 
-	~TComPtr()
-	{
-		if (mPtr != nullptr)
-		{
-			mPtr->Release();
+							~TComPtr()
+							{
+								Release();
+							}
 
-			mPtr = nullptr;
-		}
-	}
+	void					Release()
+							{
+								if (mPtr != nullptr)
+								{
+									mPtr->Release();
+
+									mPtr = nullptr;
+								}
+							}
 
 							operator T*() const	{return mPtr; }
 	T**						operator&()			{ GAssert(mPtr == nullptr); return &mPtr;}
@@ -40,6 +45,12 @@ public:
 	T*						operator=(T* ptr)
 							{
 								GAssert(false);
+								if(ptr != mPtr)
+								{
+									mPtr = ptr;
+									mPtr->AddRef();
+								}
+
 								return *this;
 							}
 

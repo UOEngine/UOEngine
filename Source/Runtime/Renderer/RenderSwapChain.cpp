@@ -2,16 +2,14 @@
 
 #include <d3d12.h>
 #include <dxgi1_6.h>
-#include <wrl/client.h>
 
 #include "Core/Assert.h"
-
+#include "Renderer/D3D12Resource.h"
 #include "Renderer/RenderContext.h"
 #include "Renderer/RenderCommandQueue.h"
 #include "Renderer/RenderDevice.h"
 #include "Renderer/RenderFence.h"
 
-using Microsoft::WRL::ComPtr;
 
 RenderSwapChain::RenderSwapChain()
 {
@@ -23,7 +21,7 @@ RenderSwapChain::RenderSwapChain()
 
 bool RenderSwapChain::Init(const InitParameters& Parameters)
 {
-	ComPtr<IDXGIFactory4> DxgiFactory;
+	TComPtr<IDXGIFactory4> DxgiFactory;
 
 	if (SUCCEEDED(CreateDXGIFactory2(0, IID_PPV_ARGS(&DxgiFactory))) == false)
 	{
@@ -61,7 +59,7 @@ bool RenderSwapChain::Init(const InitParameters& Parameters)
 
 	GAssert(CommandQueue != nullptr);
 
-	ComPtr<IDXGISwapChain1> SwapChain1;
+	TComPtr<IDXGISwapChain1> SwapChain1;
 
 	if (SUCCEEDED(DxgiFactory->CreateSwapChainForHwnd(CommandQueue, WindowHandle, &SwapChainDesc, nullptr, nullptr, &SwapChain1)) == false)
 	{
@@ -126,7 +124,7 @@ void RenderSwapChain::Resize(const IntVector2D& NewExtents)
 
 void RenderSwapChain::Present(RenderCommandContext* CommandContext)
 {
-	CommandContext->TransitionResource(GetBackBufferTexture(CurrentBackBufferIndex)->GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+	CommandContext->TransitionResource(GetBackBufferTexture(CurrentBackBufferIndex)->GetResource()->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 
 	CommandContext->FlushCommands();
 
@@ -144,20 +142,22 @@ void RenderSwapChain::CreateBackBufferTextures()
 	TextureInitParameters.Width = Extents.X;
 	TextureInitParameters.Height = Extents.Y;
 	TextureInitParameters.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	TextureInitParameters.Resource = new D3D12Resource();
 
 	for (int32 i = 0; i < BackBufferCount; i++)
 	{
-		ComPtr<ID3D12Resource> BackBuffer;
+		TComPtr<ID3D12Resource> backbuffer_resource;
 
-		SwapChain->GetBuffer(i, IID_PPV_ARGS(&BackBuffer));
+		SwapChain->GetBuffer(i, IID_PPV_ARGS(&backbuffer_resource));
 
-		TextureInitParameters.Resource = BackBuffer.Get();
+		TextureInitParameters.Resource->mResource = backbuffer_resource;
 
-		TextureInitParameters.Resource->SetName(TEXT("BackBuffer"));
+		TextureInitParameters.Resource->mResource->SetName(TEXT("BackBuffer"));
 
 		BackBufferTextures[i].Release();
 
 		BackBufferTextures[i].Init(TextureInitParameters);
+
 	}
 }
 

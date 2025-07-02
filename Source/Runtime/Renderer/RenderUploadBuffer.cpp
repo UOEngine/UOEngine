@@ -30,7 +30,12 @@ uint8* RenderUploadBuffer::Allocate(uint64 RequestedSize)
 	return allocation;
 }
 
+void RenderUploadBuffer::TempUnmap()
+{
+	mResource->Unmap(0, nullptr);
+}
+
 void RenderUploadBuffer::Flush()
 {
-
+	mResource->Unmap(0, nullptr);
 }

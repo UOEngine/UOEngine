@@ -1,5 +1,6 @@
 #include "Renderer/RenderContext.h"
 
+#include "Renderer/D3D12Resource.h"
 #include "Renderer/D3D12RenderTargetView.h"
 #include "Renderer/RenderCommandList.h"
 #include "Renderer/RenderCommandQueue.h"
@@ -44,7 +45,7 @@ void RenderCommandContext::SetRenderTarget(RenderTexture* Texture)
 {
 	RenderTarget = Texture;
 
-	GetCommandList()->AddTransitionBarrier(RenderTarget->GetResource(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	GetCommandList()->AddTransitionBarrier(RenderTarget->GetResource()->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
 	float ClearColour[4] = {0, 0, 0, 0};
 	uint32 ClearRectCount = 0;

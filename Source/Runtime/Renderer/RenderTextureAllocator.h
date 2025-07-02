@@ -3,6 +3,7 @@
 #include "Core/Containers/Array.h"
 #include "Core/TComPtr.h"
 
+class D3D12Resource;
 struct ID3D12Resource;
 class RenderCommandContext;
 class RenderDevice;
@@ -19,7 +20,7 @@ public:
 
 										RenderTextureAllocator(RenderDevice* InRenderDevice);
 
-	TComPtr<ID3D12Resource>				Allocate(uint32 Width, uint32 Height);
+	D3D12Resource*						Allocate(uint32 Width, uint32 Height);
 
 	void								FlushPendingUploads(RenderCommandContext* Context);
 
