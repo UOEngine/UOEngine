@@ -41,8 +41,7 @@ D3D12Resource* RenderTextureAllocator::Allocate(uint32 Width, uint32 Height)
 
 	D3D12Resource* new_resource = new D3D12Resource();
 
-	new_resource->mResource = resource;
-	new_resource->mDescription = desc;
+	new_resource->SetResource(resource);
 
 	return new_resource;
 }

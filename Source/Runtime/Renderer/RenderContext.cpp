@@ -45,7 +45,7 @@ void RenderCommandContext::SetRenderTarget(RenderTexture* Texture)
 {
 	RenderTarget = Texture;
 
-	GetCommandList()->AddTransitionBarrier(RenderTarget->GetResource()->mResource, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	GetCommandList()->AddTransitionBarrier(RenderTarget->GetResource()->Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
 	float ClearColour[4] = {0, 0, 0, 0};
 	uint32 ClearRectCount = 0;

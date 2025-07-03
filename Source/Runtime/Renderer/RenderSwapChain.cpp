@@ -133,7 +133,7 @@ void RenderSwapChain::Resize(const IntVector2D& NewExtents)
 
 void RenderSwapChain::Present(RenderCommandContext* CommandContext)
 {
-	CommandContext->TransitionResource(GetBackBufferTexture(mCurrentBackBufferIndex)->GetResource()->mResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+	CommandContext->TransitionResource(GetBackBufferTexture(mCurrentBackBufferIndex)->GetResource()->Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 
 	CommandContext->FlushCommands();
 
