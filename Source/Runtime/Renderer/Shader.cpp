@@ -1,20 +1,22 @@
 #include "Renderer/Shader.h"
 
-#include <wrl/client.h>
+#include <d3d12.h>
 #include <dxcapi.h>
 
 #include "Core/FileReader.h"
 
-using namespace Microsoft::WRL;
-
 Shader::Shader(EShaderType InType)
 {
-	Type = InType;
+	mType = InType;
+	mNumSignatureParameters = 0;
+	mNumBoundResources = 0;
 }
 
 bool Shader::Load(const String& FilePath)
 {
 	FileHandle* shader_file = nullptr;
+
+	GAssert(mType != EShaderType::Compute); // Not supported yet.
 
 	if (FileDevice::Open(FilePath, shader_file) == false)
 	{
@@ -36,9 +38,9 @@ bool Shader::Load(const String& FilePath)
 
 	GAssert(shader_contents.Num() > 0);
 
-	ComPtr<IDxcUtils>			dxil_utils;
-	ComPtr<IDxcCompiler3>		dxc_compiler;
-	ComPtr<IDxcIncludeHandler>	dxc_include_header;
+	TComPtr<IDxcUtils>			dxil_utils;
+	TComPtr<IDxcCompiler3>		dxc_compiler;
+	TComPtr<IDxcIncludeHandler>	dxc_include_header;
 
 	// Initialize DXC components
 	DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&dxil_utils));
@@ -46,7 +48,7 @@ bool Shader::Load(const String& FilePath)
 
 	dxil_utils->CreateDefaultIncludeHandler(&dxc_include_header);
 
-	ComPtr<IDxcBlobEncoding> dxc_source_blob;
+	TComPtr<IDxcBlobEncoding> dxc_source_blob;
 
 	HRESULT create_blob_result = dxil_utils->CreateBlobFromPinned(shader_contents.GetData(), shader_contents.Num(), DXC_CP_UTF8, &dxc_source_blob);
 
@@ -58,9 +60,9 @@ bool Shader::Load(const String& FilePath)
 	source_buffer.Size = dxc_source_blob->GetBufferSize();
 	source_buffer.Encoding = DXC_CP_UTF8;
 
-	ComPtr<IDxcResult> compile_result;
+	TComPtr<IDxcResult> compile_result;
 
-	LPCWSTR type_arg = Type == EShaderType::Vertex? L"vs_6_0" : L"ps_6_0";
+	LPCWSTR type_arg = mType == EShaderType::Vertex? L"vs_6_0" : L"ps_6_0";
 
 	TArray<LPCWSTR> Args = 
 	{
@@ -70,15 +72,15 @@ bool Shader::Load(const String& FilePath)
 		L"-Qembed_debug",       // Embed debug info in shader
 	};
 	
-	dxc_compiler->Compile(&source_buffer, Args.GetData(), Args.Num(), dxc_include_header.Get(), IID_PPV_ARGS(&compile_result));
+	dxc_compiler->Compile(&source_buffer, Args.GetData(), Args.Num(), dxc_include_header, IID_PPV_ARGS(&compile_result));
 
-	HRESULT CompileStatus;
+	HRESULT compile_status;
 
-	bool compile_succeded = SUCCEEDED(compile_result->GetStatus(&CompileStatus)) && SUCCEEDED(CompileStatus);
+	bool compile_succeded = SUCCEEDED(compile_result->GetStatus(&compile_status)) && SUCCEEDED(compile_status);
 
 	if(compile_succeded == false)
 	{
-		ComPtr< IDxcBlobEncoding> error_blob;
+		TComPtr< IDxcBlobEncoding> error_blob;
 
 		compile_result->GetErrorBuffer(&error_blob);
 
@@ -95,14 +97,117 @@ bool Shader::Load(const String& FilePath)
 
 	GAssert(compile_result->HasOutput(DXC_OUT_OBJECT));
 
-	ComPtr<IDxcBlob> dxil_blob;
+	TComPtr<IDxcBlob> dxil_blob;
 
 	compile_result->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&dxil_blob), nullptr);
 
-	Dxil.SetNum(dxil_blob->GetBufferSize());
+	mDxil.SetNum(dxil_blob->GetBufferSize());
 
-	Memory::MemCopy(Dxil.GetData(), Dxil.Num(), dxil_blob->GetBufferPointer(), dxil_blob->GetBufferSize());
+	Memory::MemCopy(mDxil.GetData(), mDxil.Num(), dxil_blob->GetBufferPointer(), dxil_blob->GetBufferSize());
+
+	TComPtr<IDxcBlob> reflection_blob;
+
+	compile_result->GetOutput(DXC_OUT_REFLECTION, IID_PPV_ARGS(&reflection_blob), nullptr);
+
+	DxcBuffer reflection_buffer;
+
+	reflection_buffer.Ptr = reflection_blob->GetBufferPointer();
+	reflection_buffer.Size = reflection_blob->GetBufferSize();
+	reflection_buffer.Encoding = DXC_CP_ACP;
+
+	dxil_utils->CreateReflection(&reflection_buffer, IID_PPV_ARGS(&mReflection));
+
+	D3D12_SHADER_DESC shader_desc;
+
+	mReflection->GetDesc(&shader_desc);
+
+	//TArray< D3D12_SIGNATURE_PARAMETER_DESC> signature_descs;
+
+	//signature_descs.SetNum(shader_desc.InputParameters);
+
+	mNumSignatureParameters = shader_desc.InputParameters;
+
+	//for (int32 i = 0; i < shader_desc.InputParameters; i++)
+	//{
+	//	D3D12_SIGNATURE_PARAMETER_DESC& sig_desc = signature_descs[i];
+
+	//	reflection->GetInputParameterDesc(i, &sig_desc);
+
+	//	if (sig_desc.ReadWriteMask != 0)
+	//	{
+
+	//	}
+	//}
+	//
+	mNumBoundResources = shader_desc.BoundResources;
+
+	//mRootParameters.SetNum(mNumBoundResources);
 
 	return true;
 
+}
+
+void Shader::BuildRootSignature(TArray<D3D12_ROOT_PARAMETER1>& OutRootSignatureDescription)
+{
+	D3D12_SHADER_DESC shader_desc;
+
+	mReflection->GetDesc(&shader_desc);
+
+	for (int32 i = 0; i < shader_desc.BoundResources; i++)
+	{
+		D3D12_SHADER_INPUT_BIND_DESC bound_desc;
+
+		mReflection->GetResourceBindingDesc(i, &bound_desc);
+
+		D3D12_ROOT_PARAMETER1 root_parameter = {};
+
+		root_parameter.ShaderVisibility = mType == EShaderType::Vertex ? D3D12_SHADER_VISIBILITY_VERTEX : D3D12_SHADER_VISIBILITY_PIXEL;
+
+		if (bound_desc.Type == D3D_SIT_TEXTURE)
+		{
+			D3D12_DESCRIPTOR_RANGE1 texture_desc_range;
+
+			texture_desc_range.BaseShaderRegister = bound_desc.BindPoint;
+			texture_desc_range.RegisterSpace = bound_desc.Space;
+			texture_desc_range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+			texture_desc_range.NumDescriptors = 1;
+			texture_desc_range.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE;
+			texture_desc_range.OffsetInDescriptorsFromTableStart = 0;
+
+			mDescriptorRanges.Add(texture_desc_range);
+
+			root_parameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+			root_parameter.DescriptorTable.NumDescriptorRanges = 1;
+			root_parameter.DescriptorTable.pDescriptorRanges = &mDescriptorRanges.Last();
+		}
+		else if (bound_desc.Type == D3D_SIT_SAMPLER)
+		{
+			D3D12_DESCRIPTOR_RANGE1 ps_sampler_desc_range;
+
+			ps_sampler_desc_range.BaseShaderRegister = bound_desc.BindPoint;
+			ps_sampler_desc_range.RegisterSpace = bound_desc.Space;
+			ps_sampler_desc_range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
+			ps_sampler_desc_range.NumDescriptors = 1;
+			ps_sampler_desc_range.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE;
+			ps_sampler_desc_range.OffsetInDescriptorsFromTableStart = 0;
+
+			mDescriptorRanges.Add(ps_sampler_desc_range);
+
+			root_parameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+			root_parameter.DescriptorTable.NumDescriptorRanges = 1;
+			root_parameter.DescriptorTable.pDescriptorRanges = &mDescriptorRanges.Last();
+
+		}
+		else if (bound_desc.Type = D3D_SIT_CBUFFER)
+		{
+			GAssert(false);
+		}
+		else
+		{
+			GAssert(false);
+		}
+
+		mRootParameters.Add(root_parameter);
+		OutRootSignatureDescription.Add(root_parameter);
+	}
 }

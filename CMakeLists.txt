@@ -19,6 +19,20 @@ include(${UOENGINE_MAIN_SRC_DIR}/CMake/Win64.cmake)
 set(CMAKE_CONFIGURATION_TYPES "Debug;Development")
 set(CMAKE_BINARY_DIR "${UOENGINE_MAIN_SRC_DIR}/Intermediate")
 
+# /GR-
+# Disables Run-Time Type Information (RTTI) — disables use of dynamic_cast and typeid.
+
+# /Gm-
+# Disables minimal rebuild — it's obsolete and can cause problems with parallel builds.
+
+# /fp:except-
+# Disables floating-point exceptions (makes floating-point behavior faster and less strict).
+
+# /nologo
+# Hides the MSVC startup banner when compiling.
+
+set(CMAKE_CXX_FLAGS "/GR- /Gm- /fp:except /MP /nologo")
+
 file(GLOB_RECURSE cmake_files "${UOENGINE_MAIN_SRC_DIR}/Source/*/CMakeLists.txt")
 
 foreach(cmake_file IN LISTS cmake_files)

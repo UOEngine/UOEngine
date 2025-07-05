@@ -1,7 +1,7 @@
 struct VsToPs
 {
-    float4 colour : COLOR0;
     float4 position : SV_Position;
+    float2 uv: TEXCOORD0;
 };
 
 static const float4 cQuadVertsNDC[4] =
@@ -25,9 +25,9 @@ VsToPs main( uint vid : SV_VertexID )
     VsToPs output;
     
     output.position = cQuadVertsNDC[vid];
-
-    output.colour = 1;
-    output.colour[vid % 3] = 0;
+    output.uv = cQuadUVs[vid];
+    //output.colour = 1;
+    //output.colour[vid % 3] = 0;
     
     return output;
 }

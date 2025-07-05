@@ -33,6 +33,8 @@ public:
 	DataType*				GetData()							{return Data;}
 	DataType*				GetData() const						{return Data;}
 
+	DataType&				Last()								{return Data[NumElements - 1]; }
+
 	void					Copy(const DataType* OtherData, uint32 OtherNumElements);
 
 private:
