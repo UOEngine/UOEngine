@@ -2,6 +2,7 @@
 
 #include "Renderer/D3D12Resource.h"
 #include "Renderer/D3D12RenderTargetView.h"
+#include "Renderer/GpuDescriptorAllocator.h"
 #include "Renderer/RenderCommandList.h"
 #include "Renderer/RenderCommandQueue.h"
 #include "Renderer/RenderDevice.h"
@@ -10,7 +11,7 @@
 
 RenderCommandContext::RenderCommandContext(RenderDevice* InDevice)
 {
-	Device = InDevice;
+	mDevice = InDevice;
 
 	CommandList = nullptr;
 	CommandAllocator = nullptr;
@@ -27,7 +28,7 @@ void RenderCommandContext::Begin()
 
 void RenderCommandContext::End()
 {
-	Device->GetTextureAllocator()->FlushPendingUploads(this);
+	mDevice->GetTextureAllocator()->FlushPendingUploads(this);
 
 	CloseCommandList();
 }
@@ -47,7 +48,7 @@ void RenderCommandContext::SetRenderTarget(RenderTexture* Texture)
 
 	GetCommandList()->AddTransitionBarrier(RenderTarget->GetResource()->Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-	float ClearColour[4] = {0, 0, 0, 0};
+	float ClearColour[4] = { 0.3f, 0.3f, 0.3f, 0.f };
 	uint32 ClearRectCount = 0;
 	D3D12_RECT* ClearRects = nullptr;
 
@@ -94,11 +95,33 @@ void RenderCommandContext::SetViewport(uint32 Width, uint32 Height)
 	GetGraphicsCommandList()->RSSetScissorRects(1, &scissor);
 }
 
+void RenderCommandContext::SetShaderBindingData(RenderTexture* inTexture)
+{
+	static int32 count = 0;
+
+	count++;
+
+	if (count % 3 == 0)
+	{
+		mDevice->GetSrvGpuDescriptorAllocator()->Reset();
+	}
+
+	DescriptorTable table = mDevice->GetSrvGpuDescriptorAllocator()->Allocate();
+
+	mDevice->GetDevice()->CopyDescriptorsSimple(1, table.mCpuHandle, inTexture->GetSrv(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	ID3D12DescriptorHeap* heaps[] = {mDevice->GetSrvGpuDescriptorAllocator()->GetHeap()};
+	//TComPtr<ID3D12DescriptorHeap> heap = mDevice->GetSrvGpuDescriptorAllocator()->GetHeap();
+
+	CommandList->GetGraphicsCommandList()->SetDescriptorHeaps(1, heaps);
+	CommandList->GetGraphicsCommandList()->SetGraphicsRootDescriptorTable(0, table.mGpuHandle);
+}
+
 void RenderCommandContext::FlushCommands()
 {
 	CloseCommandList();
 
-	Device->GetQueue(QueueType)->ExecuteCommandList();
+	mDevice->GetQueue(QueueType)->ExecuteCommandList();
 }
 
 void RenderCommandContext::Draw()
@@ -118,7 +141,7 @@ RenderCommandList* RenderCommandContext::GetCommandList()
 
 void RenderCommandContext::OpenCommandList()
 {
-	CommandList = Device->GetQueue(QueueType)->GetCommandList();
+	CommandList = mDevice->GetQueue(QueueType)->GetCommandList();
 
 	CommandList->Reset();
 }

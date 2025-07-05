@@ -18,8 +18,8 @@ D3D12Resource* RenderTextureAllocator::Allocate(uint32 Width, uint32 Height)
 	heap_properties.Type = D3D12_HEAP_TYPE_DEFAULT;
 	heap_properties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
 	heap_properties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-	heap_properties.CreationNodeMask = 1;
-	heap_properties.VisibleNodeMask = 1;
+	heap_properties.CreationNodeMask = 0;
+	heap_properties.VisibleNodeMask = 0;
 
 	D3D12_RESOURCE_DESC desc = {};
 

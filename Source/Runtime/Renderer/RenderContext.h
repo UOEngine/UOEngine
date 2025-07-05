@@ -36,6 +36,8 @@ public:
 
 	void							SetViewport(uint32 Width, uint32 Height);
 
+	void							SetShaderBindingData(RenderTexture* inTexture);
+
 	void							CopyTexture();
 
 	void							FlushCommands();
@@ -58,7 +60,7 @@ private:
 
 	RenderCommandAllocator*			CommandAllocator;
 
-	RenderDevice*					Device;
+	RenderDevice*					mDevice;
 
 	ERenderQueueType				QueueType;
 

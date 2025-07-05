@@ -31,3 +31,8 @@ void Memory::MemCopy(void* Destination, uint32 DestinationSize, void* Source, ui
 {
 	memcpy_s(Destination, DestinationSize, Source, SourceSize);
 }
+
+void Memory::MemSet(void* Destination, uint32 DestinationSize, uint64 Value)
+{
+	memset(Destination, Value, DestinationSize);
+}

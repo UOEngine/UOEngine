@@ -121,30 +121,10 @@ bool Shader::Load(const String& FilePath)
 
 	mReflection->GetDesc(&shader_desc);
 
-	//TArray< D3D12_SIGNATURE_PARAMETER_DESC> signature_descs;
-
-	//signature_descs.SetNum(shader_desc.InputParameters);
-
 	mNumSignatureParameters = shader_desc.InputParameters;
-
-	//for (int32 i = 0; i < shader_desc.InputParameters; i++)
-	//{
-	//	D3D12_SIGNATURE_PARAMETER_DESC& sig_desc = signature_descs[i];
-
-	//	reflection->GetInputParameterDesc(i, &sig_desc);
-
-	//	if (sig_desc.ReadWriteMask != 0)
-	//	{
-
-	//	}
-	//}
-	//
 	mNumBoundResources = shader_desc.BoundResources;
 
-	//mRootParameters.SetNum(mNumBoundResources);
-
 	return true;
-
 }
 
 void Shader::BuildRootSignature(TArray<D3D12_ROOT_PARAMETER1>& OutRootSignatureDescription)
@@ -182,20 +162,21 @@ void Shader::BuildRootSignature(TArray<D3D12_ROOT_PARAMETER1>& OutRootSignatureD
 		}
 		else if (bound_desc.Type == D3D_SIT_SAMPLER)
 		{
-			D3D12_DESCRIPTOR_RANGE1 ps_sampler_desc_range;
+			continue;
+			//D3D12_DESCRIPTOR_RANGE1 ps_sampler_desc_range;
 
-			ps_sampler_desc_range.BaseShaderRegister = bound_desc.BindPoint;
-			ps_sampler_desc_range.RegisterSpace = bound_desc.Space;
-			ps_sampler_desc_range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
-			ps_sampler_desc_range.NumDescriptors = 1;
-			ps_sampler_desc_range.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE;
-			ps_sampler_desc_range.OffsetInDescriptorsFromTableStart = 0;
+			//ps_sampler_desc_range.BaseShaderRegister = bound_desc.BindPoint;
+			//ps_sampler_desc_range.RegisterSpace = bound_desc.Space;
+			//ps_sampler_desc_range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
+			//ps_sampler_desc_range.NumDescriptors = 1;
+			//ps_sampler_desc_range.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE;
+			//ps_sampler_desc_range.OffsetInDescriptorsFromTableStart = 0;
 
-			mDescriptorRanges.Add(ps_sampler_desc_range);
+			//mDescriptorRanges.Add(ps_sampler_desc_range);
 
-			root_parameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-			root_parameter.DescriptorTable.NumDescriptorRanges = 1;
-			root_parameter.DescriptorTable.pDescriptorRanges = &mDescriptorRanges.Last();
+			//root_parameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+			//root_parameter.DescriptorTable.NumDescriptorRanges = 1;
+			//root_parameter.DescriptorTable.pDescriptorRanges = &mDescriptorRanges.Last();
 
 		}
 		else if (bound_desc.Type = D3D_SIT_CBUFFER)
