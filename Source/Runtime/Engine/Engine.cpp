@@ -1,8 +1,6 @@
 #include "Engine.h"
 
 #include "Core/Assert.h"
-#include "DotNet/DotNet.h"
-#include "Engine/EngineGlobals.h"
 #include "Engine/Window.h"
 #include "LivePP/LivePP.h"
 #include "Renderer/Renderer.h"
@@ -11,47 +9,43 @@ Engine GEngine;
 
 Engine::Engine()
 {
+	mGameWindow = nullptr;
 }
 
 bool Engine::Init()
 {
-	LivePP LivePPInstance;
+	//LivePP LivePPInstance;
 
 	IPlatformWindow::CreateParameters CreateParameters;
 
-	GameWindow = IPlatformWindow::Create(CreateParameters);
+	mGameWindow = IPlatformWindow::Create(CreateParameters);
 
 	Renderer::InitParameters RendererParameters = {};
 
-	RendererParameters.ViewportExtents = GameWindow->GetExtents();
-	RendererParameters.WindowHandle = GameWindow->GetHandle();
+	RendererParameters.ViewportExtents = mGameWindow->GetExtents();
+	RendererParameters.WindowHandle = mGameWindow->GetHandle();
 
 	if (GRenderer.Initialise(RendererParameters) == false)
 	{
 		GAssert(false);
 	}
 
-	GameWindow->SetVisible(true);
-
-	if (DotNet::sGet().Init() == false)
-	{
-		GAssert(false);
-	}
+	mGameWindow->SetVisible(true);
 
 	return true;
-
 }
 
-void Engine::Run()
+void Engine::Shutdown()
 {
-	while (EngineGlobals::IsRequestingExit() == false)
-	{
-		GameWindow->PollEvents();
-
-		DotNet::sGet().ManagedUpdate(0.0f);
-
-		GRenderer.RenderFrame(GameWindow->GetExtents());
-	}
-
 	GRenderer.Shutdown();
+}
+
+void Engine::PreUpdate()
+{
+	mGameWindow->PollEvents();
+}
+
+void Engine::PostUpdate()
+{
+	GRenderer.RenderFrame(mGameWindow->GetExtents());
 }

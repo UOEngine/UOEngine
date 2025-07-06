@@ -13,6 +13,21 @@
 	<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 	<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
 	<UseCommonOutputDirectory>true</UseCommonOutputDirectory>
+	<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+	<OutputType>Exe</OutputType>
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IsAotCompatible>False</IsAotCompatible>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IsAotCompatible>False</IsAotCompatible>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Intermediate\Win64\Source\Runtime\Engine\Engine.vcxproj" />
+    <ProjectReference Include="..\..\Intermediate\Win64\Source\Runtime\NativeInterop\NativeInterop.vcxproj" />
+  </ItemGroup>
 
 </Project>

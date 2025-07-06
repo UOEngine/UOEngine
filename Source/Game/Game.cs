@@ -3,34 +3,48 @@ using System.Runtime.InteropServices;
 
 namespace UOEngine
 {
-    public class Game
+    internal class Engine
     {
-        [UnmanagedCallersOnly]
-        static public int NativeInitialise()
+        public Engine(IUOEngineApp app) 
         {
-            game = new Game();
-
-            return game.Initalise()? 1: 0;
+            _app = app;
         }
 
-        virtual public bool Initalise()
+        public int Run(string[] args)
         {
-            Debug.WriteLine($"Game.Initialise: Start");
+            int code = NativeMethods.EngineInit();
 
+            if (code != 0)
+            {
+                return code;
+            }
+
+            if (_app.Initialise() == false)
+            {
+                return 1;
+            }
+
+            while (NativeMethods.EnginePreUpdate() == 1)
+            {
+                float deltaTime = 0.0f;
+
+                _app.Update(deltaTime);
+
+                NativeMethods.EnginePostUpdate();
+            }
+
+            NativeMethods.EngineShutdown();
+
+            return 0;
+        }
+
+        protected virtual void Update(float deltaTime) { }
+
+        protected virtual bool Initialise()
+        {
             return true;
         }
 
-        public void Update(float tick)
-        {
-            Console.WriteLine($"Tick {tick}");
-        }
-
-        [UnmanagedCallersOnly]
-        static public void NativeUpdate(float tick)
-        {
-            game.Update(tick);
-        }
-
-        private static Game game = null;
+        IUOEngineApp _app;
     }
 }

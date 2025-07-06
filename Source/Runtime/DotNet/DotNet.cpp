@@ -107,16 +107,32 @@ bool DotNet::Init()
 		return false;
 	}
 
-	String config_path;
+	//String config_path;
+	
+	// Hard coding these for now.
+	const wchar_t* config_path = L"D:\\UODev\\UOEngineGitHub\\Intermediate\\Win64\\Binaries\\x64\\Debug\\x64\\Debug\\UOEngine.runtimeconfig.json";
+	const char_t* assembly_path = L"D:\\UODev\\UOEngineGitHub\\Intermediate\\Win64\\Binaries\\x64\\Debug\\x64\\Debug\\UOEngine.dll";
 
-	//load_assembly_and_get_function_pointer_fn LoadAssemblyAndGetFunctionPointerFunction = GetDotNetLoadAssembly(config_path.ToCString());
+	load_assembly_and_get_function_pointer_fn LoadAssemblyAndGetFunctionPointerFunction = GetDotNetLoadAssembly(config_path);
 
-	//String assembly_path;
+	HRESULT native_initialise_result = LoadAssemblyAndGetFunctionPointerFunction(assembly_path, TEXT("UOEngine.Game, UOEngine"), TEXT("NativeInitialise"), UNMANAGEDCALLERSONLY_METHOD, nullptr, (void**)&mGameInitialise);
+	HRESULT game_update_result = LoadAssemblyAndGetFunctionPointerFunction(assembly_path, TEXT("UOEngine.Game, UOEngine"), TEXT("NativeUpdate"), UNMANAGEDCALLERSONLY_METHOD, nullptr, (void**)&mGameUpdate);
 
-	//HRESULT native_initialise_result = LoadAssemblyAndGetFunctionPointerFunction(assembly_path.ToCString(), TEXT("UOEngine.Game, UOEngine"), TEXT("NativeInitialise"), UNMANAGEDCALLERSONLY_METHOD, nullptr, (void**)&mGameInitialise);
-	//HRESULT game_update_result = LoadAssemblyAndGetFunctionPointerFunction(assembly_path.c_str(), TEXT("UOEngine.Game, UOEngine"), TEXT("NativeUpdate"), UNMANAGEDCALLERSONLY_METHOD, nullptr, (void**)&mGameUpdate);
+	if (FAILED(native_initialise_result) || FAILED(game_update_result))
+	{
+		GAssert(false);
 
-	//mGameInitialise();
+		return false;
+	}
+
+	bool init_okay = mGameInitialise();
+
+	if (init_okay == false)
+	{
+		GAssert(false);
+
+		return false;
+	}
 
 	return true;
 }

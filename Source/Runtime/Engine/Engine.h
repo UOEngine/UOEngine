@@ -1,5 +1,6 @@
  #pragma once
 
+#include "Engine/EngineGlobals.h"
  #include "Core/Types.h"
 
  class IPlatformWindow;
@@ -12,14 +13,16 @@ public:
 						Engine();
 
 	bool				Init();
+	void				Shutdown();
 
-	void				Run();
+	void				PreUpdate();
+	void				PostUpdate();
 
 	int					GetReturnCode() {return 0;}
 
 private:
 
-	IPlatformWindow*	GameWindow;
+	IPlatformWindow*	mGameWindow;
 };
 
 extern Engine GEngine;

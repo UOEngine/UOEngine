@@ -48,6 +48,21 @@ function(uoengine_add_library TARGET)
 
 endfunction()
 
+function(uoengine_add_shared_library TARGET)
+
+    file(GLOB_RECURSE UOENGINE_SOURCE_FILES
+        "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/*.h"
+    )
+
+    add_library(${TARGET} SHARED ${UOENGINE_SOURCE_FILES} ${ARGN})
+
+    set_target_properties(${TARGET} PROPERTIES LINKER_LANGUAGE CXX)
+
+    uoengine_common(${TARGET})
+
+endfunction()
+
 function(uoengine_add_csharp TARGET)
 
 #file(GLOB_RECURSE source_files
