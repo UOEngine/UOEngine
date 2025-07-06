@@ -3,6 +3,7 @@
 #include <initializer_list>
 
 #include "Core/Assert.h"
+#include "Core/Containers/Span.h"
 #include "Core/Types.h"
 
 template <typename DataType>
@@ -36,6 +37,20 @@ public:
 	DataType&				Last()								{return Data[NumElements - 1]; }
 
 	void					Copy(const DataType* OtherData, uint32 OtherNumElements);
+	
+	template<class T>
+	TSpan<T>				AsSpan()
+							{
+								uint64 size_of_new_type = sizeof(T);
+								uint64 size_of_old_type = sizeof(DataType);
+								uint64 conversion = size_of_old_type / size_of_new_type;
+
+								GAssert(conversion > 0); // Fix later when new type > old type.
+
+								uint64 new_size = conversion * NumElements;
+
+								return TSpan<T>((T*)Data, new_size);
+							}
 
 private:
 
