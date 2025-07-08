@@ -23,7 +23,7 @@ namespace UOEngine
         {
             fixed(Colour* colour = pixels.Span)
             {
-                NativeMethods.SetTextureInitialData(nativeHandle, colour, pixels.Span.Length);
+                //NativeMethods.SetTextureInitialData(nativeHandle, colour, pixels.Span.Length);
 
             }
         }

@@ -21,9 +21,9 @@ public:
 	void								Init(RenderDevice* inRenderDevice, D3D12_DESCRIPTOR_HEAP_TYPE inHeapType, uint32 inNumDescriptors);
 
 	DescriptorTable						Allocate();
-	void								Reset() {mCurrentOffset = 0;}
+	void								Reset()		{mCurrentOffset = 0;}
 
-	TComPtr<ID3D12DescriptorHeap>		GetHeap() {return mDescriptorHeap;}
+	TComPtr<ID3D12DescriptorHeap>		GetHeap()	{return mDescriptorHeap;}
 private:
 
 	TComPtr<ID3D12DescriptorHeap>		mDescriptorHeap;

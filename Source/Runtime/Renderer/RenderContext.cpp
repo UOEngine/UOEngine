@@ -97,21 +97,11 @@ void RenderCommandContext::SetViewport(uint32 Width, uint32 Height)
 
 void RenderCommandContext::SetShaderBindingData(RenderTexture* inTexture)
 {
-	static int32 count = 0;
-
-	count++;
-
-	if (count % 3 == 0)
-	{
-		mDevice->GetSrvGpuDescriptorAllocator()->Reset();
-	}
-
 	DescriptorTable table = mDevice->GetSrvGpuDescriptorAllocator()->Allocate();
 
 	mDevice->GetDevice()->CopyDescriptorsSimple(1, table.mCpuHandle, inTexture->GetSrv(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	ID3D12DescriptorHeap* heaps[] = {mDevice->GetSrvGpuDescriptorAllocator()->GetHeap()};
-	//TComPtr<ID3D12DescriptorHeap> heap = mDevice->GetSrvGpuDescriptorAllocator()->GetHeap();
 
 	CommandList->GetGraphicsCommandList()->SetDescriptorHeaps(1, heaps);
 	CommandList->GetGraphicsCommandList()->SetGraphicsRootDescriptorTable(0, table.mGpuHandle);

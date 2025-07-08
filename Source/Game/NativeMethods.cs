@@ -10,7 +10,6 @@ namespace UOEngine
         [LibraryImport("UOEngine.Native.dll")]
         public unsafe static partial void SetTextureInitialData(UIntPtr texture, Colour* pixels, int length);
 
-
         [LibraryImport("UOEngine.Native.dll")]
         public static partial int EngineInit();
 
