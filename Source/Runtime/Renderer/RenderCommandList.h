@@ -3,6 +3,7 @@
 #include "Core/Types.h"
 
 class RenderCommandAllocator;
+class RenderDevice;
 enum D3D12_RESOURCE_STATES;
 enum class ERenderQueueType : uint8;
 struct ID3D12GraphicsCommandList;
@@ -12,7 +13,7 @@ class RenderCommandList
 {
 public:
 
-								RenderCommandList(RenderCommandAllocator* CommandAllocator);
+								RenderCommandList(ERenderQueueType inQueueType, RenderDevice* inDevice);
 
 	void						Close();
 
@@ -20,24 +21,24 @@ public:
 
 	void						ClearRenderTarget(ID3D12Resource* Resource);
 
-	bool						IsOpen() const					{return bClosed == false;}
-	bool						IsClosed() const				{return bClosed;}
+	bool						IsOpen() const											{return bClosed == false;}
+	bool						IsClosed() const										{return bClosed;}
 
-	void						Reset();
+	void						Reset(RenderCommandAllocator* inCommandAllocator);
 
-	ID3D12GraphicsCommandList*	GetGraphicsCommandList() 	{return CommandList;}
+	ID3D12GraphicsCommandList*	GetGraphicsCommandList() 								{return mCommandList;}
 
-	RenderCommandAllocator*		GetCommandAllocator() const {return CommandAllocator;}
+	RenderCommandAllocator*		GetAndClearCommandAllocator();
 
 	void						CopyTextureRegion();
 
 private:
 
-	ERenderQueueType			QueueType;
+	ERenderQueueType			mQueueType;
 
-	RenderCommandAllocator*		CommandAllocator;
+	RenderCommandAllocator*		mCommandAllocator;
 
-	ID3D12GraphicsCommandList*	CommandList;
+	ID3D12GraphicsCommandList*	mCommandList;
 
 	bool						bClosed;
 };

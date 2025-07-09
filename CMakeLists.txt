@@ -6,7 +6,8 @@ project(UOEngine VERSION 0.0
 set(CMAKE_CXX_STANDARD 20)        # Set the standard
 set(CMAKE_CXX_STANDARD_REQUIRED ON)  # Enforce the standard
 
-option(USE_LIVEPP "Enable Live++ support")
+option(USE_LIVEPP    "Enable Live++ support")
+option(ENABLE_ASAN   "Enable address sanitiser (ASAN)" OFF)
 
 cmake_policy(SET CMP0141 NEW)
 
@@ -18,6 +19,8 @@ include(${UOENGINE_MAIN_SRC_DIR}/CMake/Win64.cmake)
 
 set(CMAKE_CONFIGURATION_TYPES "Debug;Development")
 set(CMAKE_BINARY_DIR "${UOENGINE_MAIN_SRC_DIR}/Intermediate")
+
+
 
 # /GR-
 # Disables Run-Time Type Information (RTTI) — disables use of dynamic_cast and typeid.
@@ -32,6 +35,11 @@ set(CMAKE_BINARY_DIR "${UOENGINE_MAIN_SRC_DIR}/Intermediate")
 # Hides the MSVC startup banner when compiling.
 
 set(CMAKE_CXX_FLAGS "/GR- /Gm- /fp:except /MP /nologo")
+
+if(ENABLE_ASAN)
+    #message(STATUS "Using ASAN.")
+    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /fsanitize=address")
+endif()
 
 file(GLOB_RECURSE cmake_files "${UOENGINE_MAIN_SRC_DIR}/Source/*/CMakeLists.txt")
 

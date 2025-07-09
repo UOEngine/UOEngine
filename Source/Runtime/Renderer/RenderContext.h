@@ -56,7 +56,7 @@ private:
 	void							AddTransitionBarrier(D3D12RenderTargetView* Texture, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After);
 
 	// The active command list.
-	RenderCommandList*				CommandList;
+	RenderCommandList*				mCommandList;
 
 	RenderCommandAllocator*			CommandAllocator;
 

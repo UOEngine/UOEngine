@@ -129,3 +129,25 @@ void TArray<DataType>::Copy(const DataType* OtherData, uint32 OtherNumElements)
 	Memory::MemCopy((void*)Data, SizeInBytes, (void*)OtherData, SizeInBytes);
 
 }
+
+template <typename DataType>
+void TArray<DataType>::RemoveAt(int32 inIndex, bool inbShrink)
+{
+	uint32 num_to_move = 1;
+
+	if (Num() > 1)
+	{
+		Move(inIndex + 1, inIndex, num_to_move);
+	}
+
+	NumElements--;
+}
+
+template <typename DataType>
+void TArray<DataType>::Move(int32 inIndexFrom, int32 inStartIndex, uint32 inNumElements)
+{
+	for (uint32 i = 0; i < NumElements; i++)
+	{
+		Data[inStartIndex + i] = Data[inIndexFrom + i];
+	}
+}

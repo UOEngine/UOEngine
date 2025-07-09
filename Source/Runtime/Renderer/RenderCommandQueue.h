@@ -23,32 +23,39 @@ public:
 
 	void									WaitUntilIdle();
 
-	void									ExecuteCommandList();
+	void									ExecuteCommandList(RenderCommandList* inCommandList);
 
-	ID3D12CommandQueue*						GetQueue() const			{return CommandQueue;}
+	ID3D12CommandQueue*						GetQueue() const			{return mCommandQueue;}
 
-	RenderDevice*							GetDevice() const			{return Device;}
+	RenderDevice*							GetDevice() const			{return mDevice;}
 
-	RenderCommandAllocator*					GetFreeCommandAllocator();
-	RenderCommandList*						GetCommandList();
+	//RenderCommandAllocator*					GetFreeCommandAllocator();
+	//RenderCommandList*						GetCommandList();
+
+	RenderCommandList*						CreateCommandList();
 
 private:
 
-	ID3D12CommandQueue*						CommandQueue;
-	ERenderQueueType						QueueType;
+	ID3D12CommandQueue*						mCommandQueue;
+	ERenderQueueType						mQueueType;
 
-	RenderDevice*							Device;
+	RenderDevice*							mDevice;
 
 	struct CommandAllocatorEntry
 	{
 		RenderCommandAllocator*	CommandAllocator = nullptr;
+		RenderCommandList*		mCommandList;
 		ID3D12Fence*			Fence = nullptr;
 		uint64					FenceValue = 0;
 	};
 
-	TArray<CommandAllocatorEntry>			CommandAllocatorQueue;
+	//TArray<CommandAllocatorEntry>			CommandAllocatorQueue;
 
-	RenderCommandList*						mCommandList;
+	RenderCommandList*						mActiveCommandList;
+
+	TArray<RenderCommandList*>				mCommandLists;
+
+	TArray<CommandAllocatorEntry>			mFreeCommandAllocators;
 
 	// Fence for the queue doing work.
 	ID3D12Fence*							Fence;

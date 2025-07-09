@@ -1,8 +1,11 @@
 #include "Engine.h"
 
+#include <windows.h>
+
 #include "Core/Assert.h"
 #include "Engine/Window.h"
 #include "LivePP/LivePP.h"
+#include "Memory/MemoryAllocator.h"
 #include "Renderer/Renderer.h"
 
 Engine GEngine;
@@ -48,4 +51,16 @@ void Engine::PreUpdate()
 void Engine::PostUpdate()
 {
 	GRenderer.RenderFrame(mGameWindow->GetExtents());
+}
+
+void Engine::Run()
+{
+	while (EngineGlobals::IsRequestingExit() == false)
+	{
+		uint64 total_allocation = MemoryAllocator::Get().GetTotalAllocationSizeBytes();
+
+		PreUpdate();
+		PostUpdate();
+
+	}
 }

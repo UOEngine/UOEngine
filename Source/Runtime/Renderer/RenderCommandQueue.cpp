@@ -11,9 +11,9 @@
 
 RenderCommandQueue::RenderCommandQueue(ERenderQueueType InQueueType)
 {
-	CommandQueue = nullptr;
-	QueueType = InQueueType;
-	mCommandList = nullptr;
+	mCommandQueue = nullptr;
+	mQueueType = InQueueType;
+	mActiveCommandList = nullptr;
 
 	Fence = nullptr;
 	FenceValue = 0;
@@ -22,9 +22,9 @@ RenderCommandQueue::RenderCommandQueue(ERenderQueueType InQueueType)
 
 void RenderCommandQueue::Create(RenderDevice* InDevice)
 {
-	Device = InDevice;
+	mDevice = InDevice;
 
-	D3D12_COMMAND_LIST_TYPE		Type = RenderQueueTypeToCommandListType(QueueType);
+	D3D12_COMMAND_LIST_TYPE		Type = RenderQueueTypeToCommandListType(mQueueType);
 
 	D3D12_COMMAND_QUEUE_DESC QueueDesc = {};
 
@@ -32,31 +32,31 @@ void RenderCommandQueue::Create(RenderDevice* InDevice)
 	QueueDesc.Type = Type;
 	QueueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
 
-	if (SUCCEEDED(Device->GetDevice()->CreateCommandQueue(&QueueDesc, IID_PPV_ARGS(&CommandQueue))) == false)
+	if (SUCCEEDED(mDevice->GetDevice()->CreateCommandQueue(&QueueDesc, IID_PPV_ARGS(&mCommandQueue))) == false)
 	{
 		GAssert(false);
 	}
 
-	CommandQueue->SetName(TEXT("CommandQueue"));
+	mCommandQueue->SetName(TEXT("CommandQueue"));
 
-	for (int32 i = 0; i < CommandAllocatorQueue.GetCapacity(); i++)
-	{
-		CommandAllocatorQueue.Add(CommandAllocatorEntry{});
-	}
+	//for (int32 i = 0; i < CommandAllocatorQueue.GetCapacity(); i++)
+	//{
+	//	CommandAllocatorQueue.Add(CommandAllocatorEntry{});
+	//}
 
-	Fence = Device->CreateFence();
+	Fence = mDevice->CreateFence();
 	FenceEvent = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
 
-	mCommandList = new RenderCommandList(GetFreeCommandAllocator());
+	//mActiveCommandList = new RenderCommandList(GetFreeCommandAllocator());
 }
 
 void RenderCommandQueue::WaitUntilIdle()
 {
 	// Dirty but for now ...
 
-	TComPtr<ID3D12Fence> wait_until_idle_fence =  Device->CreateFence();
+	TComPtr<ID3D12Fence> wait_until_idle_fence =  mDevice->CreateFence();
 
-	CommandQueue->Signal(wait_until_idle_fence, 1);
+	mCommandQueue->Signal(wait_until_idle_fence, 1);
 
 	while (wait_until_idle_fence->GetCompletedValue() < 1)
 	{
@@ -64,61 +64,113 @@ void RenderCommandQueue::WaitUntilIdle()
 	}
 }
 
-void RenderCommandQueue::ExecuteCommandList()
+void RenderCommandQueue::ExecuteCommandList(RenderCommandList* inCommandList)
 {
-	GAssert(mCommandList->IsClosed());
+	GAssert(inCommandList != nullptr);
+	GAssert(inCommandList->IsClosed());
 
-	ID3D12CommandList* const CommandLists[] = {mCommandList->GetGraphicsCommandList()};
+	ID3D12CommandList* const command_lists[] = { inCommandList->GetGraphicsCommandList() };
 
-	CommandQueue->ExecuteCommandLists(1, CommandLists);
+	mCommandQueue->ExecuteCommandLists(1, command_lists);
 
 	FenceValue++;
 
-	CommandQueue->Signal(Fence, FenceValue);
+	mCommandQueue->Signal(Fence, FenceValue);
 
-	for (int32 i = 0; i < CommandAllocatorQueue.Num(); i++)
-	{
-		CommandAllocatorEntry& Entry = CommandAllocatorQueue[i];
+	CommandAllocatorEntry new_entry;
 
-		if (Entry.CommandAllocator == mCommandList->GetCommandAllocator())
-		{
-			Entry.FenceValue = FenceValue;
-		}
-	}
+	new_entry.mCommandList = inCommandList;
+	new_entry.FenceValue = FenceValue;
+	new_entry.CommandAllocator = inCommandList->GetAndClearCommandAllocator();
+
+	mFreeCommandAllocators.Add(new_entry);
+
+	//for (int32 i = 0; i < CommandAllocatorQueue.Num(); i++)
+	//{
+	//	CommandAllocatorEntry& Entry = CommandAllocatorQueue[i];
+
+	//	if (Entry.CommandAllocator == mActiveCommandList->GetCommandAllocator())
+	//	{
+	//		Entry.FenceValue = FenceValue;
+	//	}
+	//}
 
 }
 
-RenderCommandAllocator* RenderCommandQueue::GetFreeCommandAllocator()
+//RenderCommandAllocator* RenderCommandQueue::GetFreeCommandAllocator()
+//{
+//	for (int32 i = 0; i < CommandAllocatorQueue.Num(); i++)
+//	{
+//		CommandAllocatorEntry& Entry = CommandAllocatorQueue[i];
+//
+//		if (Entry.CommandAllocator == nullptr)
+//		{
+//			Entry.CommandAllocator = new RenderCommandAllocator(Device, QueueType);
+//
+//			Entry.Fence = Device->CreateFence();
+//
+//			CommandAllocatorQueue[i] = Entry;
+//
+//			return Entry.CommandAllocator;
+//		}
+//
+//		if (Fence->GetCompletedValue() >= Entry.FenceValue)
+//		{
+//			Entry.CommandAllocator->Reset();
+//
+//			return Entry.CommandAllocator;
+//		}
+//	}
+//
+//	GAssert(false);
+//
+//	return nullptr;
+//}
+
+//RenderCommandList* RenderCommandQueue::GetCommandList()
+//{
+//	return mActiveCommandList;
+//}
+
+RenderCommandList* RenderCommandQueue::CreateCommandList()
 {
-	for (int32 i = 0; i < CommandAllocatorQueue.Num(); i++)
+	RenderCommandList* command_list = nullptr;
+	RenderCommandAllocator* command_allocator = nullptr;
+
+	int32 free_command_allocator_index = -1;
+
+	for (int32 i = 0; i < mFreeCommandAllocators.Num(); i++)
 	{
-		CommandAllocatorEntry& Entry = CommandAllocatorQueue[i];
-
-		if (Entry.CommandAllocator == nullptr)
+		if (Fence->GetCompletedValue() >= mFreeCommandAllocators[i].FenceValue)
 		{
-			Entry.CommandAllocator = new RenderCommandAllocator(Device, QueueType);
+			free_command_allocator_index = i;
 
-			Entry.Fence = Device->CreateFence();
-
-			CommandAllocatorQueue[i] = Entry;
-
-			return Entry.CommandAllocator;
-		}
-
-		if (Fence->GetCompletedValue() >= Entry.FenceValue)
-		{
-			Entry.CommandAllocator->Reset();
-
-			return Entry.CommandAllocator;
+			break;
 		}
 	}
 
-	GAssert(false);
+	if (free_command_allocator_index >= 0)
+	{
+		CommandAllocatorEntry& free_entry = mFreeCommandAllocators[free_command_allocator_index];
 
-	return nullptr;
-}
+		command_list = free_entry.mCommandList;
+		command_allocator = free_entry.CommandAllocator;
 
-RenderCommandList* RenderCommandQueue::GetCommandList()
-{
-	return mCommandList;
+		mFreeCommandAllocators.RemoveAt(free_command_allocator_index, false);
+	}
+
+	if (command_allocator != nullptr)
+	{
+		command_allocator->Reset();
+		command_list->Reset(command_allocator);
+
+		return command_list;
+	}
+
+	RenderCommandAllocator* new_command_allocator = new RenderCommandAllocator(mDevice, mQueueType);
+	RenderCommandList* new_command_list = new RenderCommandList(mQueueType, mDevice);
+
+	new_command_list->Reset(new_command_allocator);
+
+	return new_command_list;
 }

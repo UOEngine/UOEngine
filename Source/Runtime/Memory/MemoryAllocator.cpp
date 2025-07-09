@@ -21,7 +21,7 @@ void* MemoryAllocator::Allocate(uint64 SizeInBytes)
 {
 	void* Data = mi_malloc(SizeInBytes);
 
-	TotalAllocationSizeBytes += SizeInBytes;
+	mTotalAllocationSizeBytes += SizeInBytes;
 
 	return Data;
 }
@@ -30,11 +30,11 @@ void* MemoryAllocator::Reallocate(void* Data, uint64 NewSizeInBytes)
 {
 	uint64 OldSizeOfDataBytes = mi_usable_size(Data);
 
-	TotalAllocationSizeBytes -= OldSizeOfDataBytes;
+	mTotalAllocationSizeBytes -= OldSizeOfDataBytes;
 
 	void* NewData = mi_realloc(Data, NewSizeInBytes);
 
-	TotalAllocationSizeBytes += NewSizeInBytes;
+	mTotalAllocationSizeBytes += NewSizeInBytes;
 
 	return NewData;
 }
@@ -45,7 +45,7 @@ void MemoryAllocator::Free(void* Data)
 
 	mi_free(Data);
 
-	TotalAllocationSizeBytes -= SizeOfDataBytes;
+	mTotalAllocationSizeBytes -= SizeOfDataBytes;
 }
 
 void MemoryAllocator::ErrorHandler(int32 Error, void* Arg)

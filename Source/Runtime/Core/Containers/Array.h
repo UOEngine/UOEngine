@@ -22,6 +22,7 @@ public:
 	const DataType&			operator[](int32 Index) const;
 
 	int32					Add(const DataType& NewElement);
+	DataType&				AddEmpty();
 
 	uint32					GetCapacity() const					{ return Capacity;}
 
@@ -51,6 +52,10 @@ public:
 
 								return TSpan<T>((T*)Data, new_size);
 							}
+
+	void					RemoveAt(int32 Index, bool inbShrink);
+
+	void					Move(int32 inIndexFrom, int32 inStartIndex, uint32 inNumElements);
 
 private:
 

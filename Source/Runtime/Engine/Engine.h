@@ -18,6 +18,8 @@ public:
 	void				PreUpdate();
 	void				PostUpdate();
 
+	void				Run();
+
 	int					GetReturnCode() {return 0;}
 
 private:

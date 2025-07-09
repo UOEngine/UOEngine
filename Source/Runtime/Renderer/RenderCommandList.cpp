@@ -4,17 +4,16 @@
 #include "Renderer/RenderCommandQueue.h"
 #include "Renderer/RenderDevice.h"
 
-RenderCommandList::RenderCommandList(RenderCommandAllocator* InCommandAllocator)
+RenderCommandList::RenderCommandList(ERenderQueueType inQueueType, RenderDevice* inDevice)
 {
-	CommandAllocator = InCommandAllocator;
-	CommandList = nullptr;
+	mCommandList = nullptr;
 	bClosed = true;
-
-	QueueType = CommandAllocator->GetQueueType();
+	mQueueType = inQueueType;
+	mCommandAllocator = nullptr;
 
 	D3D12_COMMAND_LIST_TYPE		Type;
 
-	switch (QueueType)
+	switch (inQueueType)
 	{
 		case ERenderQueueType::Direct:
 		{
@@ -43,20 +42,18 @@ RenderCommandList::RenderCommandList(RenderCommandAllocator* InCommandAllocator)
 		}
 	}
 
-	switch (QueueType)
+	switch (mQueueType)
 	{
 		case ERenderQueueType::Direct:
 		case ERenderQueueType::Async:
 		case ERenderQueueType::Copy:
 		{
-			if (FAILED(CommandAllocator->GetDevice()->GetDevice()->CreateCommandList(0, Type, CommandAllocator->GetHandle(), nullptr, IID_PPV_ARGS(&CommandList))))
+			HRESULT result = inDevice->GetDevice()->CreateCommandList1(0, Type, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&mCommandList));
+			
+			if (FAILED(result))
 			{
 				GAssert(false);
 			}
-
-			bClosed = false;
-
-			Close();
 
 			break;
 		}
@@ -72,7 +69,7 @@ void RenderCommandList::Close()
 {
 	GAssert(IsOpen());
 
-	if (FAILED(CommandList->Close()))
+	if (FAILED(mCommandList->Close()))
 	{
 		GAssert(false);
 	}
@@ -91,22 +88,26 @@ void RenderCommandList::AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RES
 	Barrier.Transition.StateAfter = After;
 	Barrier.Transition.Subresource = 0;
 
-	CommandList->ResourceBarrier(1, &Barrier);
+	mCommandList->ResourceBarrier(1, &Barrier);
 }
 
-void RenderCommandList::Reset()
+void RenderCommandList::Reset(RenderCommandAllocator* inCommandAllocator)
 {
 	GAssert(IsClosed());
 
-	RenderCommandAllocator* FreeAllocator = CommandAllocator->GetDevice()->GetQueue(QueueType)->GetFreeCommandAllocator();
+	mCommandList->Reset(inCommandAllocator->GetHandle(), nullptr);
 
-	//CommandList->Reset(FreeAllocator->GetHandle(), nullptr);
-	//CommandAllocator->Reset();
-	CommandList->Reset(CommandAllocator->GetHandle(), nullptr);
-
-	//CommandAllocator = FreeAllocator;
-
+	mCommandAllocator = inCommandAllocator;
 	bClosed = false;
+}
+
+RenderCommandAllocator* RenderCommandList::GetAndClearCommandAllocator()
+{
+	RenderCommandAllocator* command_allocator = mCommandAllocator;
+
+	mCommandAllocator = nullptr;
+
+	return command_allocator;
 }
 
 void RenderCommandList::CopyTextureRegion()

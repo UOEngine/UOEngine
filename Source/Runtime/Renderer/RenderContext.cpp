@@ -13,7 +13,7 @@ RenderCommandContext::RenderCommandContext(RenderDevice* InDevice)
 {
 	mDevice = InDevice;
 
-	CommandList = nullptr;
+	mCommandList = nullptr;
 	CommandAllocator = nullptr;
 
 	QueueType = ERenderQueueType::Direct;
@@ -68,7 +68,7 @@ void RenderCommandContext::SetPipelineState(ID3D12PipelineState* PipelineState, 
 
 void RenderCommandContext::TransitionResource(ID3D12Resource* Resource, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After)
 {
-	GAssert(CommandList != nullptr);
+	GAssert(mCommandList != nullptr);
 
 	GetCommandList()->AddTransitionBarrier(Resource, Before, After);
 }
@@ -97,21 +97,23 @@ void RenderCommandContext::SetViewport(uint32 Width, uint32 Height)
 
 void RenderCommandContext::SetShaderBindingData(RenderTexture* inTexture)
 {
-	DescriptorTable table = mDevice->GetSrvGpuDescriptorAllocator()->Allocate();
+	DescriptorTable			table = mDevice->GetSrvGpuDescriptorAllocator()->Allocate();
+	ID3D12DescriptorHeap*	heaps[] = {mDevice->GetSrvGpuDescriptorAllocator()->GetHeap()};
+
+	mCommandList->GetGraphicsCommandList()->SetDescriptorHeaps(1, heaps);
 
 	mDevice->GetDevice()->CopyDescriptorsSimple(1, table.mCpuHandle, inTexture->GetSrv(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-	ID3D12DescriptorHeap* heaps[] = {mDevice->GetSrvGpuDescriptorAllocator()->GetHeap()};
-
-	CommandList->GetGraphicsCommandList()->SetDescriptorHeaps(1, heaps);
-	CommandList->GetGraphicsCommandList()->SetGraphicsRootDescriptorTable(0, table.mGpuHandle);
+	mCommandList->GetGraphicsCommandList()->SetGraphicsRootDescriptorTable(0, table.mGpuHandle);
 }
 
 void RenderCommandContext::FlushCommands()
 {
+	RenderCommandList* command_list = mCommandList;
+
 	CloseCommandList();
 
-	mDevice->GetQueue(QueueType)->ExecuteCommandList();
+	mDevice->GetQueue(QueueType)->ExecuteCommandList(command_list);
 }
 
 void RenderCommandContext::Draw()
@@ -121,24 +123,22 @@ void RenderCommandContext::Draw()
 
 RenderCommandList* RenderCommandContext::GetCommandList()
 {
-	if (CommandList == nullptr)
+	if (mCommandList == nullptr)
 	{
 		OpenCommandList();
 	}
 
-	return CommandList;
+	return mCommandList;
 }
 
 void RenderCommandContext::OpenCommandList()
 {
-	CommandList = mDevice->GetQueue(QueueType)->GetCommandList();
-
-	CommandList->Reset();
+	mCommandList = mDevice->GetQueue(QueueType)->CreateCommandList();
 }
 
 void RenderCommandContext::CloseCommandList()
 {
-	CommandList->Close();
+	mCommandList->Close();
 
-	CommandList = nullptr;
+	mCommandList = nullptr;
 }
