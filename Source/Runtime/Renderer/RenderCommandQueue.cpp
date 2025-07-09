@@ -15,8 +15,8 @@ RenderCommandQueue::RenderCommandQueue(ERenderQueueType InQueueType)
 	mQueueType = InQueueType;
 	mActiveCommandList = nullptr;
 
-	Fence = nullptr;
-	FenceValue = 0;
+	mFence = nullptr;
+	mSubmissionFenceValue = 0;
 	FenceEvent = INVALID_HANDLE_VALUE;
 }
 
@@ -44,7 +44,7 @@ void RenderCommandQueue::Create(RenderDevice* InDevice)
 	//	CommandAllocatorQueue.Add(CommandAllocatorEntry{});
 	//}
 
-	Fence = mDevice->CreateFence();
+	mFence = mDevice->CreateFence();
 	FenceEvent = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
 
 	//mActiveCommandList = new RenderCommandList(GetFreeCommandAllocator());
@@ -73,14 +73,14 @@ void RenderCommandQueue::ExecuteCommandList(RenderCommandList* inCommandList)
 
 	mCommandQueue->ExecuteCommandLists(1, command_lists);
 
-	FenceValue++;
+	mSubmissionFenceValue++;
 
-	mCommandQueue->Signal(Fence, FenceValue);
+	mCommandQueue->Signal(mFence, mSubmissionFenceValue);
 
 	CommandAllocatorEntry new_entry;
 
 	new_entry.mCommandList = inCommandList;
-	new_entry.FenceValue = FenceValue;
+	new_entry.FenceValue = mSubmissionFenceValue;
 	new_entry.CommandAllocator = inCommandList->GetAndClearCommandAllocator();
 
 	mFreeCommandAllocators.Add(new_entry);
@@ -141,7 +141,7 @@ RenderCommandList* RenderCommandQueue::CreateCommandList()
 
 	for (int32 i = 0; i < mFreeCommandAllocators.Num(); i++)
 	{
-		if (Fence->GetCompletedValue() >= mFreeCommandAllocators[i].FenceValue)
+		if (mFence->GetCompletedValue() >= mFreeCommandAllocators[i].FenceValue)
 		{
 			free_command_allocator_index = i;
 

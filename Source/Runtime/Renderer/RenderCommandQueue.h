@@ -25,14 +25,17 @@ public:
 
 	void									ExecuteCommandList(RenderCommandList* inCommandList);
 
-	ID3D12CommandQueue*						GetQueue() const			{return mCommandQueue;}
+	ID3D12CommandQueue*						GetQueue() const					{return mCommandQueue;}
 
-	RenderDevice*							GetDevice() const			{return mDevice;}
+	RenderDevice*							GetDevice() const					{return mDevice;}
 
 	//RenderCommandAllocator*					GetFreeCommandAllocator();
 	//RenderCommandList*						GetCommandList();
 
 	RenderCommandList*						CreateCommandList();
+
+	uint64									GetSubmissionFenceValue() const		{return mSubmissionFenceValue;}
+	ID3D12Fence*							GetSubmissionFence() const			{return mFence;}
 
 private:
 
@@ -58,8 +61,8 @@ private:
 	TArray<CommandAllocatorEntry>			mFreeCommandAllocators;
 
 	// Fence for the queue doing work.
-	ID3D12Fence*							Fence;
-	uint64									FenceValue;
+	ID3D12Fence*							mFence;
+	uint64									mSubmissionFenceValue;
 	HANDLE									FenceEvent;
 
 };
