@@ -4,8 +4,6 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <BaseOutputPath>$(SolutionDir)Binaries\$(Platform)\$(Configuration)\</BaseOutputPath>
-	<OutputPath></OutputPath>
     <Platforms>x64</Platforms>
     <PackageOutputPath></PackageOutputPath>
 	<GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
@@ -25,9 +23,15 @@
     <IsAotCompatible>False</IsAotCompatible>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\Intermediate\Win64\Source\Runtime\Engine\Engine.vcxproj" />
-    <ProjectReference Include="..\..\Intermediate\Win64\Source\Runtime\NativeInterop\NativeInterop.vcxproj" />
+	<PropertyGroup>
+		<UoEngineRoot>$(SolutionDir)..\..</UoEngineRoot>
+		<!-->BaseOutputPath>$(UoEngineRoot)\Binaries\Win64\$(Configuration)\</BaseOutputPath-->
+		<OutputPath>$(UoEngineRoot)\Binaries\Win64\$(Configuration)\</OutputPath>
+	</PropertyGroup>
+
+	<ItemGroup>
+    <ProjectReference Include="$(UoEngineRoot)\Intermediate\Win64\Source\Runtime\Engine\Engine.vcxproj" />
+    <ProjectReference Include="$(UoEngineRoot)\Intermediate\Win64\Source\Runtime\NativeInterop\NativeInterop.vcxproj" />
   </ItemGroup>
 
 </Project>
