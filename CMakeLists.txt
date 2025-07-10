@@ -20,8 +20,8 @@ include(${UOENGINE_MAIN_SRC_DIR}/CMake/Win64.cmake)
 set(CMAKE_CONFIGURATION_TYPES "Debug;Development")
 set(CMAKE_BINARY_DIR "${UOENGINE_MAIN_SRC_DIR}/Intermediate")
 
-
-
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${UOENGINE_MAIN_SRC_DIR}/Binaries/Win64")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 # /GR-
 # Disables Run-Time Type Information (RTTI) — disables use of dynamic_cast and typeid.
 
@@ -66,5 +66,5 @@ add_custom_target(CMake SOURCES CMakeLists.txt)
 add_subdirectory("${UOENGINE_THIRD_PARTY_DIR}/mimalloc-3.0.1" EXCLUDE_FROM_ALL)
 set_target_properties(mimalloc-static PROPERTIES FOLDER "ThirdParty")
 
-include_external_msproject(UOEngine "${UOENGINE_MAIN_SRC_DIR}/Source/Game/UOEngine.csproj")
+include_external_msproject(UOEngine "${UOENGINE_MAIN_SRC_DIR}/Source/Game/UOEngine.Editor/UOEngine.Editor.csproj")
 set_target_properties(UOEngine PROPERTIES FOLDER "Game")
