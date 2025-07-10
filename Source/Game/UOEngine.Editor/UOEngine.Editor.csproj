@@ -1,37 +1,30 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <Platforms>x64</Platforms>
-    <PackageOutputPath></PackageOutputPath>
-	<GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
-	<BaseIntermediaPath>$(SolutionDir)Intermediate</BaseIntermediaPath>
-	<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-	<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
-	<UseCommonOutputDirectory>true</UseCommonOutputDirectory>
-	<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-	<OutputType>Exe</OutputType>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IsAotCompatible>False</IsAotCompatible>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IsAotCompatible>False</IsAotCompatible>
-  </PropertyGroup>
-
 	<PropertyGroup>
-		<UoEngineRoot>$(SolutionDir)..\..</UoEngineRoot>
-		<!-->BaseOutputPath>$(UoEngineRoot)\Binaries\Win64\$(Configuration)\</BaseOutputPath-->
-		<OutputPath>$(UoEngineRoot)\Binaries\Win64\$(Configuration)\</OutputPath>
+		<TargetFramework>net9.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<Platforms>x64</Platforms>
+		<PackageOutputPath></PackageOutputPath>
+		<GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+		<UseCommonOutputDirectory>true</UseCommonOutputDirectory>
+		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+		<OutputType>Exe</OutputType>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+		<IsAotCompatible>False</IsAotCompatible>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+		<IsAotCompatible>False</IsAotCompatible>
 	</PropertyGroup>
 
 	<ItemGroup>
-    <ProjectReference Include="$(UoEngineRoot)\Intermediate\Win64\Source\Runtime\Engine\Engine.vcxproj" />
-    <ProjectReference Include="$(UoEngineRoot)\Intermediate\Win64\Source\Runtime\NativeInterop\NativeInterop.vcxproj" />
-  </ItemGroup>
+		<ProjectReference Include="$(UoEngineRoot)\Intermediate\Win64\Source\Runtime\Engine\Engine.vcxproj" />
+		<ProjectReference Include="$(UoEngineRoot)\Intermediate\Win64\Source\Runtime\NativeInterop\NativeInterop.vcxproj" />
+	</ItemGroup>
 
 </Project>

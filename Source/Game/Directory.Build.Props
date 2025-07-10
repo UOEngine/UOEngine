@@ -1,0 +1,8 @@
+<Project>
+	<PropertyGroup>
+		<UoEngineRoot>$(SolutionDir)..\..</UoEngineRoot>
+		<IntermediatePath>$(UoEngineRoot)\Intermediate</IntermediatePath>
+		<OutputPath>$(UoEngineRoot)\Binaries\Win64\$(Configuration)\</OutputPath>
+		<BaseIntermediateOutputPath>$(IntermediatePath)\DotNet</BaseIntermediateOutputPath>
+	</PropertyGroup>
+</Project>
