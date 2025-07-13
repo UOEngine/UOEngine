@@ -39,7 +39,7 @@ namespace UOEngine
         public uint Width { get; private set; }
         public uint Height { get; private set; }
 
-        readonly IntPtr nativeHandle;
+        readonly UIntPtr nativeHandle;
 
         Memory<Colour> pixels;
     }

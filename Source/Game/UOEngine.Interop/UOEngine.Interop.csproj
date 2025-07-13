@@ -9,4 +9,14 @@
 	  <OutputType>Library</OutputType>
   </PropertyGroup>
 
+	<!-- Keep bindings up to date -->
+	<Target Name="RunBindingsGenerator" BeforeTargets="BeforeCompile">
+		<Exec Command="dotnet run --project ..\..\Tools\BindingsGenerator\BindingsGenerator.csproj" />
+		<Message Importance="high" Text="Code generator ran." />
+	</Target>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\..\..\Intermediate\Win64\Source\Runtime\NativeInterop\NativeInterop.vcxproj" />
+	</ItemGroup>
+	
 </Project>

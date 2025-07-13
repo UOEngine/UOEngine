@@ -23,8 +23,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="$(UoEngineRoot)\Intermediate\Win64\Source\Runtime\Engine\Engine.vcxproj" />
-		<ProjectReference Include="$(UoEngineRoot)\Intermediate\Win64\Source\Runtime\NativeInterop\NativeInterop.vcxproj" />
 		<ProjectReference Include="..\UOEngine.Interop\UOEngine.Interop.csproj" />
 	</ItemGroup>
 
