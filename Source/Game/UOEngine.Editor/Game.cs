@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
+using UOEngine.Interop;
 
 namespace UOEngine
 {
@@ -12,7 +13,7 @@ namespace UOEngine
 
         public int Run(string[] args)
         {
-            int code = NativeMethods.EngineInit();
+            int code = EngineInterop.EngineInit();
 
             if (code != 0)
             {
@@ -24,16 +25,16 @@ namespace UOEngine
                 return 1;
             }
 
-            while (NativeMethods.EnginePreUpdate() == 1)
+            while (EngineInterop.EnginePreUpdate() == 1)
             {
                 float deltaTime = 0.0f;
 
                 _app.Update(deltaTime);
 
-                NativeMethods.EnginePostUpdate();
+                EngineInterop.EnginePostUpdate();
             }
 
-            NativeMethods.EngineShutdown();
+            EngineInterop.EngineShutdown();
 
             return 0;
         }

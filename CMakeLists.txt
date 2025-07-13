@@ -66,5 +66,31 @@ add_custom_target(CMake SOURCES CMakeLists.txt)
 add_subdirectory("${UOENGINE_THIRD_PARTY_DIR}/mimalloc-3.0.1" EXCLUDE_FROM_ALL)
 set_target_properties(mimalloc-static PROPERTIES FOLDER "ThirdParty")
 
-include_external_msproject(UOEngine "${UOENGINE_MAIN_SRC_DIR}/Source/Game/UOEngine.Editor/UOEngine.Editor.csproj")
-set_target_properties(UOEngine PROPERTIES FOLDER "Game")
+# Find C# projects
+
+file(GLOB_RECURSE csproj_files "${UOENGINE_MAIN_SRC_DIR}/Source/Game/*.csproj")
+
+foreach(csproj_file IN LISTS csproj_files)
+
+    get_filename_component(csproj_name ${csproj_file} NAME)
+
+    message(STATUS "Found csproj file: ${csproj_name} ${csproj_file}")
+    include_external_msproject(${csproj_name} "${csproj_file}")
+
+    set_target_properties(${csproj_name} PROPERTIES FOLDER "Game")
+
+endforeach() 
+
+file(GLOB_RECURSE csproj_files "${UOENGINE_MAIN_SRC_DIR}/Source/Tools/*.csproj")
+
+foreach(csproj_file IN LISTS csproj_files)
+
+    get_filename_component(csproj_name ${csproj_file} NAME)
+
+    message(STATUS "Found csproj file: ${csproj_name} ${csproj_file}")
+    include_external_msproject(${csproj_name} "${csproj_file}")
+
+    set_target_properties(${csproj_name} PROPERTIES FOLDER "Tools")
+
+endforeach() 
+

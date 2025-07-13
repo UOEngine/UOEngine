@@ -1,5 +1,7 @@
 #include "Threading/Windows/WindowsThread.h" 
 
+#include <Windows.h>
+
 Thread* Thread::Create(const Thread::CreationParameters& CreationParameters)
 {
 	WindowsThread* WinThread = new WindowsThread();

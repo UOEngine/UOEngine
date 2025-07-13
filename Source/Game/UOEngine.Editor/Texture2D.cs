@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using UOEngine.Interop;
 
 namespace UOEngine
 {
@@ -16,7 +17,7 @@ namespace UOEngine
             Width = width;
             Height = height;
 
-            nativeHandle = NativeMethods.CreateTexture(width, height);
+            nativeHandle = RendererInterop.CreateTexture((int)width, (int)height);
         }
 
         public unsafe void Apply()
@@ -38,7 +39,7 @@ namespace UOEngine
         public uint Width { get; private set; }
         public uint Height { get; private set; }
 
-        readonly UIntPtr nativeHandle;
+        readonly IntPtr nativeHandle;
 
         Memory<Colour> pixels;
     }
