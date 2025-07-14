@@ -7,5 +7,8 @@ namespace UOEngine.Interop
 		[LibraryImport("UOEngine.Native.dll")]
 		public static partial UIntPtr CreateTexture(int Width, int Height);
 
+		[LibraryImport("UOEngine.Native.dll")]
+		public static partial void SetTextureData(UIntPtr inTexture, UIntPtr inData, int inSize);
+
 	}
 }

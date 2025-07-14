@@ -1,5 +1,7 @@
 #include "Renderer/RenderUploadBuffer.h"
 
+#include <d3d12.h>
+
 #include "Renderer/RenderDevice.h"
 
 void RenderUploadBuffer::Init(RenderDevice* Device, uint32 Size)
@@ -9,30 +11,57 @@ void RenderUploadBuffer::Init(RenderDevice* Device, uint32 Size)
 	mSize = Size;
 
 	mResource->Map(0, nullptr, reinterpret_cast<void**>(&mMappedPtr));
+
 }
 
-uint8* RenderUploadBuffer::Allocate(uint64 RequestedSize)
+RenderUploadBufferAllocation* RenderUploadBuffer::Allocate(uint64 inRequestedSize)
 {
-	GAssert(RequestedSize <= mSize);
+	GAssert(inRequestedSize <= mSize);
 
 	uint64 bytes_left = mSize - mUsed;
 	uint64 offset = mSize - bytes_left;
 
-	if (bytes_left < RequestedSize)
+	if (bytes_left < inRequestedSize)
 	{
+		GAssert(false);
+
 		Flush();
 	}
 
-	uint8* allocation = mMappedPtr + offset;
+	mUsed += inRequestedSize;
 
-	mUsed += RequestedSize;
+	D3D12_RANGE range;
+
+	range.Begin = offset;
+	range.End = offset + inRequestedSize;
+
+	RenderUploadBufferAllocation* allocation = nullptr;
+
+	if (mFreeAllocations.Num() == 0)
+	{
+		allocation = new RenderUploadBufferAllocation();
+	}
+	else
+	{
+		allocation = mFreeAllocations.Last();
+
+		mFreeAllocations.PopBack();
+	}
+
+	allocation->mMappedPtr = mMappedPtr + offset;
+	allocation->mOffset = offset;
+	allocation->mRange = inRequestedSize;
 
 	return allocation;
 }
 
-void RenderUploadBuffer::TempUnmap()
+void RenderUploadBuffer::Free(RenderUploadBufferAllocation* inAllocation)
 {
-	mResource->Unmap(0, nullptr);
+	inAllocation->mMappedPtr = nullptr;
+	inAllocation->mOffset = 0;
+	inAllocation->mRange = 0;
+
+	mFreeAllocations.Add(inAllocation);
 }
 
 void RenderUploadBuffer::Flush()

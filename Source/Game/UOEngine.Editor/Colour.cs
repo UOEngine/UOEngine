@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Runtime.InteropServices;
 
 namespace UOEngine
 {
+    [StructLayout(LayoutKind.Sequential)]
     public struct Colour
     {
-        Colour(float r, float g, float b, float a)
+        Colour(byte r, byte g, byte b, byte a)
         {
             R = r;
             G = g;
@@ -16,11 +13,11 @@ namespace UOEngine
             A = a;
         }
 
-        float R;
-        float G;
-        float B;
-        float A;
+        byte R;
+        byte G;
+        byte B;
+        byte A;
 
-        public static readonly Colour Red = new(1.0f, 0.0f, 0.0f, 1.0f);
+        public static readonly Colour Red = new(255, 0, 0, 255);
     }
 }

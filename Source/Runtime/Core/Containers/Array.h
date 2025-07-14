@@ -57,6 +57,8 @@ public:
 
 	void					Move(int32 inIndexFrom, int32 inStartIndex, uint32 inNumElements);
 
+	void					PopBack() {GAssert(NumElements > 0); NumElements--;}
+
 private:
 
 	DataType*				Data = nullptr;

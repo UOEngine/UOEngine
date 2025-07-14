@@ -21,3 +21,8 @@ RenderTexture* CreateTexture(uint32 Width, uint32 Height)
 
 	return texture;
 }
+
+void SetTextureData(RenderTexture* inTexture, uint8* inData, uint32 inSize)
+{
+	inTexture->InitialiseTextureData(TSpan<uint8>(inData, inSize));
+}
