@@ -85,8 +85,8 @@ bool TArray<DataType>::Reserve(int32 MinNumElements)
 		Data = (DataType*)MemoryAllocator::Get().Allocate(NewSizeBytes);
 	}
 
-	uint32 old_size_bytes = NumElements * sizeof(DataType);
-	uint32 num_bytes_to_zero = NewSizeBytes - old_size_bytes;
+	uint64 old_size_bytes = NumElements * sizeof(DataType);
+	uint64 num_bytes_to_zero = NewSizeBytes - old_size_bytes;
 
 	Memory::MemZero(Data + old_size_bytes, num_bytes_to_zero);
 

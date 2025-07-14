@@ -11,7 +11,7 @@ namespace UOEngine
 {
     public class Texture2D
     {
-        readonly UIntPtr        _nativeHandle;
+        public readonly UIntPtr NativeHandle;
 
         private Memory<Colour>  _pixels;
 
@@ -22,7 +22,7 @@ namespace UOEngine
             Width = width;
             Height = height;
 
-            _nativeHandle = RendererInterop.CreateTexture((int)width, (int)height);
+            NativeHandle = RendererInterop.CreateTexture((int)width, (int)height);
         }
 
         public unsafe void Apply()
@@ -31,7 +31,7 @@ namespace UOEngine
 
             fixed(byte* start = pixelBytes)
             {
-                RendererInterop.SetTextureData(_nativeHandle, (UIntPtr)start, pixelBytes.Length);
+                RendererInterop.SetTextureData(NativeHandle, (UIntPtr)start, pixelBytes.Length);
             }
         }
 

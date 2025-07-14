@@ -22,7 +22,6 @@ public:
 	const DataType&			operator[](int32 Index) const;
 
 	int32					Add(const DataType& NewElement);
-	DataType&				AddEmpty();
 
 	uint32					GetCapacity() const					{ return Capacity;}
 

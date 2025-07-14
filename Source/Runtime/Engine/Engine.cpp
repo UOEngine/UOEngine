@@ -46,11 +46,13 @@ void Engine::Shutdown()
 void Engine::PreUpdate()
 {
 	mGameWindow->PollEvents();
+
+	GRenderer.BeginFrame(mGameWindow->GetExtents());
 }
 
 void Engine::PostUpdate()
 {
-	GRenderer.RenderFrame(mGameWindow->GetExtents());
+	GRenderer.EndFrame();
 }
 
 void Engine::Run()

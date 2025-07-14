@@ -139,7 +139,7 @@ namespace BindingsGenerator
                 CXTypeKind.CXType_UInt => "uint",
                 CXTypeKind.CXType_Float => "float",
                 CXTypeKind.CXType_Double => "double",
-                _ => throw new NotImplementedException()
+                _ => throw new NotImplementedException($"Unhandled type {type.kind}")
             };
         }
 

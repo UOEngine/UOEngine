@@ -1,24 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using UOEngine.Interop;
 
 namespace UOEngine
 {
-    public class RenderContext
+    public static class RenderContext
     {
-        public static RenderContext Instance =>     _instance.Value;
-        private static readonly Lazy<RenderContext> _instance = new(() => new RenderContext());
-
-        public RenderContext()
+        public static void SetShaderBindingData(Texture2D texture)
         {
-
+            RenderContextNative.SetShaderBindingData(texture.NativeHandle);
         }
 
-        public void Draw()
+        public static void Draw()
         {
-
+            RenderContextNative.Draw();
         }
     }
 }

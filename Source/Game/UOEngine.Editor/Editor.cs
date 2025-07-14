@@ -26,9 +26,8 @@ namespace UOEngine
 
         public void Update(float tick)
         {
-            Console.WriteLine($"Tick {tick}");
-
-            RenderContext.Instance.Draw();
+            RenderContext.SetShaderBindingData(_texture);
+            RenderContext.Draw();
         }
 
         private Texture2D? _texture;

@@ -2,6 +2,7 @@
 
 #include "Core/Types.h"
 
+class RenderCommandContext;
 class RenderTexture;
 
 extern "C"
