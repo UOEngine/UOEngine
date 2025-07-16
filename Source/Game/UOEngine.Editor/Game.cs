@@ -1,4 +1,6 @@
-﻿using UOEngine.Interop;
+﻿using System.Diagnostics;
+using System.Threading.Tasks;
+using UOEngine.Interop;
 
 namespace UOEngine
 {
@@ -11,6 +13,10 @@ namespace UOEngine
 
         public int Run(string[] args)
         {
+            var startupMeasurement = Stopwatch.StartNew();
+
+            var preEngineInitTask = Task.Run(() => _app.PreEngineInit());
+
             int code = EngineInterop.EngineInit();
 
             if (code != 0)
@@ -18,10 +24,16 @@ namespace UOEngine
                 return code;
             }
 
+            preEngineInitTask.Wait();
+
             if (_app.Initialise() == false)
             {
                 return 1;
             }
+
+            startupMeasurement.Stop();
+
+            Console.WriteLine($"Startup time: {startupMeasurement.ElapsedMilliseconds} ms");
 
             while (EngineInterop.EnginePreUpdate() == 1)
             {

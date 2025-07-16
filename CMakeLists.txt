@@ -11,8 +11,11 @@ option(ENABLE_ASAN   "Enable address sanitiser (ASAN)" OFF)
 
 cmake_policy(SET CMP0141 NEW)
 
+include(FetchContent)
+
 set(UOENGINE_MAIN_SRC_DIR     ${CMAKE_CURRENT_SOURCE_DIR})
 set(UOENGINE_THIRD_PARTY_DIR "${UOENGINE_MAIN_SRC_DIR}/ThirdParty")
+set(UOENGINE_TOOLS_SRC_DIR   "${UOENGINE_MAIN_SRC_DIR}/Source/Tools")
 
 include(${UOENGINE_MAIN_SRC_DIR}/CMake/UOEngine.cmake)
 include(${UOENGINE_MAIN_SRC_DIR}/CMake/Win64.cmake)
