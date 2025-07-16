@@ -5,12 +5,20 @@ namespace UOEngine
     [StructLayout(LayoutKind.Sequential)]
     public struct Colour
     {
-        Colour(byte r, byte g, byte b, byte a)
+        public Colour(byte r, byte g, byte b, byte a)
         {
             R = r;
             G = g;
             B = b;
             A = a;
+        }
+
+        public Colour(uint colour)
+        {
+            R = (byte)((colour >> 0)  & 0xFF);
+            G = (byte)((colour >> 8)  & 0xFF);
+            B = (byte)((colour >> 16) & 0xFF);
+            A = (byte)((colour >> 24) & 0xFF);
         }
 
         byte R;

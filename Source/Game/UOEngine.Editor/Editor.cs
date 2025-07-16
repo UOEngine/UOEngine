@@ -1,6 +1,8 @@
 ﻿using System.Diagnostics;
 using System.Drawing;
 
+using UOEngine.UOAssets;
+
 namespace UOEngine
 {
     public class Editor : IUOEngineApp
@@ -9,16 +11,15 @@ namespace UOEngine
         {
             Debug.WriteLine($"Game.Initialise: Start");
 
-            _texture = new(128, 64);
+            var assetLoader = new UOAssetLoader();
 
-            for (uint y = 0; y < _texture.Height; y++)
-            {
-                for (uint x = 0; x < _texture.Width; x++)
-                {
-                    _texture.SetPixel(x, y, Colour.Red);
-                }
-            }
+            assetLoader.LoadAllFiles(@"D:\Program Files (x86)\Electronic Arts\Ultima Online Classic");
 
+            var loginBackgroundBitmap = assetLoader.GetGump((int)EGumpTypes.LoginBackground);
+
+            _texture = new(loginBackgroundBitmap.Width, loginBackgroundBitmap.Height);
+
+            _texture.SetPixels(loginBackgroundBitmap.Texels);
             _texture.Apply();
 
             return true;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -12,6 +13,8 @@ namespace UOEngine
     public class Texture2D
     {
         public readonly UIntPtr NativeHandle;
+        public readonly uint    Width ;
+        public readonly uint    Height;
 
         private Memory<Colour>  _pixels;
 
@@ -42,9 +45,19 @@ namespace UOEngine
             _pixels.Span[index] = colour;
         }
 
-        public uint Width { get; private set; }
-        public uint Height { get; private set; }
+        public void SetPixel(uint x, uint y, uint colour)
+        {
+            int index = (int)(y * Width + x);
 
+            _pixels.Span[index] = new Colour(colour);
+        }
 
+        public void SetPixels(ReadOnlySpan<uint> texels)
+        {
+            for(int i = 0; i < texels.Length; i++)
+            {
+                _pixels.Span[i] = new Colour(texels[i]);
+            }
+        }
     }
 }

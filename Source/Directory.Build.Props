@@ -4,5 +4,6 @@
 		<IntermediatePath>$(UoEngineRoot)\Intermediate</IntermediatePath>
 		<OutputPath>$(UoEngineRoot)\Binaries\Win64\$(Configuration)\</OutputPath>
 		<BaseIntermediateOutputPath>$(IntermediatePath)\DotNet</BaseIntermediateOutputPath>
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 	</PropertyGroup>
 </Project>
