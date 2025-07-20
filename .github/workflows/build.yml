@@ -35,4 +35,4 @@ jobs:
           run: dotnet restore Intermediate\Win64\UOEngine.sln
 
         - name: Build
-          run: msbuild Intermediate\Win64\UOEngine.sln /p:Configuration=Development /p:Platform=x64 /m /verbosity:minimal
+          run: msbuild Intermediate\Win64\UOEngine.sln /p:Configuration=Development /p:Platform=x64 /m /verbosity:minimal /t:Restore
