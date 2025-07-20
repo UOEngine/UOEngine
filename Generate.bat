@@ -12,10 +12,11 @@ if %ERRORLEVEL%==0 (
     set CMAKE_BIN=%ROOT%Tools\cmake-4.0.0-rc3-windows-x86_64\bin\cmake.exe
 )
 
-
 echo Using cmake at %CMAKE_BIN%
 
-%CMAKE_BIN% -B %BUILD_DIR% -G "Visual Studio 17 2022" -DUSE_LIVEPP=ON
+@echo on
+%CMAKE_BIN% -B %BUILD_DIR% -G "Visual Studio 17 2022" -DUSE_LIVEPP=OFF
+@echo off
 
 if /I NOT "%GITHUB_ACTIONS%"=="true" (
     pause

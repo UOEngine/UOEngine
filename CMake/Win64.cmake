@@ -12,5 +12,7 @@
 
 set(CMAKE_CXX_FLAGS "/GR- /Gm- /fp:except /MP /nologo")
 
-message(STATUS "CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
-message(STATUS "CMAKE_SIZEOF_VOID_P: ${CMAKE_SIZEOF_VOID_P}")
+if(ENABLE_ASAN)
+    message(STATUS "Enabling ASAN support")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /fsanitize=address")
+endif()
