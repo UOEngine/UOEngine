@@ -21,7 +21,7 @@ jobs:
             dotnet-version: 9.0.x
            
         - name: Add msbuild to PATH
-          uses: microsoft/setup-msbuild@v4
+          uses: microsoft/setup-msbuild@v2
 
         - name: Generate solution
           run: .\Generate.bat
