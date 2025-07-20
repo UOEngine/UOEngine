@@ -23,6 +23,11 @@ jobs:
         - name: Add msbuild to PATH
           uses: microsoft/setup-msbuild@v2
 
+        - name: Install CMake
+          uses: ssrobins/install-cmake@v1
+          with:
+           version: 4.0.3
+
         - name: Generate solution
           run: .\Generate.bat
 
