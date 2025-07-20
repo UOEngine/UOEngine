@@ -80,6 +80,18 @@ namespace BindingsGenerator
 
             string csharpFile = $"{destination}/{filename}.cs";
 
+            if(File.Exists(csharpFile))
+            {
+                string existingContents = File.ReadAllText(csharpFile);
+
+                if(existingContents == csharpFileContents)
+                {
+                    // Do not change if the same, otherwise timestamp will change and build system may see it as changed
+                    // and do rebuilds.
+                    return;
+                }
+            }
+
             File.WriteAllText(csharpFile, csharpFileContents);
         }
 
