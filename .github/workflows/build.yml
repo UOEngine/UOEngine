@@ -32,4 +32,4 @@ jobs:
           run: .\Generate.bat
 
         - name: Build
-          run: msbuild Intermediate\Win64\UOEngine.sln /p:Configuration=Release /p:Platform=x64 /m
+          run: msbuild Intermediate\Win64\UOEngine.sln /p:Configuration=Development /p:Platform=x64 /m

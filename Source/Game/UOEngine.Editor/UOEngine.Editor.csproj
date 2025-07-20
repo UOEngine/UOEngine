@@ -14,14 +14,6 @@
 		<OutputType>Exe</OutputType>
 	</PropertyGroup>
 
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-		<IsAotCompatible>False</IsAotCompatible>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-		<IsAotCompatible>False</IsAotCompatible>
-	</PropertyGroup>
-
 	<ItemGroup>
 		<ProjectReference Include="..\UOEngine.Interop\UOEngine.Interop.csproj" />
 		<ProjectReference Include="..\UOEngine.Ultima.Assets\UOEngine.UOAssets.csproj" />
