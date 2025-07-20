@@ -19,9 +19,6 @@ jobs:
           uses: actions/setup-dotnet@v4
           with:
             dotnet-version: 9.0.x
-
-        - name: Restore
-          run: dotnet restore
            
         - name: Add msbuild to PATH
           uses: microsoft/setup-msbuild@v2
@@ -33,6 +30,9 @@ jobs:
 
         - name: Generate solution
           run: .\Generate.bat
+
+        - name: Restore
+          run: dotnet restore Intermediate\Win64\UOEngine.sln
 
         - name: Build
           run: msbuild Intermediate\Win64\UOEngine.sln /p:Configuration=Development /p:Platform=x64 /m /verbosity:minimal
