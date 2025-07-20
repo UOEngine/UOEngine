@@ -1,7 +1,16 @@
-if(CMAKE_SYSTEM_PROCESSOR STREQUAL "AMD64" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
-    set(ARCH_NAME "Win64")
-endif()
+# /GR-
+# Disables Run-Time Type Information (RTTI) — disables use of dynamic_cast and typeid.
 
-if(CMAKE_GENERATOR_PLATFORM STREQUAL "x64")
-    set(CMAKE_GENERATOR_PLATFORM "Win64" CACHE STRING "" FORCE)
-endif()
+# /Gm-
+# Disables minimal rebuild — it's obsolete and can cause problems with parallel builds.
+
+# /fp:except-
+# Disables floating-point exceptions (makes floating-point behavior faster and less strict).
+
+# /nologo
+# Hides the MSVC startup banner when compiling.
+
+set(CMAKE_CXX_FLAGS "/GR- /Gm- /fp:except /MP /nologo")
+
+message(STATUS "CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
+message(STATUS "CMAKE_SIZEOF_VOID_P: ${CMAKE_SIZEOF_VOID_P}")

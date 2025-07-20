@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "Game": {
-      "commandName": "Project",
-      "nativeDebugging": true
-    }
-  }
-}

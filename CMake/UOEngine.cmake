@@ -109,7 +109,3 @@ function(uoengine_add_thirdparty_library TARGET DIR)
     #message(STATUS "Inferred target: ${first_target}")
 
 endfunction()
-
-function(uoengine_add_dll)
-
-endfunction()

@@ -1,9 +1,11 @@
 <Project>
 	<PropertyGroup>
-		<UoEngineRoot>$(SolutionDir)..\..</UoEngineRoot>
+		<UoEngineRoot>$(MSBuildThisFileDirectory)..\</UoEngineRoot>
 		<IntermediatePath>$(UoEngineRoot)\Intermediate</IntermediatePath>
 		<OutputPath>$(UoEngineRoot)\Binaries\Win64\$(Configuration)\</OutputPath>
-		<BaseIntermediateOutputPath>$(IntermediatePath)\DotNet</BaseIntermediateOutputPath>
+		<BaseIntermediateOutputPath>$(IntermediatePath)\DotNet\$(Configuration)\$(MSBuildProjectName)</BaseIntermediateOutputPath>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+		<TargetFramework>net9.0</TargetFramework>
 	</PropertyGroup>
 </Project>

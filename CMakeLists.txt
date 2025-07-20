@@ -19,7 +19,6 @@ set(UOENGINE_TOOLS_SRC_DIR              "${UOENGINE_MAIN_SRC_DIR}/Source/Tools")
 set(UOENGINE_DOWNLOAD_THIRD_PARTY_DIR   "${UOENGINE_MAIN_SRC_DIR}/Intermediate/Downloads")
 
 include(${UOENGINE_MAIN_SRC_DIR}/CMake/UOEngine.cmake)
-include(${UOENGINE_MAIN_SRC_DIR}/CMake/Win64.cmake)
 
 set(CMAKE_CONFIGURATION_TYPES "Debug;Development")
 set(CMAKE_BINARY_DIR "${UOENGINE_MAIN_SRC_DIR}/Intermediate")
@@ -27,19 +26,11 @@ set(CMAKE_BINARY_DIR "${UOENGINE_MAIN_SRC_DIR}/Intermediate")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${UOENGINE_MAIN_SRC_DIR}/Binaries/Win64")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 
-# /GR-
-# Disables Run-Time Type Information (RTTI) — disables use of dynamic_cast and typeid.
-
-# /Gm-
-# Disables minimal rebuild — it's obsolete and can cause problems with parallel builds.
-
-# /fp:except-
-# Disables floating-point exceptions (makes floating-point behavior faster and less strict).
-
-# /nologo
-# Hides the MSVC startup banner when compiling.
-
-set(CMAKE_CXX_FLAGS "/GR- /Gm- /fp:except /MP /nologo")
+if(WIN32 AND MSVC)
+    include(CMake/Win64.cmake)
+else()
+    message(FATAL_ERROR "Unsupported platform now for.")
+endif()
 
 if(ENABLE_ASAN)
     #message(STATUS "Using ASAN.")
