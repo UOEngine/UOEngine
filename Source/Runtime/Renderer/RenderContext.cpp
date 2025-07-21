@@ -73,13 +73,15 @@ void RenderCommandContext::TransitionResource(ID3D12Resource* Resource, D3D12_RE
 	GetCommandList()->AddTransitionBarrier(Resource, Before, After);
 }
 
-void RenderCommandContext::SetViewport(uint32 Width, uint32 Height)
+void RenderCommandContext::SetViewport(const Rect& inViewportRect)
 {
+	mViewportRect = inViewportRect;
+
 	D3D12_VIEWPORT viewport = {
 		.TopLeftX = 0,
 		.TopLeftY = 0,
-		.Width = (float)Width,
-		.Height = (float)Height,
+		.Width = (float)mViewportRect.Width(),
+		.Height = (float)mViewportRect.Height(),
 		.MinDepth = 0.0f,
 		.MaxDepth = 1.0f
 	};
@@ -87,8 +89,8 @@ void RenderCommandContext::SetViewport(uint32 Width, uint32 Height)
 	D3D12_RECT scissor = {
 		.left = 0,
 		.top = 0,
-		.right = (int32)Width,
-		.bottom = (int32)Height,
+		.right = (int32)mViewportRect.Width(),
+		.bottom = (int32)mViewportRect.Height(),
 	};
 
 	GetGraphicsCommandList()->RSSetViewports(1, &viewport);
@@ -104,7 +106,14 @@ void RenderCommandContext::SetShaderBindingData(RenderTexture* inTexture)
 
 	mDevice->GetDevice()->CopyDescriptorsSimple(1, table.mCpuHandle, inTexture->GetSrv(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-	mCommandList->GetGraphicsCommandList()->SetGraphicsRootDescriptorTable(0, table.mGpuHandle);
+	mCommandList->GetGraphicsCommandList()->SetGraphicsRootDescriptorTable(1, table.mGpuHandle);
+}
+
+void RenderCommandContext::SetProjectionMatrix(const Matrix4x4& inMatrix)
+{
+	mProjectionMatrix = inMatrix;
+
+	mCommandList->GetGraphicsCommandList()->SetGraphicsRoot32BitConstants(0, Matrix4x4::NumElements, &mProjectionMatrix, 0);
 }
 
 void RenderCommandContext::FlushCommands()

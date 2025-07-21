@@ -70,6 +70,7 @@ bool Shader::Load(const String& FilePath)
 		L"-T", type_arg,		// Target profile
 		L"-Zi",                 // Debug info
 		L"-Qembed_debug",       // Embed debug info in shader
+		L"-Od"
 	};
 	
 	dxc_compiler->Compile(&source_buffer, Args.GetData(), Args.Num(), dxc_include_header, IID_PPV_ARGS(&compile_result));
@@ -179,9 +180,28 @@ void Shader::BuildRootSignature(TArray<D3D12_ROOT_PARAMETER1>& OutRootSignatureD
 			//root_parameter.DescriptorTable.pDescriptorRanges = &mDescriptorRanges.Last();
 
 		}
-		else if (bound_desc.Type = D3D_SIT_CBUFFER)
+		else if (bound_desc.Type == D3D_SIT_CBUFFER)
 		{
-			GAssert(false);
+			ID3D12ShaderReflectionConstantBuffer* constant_buffer = mReflection->GetConstantBufferByName(bound_desc.Name);
+
+			D3D12_SHADER_BUFFER_DESC constant_buffer_desc;
+
+			constant_buffer->GetDesc(&constant_buffer_desc);
+
+			D3D12_DESCRIPTOR_RANGE1 const_buffer_desc_range = {};
+
+			const_buffer_desc_range.BaseShaderRegister = bound_desc.BindPoint;
+			const_buffer_desc_range.RegisterSpace = bound_desc.Space;
+			const_buffer_desc_range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+			const_buffer_desc_range.NumDescriptors = 1;
+			const_buffer_desc_range.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE;
+
+			mDescriptorRanges.Add(const_buffer_desc_range);
+
+			root_parameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+			root_parameter.Constants.Num32BitValues = constant_buffer_desc.Size / 4;
+			root_parameter.Constants.ShaderRegister = bound_desc.BindPoint;
+			root_parameter.Constants.RegisterSpace = bound_desc.Space;
 		}
 		else
 		{

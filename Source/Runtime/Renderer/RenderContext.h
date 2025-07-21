@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Core/Math/Matrix4x4.h"
+#include "Core/Math/Rect.h"
 #include "Core/Types.h"
 #include "Renderer/RenderCommandList.h"
 
@@ -34,9 +36,12 @@ public:
 
 	void							TransitionResource(ID3D12Resource* Resource, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After);
 
-	void							SetViewport(uint32 Width, uint32 Height);
+	void							SetViewport(const Rect& inViewportRect);
+	Rect							GetViewport() const 							{return mViewportRect;}
 
 	void							SetShaderBindingData(RenderTexture* inTexture);
+
+	void							SetProjectionMatrix(const Matrix4x4& inMatrix);
 
 	void							CopyTexture();
 
@@ -45,7 +50,7 @@ public:
 	void							Draw();
 
 	// Get the raw ID3D12GraphicsCommandList
-	ID3D12GraphicsCommandList*		GetGraphicsCommandList() { return GetCommandList()->GetGraphicsCommandList(); }
+	ID3D12GraphicsCommandList*		GetGraphicsCommandList()						{ return GetCommandList()->GetGraphicsCommandList(); }
 
 private:
 	RenderCommandList*				GetCommandList();
@@ -67,6 +72,8 @@ private:
 	// State for drawing.
 
 	RenderTexture*					RenderTarget;
+	Rect							mViewportRect;
+	Matrix4x4						mProjectionMatrix;
 
 };
 
