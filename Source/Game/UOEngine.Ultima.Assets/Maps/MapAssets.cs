@@ -3,244 +3,149 @@ using System.Runtime.InteropServices;
 
 using UOEngine.PackageFile;
 
-namespace UOEngine.UOAssets
+namespace UOEngine.UOAssets;
+
+public readonly struct UOMapFileData
 {
-    //public readonly struct UOMapFileData
-    //{
-    //    public readonly UOPackageFile MapLegacyMul;
-    //    public readonly UOPackageFile MapXLegacyMul;
-    //    public readonly UOPackageFile Statics;
-    //    public readonly UOPackageFile IdxStatics;
-    //    public readonly UOPackageFile StaticsX;
-    //    public readonly UOPackageFile IdxStaticsX;
+    public readonly UOPackageFile MapLegacyMul;
+    public readonly UOPackageFile MapXLegacyMul;
+    public readonly UOPackageFile Statics;
+    public readonly UOPackageFile IdxStatics;
+    public readonly UOPackageFile StaticsX;
+    public readonly UOPackageFile IdxStaticsX;
+    public readonly int Index;
 
-    //    public UOMapFileData(string uoPath, int mapIndex)
-    //    {
-    //        MapLegacyMul = new UOPackageFile();
-    //        MapLegacyMul.Load(path, $"build/map{mapIndex}legacymul/{{0:D8}}.dat", false);
-
-
-    //    }
-    //}
-
-    public class UOMapAssets
+    public UOMapFileData(string ultimaOnlineDirectory, int mapIndex)
     {
-        public const int            NumMaps = 6;
+        Index = mapIndex;
 
-        public readonly UOPackageFile[]    MapLegacyMUL = new UOPackageFile[NumMaps];
-        public readonly UOPackageFile[]    MapXLegacyMUL = new UOPackageFile[NumMaps];
-        public readonly UOPackageFile[]    Statics = new UOPackageFile[NumMaps];
-        public readonly UOPackageFile[]    StaticsIdx = new UOPackageFile[NumMaps];
-        public readonly UOPackageFile[]    StaticsX = new UOPackageFile[NumMaps];
-        public readonly UOPackageFile[]    StaticsXIdx = new UOPackageFile[NumMaps];
+        string packedMapFilePattern = $"build/map{mapIndex}legacymul/{{0:D8}}.dat";
+        string path = Path.Combine(ultimaOnlineDirectory, $"map{mapIndex}LegacyMUL.uop");
 
-        public IndexMap[][]         BlockData { get; private set; } = new IndexMap[NumMaps][];
+        MapLegacyMul = new UOPackageFile(path);
 
-        public int[,]               MapsDefaultSize { get; protected set; }
+        path = Path.Combine(ultimaOnlineDirectory, $"map{mapIndex}xLegacyMUL.uop");
 
-        public int[,]               MapBlocksSize { get; private set; } = new int[NumMaps, 2];
+        MapXLegacyMul = new UOPackageFile(path);
 
-        public UOMapAssets()
+        path = Path.Combine(ultimaOnlineDirectory, $"statics{mapIndex}.mul");
+
+        Statics = new UOPackageFile(path);
+
+        path = Path.Combine(ultimaOnlineDirectory, $"staidx{mapIndex}.mul");
+
+        IdxStatics = new UOPackageFile(path);
+
+        path = Path.Combine(ultimaOnlineDirectory, $"statics{mapIndex}x.mul");
+
+        StaticsX = new UOPackageFile(path);
+
+        path = Path.Combine(ultimaOnlineDirectory, $"staidx{mapIndex}x.mul");
+
+        IdxStaticsX = new UOPackageFile(path);
+    }
+
+    public void Mount()
+    {
+        MapLegacyMul.Load($"build/map{Index}legacymul/{{0:D8}}.dat", false);
+
+        if (MapXLegacyMul.Exists)
         {
-            MapsDefaultSize = new int[6, 2]
-            {
-                {7168, 4096},
-                {7168, 4096},
-                {2304, 1600},
-                {2560, 2048},
-                {1448, 1448},
-                {1280, 4096}
-            };
+            MapXLegacyMul.Load($"build/map{Index}legacymul/{{0:D8}}.dat", false);
         }
 
-        public void Load(string ultimaOnlineDirectory)
+        if (Statics.Exists)
         {
-            for (int i = 0; i < NumMaps; i++)
-            {
-                string packedMapFilePattern = $"build/map{i}legacymul/{{0:D8}}.dat";
-                string path = Path.Combine(ultimaOnlineDirectory, $"map{i}LegacyMUL.uop");
-
-                MapLegacyMUL[i] = new UOPackageFile(path);
-
-                MapLegacyMUL[i].Load($"build/map{i}legacymul/{{0:D8}}.dat", false);
-
-                path = Path.Combine(ultimaOnlineDirectory, $"map{i}xLegacyMUL.uop");
-
-                if (File.Exists(path))
-                {
-                    MapXLegacyMUL[i] = new UOPackageFile(path);
-                    MapXLegacyMUL[i].Load(packedMapFilePattern, false);
-                }
-
-                path = Path.Combine(ultimaOnlineDirectory, $"statics{i}.mul");
-
-                Statics[i] = new UOPackageFile(path);
-                Statics[i].Load("", false);
-
-                path = Path.Combine(ultimaOnlineDirectory, $"staidx{i}.mul");
-
-                StaticsIdx[i] = new UOPackageFile(path);
-                StaticsIdx[i].Load("", false);
-
-                path = Path.Combine(ultimaOnlineDirectory, $"statics{i}x.mul");
-
-                if (File.Exists(path))
-                {
-                    StaticsX[i] = new UOPackageFile(path);
-                    StaticsX[i].Load("", false);
-                }
-
-                path = Path.Combine(ultimaOnlineDirectory, $"staidx{i}x.mul");
-
-                if (File.Exists(path))
-                {
-                    StaticsXIdx[i] = new UOPackageFile(path);
-                    StaticsXIdx[i].Load("", false);
-                }
-            }
+            Statics.Mount();
         }
 
-        public void LoadMap(int i)
+        if (IdxStatics.Exists)
         {
-            MapBlocksSize[i, 0] = MapsDefaultSize[i, 0] >> 3;
-            MapBlocksSize[i, 1] = MapsDefaultSize[i, 1] >> 3;
+            IdxStatics.Mount();
+        }
 
-            int mapblocksize = Unsafe.SizeOf<MapBlock>();
-            var staticidxblocksize = Unsafe.SizeOf<StaidxBlock>();
-            var staticblocksize = Unsafe.SizeOf<StaticsBlock>();
-            var width = MapBlocksSize[i, 0];
-            var height = MapBlocksSize[i, 1];
-            var maxblockcount = width * height;
-            BlockData[i] = new IndexMap[maxblockcount];
-            var file = MapLegacyMUL[i];
-            var fileidx = StaticsIdx[i];
-            var staticfile = Statics[i];
+        if (StaticsX.Exists)
+        {
+            StaticsX.Mount();
+        }
 
-            ulong uopoffset = 0;
-            int fileNumber = -1;
-            bool isUop = file.IsUop;
-
-            for (int block = 0; block < maxblockcount; block++)
-            {
-                int blocknum = block;
-
-                if (isUop)
-                {
-                    blocknum &= 4095;
-
-                    int shifted = block >> 12;
-
-                    if (fileNumber != shifted)
-                    {
-                        fileNumber = shifted;
-
-                        if (shifted < file.FileIndices.Length)
-                        {
-                            uopoffset = (ulong)file.FileIndices[shifted].Offset;
-                        }
-                    }
-                }
-
-                var mapPos = uopoffset + (ulong)(blocknum * mapblocksize);
-                var staticPos = 0ul;
-                var staticCount = 0u;
-
-                fileidx.Stream!.Seek(block * staticidxblocksize, SeekOrigin.Begin);
-
-                var st = fileidx.Reader!.Read<StaidxBlock>();
-
-                if (st.Size > 0 && st.Position != 0xFFFF_FFFF)
-                {
-                    staticPos = st.Position;
-                    staticCount = Math.Min(1024, (uint)(st.Size / staticblocksize));
-                }
-
-                ref var data = ref BlockData[i][block];
-
-                data.MapAddress = mapPos;
-                data.StaticAddress = staticPos;
-                data.StaticCount = staticCount;
-                data.OriginalMapAddress = mapPos;
-                data.OriginalStaticAddress = staticPos;
-                data.OriginalStaticCount = staticCount;
-
-                data.MapFile = file;
-                data.StaticFile = staticfile;
-            }
+        if (IdxStaticsX.Exists)
+        {
+            IdxStaticsX.Mount();
         }
     }
+}
 
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct StaticsBlock
-    {
-        public ushort Color;
-        public byte X;
-        public byte Y;
-        public sbyte Z;
-        public ushort Hue;
-    }
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct StaticsBlock
+{
+    public ushort Color;
+    public byte X;
+    public byte Y;
+    public sbyte Z;
+    public ushort Hue;
+}
 
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct StaidxBlock
-    {
-        public uint Position;
-        public uint Size;
-        public uint Unknown;
-    }
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct StaidxBlock
+{
+    public uint Position;
+    public uint Size;
+    public uint Unknown;
+}
 
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public ref struct StaidxBlockVerdata
-    {
-        public uint Position;
-        public ushort Size;
-        public byte Unknown;
-    }
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public ref struct StaidxBlockVerdata
+{
+    public uint   Position;
+    public ushort Size;
+    public byte   Unknown;
+}
 
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct MapCells
-    {
-        public ushort TileID;
-        public sbyte Z;
-    }
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct MapCells
+{
+    public ushort TileID;
+    public sbyte Z;
+}
 
-    [InlineArray(64)]
-    public struct MapCellsArray
-    {
-        private MapCells _a0;
-    }
+[InlineArray(64)]
+public struct MapCellsArray
+{
+    private MapCells _a0;
+}
 
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct MapBlock
-    {
-        public uint Header;
-        public unsafe MapCellsArray Cells;
-    }
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct MapBlock
+{
+    public uint Header;
+    public unsafe MapCellsArray Cells;
+}
 
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct RadarMapcells
-    {
-        public ushort Graphic;
-        public sbyte Z;
-        public bool IsLand;
-    }
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct RadarMapcells
+{
+    public ushort Graphic;
+    public sbyte Z;
+    public bool IsLand;
+}
 
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct RadarMapBlock
-    {
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 64)]
-        public RadarMapcells[,] Cells;
-    }
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct RadarMapBlock
+{
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 64)]
+    public RadarMapcells[,] Cells;
+}
 
-    public struct IndexMap
-    {
-        public UOPackageFile        MapFile;
-        public UOPackageFile        StaticFile;
-        public ulong                MapAddress;
-        public ulong                OriginalMapAddress;
-        public ulong                OriginalStaticAddress;
-        public uint                 OriginalStaticCount;
-        public ulong                StaticAddress;
-        public uint                 StaticCount;
-        public static IndexMap      Invalid = new IndexMap();
-    }
+public struct IndexMap
+{
+    public UOPackageFile MapFile;
+    public UOPackageFile StaticFile;
+    public ulong MapAddress;
+    public ulong OriginalMapAddress;
+    public ulong OriginalStaticAddress;
+    public uint OriginalStaticCount;
+    public ulong StaticAddress;
+    public uint StaticCount;
+    public static IndexMap Invalid = new IndexMap();
 }

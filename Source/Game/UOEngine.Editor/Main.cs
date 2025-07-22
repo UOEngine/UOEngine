@@ -5,7 +5,7 @@
         [STAThread]
         static int Main(string[] args)
         {
-            Engine engine = new Engine(new Editor());
+            using Engine engine = new Engine(new Editor());
 
             return engine.Run(args);
         }
