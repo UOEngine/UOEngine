@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 using UOEngine.Interop;
 
@@ -14,6 +15,9 @@ namespace UOEngine
 
         public Texture2D(uint width, uint height)
         {
+            Debug.Assert(width > 0);
+            Debug.Assert(height > 0);
+
             _pixels = new Colour[width * height];
 
             Width = width;

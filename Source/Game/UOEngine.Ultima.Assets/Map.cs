@@ -4,23 +4,23 @@ using UOEngine.PackageFile;
 
 namespace UOEngine.UOAssets;
 
-internal class Map
+public class Map
 {
     public IndexMap[] BlockData { get; private set; } = new IndexMap[1];
 
-    private int _blockSizeX = 0;
-    private int _blockSizeY = 0;
+    public int BlockSizeX { get; private set; } = 0;
+    public int BlockSizeY { get; private set; } = 0;
 
-    public void Deserialise(int sizeX, int sizeY, UOPackageFile mapFile, bool isUop, BinaryReader fileIdxReader)
+    public void Deserialise(int sizeX, int sizeY, UOMapFileData mapFileData, bool isUop)
     {
-        _blockSizeX = sizeX >> 3;
-        _blockSizeY = sizeY >> 3;
+        BlockSizeX = sizeX >> 3;
+        BlockSizeY = sizeY >> 3;
 
         int mapblocksize = Unsafe.SizeOf<MapBlock>();
         var staticidxblocksize = Unsafe.SizeOf<StaidxBlock>();
         var staticblocksize = Unsafe.SizeOf<StaticsBlock>();
-        var width = _blockSizeX;
-        var height = _blockSizeY;
+        var width = BlockSizeX;
+        var height = BlockSizeY;
         var maxblockcount = width * height;
 
         BlockData = new IndexMap[maxblockcount];
@@ -43,9 +43,9 @@ internal class Map
                 {
                     fileNumber = shifted;
 
-                    if (shifted < mapFile.FileIndices.Length)
+                    if (shifted < mapFileData.MapLegacyMul.FileIndices.Length)
                     {
-                        uopoffset = (ulong)mapFile.FileIndices[shifted].Offset;
+                        uopoffset = (ulong)mapFileData.MapLegacyMul.FileIndices[shifted].Offset;
                     }
                 }
             }
@@ -54,9 +54,9 @@ internal class Map
             var staticPos = 0ul;
             var staticCount = 0u;
 
-            fileIdxReader.BaseStream.Seek(block * staticidxblocksize, SeekOrigin.Begin);
+            mapFileData.IdxStatics.Reader.BaseStream.Seek(block * staticidxblocksize, SeekOrigin.Begin);
 
-            var st = fileIdxReader.Read<StaidxBlock>();
+            var st = mapFileData.IdxStatics.Reader.Read<StaidxBlock>();
 
             if (st.Size > 0 && st.Position != 0xFFFF_FFFF)
             {
@@ -72,9 +72,8 @@ internal class Map
             data.OriginalMapAddress = mapPos;
             data.OriginalStaticAddress = staticPos;
             data.OriginalStaticCount = staticCount;
-
-            //data.MapFile = file;
-            //data.StaticFile = staticfile;
+            data.MapFile = mapFileData.MapLegacyMul;
+            data.StaticFile = mapFileData.Statics;
         }
     }
 }
