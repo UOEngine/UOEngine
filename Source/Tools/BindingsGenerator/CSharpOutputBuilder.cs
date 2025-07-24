@@ -10,6 +10,7 @@ namespace BindingsGenerator
     internal class CSharpOutputBuilder(LibraryImportGenerator generator)
     {
         public const string                         DefaultIndentationString = "\t";
+        public const string                         LineEnding = "\n";
 
         public IEnumerable<string>                  Contents => _contents;
 
@@ -26,7 +27,7 @@ namespace BindingsGenerator
             foreach (var line in _contents)
             {
                 _ = result.Append(line);
-                _ = result.Append('\n');
+                _ = result.Append(LineEnding);
             }
 
             _ = result.Append(_currentLine);

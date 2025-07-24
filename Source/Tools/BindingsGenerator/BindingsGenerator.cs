@@ -17,7 +17,12 @@ namespace BindingsGenerator
 
             string nativeInteropSource = @"D:\UODev\UOEngineGitHub\Source\Runtime\NativeInterop";
 
-            string destination = @"D:\UODev\UOEngineGitHub\Source\Game\UOEngine.Interop";
+            string destination = @"D:\UODev\UOEngineGitHub\Source\Game\UOEngine.Interop\Generated";
+
+            if (Directory.Exists(destination) == false)
+            {
+                Directory.CreateDirectory(destination);
+            }
 
             var files = Directory.GetFiles(nativeInteropSource, "*.h");
 
@@ -83,6 +88,8 @@ namespace BindingsGenerator
             if(File.Exists(csharpFile))
             {
                 string existingContents = File.ReadAllText(csharpFile);
+
+                existingContents.Replace("\r\n", "\n").Replace("\r", "\n");
 
                 if(existingContents == csharpFileContents)
                 {
