@@ -12,6 +12,14 @@ struct Vector4
 				W = inW;
 			}
 
+			void	SetToZero()
+			{
+				X = 0.0f;
+				Y = 0.0f;
+				Z = 0.0f;
+				W = 0.0f;
+			}
+
 	float	X;
 	float	Y;
 	float	Z;
@@ -30,6 +38,12 @@ public:
 										  float in30, float in31, float in32, float in33);
 
 	static Matrix4x4			sCreateOrthographic(float inLeft, float inRight, float inBottom, float inTop, float inNear, float inFar);
+	static Matrix4x4			sIdentity();
+
+	void						SetToIdentity();
+	void						SetToZero();
+
+	Vector4						Column(int index) const {return mColumns[index]; }
 
 	static constexpr uint32		Rows = 4;
 	static constexpr uint32		Columns = 4;

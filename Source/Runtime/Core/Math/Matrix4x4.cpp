@@ -30,3 +30,30 @@ Matrix4x4 Matrix4x4::sCreateOrthographic(float inLeft, float inRight, float inBo
 		             0.0f, 0.0f,    z, tz,
 		             0.0f, 0.0f, 0.0f, 1.0f);
 }
+
+Matrix4x4 Matrix4x4::sIdentity()
+{
+	Matrix4x4 identity;
+
+	identity.SetToIdentity();
+
+	return identity;
+}
+
+void Matrix4x4::SetToIdentity()
+{
+	SetToZero();
+
+	mColumns[0].X = 1.0f;
+	mColumns[1].Y = 1.0f;
+	mColumns[2].Z = 1.0f;
+	mColumns[3].W = 1.0f;
+}
+
+void Matrix4x4::SetToZero()
+{
+	for (int32 column = 0; column < Columns; column++)
+	{
+		mColumns[column].SetToZero();
+	}
+}

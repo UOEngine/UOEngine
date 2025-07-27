@@ -5,15 +5,17 @@
 #include "Memory/Memory.h"
 #include "Memory/MemoryAllocator.h"
 
+int strcmp(const char*, const char*);
+
 String::String()
 {
-	Data = nullptr;
-	NumCharacters = 0;
+	mData = nullptr;
+	mNumCharacters = 0;
 }
 
 String::String(char* Str)
 {
-	Data = nullptr;
+	mData = nullptr;
 
 	uint32 Length = strlen(Str);
 
@@ -23,7 +25,7 @@ String::String(char* Str)
 
 String::String(const char* Str)
 {
-	Data = nullptr;
+	mData = nullptr;
 
 	uint32 Length = strlen(Str);
 
@@ -32,8 +34,8 @@ String::String(const char* Str)
 
 String::String(const String& Other)
 {
-	Data = Other.Data;
-	NumCharacters = Other.NumCharacters;
+	mData = Other.mData;
+	mNumCharacters = Other.mNumCharacters;
 
 	Buffer* OtherBuffer = Other.GetBuffer();
 
@@ -44,7 +46,7 @@ String::String(const String& Other)
 
 String::~String()
 {
-	if (Data == nullptr)
+	if (mData == nullptr)
 	{
 		return;
 	}
@@ -55,19 +57,57 @@ String::~String()
 	{
 		MemoryAllocator::Get().Free(GetBuffer());
 
-		Data = nullptr;
+		mData = nullptr;
+		mNumCharacters = 0;
 	}
+}
+
+String& String::operator=(const String& inOther)
+{
+	if (mData != inOther.mData)
+	{
+		if (mData != nullptr)
+		{
+			GNotImplemented;
+		}
+
+		inOther.GetBuffer()->Header.ReferenceCount++;
+
+		mData = inOther.mData;
+		mNumCharacters = inOther.mNumCharacters;
+	}
+
+	return *this;
+}
+
+String& String::operator=(const char* Str)
+{
+	if (Str[0] == 0)
+	{
+		GNotImplemented;
+	}
+
+	uint32 Length = strlen(Str);
+
+	Copy(Str, Length);
+
+	return *this;
+}
+
+bool String::operator==(const char* Str)
+{
+	return (strcmp(mData, Str) == 0);
 }
 
 void String::Copy(const char* Str, uint32 Length)
 {
-	if (Data != nullptr)
+	if (mData != nullptr)
 	{
-		GAssert(false);
+		GNotImplemented;
 	}
 	else
 	{
-		NumCharacters = Length;
+		mNumCharacters = Length;
 
 		// +1 for terminating zero.
 		uint32 StringSizeBytes = (Length + 1) * sizeof(char);
@@ -80,6 +120,6 @@ void String::Copy(const char* Str, uint32 Length)
 
 		Memory::MemCopy(NewBuffer->Data, StringSizeBytes, (void*)Str, StringSizeBytes);
 
-		Data = NewBuffer->Data;
+		mData = NewBuffer->Data;
 	}
 }

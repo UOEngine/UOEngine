@@ -16,11 +16,16 @@ public:
 
 					~String();
 
+	String&			operator=(const String& inOther);
+	String&			operator=(const char* Str);
+
+	bool			operator==(const char* Str);
+
 	void			Copy(const char* Str, uint32 Length);
 
-	const char*		ToCString() const	{return Data;}
+	const char*		ToCString() const	{return mData;}
 
-	uint32			Length() const		{return NumCharacters;}
+	uint32			Length() const		{return mNumCharacters;}
 
 private:
 
@@ -35,11 +40,11 @@ private:
 		char			Data[];
 	};
 
-	Buffer*			GetBuffer()			{ return (Buffer*)((uint8*)Data - sizeof(BufferHeader)); }
-	Buffer*			GetBuffer() const	{ return (Buffer*)((uint8*)Data - sizeof(BufferHeader)); }
+	Buffer*			GetBuffer()			{ return (Buffer*)((uint8*)mData - sizeof(BufferHeader)); }
+	Buffer*			GetBuffer() const	{ return (Buffer*)((uint8*)mData - sizeof(BufferHeader)); }
 
-	char*			Data;
+	char*			mData;
 
-	uint32			NumCharacters;
+	uint32			mNumCharacters;
 
 };

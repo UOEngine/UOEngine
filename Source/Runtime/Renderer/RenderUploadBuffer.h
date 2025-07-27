@@ -3,6 +3,7 @@
 #include "Core/Containers/Array.h"
 #include "Core/TComPtr.h"
 
+class D3D12Resource;
 class RenderDevice;
 struct ID3D12Resource;
 
@@ -21,7 +22,7 @@ public:
 
 	RenderUploadBufferAllocation*	Allocate(uint64 Size);
 
-	TComPtr<ID3D12Resource>			GetResource() const {return mResource;}
+	D3D12Resource*					GetResource() const {return mResource;}
 
 	void							Free(RenderUploadBufferAllocation* inAllocation);
 private:
@@ -29,7 +30,7 @@ private:
 	void							Flush();
 
 	uint64							mSize = 0;
-	TComPtr<ID3D12Resource>			mResource; // The actual buffer.
+	D3D12Resource*					mResource; // The actual buffer.
 
 	uint8*							mMappedPtr;
 

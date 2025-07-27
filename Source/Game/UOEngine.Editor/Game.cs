@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using UOEngine.Interop;
 
@@ -9,6 +10,44 @@ public class Engine(IUOEngineApp app) : IDisposable
     readonly IUOEngineApp _app = app;
 
     public int Run(string[] args)
+    {
+        int code = -1;
+
+        try
+        {
+            code = RunInternal(args);
+        }
+        catch(SEHException ex)
+        {
+            IntPtr exceptionPointers = Marshal.GetExceptionPointers();
+
+            Debug.Assert(false);
+        }
+        catch (Exception ex)
+        {
+            Debug.Assert(false);
+        }
+        finally
+        {
+            Dispose();
+        }
+
+        return code;
+    }
+
+    public void Dispose()
+    {
+        EngineInterop.EngineShutdown();
+    }
+
+    protected virtual void Update(float deltaTime) { }
+
+    protected virtual bool Initialise()
+    {
+        return true;
+    }
+
+    private int RunInternal(string[] args)
     {
         var startupMeasurement = Stopwatch.StartNew();
 
@@ -43,17 +82,5 @@ public class Engine(IUOEngineApp app) : IDisposable
 
 
         return 0;
-    }
-
-    public void Dispose()
-    {
-        EngineInterop.EngineShutdown();
-    }
-
-    protected virtual void Update(float deltaTime) { }
-
-    protected virtual bool Initialise()
-    {
-        return true;
     }
 }

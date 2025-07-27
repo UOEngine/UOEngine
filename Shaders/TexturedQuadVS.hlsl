@@ -28,15 +28,26 @@ struct PerFrameData
     float4x4 Projection;
 };
 
+struct PerInstanceData
+{
+    float4x4 ModelToWorld;
+};
+
 ConstantBuffer<PerFrameData> cbPerFrameData: register(b0);
 
-VsToPs main( uint vid : SV_VertexID )
+StructuredBuffer<PerInstanceData> sbPerInstanceData: register(t0);
+
+VsToPs main( uint vid : SV_VertexID, uint instance_id : SV_InstanceID )
 {
     VsToPs output;
 
+    float4x4 model = sbPerInstanceData[instance_id].ModelToWorld;
+
     float4 vert = float4(width * cQuadVertsNDC[vid].x, height * cQuadVertsNDC[vid].y, 0.0, 1.0);
     
-    output.position = mul(cbPerFrameData.Projection, vert);
+    float4 vertex_world_space = mul(model, vert);
+
+    output.position = mul(cbPerFrameData.Projection, vertex_world_space);
     output.uv = cQuadUVs[vid];
     
     return output;

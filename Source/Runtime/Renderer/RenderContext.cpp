@@ -3,11 +3,14 @@
 #include "Renderer/D3D12Resource.h"
 #include "Renderer/D3D12RenderTargetView.h"
 #include "Renderer/GpuDescriptorAllocator.h"
+#include "Renderer/RenderBuffer.h"
 #include "Renderer/RenderCommandList.h"
 #include "Renderer/RenderCommandQueue.h"
 #include "Renderer/RenderDevice.h"
 #include "Renderer/RenderTextureAllocator.h"
 #include "Renderer/RenderTexture.h"
+#include "Renderer/Shader.h"
+#include "Renderer/ShaderInstance.h"
 
 RenderCommandContext::RenderCommandContext(RenderDevice* InDevice)
 {
@@ -19,6 +22,12 @@ RenderCommandContext::RenderCommandContext(RenderDevice* InDevice)
 	QueueType = ERenderQueueType::Direct;
 
 	RenderTarget = nullptr;
+
+	mProjectionMatrix.SetToIdentity();
+
+	mShaderInstance = nullptr;
+
+	mbRenderStateDirty = true;
 }
 
 void RenderCommandContext::Begin()
@@ -97,16 +106,30 @@ void RenderCommandContext::SetViewport(const Rect& inViewportRect)
 	GetGraphicsCommandList()->RSSetScissorRects(1, &scissor);
 }
 
-void RenderCommandContext::SetShaderBindingData(RenderTexture* inTexture)
+//void RenderCommandContext::SetShaderBindingData(EShaderType inShaderType, RenderTexture* inTexture, uint32 inSlot)
+//{
+//	DescriptorTable			table = mDevice->GetSrvGpuDescriptorAllocator()->Allocate();
+//	ID3D12DescriptorHeap*	heaps[] = {mDevice->GetSrvGpuDescriptorAllocator()->GetHeap()};
+//
+//	mCommandList->GetGraphicsCommandList()->SetDescriptorHeaps(1, heaps);
+//
+//	mDevice->GetDevice()->CopyDescriptorsSimple(1, table.mCpuHandle, inTexture->GetSrv(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+//
+//	mGpuDescriptorsToBind[static_cast<uint32>(inShaderType)][inSlot] = table.mGpuHandle;
+//
+//	mbRenderStateDirty = true;
+//}
+
+void RenderCommandContext::SetShaderInstance(ShaderInstance* inShaderInstance)
 {
-	DescriptorTable			table = mDevice->GetSrvGpuDescriptorAllocator()->Allocate();
-	ID3D12DescriptorHeap*	heaps[] = {mDevice->GetSrvGpuDescriptorAllocator()->GetHeap()};
+	if (inShaderInstance == mShaderInstance)
+	{
+		return;
+	}
 
-	mCommandList->GetGraphicsCommandList()->SetDescriptorHeaps(1, heaps);
+	mShaderInstance = inShaderInstance;
 
-	mDevice->GetDevice()->CopyDescriptorsSimple(1, table.mCpuHandle, inTexture->GetSrv(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-	mCommandList->GetGraphicsCommandList()->SetGraphicsRootDescriptorTable(1, table.mGpuHandle);
+	mbRenderStateDirty = true;
 }
 
 void RenderCommandContext::SetProjectionMatrix(const Matrix4x4& inMatrix)
@@ -127,6 +150,8 @@ void RenderCommandContext::FlushCommands()
 
 void RenderCommandContext::Draw()
 {
+	Bind();
+
 	GetGraphicsCommandList()->DrawInstanced(4, 1, 0, 0);
 }
 
@@ -143,6 +168,8 @@ RenderCommandList* RenderCommandContext::GetCommandList()
 void RenderCommandContext::OpenCommandList()
 {
 	mCommandList = mDevice->GetQueue(QueueType)->CreateCommandList();
+
+	Memory::MemZero(mDirtySrvs, sizeof(uint16) * static_cast<uint32>(EShaderType::Count));
 }
 
 void RenderCommandContext::CloseCommandList()
@@ -150,4 +177,106 @@ void RenderCommandContext::CloseCommandList()
 	mCommandList->Close();
 
 	mCommandList = nullptr;
+}
+
+void RenderCommandContext::Bind()
+{
+	//if (mbRenderStateDirty == false)
+	//{
+	//	return;
+	//}
+
+	const uint32 num_shader_programs = static_cast<uint32>(EShaderType::Count);
+
+	for (uint32 i = 0; i < num_shader_programs; i++)
+	{
+		EShaderType shader_program_type = static_cast<EShaderType>(i);
+
+		Shader* shader = mShaderInstance->GetShader(shader_program_type);
+
+		if (shader == nullptr)
+		{
+			continue;
+		}
+
+		const ShaderBindingInfo* shader_binding_info = shader->GetBindingInfo();
+		const ShaderBoundData*	shader_bound_data = mShaderInstance->GetBoundData(shader_program_type);
+
+		for (uint32 element = 0; element < shader_binding_info->mBindings.Num(); element++)
+		{
+			const ShaderBinding& binding_info = shader_binding_info->mBindings[element];
+
+			uint32 binding_index = binding_info.mBindIndex;
+
+			GAssert(binding_info.mType != EShaderBindingType::Invalid);
+
+			if (binding_info.mType == EShaderBindingType::ConstantBuffer)
+			{
+				continue;
+			}
+
+			if (binding_info.mType == EShaderBindingType::Sampler)
+			{
+				continue;
+			}
+
+			const Slot& slot = shader_bound_data->mData[binding_index];
+
+			uint32 hack_bind = 0;
+
+			switch (binding_info.mType)
+			{
+				case EShaderBindingType::Texture:
+				{
+					SetTexture(binding_index, i, slot.mTexture);
+
+					break;
+				}
+
+				case EShaderBindingType::StructuredBuffer:
+				{
+					SetBuffer(binding_index, i, slot.mBuffer);
+
+					break;
+				}
+
+				default:
+					GNotImplemented;
+			}
+
+			mCommandList->GetGraphicsCommandList()->SetGraphicsRootDescriptorTable(binding_info.mRootParameterIndex, mGpuDescriptorsToBind[i][binding_index]);
+
+		}
+	}
+
+	mbRenderStateDirty = false;
+}
+
+void RenderCommandContext::SetTexture(uint32 inSlot, uint32 inProgramIndex, RenderTexture* inTexture)
+{
+	GAssert(inTexture != nullptr);
+
+	DescriptorTable			table = mDevice->GetSrvGpuDescriptorAllocator()->Allocate();
+	ID3D12DescriptorHeap* heaps[] = { mDevice->GetSrvGpuDescriptorAllocator()->GetHeap() };
+
+	mCommandList->GetGraphicsCommandList()->SetDescriptorHeaps(1, heaps);
+
+	mDevice->GetDevice()->CopyDescriptorsSimple(1, table.mCpuHandle, inTexture->GetSrv(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	mGpuDescriptorsToBind[inProgramIndex][inSlot] = table.mGpuHandle;
+}
+
+void RenderCommandContext::SetBuffer(uint32 inSlot, uint32 inProgramIndex, RenderBuffer* inBuffer)
+{
+	GAssert(inBuffer != nullptr);
+
+	DescriptorTable			table = mDevice->GetSrvGpuDescriptorAllocator()->Allocate();
+	ID3D12DescriptorHeap* heaps[] = { mDevice->GetSrvGpuDescriptorAllocator()->GetHeap() };
+
+	mCommandList->GetGraphicsCommandList()->SetDescriptorHeaps(1, heaps);
+
+	mDevice->GetDevice()->CopyDescriptorsSimple(1, table.mCpuHandle, inBuffer->GetSrv(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	mGpuDescriptorsToBind[inProgramIndex][inSlot] = table.mGpuHandle;
+
 }

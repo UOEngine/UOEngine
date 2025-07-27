@@ -125,6 +125,8 @@ bool Shader::Load(const String& FilePath)
 	mNumSignatureParameters = shader_desc.InputParameters;
 	mNumBoundResources = shader_desc.BoundResources;
 
+	mBindingInfo.mBindings.Reserve(mNumBoundResources);
+
 	return true;
 }
 
@@ -134,9 +136,19 @@ void Shader::BuildRootSignature(TArray<D3D12_ROOT_PARAMETER1>& OutRootSignatureD
 
 	mReflection->GetDesc(&shader_desc);
 
+	uint32 root_parameter_index = 0;
+	
+	if (OutRootSignatureDescription.Num() > 0)
+	{
+		root_parameter_index = OutRootSignatureDescription.Num();
+	}
+
 	for (int32 i = 0; i < shader_desc.BoundResources; i++)
 	{
-		D3D12_SHADER_INPUT_BIND_DESC bound_desc;
+		ShaderBinding					shader_binding = {};
+		D3D12_SHADER_INPUT_BIND_DESC	bound_desc = {};
+
+		EShaderBindingType binding_type = EShaderBindingType::Invalid;
 
 		mReflection->GetResourceBindingDesc(i, &bound_desc);
 
@@ -144,40 +156,29 @@ void Shader::BuildRootSignature(TArray<D3D12_ROOT_PARAMETER1>& OutRootSignatureD
 
 		root_parameter.ShaderVisibility = mType == EShaderType::Vertex ? D3D12_SHADER_VISIBILITY_VERTEX : D3D12_SHADER_VISIBILITY_PIXEL;
 
-		if (bound_desc.Type == D3D_SIT_TEXTURE)
+		if ((bound_desc.Type == D3D_SIT_TEXTURE) || (bound_desc.Type == D3D_SIT_STRUCTURED))
 		{
-			D3D12_DESCRIPTOR_RANGE1 texture_desc_range;
+			D3D12_DESCRIPTOR_RANGE1 descriptor_range;
 
-			texture_desc_range.BaseShaderRegister = bound_desc.BindPoint;
-			texture_desc_range.RegisterSpace = bound_desc.Space;
-			texture_desc_range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-			texture_desc_range.NumDescriptors = 1;
-			texture_desc_range.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE;
-			texture_desc_range.OffsetInDescriptorsFromTableStart = 0;
+			descriptor_range.BaseShaderRegister = bound_desc.BindPoint;
+			descriptor_range.RegisterSpace = bound_desc.Space;
+			descriptor_range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+			descriptor_range.NumDescriptors = 1;
+			descriptor_range.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE;
+			descriptor_range.OffsetInDescriptorsFromTableStart = 0;
 
-			mDescriptorRanges.Add(texture_desc_range);
+			mDescriptorRanges.Add(descriptor_range);
 
 			root_parameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 			root_parameter.DescriptorTable.NumDescriptorRanges = 1;
 			root_parameter.DescriptorTable.pDescriptorRanges = &mDescriptorRanges.Last();
+
+			shader_binding.mType = bound_desc.Type == D3D_SIT_TEXTURE? EShaderBindingType::Texture: EShaderBindingType::StructuredBuffer;
 		}
 		else if (bound_desc.Type == D3D_SIT_SAMPLER)
 		{
-			continue;
-			//D3D12_DESCRIPTOR_RANGE1 ps_sampler_desc_range;
-
-			//ps_sampler_desc_range.BaseShaderRegister = bound_desc.BindPoint;
-			//ps_sampler_desc_range.RegisterSpace = bound_desc.Space;
-			//ps_sampler_desc_range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
-			//ps_sampler_desc_range.NumDescriptors = 1;
-			//ps_sampler_desc_range.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE;
-			//ps_sampler_desc_range.OffsetInDescriptorsFromTableStart = 0;
-
-			//mDescriptorRanges.Add(ps_sampler_desc_range);
-
-			//root_parameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-			//root_parameter.DescriptorTable.NumDescriptorRanges = 1;
-			//root_parameter.DescriptorTable.pDescriptorRanges = &mDescriptorRanges.Last();
+			// Using static sampler for now.
+			shader_binding.mType = EShaderBindingType::Sampler;
 
 		}
 		else if (bound_desc.Type == D3D_SIT_CBUFFER)
@@ -202,13 +203,47 @@ void Shader::BuildRootSignature(TArray<D3D12_ROOT_PARAMETER1>& OutRootSignatureD
 			root_parameter.Constants.Num32BitValues = constant_buffer_desc.Size / 4;
 			root_parameter.Constants.ShaderRegister = bound_desc.BindPoint;
 			root_parameter.Constants.RegisterSpace = bound_desc.Space;
+
+			shader_binding.mType = EShaderBindingType::ConstantBuffer;
+
 		}
 		else
 		{
 			GAssert(false);
 		}
 
-		mRootParameters.Add(root_parameter);
-		OutRootSignatureDescription.Add(root_parameter);
+		shader_binding.mName = bound_desc.Name;
+		shader_binding.mBindIndex = bound_desc.BindPoint;
+		shader_binding.mRootParameterIndex = root_parameter_index;
+
+		mBindingInfo.mBindings.Add(shader_binding);
+
+		if (bound_desc.Type != D3D_SIT_SAMPLER)
+		{
+			//	Using static samplers.
+			OutRootSignatureDescription.Add(root_parameter);
+
+			root_parameter_index++;
+		}
 	}
+}
+
+ShaderBindingHandle Shader::GetParameter(const char* inName)
+{
+	for (uint32 i = 0; i < mBindingInfo.mBindings.Num(); i++)
+	{
+		if (mBindingInfo.mBindings[i].mName == inName)
+		{
+			return ShaderBindingHandle{ mBindingInfo.mBindings[i].mBindIndex, static_cast<uint8>(mType)};
+		}
+	}
+
+	GUnreachable;
+
+	return ShaderBindingHandle{};
+}
+
+ShaderBindingHandle Shader::GetParameter(uint32 inIndex)
+{
+	return ShaderBindingHandle{ mBindingInfo.mBindings[inIndex].mBindIndex, static_cast<uint8>(mType)};
 }

@@ -2,15 +2,16 @@
 
 #include <d3d12.h>
 
+#include "Renderer/D3D12Resource.h"
 #include "Renderer/RenderDevice.h"
 
 void RenderUploadBuffer::Init(RenderDevice* Device, uint32 Size)
 {
-	mResource = Device->CreateResource(ERenderHeapType::Upload, Size);
+	mResource = Device->CreateResource(ERenderHeapType::Upload, Size, D3D12_RESOURCE_STATE_GENERIC_READ);
 
 	mSize = Size;
 
-	mResource->Map(0, nullptr, reinterpret_cast<void**>(&mMappedPtr));
+	mResource->Get()->Map(0, nullptr, reinterpret_cast<void**>(&mMappedPtr));
 
 }
 
@@ -66,5 +67,5 @@ void RenderUploadBuffer::Free(RenderUploadBufferAllocation* inAllocation)
 
 void RenderUploadBuffer::Flush()
 {
-	mResource->Unmap(0, nullptr);
+	GAssert(false);
 }

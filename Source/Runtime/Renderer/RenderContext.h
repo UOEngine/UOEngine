@@ -4,12 +4,16 @@
 #include "Core/Math/Rect.h"
 #include "Core/Types.h"
 #include "Renderer/RenderCommandList.h"
+#include "Renderer/Shader.h"
 
 class D3D12RenderTargetView;
+class RenderBuffer;
 class RenderCommandAllocator;
 class RenderCommandList;
 class RenderDevice;
 class RenderTexture;
+class Shader;
+class ShaderInstance;
 enum class ERenderQueueType: uint8;
 enum D3D12_RESOURCE_STATES;
 struct ID3D12GraphicsCommandList;
@@ -39,7 +43,9 @@ public:
 	void							SetViewport(const Rect& inViewportRect);
 	Rect							GetViewport() const 							{return mViewportRect;}
 
-	void							SetShaderBindingData(RenderTexture* inTexture);
+	//void							SetShaderBindingData(EShaderType inShaderType, RenderTexture* inTexture, uint32 inSlot);
+
+	void							SetShaderInstance(ShaderInstance* inShaderInstance);
 
 	void							SetProjectionMatrix(const Matrix4x4& inMatrix);
 
@@ -53,12 +59,18 @@ public:
 	ID3D12GraphicsCommandList*		GetGraphicsCommandList()						{ return GetCommandList()->GetGraphicsCommandList(); }
 
 private:
+
 	RenderCommandList*				GetCommandList();
 
 	void							OpenCommandList();
 	void							CloseCommandList();
 
 	void							AddTransitionBarrier(D3D12RenderTargetView* Texture, D3D12_RESOURCE_STATES Before, D3D12_RESOURCE_STATES After);
+
+	void							Bind();
+
+	void							SetTexture(uint32 inSlot, uint32 inProgramIndex, RenderTexture* inTexture);
+	void							SetBuffer(uint32 inSlot, uint32 inProgramIndex, RenderBuffer* inBuffer);
 
 	// The active command list.
 	RenderCommandList*				mCommandList;
@@ -69,11 +81,19 @@ private:
 
 	ERenderQueueType				QueueType;
 
+	bool							mbRenderStateDirty;
+
 	// State for drawing.
 
 	RenderTexture*					RenderTarget;
 	Rect							mViewportRect;
 	Matrix4x4						mProjectionMatrix;
+	ShaderInstance*					mShaderInstance;
+
+	static const uint32				sMaxDescriptorsToBindPerProgram = 4;
+	D3D12_GPU_DESCRIPTOR_HANDLE		mGpuDescriptorsToBind[static_cast<uint32>(EShaderType::Count)][sMaxDescriptorsToBindPerProgram];
+
+	uint16							mDirtySrvs[static_cast<uint32>(EShaderType::Count)];
 
 };
 

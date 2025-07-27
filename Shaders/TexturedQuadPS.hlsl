@@ -4,7 +4,7 @@ struct VsToPs
     float2 uv: TEXCOORD0;
 };
 
-Texture2D<float4> texture : register(t0);
+Texture2D<float4> texture : register(t1);
 SamplerState bilinear_clamp_sampler : register(s0);
 
 float4 main(in VsToPs input) : SV_TARGET
