@@ -26,6 +26,27 @@ struct Vector4
 	float	W;
 };
 
+struct Vector3
+{
+	Vector3(float inX, float inY, float inZ)
+	{
+		X = inX;
+		Y = inY;
+		Z = inZ;
+	}
+
+	void	SetToZero()
+	{
+		X = 0.0f;
+		Y = 0.0f;
+		Z = 0.0f;
+	}
+
+	float	X;
+	float	Y;
+	float	Z;
+};
+
 class Matrix4x4
 {
 public:
@@ -44,6 +65,11 @@ public:
 	void						SetToZero();
 
 	Vector4						Column(int index) const {return mColumns[index]; }
+	void						SetColumn(uint32 inColumn, const Vector3& inValue);
+
+	void						SetTranslation(const Vector3& inTranslation);
+
+	float						operator()(uint32 inRow, uint32 inColumn);
 
 	static constexpr uint32		Rows = 4;
 	static constexpr uint32		Columns = 4;

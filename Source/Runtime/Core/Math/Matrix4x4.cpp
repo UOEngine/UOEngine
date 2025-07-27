@@ -1,5 +1,7 @@
 #include "Core/Math/Matrix4x4.h"
 
+#include "Core/Assert.h"
+
 Matrix4x4::Matrix4x4()
 {
 	
@@ -56,4 +58,26 @@ void Matrix4x4::SetToZero()
 	{
 		mColumns[column].SetToZero();
 	}
+}
+
+void Matrix4x4::SetColumn(uint32 inColumn, const Vector3& inValue)
+{
+	GAssert(inColumn < Columns);
+
+	mColumns[inColumn].X = inValue.X;
+	mColumns[inColumn].Y = inValue.Y;
+	mColumns[inColumn].Z = inValue.Z;
+}
+
+void Matrix4x4::SetTranslation(const Vector3& inTranslation)
+{
+	SetColumn(3, inTranslation);
+}
+
+float Matrix4x4::operator()(uint32 inRow, uint32 inColumn)
+{
+	GAssert(inRow < Rows);
+	GAssert(inColumn < Columns);
+
+	return mElements[inColumn * Rows + inRow];
 }
