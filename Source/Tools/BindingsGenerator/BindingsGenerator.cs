@@ -11,20 +11,45 @@ namespace BindingsGenerator
 
         public int Main(string[] args)
         {
+            Console.WriteLine("BindingsGenerator: Running...");
 
             string exePath = Assembly.GetExecutingAssembly().Location;
             string exeFolder = Path.GetDirectoryName(exePath);
 
-            string nativeInteropSource = @"D:\UODev\UOEngineGitHub\Source\Runtime\NativeInterop";
+            string sourcePath = "";
 
-            string destination = @"D:\UODev\UOEngineGitHub\Source\Game\UOEngine.Interop\Generated";
+            var repoRoot = new DirectoryInfo(exePath);
+
+            while (repoRoot != null)
+            {
+                sourcePath = Path.Combine(repoRoot.FullName, "Source");
+
+                if (Directory.Exists(sourcePath))
+                {
+
+                    break;
+                }
+
+                repoRoot = repoRoot.Parent;
+            }
+
+            string nativeInteropPath = Path.Combine(sourcePath, @"Runtime\NativeInterop");
+
+            if (Directory.Exists(nativeInteropPath) == false)
+            {
+                Console.WriteLine($"BindingsGenerator: Native Interop directory {nativeInteropPath} does not exist.");
+
+                return -1;
+            }
+
+            string destination = Path.Combine(sourcePath, @"Game\UOEngine.Interop\Generated");
 
             if (Directory.Exists(destination) == false)
             {
                 Directory.CreateDirectory(destination);
             }
 
-            var files = Directory.GetFiles(nativeInteropSource, "*.h");
+            var files = Directory.GetFiles(nativeInteropPath, "*.h");
 
             foreach (var file in files)
             {
