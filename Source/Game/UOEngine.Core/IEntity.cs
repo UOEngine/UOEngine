@@ -6,6 +6,6 @@ using System.Threading.Tasks;
 
 namespace UOEngine;
 
-internal interface IEntity
+public interface IEntity
 {
 }
