@@ -17,13 +17,13 @@ public class Engine(IUOEngineApp app) : IDisposable
         {
             code = RunInternal(args);
         }
-        catch(SEHException ex)
+        catch(SEHException)
         {
             IntPtr exceptionPointers = Marshal.GetExceptionPointers();
 
             Debug.Assert(false);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             Debug.Assert(false);
         }

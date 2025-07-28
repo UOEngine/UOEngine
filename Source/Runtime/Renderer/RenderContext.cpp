@@ -186,6 +186,11 @@ void RenderCommandContext::Bind()
 	//	return;
 	//}
 
+	if (mShaderInstance == nullptr)
+	{
+		GAssert(false);
+	}
+
 	const uint32 num_shader_programs = static_cast<uint32>(EShaderType::Count);
 
 	for (uint32 i = 0; i < num_shader_programs; i++)
@@ -222,8 +227,6 @@ void RenderCommandContext::Bind()
 
 			const Slot& slot = shader_bound_data->mData[binding_index];
 
-			uint32 hack_bind = 0;
-
 			switch (binding_info.mType)
 			{
 				case EShaderBindingType::Texture:
@@ -244,6 +247,7 @@ void RenderCommandContext::Bind()
 					GNotImplemented;
 			}
 
+			// Binding this always currently, but eventually only if changed.
 			mCommandList->GetGraphicsCommandList()->SetGraphicsRootDescriptorTable(binding_info.mRootParameterIndex, mGpuDescriptorsToBind[i][binding_index]);
 
 		}

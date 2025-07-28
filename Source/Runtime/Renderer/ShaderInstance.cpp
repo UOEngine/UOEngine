@@ -40,8 +40,42 @@ void ShaderInstance::SetTexture(ShaderBindingHandle inBindingHandle, RenderTextu
 	mBoundData[inBindingHandle.mShaderType].mData[inBindingHandle.mHandle].mTexture = inTexture;
 }
 
+void ShaderInstance::SetTexture(const char* inName, RenderTexture* inTexture)
+{
+	for (int i = 0; i < sNumShaderTypes; i++)
+	{
+		ShaderBindingHandle handle = mShaderPrograms[i]->GetParameter(inName);
+
+		if (handle.IsValid())
+		{
+			SetTexture(handle, inTexture);
+
+			return;
+		}
+	}
+
+	GUnreachable;
+}
+
 void ShaderInstance::SetBuffer(ShaderBindingHandle inBindingHandle, RenderBuffer* inBuffer)
 {
 	mBoundData[inBindingHandle.mShaderType].mData[inBindingHandle.mHandle].mBuffer = inBuffer;
+}
+
+void ShaderInstance::SetBuffer(const char* inName, RenderBuffer* inBuffer)
+{
+	for (int i = 0; i < sNumShaderTypes; i++)
+	{
+		ShaderBindingHandle handle = mShaderPrograms[i]->GetParameter(inName);
+
+		if (handle.IsValid())
+		{
+			SetBuffer(handle, inBuffer);
+
+			return;
+		}
+	}
+
+	GUnreachable;
 }
 

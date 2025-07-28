@@ -2,8 +2,6 @@
 
 namespace UOEngine.UOAssets;
 
-
-
 public class UOAssetLoader
 {
     public UOPackageFile Gumps { get; private set; }
@@ -15,7 +13,6 @@ public class UOAssetLoader
 
     public UOPackageFile Art { get; private set; }
 
-    private UOPackageFile _t;
     public void LoadAllFiles(string ultimaOnlineDirectory)
     {
         LoadGumps(ultimaOnlineDirectory);
@@ -39,7 +36,6 @@ public class UOAssetLoader
     {
         return GetArtInternal((uint)(idx & ~0x4000));
     }
-
 
     private UOBitmap GetArtInternal(uint idx)
     {

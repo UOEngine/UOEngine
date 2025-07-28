@@ -238,8 +238,6 @@ ShaderBindingHandle Shader::GetParameter(const char* inName)
 		}
 	}
 
-	GUnreachable;
-
 	return ShaderBindingHandle{};
 }
 

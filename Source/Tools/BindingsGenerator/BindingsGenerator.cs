@@ -26,7 +26,6 @@ namespace BindingsGenerator
 
                 if (Directory.Exists(sourcePath))
                 {
-
                     break;
                 }
 
@@ -96,7 +95,7 @@ namespace BindingsGenerator
 
             foreach (var line in _functions)
             {
-                builder.WriteIndentedLine("[LibraryImport(\"UOEngine.Native.dll\")]");
+                builder.WriteIndentedLine("[LibraryImport(\"UOEngine.Native.dll\", StringMarshalling = StringMarshalling.Utf8)]");
                 builder.WriteIndented(line);
                 builder.Write(";");
                 builder.WriteNewLine();

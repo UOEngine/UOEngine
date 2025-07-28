@@ -28,19 +28,19 @@ struct Vector4
 
 struct Vector3
 {
-	Vector3(float inX, float inY, float inZ)
-	{
-		X = inX;
-		Y = inY;
-		Z = inZ;
-	}
+			Vector3(float inX, float inY, float inZ)
+			{
+				X = inX;
+				Y = inY;
+				Z = inZ;
+			}
 
-	void	SetToZero()
-	{
-		X = 0.0f;
-		Y = 0.0f;
-		Z = 0.0f;
-	}
+			void	SetToZero()
+			{
+				X = 0.0f;
+				Y = 0.0f;
+				Z = 0.0f;
+			}
 
 	float	X;
 	float	Y;

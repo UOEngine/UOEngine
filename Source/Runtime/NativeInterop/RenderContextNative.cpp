@@ -5,10 +5,15 @@
 
 void SetShaderBindingData(RenderTexture* inTexture)
 {
-	GRenderer.GetContext()->SetShaderBindingData(inTexture);
+	//GRenderer.GetContext()->SetShaderBindingData(inTexture);
 }
 
 void Draw()
 {
 	GRenderer.GetContext()->Draw();
+}
+
+ShaderInstance* GetShaderInstance()
+{
+	return GRenderer.GetContext()->GetShaderInstance();
 }

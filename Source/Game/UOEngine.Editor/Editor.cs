@@ -1,53 +1,82 @@
 ﻿using System.Diagnostics;
-using System.Drawing;
-using UOEngine.Editor;
+using System.Runtime.CompilerServices;
+using UOEngine.Core;
 using UOEngine.UOAssets;
 
-namespace UOEngine.Editor
+namespace UOEngine.Editor;
+
+public class Editor : IUOEngineApp
 {
-    public class Editor : IUOEngineApp
+    readonly UOAssetLoader _assetLoader = new();
+
+    private Texture2D? _texture;
+
+    private List<Texture2D> _textures = [];
+    private Memory<Matrix4x4> _modelToWorld;
+    private RenderBuffer _renderBuffer; 
+
+    public bool PreEngineInit()
     {
-        readonly UOAssetLoader _assetLoader = new();
+        _assetLoader.LoadAllFiles(@"D:\Program Files (x86)\Electronic Arts\Ultima Online Classic");
 
-        private Texture2D? _texture;
+        return true;
+    }
 
-        public bool PreEngineInit()
+    public bool Initialise()
+    {
+        Debug.WriteLine($"Game.Initialise: Start");
+
+        //var loginBackgroundBitmap = _assetLoader.GetGump((int)EGumpTypes.LoginBackground);
+
+        //_texture = new(loginBackgroundBitmap.Width, loginBackgroundBitmap.Height);
+
+        //_texture.SetPixels(loginBackgroundBitmap.Texels);
+        //_texture.Apply();
+
+        var mapEntity = EntityManager.Instance.NewEntity<MapEntity>();
+
+        mapEntity.Load(_assetLoader.Maps[0]);
+
+        Chunk chunk = mapEntity.GetChunk(0, 0);
+
+        uint numTextures = 2;
+
+        _modelToWorld = new Matrix4x4[numTextures];
+
+        _renderBuffer = new RenderBuffer(numTextures, (uint)Unsafe.SizeOf<Matrix4x4>());
+
+        for (int i = 0; i < numTextures; i++)
         {
-            _assetLoader.LoadAllFiles(@"D:\Program Files (x86)\Electronic Arts\Ultima Online Classic");
-
-            return true;
-        }
-
-        public bool Initialise()
-        {
-            Debug.WriteLine($"Game.Initialise: Start");
-
-            //var loginBackgroundBitmap = _assetLoader.GetGump((int)EGumpTypes.LoginBackground);
-
-            //_texture = new(loginBackgroundBitmap.Width, loginBackgroundBitmap.Height);
-
-            //_texture.SetPixels(loginBackgroundBitmap.Texels);
-            //_texture.Apply();
-
-            var mapEntity = EntityManager.Instance.NewEntity<MapEntity>();
-
-            mapEntity.Load(_assetLoader.Maps[0]);
-
-            Chunk chunk = mapEntity.GetChunk(0, 0);
-
-            var bitmap = _assetLoader.GetLand(chunk.Entities[0, 0].GraphicId);
+            var bitmap = _assetLoader.GetLand((uint)i);
 
             _texture = new(bitmap.Width, bitmap.Height);
-
             _texture.SetPixels(bitmap.Texels);
             _texture.Apply();
 
-            return true;
+            _textures.Add(_texture);
+
+            Matrix4x4 modelToWorld = new Matrix4x4();
+
+            modelToWorld = Matrix4x4.Translate(new Vector3(44.0f * i, 0.0f, 0.0f));
+
+            _modelToWorld.Span[i] = modelToWorld;
         }
 
-        public void Update(float tick)
+        _renderBuffer.SetData<Matrix4x4>(_modelToWorld.Span);
+
+        return true;
+    }
+
+    public void Update(float tick)
+    {
+        ShaderInstance shaderInstance = RenderContext.GetShaderInstance();
+
+        for (int i = 0; i < _textures.Count; i++)
         {
-            RenderContext.SetShaderBindingData(_texture);
+            shaderInstance.SetTexture("texture", _textures[i]);
+            shaderInstance.SetBuffer("sbPerInstanceData", _renderBuffer);
+            shaderInstance.SetMatrix("modelToWorld", _modelToWorld.Span[i]);
+
             RenderContext.Draw();
         }
     }

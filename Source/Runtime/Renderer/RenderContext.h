@@ -46,6 +46,7 @@ public:
 	//void							SetShaderBindingData(EShaderType inShaderType, RenderTexture* inTexture, uint32 inSlot);
 
 	void							SetShaderInstance(ShaderInstance* inShaderInstance);
+	ShaderInstance*					GetShaderInstance() const						{return mShaderInstance;}
 
 	void							SetProjectionMatrix(const Matrix4x4& inMatrix);
 
