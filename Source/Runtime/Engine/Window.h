@@ -19,4 +19,6 @@ public:
 	virtual void			SetVisible(bool bVisible) = 0;
 
 	virtual IntVector2D		GetExtents() const = 0;
+
+	virtual void			SetTitle(const char* inTitle) = 0;
 };

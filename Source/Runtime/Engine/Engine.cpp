@@ -3,6 +3,8 @@
 #include <windows.h>
 
 #include "Core/Assert.h"
+#include "Core/Containers/String.h"
+#include "Core/Timer.h"
 #include "Engine/Window.h"
 #include "LivePP/LivePP.h"
 #include "Memory/MemoryAllocator.h"
@@ -13,6 +15,8 @@ Engine GEngine;
 Engine::Engine()
 {
 	mGameWindow = nullptr;
+
+	mTicksPassed = 0;
 }
 
 bool Engine::Init()
@@ -35,6 +39,8 @@ bool Engine::Init()
 
 	mGameWindow->SetVisible(true);
 
+	mTicksPassed = Timer::GetTicks();
+
 	return true;
 }
 
@@ -53,6 +59,25 @@ void Engine::PreUpdate()
 void Engine::PostUpdate()
 {
 	GRenderer.EndFrame();
+
+	if ((GRenderer.GetNumFramesRendered() % 500) == 0)
+	{
+		uint64 ticksNow = Timer::GetTicks();
+
+		uint64 delta_ticks = ticksNow - mTicksPassed;
+
+		uint64 delta_ticks_per_frame = (float)delta_ticks / 500.0f;
+
+		double frame_time_ms = Timer::sGetTicksInMilliseconds(delta_ticks_per_frame);
+
+		uint32 fps = 1000.0f / frame_time_ms;
+
+		String frame_time_display = String::sFormat("UOEngine: %.0f ms ( %d fps)", frame_time_ms, fps);
+
+		mGameWindow->SetTitle(frame_time_display.ToCString());
+
+		mTicksPassed = ticksNow;
+	}
 }
 
 void Engine::Run()

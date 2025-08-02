@@ -1,11 +1,14 @@
 #include "Core/Containers/String.h"
 
+#include <stdio.h>
+#include <cstdarg>
 #include <string.h>
 
 #include "Memory/Memory.h"
 #include "Memory/MemoryAllocator.h"
 
 int strcmp(const char*, const char*);
+int snprintf(char* const _Buffer, size_t      const _BufferCount, char const* const _Format, ...);
 
 String::String()
 {
@@ -97,6 +100,24 @@ String& String::operator=(const char* Str)
 bool String::operator==(const char* Str)
 {
 	return (strcmp(mData, Str) == 0);
+}
+
+String String::sFormat(const char* inFormat, ...)
+{
+	const uint32 max_size = 128;
+	char output_buffer[max_size];
+	va_list args;
+
+	va_start(args, inFormat);
+	int32 result = vsnprintf(output_buffer, max_size, inFormat, args);
+	va_end(args);
+
+	if (result < 0)
+	{
+		GAssert(false);
+	}
+
+	return String(output_buffer);
 }
 
 void String::Copy(const char* Str, uint32 Length)

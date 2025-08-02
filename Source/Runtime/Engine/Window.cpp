@@ -64,6 +64,11 @@ public:
 
 	virtual void* GetHandle() const {return static_cast<void*>(Hwnd);}
 
+	virtual void SetTitle(const char* inTitle)
+	{
+		SetWindowTextA(Hwnd, inTitle);
+	}
+
 	void PollEvents()
 	{
 		MSG msg;

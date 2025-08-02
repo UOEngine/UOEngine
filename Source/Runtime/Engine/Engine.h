@@ -25,6 +25,9 @@ public:
 private:
 
 	IPlatformWindow*	mGameWindow;
+
+	uint64				mTicksPassed;
+
 };
 
 extern Engine GEngine;

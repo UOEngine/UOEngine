@@ -21,6 +21,8 @@ public:
 
 	bool			operator==(const char* Str);
 
+	static String	sFormat(const char* inFormat, ...);
+
 	void			Copy(const char* Str, uint32 Length);
 
 	const char*		ToCString() const	{return mData;}
