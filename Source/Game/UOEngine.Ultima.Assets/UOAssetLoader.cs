@@ -1,4 +1,5 @@
-﻿using UOEngine.PackageFile;
+﻿using System.Diagnostics;
+using UOEngine.PackageFile;
 
 namespace UOEngine.UOAssets;
 
@@ -34,6 +35,11 @@ public class UOAssetLoader
 
     public UOBitmap GetLand(uint idx)
     {
+        if(idx > 16384)
+        {
+            Debug.Assert(false);
+        }
+
         return GetArtInternal((uint)(idx & ~0x4000));
     }
 

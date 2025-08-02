@@ -21,20 +21,24 @@ public:
 	DataType&				operator[](int32 Index);
 	const DataType&			operator[](int32 Index) const;
 
+	TArray<DataType>&		operator=(const TArray<DataType>& inRHS);
+
 	int32					Add(const DataType& NewElement);
 
-	uint32					GetCapacity() const					{ return Capacity;}
+	uint32					GetCapacity() const					{ return mCapacity;}
 
 	bool					Reserve(int32 MinNumElements);
 
 	void					SetNum(uint32 NewSize);
 
+	void					Clear();
+
 	uint32					Num() const;
 
-	DataType*				GetData()							{return Data;}
-	DataType*				GetData() const						{return Data;}
+	DataType*				GetData()							{return mData;}
+	DataType*				GetData() const						{return mData;}
 
-	DataType&				Last()								{return Data[NumElements - 1]; }
+	DataType&				Last()								{return mData[mNumElements - 1]; }
 
 	void					Copy(const DataType* OtherData, uint32 OtherNumElements);
 	
@@ -47,22 +51,22 @@ public:
 
 								GAssert(conversion > 0); // Fix later when new type > old type.
 
-								uint64 new_size = conversion * NumElements;
+								uint64 new_size = conversion * mNumElements;
 
-								return TSpan<T>((T*)Data, new_size);
+								return TSpan<T>((T*)mData, new_size);
 							}
 
 	void					RemoveAt(int32 Index, bool inbShrink);
 
 	void					Move(int32 inIndexFrom, int32 inStartIndex, uint32 inNumElements);
 
-	void					PopBack() {GAssert(NumElements > 0); NumElements--;}
+	void					PopBack() {GAssert(mNumElements > 0); mNumElements--;}
 
 private:
 
-	DataType*				Data = nullptr;
-	int32					NumElements = 0;
-	uint32					Capacity = 0;
+	DataType*				mData = nullptr;
+	int32					mNumElements = 0;
+	uint32					mCapacity = 0;
 };
 
 #include "Core/Containers/Array.inl"

@@ -1,11 +1,14 @@
+#include "PerInstanceData.hlsl"
+
 struct VsToPs
 {
     float4 position : SV_Position;
     float2 uv: TEXCOORD0;
+    uint instanceIndex: SV_InstanceID;
 };
 
-static const float width = 640.0;
-static const float height = 480.0;
+static const float width = 44.0;
+static const float height = 44.0;
 
 static const float4 cQuadVertsNDC[4] =
 {
@@ -28,14 +31,7 @@ struct PerFrameData
     float4x4 Projection;
 };
 
-struct PerInstanceData
-{
-    float4x4 ModelToWorld;
-};
-
-ConstantBuffer<PerFrameData> cbPerFrameData: register(b0);
-
-StructuredBuffer<PerInstanceData> sbPerInstanceData: register(t0);
+ConstantBuffer<PerFrameData> cbPerFrameData: register(b0, PER_FRAME_UPDATE);
 
 VsToPs main( uint vid : SV_VertexID, uint instance_id : SV_InstanceID )
 {
@@ -50,5 +46,7 @@ VsToPs main( uint vid : SV_VertexID, uint instance_id : SV_InstanceID )
     output.position = mul(cbPerFrameData.Projection, vertex_world_space);
     output.uv = cQuadUVs[vid];
     
+    output.instanceIndex = instance_id;
+
     return output;
 }

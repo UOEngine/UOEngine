@@ -16,7 +16,7 @@ void SetData(RenderBuffer* inBuffer, void* inData, uint32 inNumBytes)
 {
 	TSpan<uint8> data = inBuffer->Lock();
 
-	GAssert(data.Num() <= inNumBytes);
+	GAssert(inNumBytes <= data.Num());
 
 	Memory::MemCopy(data.GetData(), data.Num(), inData, inNumBytes);
 

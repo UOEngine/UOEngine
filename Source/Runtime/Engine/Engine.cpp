@@ -60,15 +60,17 @@ void Engine::PostUpdate()
 {
 	GRenderer.EndFrame();
 
-	if ((GRenderer.GetNumFramesRendered() % 500) == 0)
+	const uint32 per_frame_measurement = 144;
+
+	if ((GRenderer.GetNumFramesRendered() % per_frame_measurement) == 0)
 	{
 		uint64 ticksNow = Timer::GetTicks();
 
 		uint64 delta_ticks = ticksNow - mTicksPassed;
 
-		uint64 delta_ticks_per_frame = (float)delta_ticks / 500.0f;
+		uint64 delta_ticks_per_frame = (float)delta_ticks / (float)per_frame_measurement;
 
-		double frame_time_ms = Timer::sGetTicksInMilliseconds(delta_ticks_per_frame);
+		double frame_time_ms = Timer::sGetTicksInMilliseconds(delta_ticks);
 
 		uint32 fps = 1000.0f / frame_time_ms;
 

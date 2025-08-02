@@ -37,6 +37,8 @@ ShaderBindingHandle ShaderInstance::GetParameter(EShaderType inShaderType, const
 
 void ShaderInstance::SetTexture(ShaderBindingHandle inBindingHandle, RenderTexture* inTexture)
 {
+	GAssert(inBindingHandle.IsValid());
+
 	mBoundData[inBindingHandle.mShaderType].mData[inBindingHandle.mHandle].mTexture = inTexture;
 }
 
@@ -59,21 +61,35 @@ void ShaderInstance::SetTexture(const char* inName, RenderTexture* inTexture)
 
 void ShaderInstance::SetBuffer(ShaderBindingHandle inBindingHandle, RenderBuffer* inBuffer)
 {
+	GAssert(inBindingHandle.IsValid());
+
 	mBoundData[inBindingHandle.mShaderType].mData[inBindingHandle.mHandle].mBuffer = inBuffer;
 }
 
 void ShaderInstance::SetBuffer(const char* inName, RenderBuffer* inBuffer)
 {
+	bool found = false;
+
 	for (int i = 0; i < sNumShaderTypes; i++)
 	{
+		if (mShaderPrograms[i] == nullptr)
+		{
+			continue;
+		}
+
 		ShaderBindingHandle handle = mShaderPrograms[i]->GetParameter(inName);
 
 		if (handle.IsValid())
 		{
 			SetBuffer(handle, inBuffer);
 
-			return;
+			found = true;
 		}
+	}
+
+	if (found)
+	{
+		return;
 	}
 
 	GUnreachable;

@@ -2,18 +2,33 @@
 
 #include "Renderer/Renderer.h"
 #include "Renderer/RenderContext.h"
+#include "Renderer/RenderTexture.h"
 
 void SetShaderBindingData(RenderTexture* inTexture)
 {
 	//GRenderer.GetContext()->SetShaderBindingData(inTexture);
 }
 
-void Draw()
+void Draw(uint32 inNumInstances)
 {
-	GRenderer.GetContext()->Draw();
+	GRenderer.GetContext()->Draw(inNumInstances);
 }
 
 ShaderInstance* GetShaderInstance()
 {
 	return GRenderer.GetContext()->GetShaderInstance();
+}
+
+void SetBindlessTextures(RenderTexture** inTextures, uint32 inNum)
+{
+	TArray<RenderTexture*> textures;
+
+	textures.SetNum(inNum);
+
+	for (int32 i = 0; i < inNum; i++)
+	{
+		textures[i] = inTextures[i];
+	}
+
+	GRenderer.GetContext()->SetBindlessTextures(textures);
 }

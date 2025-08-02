@@ -1,6 +1,7 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using UOEngine.Interop;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace UOEngine;
 
@@ -27,5 +28,12 @@ public class RenderBuffer
         {
             RenderBufferNative.SetData(NativeHandle, (UIntPtr)ptr, asBytes.Length);
         }
+    }
+
+    public unsafe void SetData<T>(T value) where T: struct
+    {
+        ReadOnlySpan<T> span  = MemoryMarshal.CreateReadOnlySpan(ref value, 1);
+
+        SetData(span);
     }
 }

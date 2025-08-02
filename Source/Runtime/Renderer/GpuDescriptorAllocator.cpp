@@ -23,11 +23,9 @@ void GpuDescriptorAllocator::Init(RenderDevice* inRenderDevice, D3D12_DESCRIPTOR
 	mDescriptorHeap = inRenderDevice->CreateDescriptorHeap(&desc);
 }
 
-DescriptorTable GpuDescriptorAllocator::Allocate()
+DescriptorTable GpuDescriptorAllocator::Allocate(uint32 inCount)
 {
 	DescriptorTable table;
-
-	uint32 inCount = 1;
 
 	if (mCurrentOffset + inCount <= mSize)
 	{

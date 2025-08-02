@@ -9,21 +9,21 @@ namespace UOEngine.Core;
 
 public class ShaderInstance
 {
-    private UIntPtr _nativeHandle;
+    public readonly UIntPtr NativeHandle;
 
     public ShaderInstance(UIntPtr nativeHandle)
     {
-        _nativeHandle = nativeHandle;
+        NativeHandle = nativeHandle;
     }
 
     public void SetTexture(string name, Texture2D texture)
     {
-        ShaderInstanceNative.SetTexture(_nativeHandle, name, texture.NativeHandle);
+        ShaderInstanceNative.SetTexture(NativeHandle, name, texture.NativeHandle);
     }
 
     public void SetBuffer(string name, RenderBuffer buffer) 
     {
-        ShaderInstanceNative.SetBuffer(_nativeHandle, name, buffer.NativeHandle);
+        ShaderInstanceNative.SetBuffer(NativeHandle, name, buffer.NativeHandle);
     }
 
     public void SetMatrix(string name, Matrix4x4 matrix)

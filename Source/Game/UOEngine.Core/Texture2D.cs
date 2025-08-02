@@ -7,7 +7,7 @@ namespace UOEngine;
 
 public class Texture2D
 {
-    public readonly UIntPtr NativeHandle;
+    public UIntPtr          NativeHandle { get; private set; } = UIntPtr.Zero;
     public readonly uint    Width ;
     public readonly uint    Height;
 
@@ -22,12 +22,15 @@ public class Texture2D
 
         Width = width;
         Height = height;
-
-        NativeHandle = RendererInterop.CreateTexture((int)width, (int)height);
     }
 
     public unsafe void Apply()
     {
+        if(NativeHandle == UIntPtr.Zero)
+        {
+            NativeHandle = RendererInterop.CreateTexture((int)Width, (int)Height);
+        }
+
         ReadOnlySpan<byte> pixelBytes = MemoryMarshal.AsBytes(_pixels.Span);
 
         fixed(byte* start = pixelBytes)

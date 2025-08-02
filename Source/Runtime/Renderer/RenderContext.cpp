@@ -106,20 +106,6 @@ void RenderCommandContext::SetViewport(const Rect& inViewportRect)
 	GetGraphicsCommandList()->RSSetScissorRects(1, &scissor);
 }
 
-//void RenderCommandContext::SetShaderBindingData(EShaderType inShaderType, RenderTexture* inTexture, uint32 inSlot)
-//{
-//	DescriptorTable			table = mDevice->GetSrvGpuDescriptorAllocator()->Allocate();
-//	ID3D12DescriptorHeap*	heaps[] = {mDevice->GetSrvGpuDescriptorAllocator()->GetHeap()};
-//
-//	mCommandList->GetGraphicsCommandList()->SetDescriptorHeaps(1, heaps);
-//
-//	mDevice->GetDevice()->CopyDescriptorsSimple(1, table.mCpuHandle, inTexture->GetSrv(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-//
-//	mGpuDescriptorsToBind[static_cast<uint32>(inShaderType)][inSlot] = table.mGpuHandle;
-//
-//	mbRenderStateDirty = true;
-//}
-
 void RenderCommandContext::SetShaderInstance(ShaderInstance* inShaderInstance)
 {
 	if (inShaderInstance == mShaderInstance)
@@ -139,6 +125,11 @@ void RenderCommandContext::SetProjectionMatrix(const Matrix4x4& inMatrix)
 	mCommandList->GetGraphicsCommandList()->SetGraphicsRoot32BitConstants(0, Matrix4x4::NumElements, &mProjectionMatrix, 0);
 }
 
+void RenderCommandContext::SetBindlessTextures(const TArray<RenderTexture*>& inTextures)
+{
+	mBindlessTextures = inTextures;
+}
+
 void RenderCommandContext::FlushCommands()
 {
 	RenderCommandList* command_list = mCommandList;
@@ -148,11 +139,11 @@ void RenderCommandContext::FlushCommands()
 	mDevice->GetQueue(QueueType)->ExecuteCommandList(command_list);
 }
 
-void RenderCommandContext::Draw()
+void RenderCommandContext::Draw(uint32 inNumInstances)
 {
 	Bind();
 
-	GetGraphicsCommandList()->DrawInstanced(4, 1, 0, 0);
+	GetGraphicsCommandList()->DrawInstanced(4, inNumInstances, 0, 0);
 }
 
 RenderCommandList* RenderCommandContext::GetCommandList()
@@ -231,14 +222,21 @@ void RenderCommandContext::Bind()
 			{
 				case EShaderBindingType::Texture:
 				{
-					SetTexture(binding_index, i, slot.mTexture);
+					SetTextures(shader_program_type, binding_index, slot.mTexture, slot.mNumResources);
 
 					break;
 				}
 
 				case EShaderBindingType::StructuredBuffer:
 				{
-					SetBuffer(binding_index, i, slot.mBuffer);
+					SetBuffer(shader_program_type, binding_index, slot.mBuffer);
+
+					break;
+				}
+
+				case EShaderBindingType::BindlessTexture:
+				{
+					SetTextures(shader_program_type, binding_index, mBindlessTextures.GetData()[0], mBindlessTextures.Num());
 
 					break;
 				}
@@ -248,7 +246,12 @@ void RenderCommandContext::Bind()
 			}
 
 			// Binding this always currently, but eventually only if changed.
-			mCommandList->GetGraphicsCommandList()->SetGraphicsRootDescriptorTable(binding_info.mRootParameterIndex, mGpuDescriptorsToBind[i][binding_index]);
+			//if (mDirtySrvs[i] & (1 << binding_index))
+			{
+				mCommandList->GetGraphicsCommandList()->SetGraphicsRootDescriptorTable(binding_info.mRootParameterIndex, mGpuDescriptorsToBind[i][binding_index]);
+
+				mDirtySrvs[i] &= ~(1 << binding_index);
+			}
 
 		}
 	}
@@ -256,31 +259,49 @@ void RenderCommandContext::Bind()
 	mbRenderStateDirty = false;
 }
 
-void RenderCommandContext::SetTexture(uint32 inSlot, uint32 inProgramIndex, RenderTexture* inTexture)
+void RenderCommandContext::SetTextures(EShaderType inShaderType, uint32 inSlot, const RenderTexture* inTextures, uint32 inNumTextures)
 {
-	GAssert(inTexture != nullptr);
+	GAssert(inNumTextures > 0);
 
-	DescriptorTable			table = mDevice->GetSrvGpuDescriptorAllocator()->Allocate();
-	ID3D12DescriptorHeap* heaps[] = { mDevice->GetSrvGpuDescriptorAllocator()->GetHeap() };
+	DescriptorTable			table = mDevice->GetSrvGpuDescriptorAllocator(ERenderResourceLifetime::Frame)->Allocate(inNumTextures);
+	ID3D12DescriptorHeap* heaps[] = { mDevice->GetSrvGpuDescriptorAllocator(ERenderResourceLifetime::Frame)->GetHeap() };
 
 	mCommandList->GetGraphicsCommandList()->SetDescriptorHeaps(1, heaps);
 
-	mDevice->GetDevice()->CopyDescriptorsSimple(1, table.mCpuHandle, inTexture->GetSrv(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	TArray<DescriptorHandleCPU> texture_srvs;
 
-	mGpuDescriptorsToBind[inProgramIndex][inSlot] = table.mGpuHandle;
+	texture_srvs.SetNum(inNumTextures);
+
+	for (int32 i = 0; i < inNumTextures; i++)
+	{
+		GAssert(inTextures[i].GetSrv().IsValid());
+
+		texture_srvs[i] = inTextures[i].GetSrv();
+	}
+
+	mDevice->GetDevice()->CopyDescriptorsSimple(inNumTextures, table.mCpuHandle, texture_srvs[0], D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	SetPendingGpuDescriptor(inShaderType, inSlot, table);
 }
 
-void RenderCommandContext::SetBuffer(uint32 inSlot, uint32 inProgramIndex, RenderBuffer* inBuffer)
+void RenderCommandContext::SetBuffer(EShaderType inProgramType, uint32 inSlot, RenderBuffer* inBuffer)
 {
 	GAssert(inBuffer != nullptr);
 
-	DescriptorTable			table = mDevice->GetSrvGpuDescriptorAllocator()->Allocate();
-	ID3D12DescriptorHeap* heaps[] = { mDevice->GetSrvGpuDescriptorAllocator()->GetHeap() };
+	DescriptorTable			table = mDevice->GetSrvGpuDescriptorAllocator(ERenderResourceLifetime::Frame)->Allocate();
+	ID3D12DescriptorHeap* heaps[] = { mDevice->GetSrvGpuDescriptorAllocator(ERenderResourceLifetime::Frame)->GetHeap() };
 
 	mCommandList->GetGraphicsCommandList()->SetDescriptorHeaps(1, heaps);
 
 	mDevice->GetDevice()->CopyDescriptorsSimple(1, table.mCpuHandle, inBuffer->GetSrv(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-	mGpuDescriptorsToBind[inProgramIndex][inSlot] = table.mGpuHandle;
+	SetPendingGpuDescriptor(inProgramType, inSlot, table);
 
+}
+
+void RenderCommandContext::SetPendingGpuDescriptor(EShaderType inShaderType, uint32 inSlot, DescriptorTable inTable)
+{
+	mGpuDescriptorsToBind[static_cast<uint32>(inShaderType)][inSlot] = inTable.mGpuHandle;
+
+	mDirtySrvs[static_cast<uint32>(inShaderType)] |= (1 << inSlot);
 }

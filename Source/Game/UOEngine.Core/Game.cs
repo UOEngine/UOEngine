@@ -13,6 +13,18 @@ public class Engine(IUOEngineApp app) : IDisposable
     {
         int code = -1;
 
+        bool waitForDebugger = true;
+
+        if(waitForDebugger && (Debugger.IsAttached == false))
+        {
+            Console.WriteLine("Waiting for debugger to attach ...");
+
+            while (Debugger.IsAttached == false)
+            {
+                Thread.Sleep(0);
+            }
+        }
+
         try
         {
             code = RunInternal(args);
@@ -23,8 +35,10 @@ public class Engine(IUOEngineApp app) : IDisposable
 
             Debug.Assert(false);
         }
-        catch (Exception)
+        catch (Exception) when (Debugger.IsAttached == false)
         {
+            Console.WriteLine("Uh oh");
+
             Debug.Assert(false);
         }
         finally

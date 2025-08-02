@@ -12,6 +12,7 @@ struct Slot
 		RenderTexture*	mTexture;
 		RenderBuffer*	mBuffer;
 	};
+	uint32 mNumResources = 0;
 };
 
 struct ShaderBoundData

@@ -5,6 +5,30 @@
 
 #include "Core/FileReader.h"
 
+#define PER_FRAME_UPDATE    space0
+#define PER_DRAW_UPDATE     space1
+#define BINDLESS_UPDATE     space2
+
+EShaderUpdateFrequency ShaderSpaceToUpdateFrequency(uint32 inSpace)
+{
+	switch (inSpace)
+	{
+		case 0:
+			return EShaderUpdateFrequency::PerFrame;
+
+		case 1:
+			return EShaderUpdateFrequency::PerDraw;
+
+		case 2:
+			return EShaderUpdateFrequency::Bindless;
+
+		default:
+			GAssert(false);
+	}
+
+	return EShaderUpdateFrequency::Invalid;
+}
+
 Shader::Shader(EShaderType InType)
 {
 	mType = InType;
@@ -62,7 +86,7 @@ bool Shader::Load(const String& FilePath)
 
 	TComPtr<IDxcResult> compile_result;
 
-	LPCWSTR type_arg = mType == EShaderType::Vertex? L"vs_6_0" : L"ps_6_0";
+	LPCWSTR type_arg = mType == EShaderType::Vertex? L"vs_6_6" : L"ps_6_6";
 
 	TArray<LPCWSTR> Args = 
 	{
@@ -70,7 +94,8 @@ bool Shader::Load(const String& FilePath)
 		L"-T", type_arg,		// Target profile
 		L"-Zi",                 // Debug info
 		L"-Qembed_debug",       // Embed debug info in shader
-		L"-Od"
+		L"-Od",
+		L"-I D:\\UODev\\UOEngineGitHub\\Shaders",
 	};
 	
 	dxc_compiler->Compile(&source_buffer, Args.GetData(), Args.Num(), dxc_include_header, IID_PPV_ARGS(&compile_result));
@@ -95,7 +120,7 @@ bool Shader::Load(const String& FilePath)
 
 		return false;
 	}
-
+	
 	GAssert(compile_result->HasOutput(DXC_OUT_OBJECT));
 
 	TComPtr<IDxcBlob> dxil_blob;
@@ -151,7 +176,7 @@ void Shader::BuildRootSignature(TArray<D3D12_ROOT_PARAMETER1>& OutRootSignatureD
 		EShaderBindingType binding_type = EShaderBindingType::Invalid;
 
 		mReflection->GetResourceBindingDesc(i, &bound_desc);
-
+		
 		D3D12_ROOT_PARAMETER1 root_parameter = {};
 
 		root_parameter.ShaderVisibility = mType == EShaderType::Vertex ? D3D12_SHADER_VISIBILITY_VERTEX : D3D12_SHADER_VISIBILITY_PIXEL;
@@ -160,10 +185,12 @@ void Shader::BuildRootSignature(TArray<D3D12_ROOT_PARAMETER1>& OutRootSignatureD
 		{
 			D3D12_DESCRIPTOR_RANGE1 descriptor_range;
 
+			bool is_bindless = bound_desc.Type == D3D_SIT_TEXTURE && bound_desc.Space == 2;
+			
 			descriptor_range.BaseShaderRegister = bound_desc.BindPoint;
 			descriptor_range.RegisterSpace = bound_desc.Space;
 			descriptor_range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-			descriptor_range.NumDescriptors = 1;
+			descriptor_range.NumDescriptors = is_bindless? 2 : 1;
 			descriptor_range.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE;
 			descriptor_range.OffsetInDescriptorsFromTableStart = 0;
 
@@ -172,8 +199,15 @@ void Shader::BuildRootSignature(TArray<D3D12_ROOT_PARAMETER1>& OutRootSignatureD
 			root_parameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 			root_parameter.DescriptorTable.NumDescriptorRanges = 1;
 			root_parameter.DescriptorTable.pDescriptorRanges = &mDescriptorRanges.Last();
-
-			shader_binding.mType = bound_desc.Type == D3D_SIT_TEXTURE? EShaderBindingType::Texture: EShaderBindingType::StructuredBuffer;
+			
+			if (bound_desc.Type == D3D_SIT_TEXTURE)
+			{
+				shader_binding.mType = is_bindless? EShaderBindingType::BindlessTexture: EShaderBindingType::Texture;
+			}
+			else
+			{
+				shader_binding.mType = EShaderBindingType::StructuredBuffer;
+			}
 		}
 		else if (bound_desc.Type == D3D_SIT_SAMPLER)
 		{
@@ -215,6 +249,7 @@ void Shader::BuildRootSignature(TArray<D3D12_ROOT_PARAMETER1>& OutRootSignatureD
 		shader_binding.mName = bound_desc.Name;
 		shader_binding.mBindIndex = bound_desc.BindPoint;
 		shader_binding.mRootParameterIndex = root_parameter_index;
+		shader_binding.mUpdateFrequency = ShaderSpaceToUpdateFrequency(bound_desc.Space);
 
 		mBindingInfo.mBindings.Add(shader_binding);
 

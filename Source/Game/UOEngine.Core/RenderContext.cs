@@ -17,9 +17,29 @@ namespace UOEngine
             return new ShaderInstance(shaderHandle);
         }
 
-        public static void Draw()
+        public static void SetShaderInstance(ShaderInstance shaderInstance)
         {
-            RenderContextNative.Draw();
+            //RenderContextNative.SetShaderInstance(shaderInstance.NativeHandle);
+        }
+
+        public static unsafe void SetBindlessTextures(Texture2D[] textures)
+        {
+            Span<UIntPtr> handles = stackalloc UIntPtr[textures.Length];
+
+            for(int i = 0; i < textures.Length; i++)
+            {
+                handles[i] = textures[i].NativeHandle;
+            }
+
+            fixed(UIntPtr* start = handles)
+            {
+                RenderContextNative.SetBindlessTextures((nuint)start, textures.Length);
+            }
+        }
+
+        public static void Draw(uint numInstances = 1)
+        {
+            RenderContextNative.Draw((int)numInstances);
         }
     }
 }

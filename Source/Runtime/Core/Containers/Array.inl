@@ -22,75 +22,80 @@ TArray<DataType>::TArray(const DataType* Ptr, uint32 NumToCopy)
 template <typename DataType>
 TArray<DataType>::~TArray()
 {
-	if (Data != nullptr)
-	{
-		MemoryAllocator::Get().Free(Data);
-
-		Data = nullptr;
-		NumElements = 0;
-		Capacity = 0;
-	}
+	Clear();
 }
 
 template <typename DataType>
 DataType& TArray<DataType>::operator[](int32 Index)
 {
 	GAssert(Index >= 0);
-	GAssert(Index < NumElements);
+	GAssert(Index < mNumElements);
 
-	return Data[Index];
+	return mData[Index];
 }
 
 template <typename DataType>
 const DataType& TArray<DataType>::operator[](int32 Index) const
 {
 	GAssert(Index >= 0);
-	GAssert(Index < NumElements);
+	GAssert(Index < mNumElements);
 
-	return Data[Index];
+	return mData[Index];
+}
+
+template <typename DataType>
+TArray<DataType>& TArray<DataType>::operator=(const TArray<DataType>& inRHS)
+{
+	Clear();
+
+	SetNum(inRHS.Num());
+
+	Memory::MemCopy(GetData(), Num() * sizeof(DataType), inRHS.GetData(), inRHS.Num() * sizeof(DataType));
+
+	return *this;
 }
 
 template <typename DataType>
 int32 TArray<DataType>::Add(const DataType& NewElement)
 {
-	if (Capacity == NumElements)
+	if (mCapacity == mNumElements)
 	{
-		int32 NewSize = 2 * (Capacity != 0? Capacity: 1);
+		int32 NewSize = 2 * (mCapacity != 0? mCapacity: 1);
 
 		Reserve(NewSize);
 	}
 
-	Data[NumElements] = NewElement;
-	NumElements++;
+	mData[mNumElements] = NewElement;
+	mNumElements++;
 
-	return NumElements - 1;
+	return mNumElements - 1;
 }
 
 template <typename DataType>
 bool TArray<DataType>::Reserve(int32 MinNumElements)
 {
-	if ((Capacity != 0) && (Capacity <= MinNumElements))
+	if ((mCapacity != 0) && (mCapacity <= MinNumElements))
 	{
 		return true;
 	}
 
 	const uint32 NewSizeBytes = sizeof(DataType) * MinNumElements;
 
-	if (Data != nullptr)
+	if (mData != nullptr)
 	{
-		Data = (DataType*)MemoryAllocator::Get().Reallocate(Data, NewSizeBytes);
+		mData = (DataType*)MemoryAllocator::Get().Reallocate(mData, NewSizeBytes);
 	}
 	else
 	{
-		Data = (DataType*)MemoryAllocator::Get().Allocate(NewSizeBytes);
+		mData = (DataType*)MemoryAllocator::Get().Allocate(NewSizeBytes);
 	}
 
-	uint64 old_size_bytes = NumElements * sizeof(DataType);
+	uint64 old_size_bytes = mNumElements * sizeof(DataType);
 	uint64 num_bytes_to_zero = NewSizeBytes - old_size_bytes;
 
-	Memory::MemZero(Data + old_size_bytes, num_bytes_to_zero);
+	Memory::MemZero(mData + old_size_bytes, num_bytes_to_zero);
 
-	Capacity = MinNumElements;
+	mCapacity = MinNumElements;
 
 	return true;
 }
@@ -100,23 +105,36 @@ void TArray<DataType>::SetNum(uint32 NewSize)
 {
 	const uint32 NewSizeBytes = sizeof(DataType) * NewSize;
 
-	if (Data != nullptr)
+	if (mData != nullptr)
 	{
-		Data = (DataType*)MemoryAllocator::Get().Reallocate(Data, NewSizeBytes);
+		mData = (DataType*)MemoryAllocator::Get().Reallocate(mData, NewSizeBytes);
 	}
 	else
 	{
-		Data = (DataType*)MemoryAllocator::Get().Allocate(NewSizeBytes);
+		mData = (DataType*)MemoryAllocator::Get().Allocate(NewSizeBytes);
 	}
 
-	NumElements = NewSize;
-	Capacity = NumElements;
+	mNumElements = NewSize;
+	mCapacity = mNumElements;
+}
+
+template <typename DataType>
+void TArray<DataType>::Clear()
+{
+	if (mData != nullptr)
+	{
+		MemoryAllocator::Get().Free(mData);
+
+		mData = nullptr;
+		mNumElements = 0;
+		mCapacity = 0;
+	}
 }
 
 template <typename DataType>
 uint32 TArray<DataType>::Num() const
 {
-	return NumElements;
+	return mNumElements;
 }
 
 template <typename DataType>
@@ -126,7 +144,7 @@ void TArray<DataType>::Copy(const DataType* OtherData, uint32 OtherNumElements)
 
 	const uint32 SizeInBytes = OtherNumElements * sizeof(DataType);
 
-	Memory::MemCopy((void*)Data, SizeInBytes, (void*)OtherData, SizeInBytes);
+	Memory::MemCopy((void*)mData, SizeInBytes, (void*)OtherData, SizeInBytes);
 
 }
 
@@ -140,14 +158,14 @@ void TArray<DataType>::RemoveAt(int32 inIndex, bool inbShrink)
 		Move(inIndex + 1, inIndex, num_to_move);
 	}
 
-	NumElements--;
+	mNumElements--;
 }
 
 template <typename DataType>
 void TArray<DataType>::Move(int32 inIndexFrom, int32 inStartIndex, uint32 inNumElements)
 {
-	for (uint32 i = 0; i < NumElements; i++)
+	for (uint32 i = 0; i < mNumElements; i++)
 	{
-		Data[inStartIndex + i] = Data[inIndexFrom + i];
+		mData[inStartIndex + i] = mData[inIndexFrom + i];
 	}
 }

@@ -140,12 +140,12 @@ public struct Matrix4x4
     {
         get
         {
-            return this[row + column * 4];
+            return this[row + 4 * column];
         }
 
         set
         {
-            this[row + column * 4] = value;
+            this[row + 4 * column] = value;
         }
     }
 
@@ -153,12 +153,13 @@ public struct Matrix4x4
     {
         var matrix = Identity;
 
-        matrix[0, 0] = translation.X;
-        matrix[0, 1] = translation.Y;
-        matrix[0, 2] = translation.Z;
+        matrix[0, 3] = translation.X;
+        matrix[1, 3] = translation.Y;
+        matrix[1, 3] = translation.Z;
 
         matrix[3, 3] = 1.0f;
 
         return matrix;
     }
+
 }

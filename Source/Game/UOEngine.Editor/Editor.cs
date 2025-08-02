@@ -1,18 +1,25 @@
 ﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using UOEngine.Core;
 using UOEngine.UOAssets;
 
 namespace UOEngine.Editor;
 
+[StructLayout(LayoutKind.Sequential)]
+struct PerInstanceData
+{
+    public Matrix4x4 ModelToWorld;
+    public uint TextureIndex;
+}
+
 public class Editor : IUOEngineApp
 {
     readonly UOAssetLoader _assetLoader = new();
 
-    private Texture2D? _texture;
+    private Texture2D[] _textures = [];
 
-    private List<Texture2D> _textures = [];
-    private Memory<Matrix4x4> _modelToWorld;
+    private Memory<PerInstanceData> _modelToWorld;
     private RenderBuffer _renderBuffer; 
 
     public bool PreEngineInit()
@@ -39,30 +46,38 @@ public class Editor : IUOEngineApp
 
         Chunk chunk = mapEntity.GetChunk(0, 0);
 
-        uint numTextures = 2;
+        uint numTextures = 8;
 
-        _modelToWorld = new Matrix4x4[numTextures];
+        uint texelPerDim = 44;
 
-        _renderBuffer = new RenderBuffer(numTextures, (uint)Unsafe.SizeOf<Matrix4x4>());
+        _modelToWorld = new PerInstanceData[numTextures];
+
+        _textures = new Texture2D[numTextures];
+
+        _renderBuffer = new RenderBuffer((uint)numTextures, (uint)Unsafe.SizeOf<PerInstanceData>());
 
         for (int i = 0; i < numTextures; i++)
         {
             var bitmap = _assetLoader.GetLand((uint)i);
 
-            _texture = new(bitmap.Width, bitmap.Height);
-            _texture.SetPixels(bitmap.Texels);
-            _texture.Apply();
+            Texture2D texture = new(bitmap.Width, bitmap.Height);
 
-            _textures.Add(_texture);
+            texture.SetPixels(bitmap.Texels);
+            texture.Apply();
+
+            _textures[i] = texture;
 
             Matrix4x4 modelToWorld = new Matrix4x4();
 
             modelToWorld = Matrix4x4.Translate(new Vector3(44.0f * i, 0.0f, 0.0f));
 
-            _modelToWorld.Span[i] = modelToWorld;
+            _modelToWorld.Span[i].ModelToWorld = modelToWorld;
+            _modelToWorld.Span[i].TextureIndex = (uint)i;
         }
 
-        _renderBuffer.SetData<Matrix4x4>(_modelToWorld.Span);
+        _renderBuffer.SetData<PerInstanceData>(_modelToWorld.Span);
+
+        RenderContext.SetBindlessTextures(_textures);
 
         return true;
     }
@@ -71,13 +86,8 @@ public class Editor : IUOEngineApp
     {
         ShaderInstance shaderInstance = RenderContext.GetShaderInstance();
 
-        for (int i = 0; i < _textures.Count; i++)
-        {
-            shaderInstance.SetTexture("texture", _textures[i]);
-            shaderInstance.SetBuffer("sbPerInstanceData", _renderBuffer);
-            shaderInstance.SetMatrix("modelToWorld", _modelToWorld.Span[i]);
+        shaderInstance.SetBuffer("sbPerInstanceData", _renderBuffer);
 
-            RenderContext.Draw();
-        }
+        RenderContext.Draw((uint)_textures.Length);
     }
 }

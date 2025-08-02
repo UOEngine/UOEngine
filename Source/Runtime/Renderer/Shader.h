@@ -17,12 +17,22 @@ enum class EShaderType : uint8
 	Invalid
 };
 
+enum class EShaderUpdateFrequency
+{
+	PerFrame = 0, // Space0 etc.
+	PerDraw,
+	Bindless,
+	Count,
+	Invalid
+};
+
 enum class EShaderBindingType : uint8
 {
 	ConstantBuffer = 0,
 	Texture,
 	StructuredBuffer,
 	Sampler,
+	BindlessTexture,
 	Count,
 	Invalid
 };
@@ -43,6 +53,7 @@ struct ShaderBinding
 	uint32					mBindIndex;
 	uint8					mRootParameterIndex;
 	EShaderBindingType		mType = EShaderBindingType::Invalid;
+	EShaderUpdateFrequency	mUpdateFrequency = EShaderUpdateFrequency::Invalid;
 };
 
 struct ShaderBindingInfo

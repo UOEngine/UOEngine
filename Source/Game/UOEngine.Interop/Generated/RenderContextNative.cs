@@ -11,7 +11,10 @@ namespace UOEngine.Interop
 		public static partial UIntPtr GetShaderInstance();
 
 		[LibraryImport("UOEngine.Native.dll", StringMarshalling = StringMarshalling.Utf8)]
-		public static partial void Draw();
+		public static partial void SetBindlessTextures(UIntPtr inTextures, int inNum);
+
+		[LibraryImport("UOEngine.Native.dll", StringMarshalling = StringMarshalling.Utf8)]
+		public static partial void Draw(int inNumInstances);
 
 	}
 }

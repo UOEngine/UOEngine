@@ -3,6 +3,7 @@
 #include "Core/Math/Matrix4x4.h"
 #include "Core/Math/Rect.h"
 #include "Core/Types.h"
+#include "Renderer/GpuDescriptorAllocator.h"
 #include "Renderer/RenderCommandList.h"
 #include "Renderer/Shader.h"
 
@@ -52,9 +53,11 @@ public:
 
 	void							CopyTexture();
 
+	void							SetBindlessTextures(const TArray<RenderTexture*>& inTextures);
+
 	void							FlushCommands();
 
-	void							Draw();
+	void							Draw(uint32 inNumInstances = 1);
 
 	// Get the raw ID3D12GraphicsCommandList
 	ID3D12GraphicsCommandList*		GetGraphicsCommandList()						{ return GetCommandList()->GetGraphicsCommandList(); }
@@ -70,8 +73,10 @@ private:
 
 	void							Bind();
 
-	void							SetTexture(uint32 inSlot, uint32 inProgramIndex, RenderTexture* inTexture);
-	void							SetBuffer(uint32 inSlot, uint32 inProgramIndex, RenderBuffer* inBuffer);
+	void							SetTextures(EShaderType inShaderType, uint32 inBindingSlot, const RenderTexture* inTextures, uint32 inNumTextures);
+	void							SetBuffer(EShaderType inProgramType, uint32 inSlot, RenderBuffer* inBuffer);
+
+	void							SetPendingGpuDescriptor(EShaderType inShaderType, uint32 inSlot, DescriptorTable inTable);
 
 	// The active command list.
 	RenderCommandList*				mCommandList;
@@ -95,6 +100,8 @@ private:
 	D3D12_GPU_DESCRIPTOR_HANDLE		mGpuDescriptorsToBind[static_cast<uint32>(EShaderType::Count)][sMaxDescriptorsToBindPerProgram];
 
 	uint16							mDirtySrvs[static_cast<uint32>(EShaderType::Count)];
+
+	TArray<RenderTexture*>			mBindlessTextures;
 
 };
 
