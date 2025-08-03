@@ -34,11 +34,6 @@ void SetBindlessTextures(RenderTexture** inTextures, uint32 inNum)
 		GAssert(textures[i]->GetDescription().Height == 44);
 
 		GAssert(inTextures[i]->GetSrv().IsValid());
-
-		//PrintDebugString("T_Test_%d", i);
-
-		//PrintDebugString("Texture %s", textures[i]->GetName().ToCString());
-
 	}
 
 	GRenderer.GetContext()->SetBindlessTextures(textures);

@@ -73,7 +73,7 @@ private:
 
 	void							Bind();
 
-	void							SetTextures(EShaderType inShaderType, uint32 inBindingSlot, RenderTexture* inTextures, uint32 inNumTextures);
+	void							SetTextures(EShaderType inShaderType, uint32 inBindingSlot, const TArray<RenderTexture*>& inTextures);
 	void							SetBuffer(EShaderType inProgramType, uint32 inSlot, RenderBuffer* inBuffer);
 
 	void							SetPendingGpuDescriptor(EShaderType inShaderType, uint32 inSlot, DescriptorTable inTable);
