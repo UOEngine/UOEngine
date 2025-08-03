@@ -1,13 +1,13 @@
-#include "Renderer/RenderCommandQueue.h"
+#include "RenderCommandQueue.h"
 
 #include <d3d12.h>
 
 #include "Core/Assert.h"
 #include "Memory/Memory.h"
-#include "Renderer/RenderCommandAllocator.h"
-#include "Renderer/RenderCommandList.h"
-#include "Renderer/RenderDevice.h"
-#include "Renderer/RenderFence.h"
+#include "RenderCommandAllocator.h"
+#include "RenderCommandList.h"
+#include "RenderDevice.h"
+#include "RenderFence.h"
 
 RenderCommandQueue::RenderCommandQueue(ERenderQueueType InQueueType)
 {

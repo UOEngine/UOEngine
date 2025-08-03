@@ -8,7 +8,9 @@
 #include "Engine/Window.h"
 #include "LivePP/LivePP.h"
 #include "Memory/MemoryAllocator.h"
-#include "Renderer/Renderer.h"
+
+#include "RHI/IRHI.h"
+#include "D3D12RHI/Renderer.h"
 
 Engine GEngine;
 
@@ -22,6 +24,8 @@ Engine::Engine()
 bool Engine::Init()
 {
 	PrintDebugString("Engine::Init startup");
+
+	//GRenderer2 = &GRenderer;
 
 	bool wait_for_debugger = false;
 
@@ -39,7 +43,7 @@ bool Engine::Init()
 
 	mGameWindow = IPlatformWindow::Create(CreateParameters);
 
-	Renderer::InitParameters RendererParameters = {};
+	InitParameters RendererParameters = {};
 
 	RendererParameters.ViewportExtents = mGameWindow->GetExtents();
 	RendererParameters.WindowHandle = mGameWindow->GetHandle();
@@ -102,6 +106,5 @@ void Engine::Run()
 
 		PreUpdate();
 		PostUpdate();
-
 	}
 }

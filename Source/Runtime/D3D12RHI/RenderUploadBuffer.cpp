@@ -1,9 +1,9 @@
-#include "Renderer/RenderUploadBuffer.h"
+#include "RenderUploadBuffer.h"
 
 #include <d3d12.h>
 
-#include "Renderer/D3D12Resource.h"
-#include "Renderer/RenderDevice.h"
+#include "D3D12Resource.h"
+#include "RenderDevice.h"
 
 void RenderUploadBuffer::Init(RenderDevice* Device, uint32 Size)
 {

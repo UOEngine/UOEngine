@@ -1,9 +1,9 @@
 #include "NativeInterop/RenderContextNative.h"
 
 #include "Core/Assert.h"
-#include "Renderer/Renderer.h"
-#include "Renderer/RenderContext.h"
-#include "Renderer/RenderTexture.h"
+#include "D3D12RHI/Renderer.h"
+#include "D3D12RHI/RenderContext.h"
+#include "D3D12RHI/RenderTexture.h"
 
 void SetShaderBindingData(RenderTexture* inTexture)
 {

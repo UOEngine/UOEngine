@@ -3,7 +3,7 @@ uoengine_add_shared_library(NativeInterop)
 
 target_link_libraries(NativeInterop
 	Engine
-	Renderer
+	D3D12RHI
 )
 
 set_target_properties(NativeInterop PROPERTIES OUTPUT_NAME "UOEngine.Native")

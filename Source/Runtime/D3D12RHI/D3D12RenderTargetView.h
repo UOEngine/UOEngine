@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Renderer/DescriptorAllocator.h"
+#include "DescriptorAllocator.h"
 
 struct ID3D12Resource;
 

@@ -1,16 +1,16 @@
-#include "Renderer/RenderContext.h"
+#include "RenderContext.h"
 
-#include "Renderer/D3D12Resource.h"
-#include "Renderer/D3D12RenderTargetView.h"
-#include "Renderer/GpuDescriptorAllocator.h"
-#include "Renderer/RenderBuffer.h"
-#include "Renderer/RenderCommandList.h"
-#include "Renderer/RenderCommandQueue.h"
-#include "Renderer/RenderDevice.h"
-#include "Renderer/RenderTextureAllocator.h"
-#include "Renderer/RenderTexture.h"
-#include "Renderer/Shader.h"
-#include "Renderer/ShaderInstance.h"
+#include "D3D12Resource.h"
+#include "D3D12RenderTargetView.h"
+#include "GpuDescriptorAllocator.h"
+#include "RenderBuffer.h"
+#include "RenderCommandList.h"
+#include "RenderCommandQueue.h"
+#include "RenderDevice.h"
+#include "RenderTextureAllocator.h"
+#include "RenderTexture.h"
+#include "Shader.h"
+#include "ShaderInstance.h"
 
 RenderCommandContext::RenderCommandContext(RenderDevice* InDevice)
 {

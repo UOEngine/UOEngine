@@ -1,12 +1,12 @@
-#include "Renderer/RenderBuffer.h"
+#include "RenderBuffer.h"
 
 #include "Core/Alignment.h"
 
-#include "Renderer/D3D12Resource.h"
-#include "Renderer/RenderCommandList.h"
-#include "Renderer/RenderCommandQueue.h"
-#include "Renderer/RenderUploadBuffer.h"
-#include "Renderer/RenderDevice.h"
+#include "D3D12Resource.h"
+#include "RenderCommandList.h"
+#include "RenderCommandQueue.h"
+#include "RenderUploadBuffer.h"
+#include "RenderDevice.h"
 
 RenderBuffer::RenderBuffer()
 {

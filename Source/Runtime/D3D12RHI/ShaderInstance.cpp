@@ -1,6 +1,6 @@
-#include "Renderer/ShaderInstance.h"
+#include "ShaderInstance.h"
 
-#include "Renderer/RenderTexture.h"
+#include "RenderTexture.h"
 
 void ShaderInstance::Init(Shader* inVertexProgram, Shader* inPixelProgram)
 {

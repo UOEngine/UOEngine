@@ -1,9 +1,9 @@
-#include "Renderer/RenderTextureAllocator.h"
+#include "RenderTextureAllocator.h"
 
 #include <d3d12.h>
 
-#include "Renderer/D3D12Resource.h"
-#include "Renderer/RenderDevice.h"
+#include "D3D12Resource.h"
+#include "RenderDevice.h"
 
 RenderTextureAllocator::RenderTextureAllocator(RenderDevice* InRenderDevice)
 {

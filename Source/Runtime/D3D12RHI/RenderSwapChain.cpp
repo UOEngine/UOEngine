@@ -1,15 +1,14 @@
-#include "Renderer/RenderSwapChain.h" 
+#include "RenderSwapChain.h" 
 
 #include <d3d12.h>
 #include <dxgi1_6.h>
 
 #include "Core/Assert.h"
-#include "Renderer/D3D12Resource.h"
-#include "Renderer/RenderContext.h"
-#include "Renderer/RenderCommandQueue.h"
-#include "Renderer/RenderDevice.h"
-#include "Renderer/RenderFence.h"
-
+#include "D3D12Resource.h"
+#include "RenderContext.h"
+#include "RenderCommandQueue.h"
+#include "RenderDevice.h"
+#include "RenderFence.h"
 
 RenderSwapChain::RenderSwapChain()
 {

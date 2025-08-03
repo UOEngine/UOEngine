@@ -1,7 +1,7 @@
 #include "NativeInterop/RenderBufferNative.h"
 
-#include "Renderer/Renderer.h"
-#include "Renderer/RenderBuffer.h"
+#include "D3D12RHI/Renderer.h"
+#include "D3D12RHI/RenderBuffer.h"
 
 RenderBuffer* CreateRenderBuffer(uint32 inNumElements, uint32 inStride)
 {

@@ -1,8 +1,8 @@
-#include "Renderer/RenderCommandList.h"
+#include "RenderCommandList.h"
 
-#include "Renderer/RenderCommandAllocator.h"
-#include "Renderer/RenderCommandQueue.h"
-#include "Renderer/RenderDevice.h"
+#include "RenderCommandAllocator.h"
+#include "RenderCommandQueue.h"
+#include "RenderDevice.h"
 
 RenderCommandList::RenderCommandList(ERenderQueueType inQueueType, RenderDevice* inDevice)
 {

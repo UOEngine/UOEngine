@@ -1,8 +1,8 @@
-#include "Renderer/RenderCommandAllocator.h"
+#include "RenderCommandAllocator.h"
 
 #include "Core/Assert.h"
 
-#include "Renderer/RenderDevice.h"
+#include "RenderDevice.h"
 
 RenderCommandAllocator::RenderCommandAllocator(RenderDevice* InDevice, ERenderQueueType InQeueType)
 {

@@ -3,9 +3,9 @@
 #include "Core/Math/Matrix4x4.h"
 #include "Core/Math/Rect.h"
 #include "Core/Types.h"
-#include "Renderer/GpuDescriptorAllocator.h"
-#include "Renderer/RenderCommandList.h"
-#include "Renderer/Shader.h"
+#include "D3D12RHI/GpuDescriptorAllocator.h"
+#include "D3D12RHI/RenderCommandList.h"
+#include "D3D12RHI/Shader.h"
 
 class D3D12RenderTargetView;
 class RenderBuffer;

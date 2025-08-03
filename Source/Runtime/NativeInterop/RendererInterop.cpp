@@ -1,9 +1,9 @@
 #include "NativeInterop/RendererInterop.h"
 
-#include "Renderer/RenderContext.h"
-#include "Renderer/RenderDevice.h"
-#include "Renderer/RenderTexture.h"
-#include "Renderer/Renderer.h"
+#include "D3D12RHI/RenderContext.h"
+#include "D3D12RHI/RenderDevice.h"
+#include "D3D12RHI/RenderTexture.h"
+#include "D3D12RHI/Renderer.h"
 
 RenderTexture* CreateTexture(uint32 Width, uint32 Height, const char* inName)
 {

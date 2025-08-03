@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Renderer/Shader.h"
+#include "Shader.h"
 
 class RenderBuffer;
 class RenderTexture;

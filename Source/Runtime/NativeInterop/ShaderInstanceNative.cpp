@@ -1,6 +1,6 @@
 #include "NativeInterop/ShaderInstanceNative.h"
 
-#include "Renderer/ShaderInstance.h"
+#include "D3D12RHI/ShaderInstance.h"
 
 void SetTexture(ShaderInstance* inShaderInstance, const char* inParameterName, RenderTexture* inTexture)
 {

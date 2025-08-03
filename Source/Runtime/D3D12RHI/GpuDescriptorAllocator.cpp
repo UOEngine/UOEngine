@@ -1,7 +1,7 @@
-#include "Renderer/GpuDescriptorAllocator.h"
+#include "GpuDescriptorAllocator.h"
 
 #include "Core/Assert.h"
-#include "Renderer/RenderDevice.h"
+#include "RenderDevice.h"
 
 void GpuDescriptorAllocator::Init(RenderDevice* inRenderDevice, D3D12_DESCRIPTOR_HEAP_TYPE inHeapType, uint32 inNumDescriptors)
 {

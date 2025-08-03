@@ -2,7 +2,7 @@
 
 #include "Core/Containers/Array.h"
 #include "Core/Types.h"
-#include "Renderer/DescriptorAllocator.h"
+#include "DescriptorAllocator.h"
 
 class D3D12Resource;
 class RenderDevice;
