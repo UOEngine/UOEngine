@@ -128,6 +128,15 @@ void RenderCommandContext::SetProjectionMatrix(const Matrix4x4& inMatrix)
 void RenderCommandContext::SetBindlessTextures(const TArray<RenderTexture*>& inTextures)
 {
 	mBindlessTextures = inTextures;
+
+	for (int32 i = 0; i < mBindlessTextures.Num(); i++)
+	{
+		RenderTexture* texture = mBindlessTextures[i];
+
+		String name = texture->GetName();
+
+		PrintDebugString("Name is %s", name.ToCString());
+	}
 }
 
 void RenderCommandContext::FlushCommands()
@@ -259,7 +268,7 @@ void RenderCommandContext::Bind()
 	mbRenderStateDirty = false;
 }
 
-void RenderCommandContext::SetTextures(EShaderType inShaderType, uint32 inSlot, const RenderTexture* inTextures, uint32 inNumTextures)
+void RenderCommandContext::SetTextures(EShaderType inShaderType, uint32 inSlot, RenderTexture* inTextures, uint32 inNumTextures)
 {
 	GAssert(inNumTextures > 0);
 
@@ -274,9 +283,13 @@ void RenderCommandContext::SetTextures(EShaderType inShaderType, uint32 inSlot, 
 
 	for (int32 i = 0; i < inNumTextures; i++)
 	{
-		GAssert(inTextures[i].GetSrv().IsValid());
+		const RenderTexture* texture = mBindlessTextures[i];
 
-		texture_srvs[i] = inTextures[i].GetSrv();
+		//PrintDebugString("RenderCommandContext::SetTextures %s", texture->GetName().ToCString());
+
+		GAssert(texture->GetSrv().IsValid());
+
+		texture_srvs[i] = texture->GetSrv();
 	}
 
 	mDevice->GetDevice()->CopyDescriptorsSimple(inNumTextures, table.mCpuHandle, texture_srvs[0], D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);

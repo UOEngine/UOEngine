@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Core/Assert.h"
 #include "Core/Containers/Array.h"
 #include "Core/Types.h"
 

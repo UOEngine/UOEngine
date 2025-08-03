@@ -13,17 +13,17 @@ public class Engine(IUOEngineApp app) : IDisposable
     {
         int code = -1;
 
-        bool waitForDebugger = true;
+        //bool waitForDebugger = true;
 
-        if(waitForDebugger && (Debugger.IsAttached == false))
-        {
-            Console.WriteLine("Waiting for debugger to attach ...");
+        //if(waitForDebugger && (Debugger.IsAttached == false))
+        //{
+        //    Console.WriteLine("Waiting for debugger to attach ...");
 
-            while (Debugger.IsAttached == false)
-            {
-                Thread.Sleep(0);
-            }
-        }
+        //    while (Debugger.IsAttached == false)
+        //    {
+        //        Thread.Sleep(0);
+        //    }
+        //}
 
         try
         {

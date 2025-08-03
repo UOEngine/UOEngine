@@ -155,7 +155,7 @@ public struct Matrix4x4
 
         matrix[0, 3] = translation.X;
         matrix[1, 3] = translation.Y;
-        matrix[1, 3] = translation.Z;
+        matrix[2, 3] = translation.Z;
 
         matrix[3, 3] = 1.0f;
 

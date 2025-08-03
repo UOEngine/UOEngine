@@ -21,7 +21,10 @@ public:
 	DataType&				operator[](int32 Index);
 	const DataType&			operator[](int32 Index) const;
 
-	TArray<DataType>&		operator=(const TArray<DataType>& inRHS);
+	const TArray<DataType>&	operator=(const TArray<DataType>& inRHS);
+
+	DataType*				begin()								{ return mData; }
+	DataType*				end()								{ return mData + sizeof(DataType); }
 
 	int32					Add(const DataType& NewElement);
 
@@ -36,7 +39,7 @@ public:
 	uint32					Num() const;
 
 	DataType*				GetData()							{return mData;}
-	DataType*				GetData() const						{return mData;}
+	const DataType*			GetData() const						{return mData;}
 
 	DataType&				Last()								{return mData[mNumElements - 1]; }
 

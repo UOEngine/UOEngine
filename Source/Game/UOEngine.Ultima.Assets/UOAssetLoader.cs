@@ -45,9 +45,14 @@ public class UOAssetLoader
 
     private UOBitmap GetArtInternal(uint idx)
     {
-        var bitmap = new UOBitmap();
-
         UOFileIndex entry = Art.FileIndices[(int)idx];
+
+        if(entry.Length == 0)
+        {
+            return UOBitmap.Empty();
+        }
+
+        var bitmap = new UOBitmap();
 
         Art.Reader.BaseStream.Seek(entry.Offset, SeekOrigin.Begin);
 

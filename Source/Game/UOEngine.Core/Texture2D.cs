@@ -11,9 +11,11 @@ public class Texture2D
     public readonly uint    Width ;
     public readonly uint    Height;
 
+    public string           Name { get; set; }
+
     private Memory<Colour>  _pixels;
 
-    public Texture2D(uint width, uint height)
+    public Texture2D(uint width, uint height, string name = "")
     {
         Debug.Assert(width > 0);
         Debug.Assert(height > 0);
@@ -22,13 +24,14 @@ public class Texture2D
 
         Width = width;
         Height = height;
+        Name = name;
     }
 
     public unsafe void Apply()
     {
         if(NativeHandle == UIntPtr.Zero)
         {
-            NativeHandle = RendererInterop.CreateTexture((int)Width, (int)Height);
+            NativeHandle = RendererInterop.CreateTexture((int)Width, (int)Height, Name);
         }
 
         ReadOnlySpan<byte> pixelBytes = MemoryMarshal.AsBytes(_pixels.Span);

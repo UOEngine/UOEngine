@@ -21,6 +21,18 @@ Engine::Engine()
 
 bool Engine::Init()
 {
+	PrintDebugString("Engine::Init startup");
+
+	bool wait_for_debugger = false;
+
+	if (wait_for_debugger && (IsDebuggerPresent() == false))
+	{
+		while (IsDebuggerPresent() == false)
+		{
+			_mm_pause();
+		}
+	}
+
 	//LivePP LivePPInstance;
 
 	IPlatformWindow::CreateParameters CreateParameters;
@@ -70,7 +82,7 @@ void Engine::PostUpdate()
 
 		uint64 delta_ticks_per_frame = (float)delta_ticks / (float)per_frame_measurement;
 
-		double frame_time_ms = Timer::sGetTicksInMilliseconds(delta_ticks);
+		double frame_time_ms = Timer::sGetTicksInMilliseconds(delta_ticks_per_frame);
 
 		uint32 fps = 1000.0f / frame_time_ms;
 

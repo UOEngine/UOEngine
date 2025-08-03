@@ -44,7 +44,7 @@ String::String(const String& Other)
 
 	GAssert(OtherBuffer->Header.ReferenceCount > 0);
 
-	OtherBuffer->Header.ReferenceCount++;
+	OtherBuffer->AddReference();
 }
 
 String::~String()
@@ -54,12 +54,10 @@ String::~String()
 		return;
 	}
 
-	GetBuffer()->Header.ReferenceCount--;
+	GetBuffer()->Release();
 
-	if (GetBuffer()->Header.ReferenceCount == 0)
+	if (GetBuffer()->Data == nullptr)
 	{
-		MemoryAllocator::Get().Free(GetBuffer());
-
 		mData = nullptr;
 		mNumCharacters = 0;
 	}
@@ -71,10 +69,10 @@ String& String::operator=(const String& inOther)
 	{
 		if (mData != nullptr)
 		{
-			GNotImplemented;
+			GetBuffer()->Release();
 		}
 
-		inOther.GetBuffer()->Header.ReferenceCount++;
+		inOther.GetBuffer()->AddReference();
 
 		mData = inOther.mData;
 		mNumCharacters = inOther.mNumCharacters;
@@ -102,15 +100,15 @@ bool String::operator==(const char* Str)
 	return (strcmp(mData, Str) == 0);
 }
 
-String String::sFormat(const char* inFormat, ...)
+String String::sFormat(const char* inFormat, va_list inArgs)
 {
 	const uint32 max_size = 128;
-	char output_buffer[max_size];
-	va_list args;
+	char output_buffer[max_size] = {0};
+	//va_list args;
 
-	va_start(args, inFormat);
-	int32 result = vsnprintf(output_buffer, max_size, inFormat, args);
-	va_end(args);
+	//va_start(args, inFormat);
+	int32 result = vsnprintf(output_buffer, max_size, inFormat, inArgs);
+	//va_end(args);
 
 	if (result < 0)
 	{
@@ -120,7 +118,18 @@ String String::sFormat(const char* inFormat, ...)
 	return String(output_buffer);
 }
 
-void String::Copy(const char* Str, uint32 Length)
+String String::sFormat(const char* inFormat, ...)
+{
+	va_list args;
+
+	va_start(args, inFormat);
+	String str = String::sFormat(inFormat, args);
+	va_end(args);
+
+	return str;
+}
+
+void String::Copy(const char* inStr, uint32 inLength)
 {
 	if (mData != nullptr)
 	{
@@ -128,19 +137,19 @@ void String::Copy(const char* Str, uint32 Length)
 	}
 	else
 	{
-		mNumCharacters = Length;
+		mNumCharacters = inLength;
 
 		// +1 for terminating zero.
-		uint32 StringSizeBytes = (Length + 1) * sizeof(char);
+		uint32 string_size_bytes = (inLength + 1) * sizeof(char);
 
-		uint32 SizeInBytes = sizeof(BufferHeader) + StringSizeBytes;
+		uint32 size_in_bytes = sizeof(Buffer) + string_size_bytes;
 
-		Buffer* NewBuffer = (Buffer*)MemoryAllocator::Get().Allocate(SizeInBytes);
+		Buffer* new_buffer = (Buffer*)MemoryAllocator::Get().Allocate(size_in_bytes);
 
-		NewBuffer->Header.ReferenceCount = 1;
+		new_buffer->Header.ReferenceCount = 1;
 
-		Memory::MemCopy(NewBuffer->Data, StringSizeBytes, (void*)Str, StringSizeBytes);
+		Memory::MemCopy(new_buffer->Data, string_size_bytes, (void*)inStr, string_size_bytes);
 
-		mData = NewBuffer->Data;
+		mData = new_buffer->Data;
 	}
 }

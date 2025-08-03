@@ -5,7 +5,7 @@
 #include "Renderer/RenderTexture.h"
 #include "Renderer/Renderer.h"
 
-RenderTexture* CreateTexture(uint32 Width, uint32 Height)
+RenderTexture* CreateTexture(uint32 Width, uint32 Height, const char* inName)
 {
 	RenderTexture* texture = new RenderTexture();
 
@@ -16,6 +16,7 @@ RenderTexture* CreateTexture(uint32 Width, uint32 Height)
 	desc.Height = Height;
 	desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	desc.Device = GRenderer.GetDevice();
+	desc.Name = inName;
 
 	texture->Init(desc);
 

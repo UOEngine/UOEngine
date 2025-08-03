@@ -44,13 +44,11 @@ const DataType& TArray<DataType>::operator[](int32 Index) const
 }
 
 template <typename DataType>
-TArray<DataType>& TArray<DataType>::operator=(const TArray<DataType>& inRHS)
+const TArray<DataType>& TArray<DataType>::operator=(const TArray<DataType>& inRHS)
 {
 	Clear();
 
-	SetNum(inRHS.Num());
-
-	Memory::MemCopy(GetData(), Num() * sizeof(DataType), inRHS.GetData(), inRHS.Num() * sizeof(DataType));
+	Copy(inRHS.GetData(), inRHS.Num());
 
 	return *this;
 }

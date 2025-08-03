@@ -21,5 +21,5 @@ void EnginePostUpdate()
 
 void EngineShutdown()
 {
-	GEngine.PostUpdate();
+	GEngine.Shutdown();
 }

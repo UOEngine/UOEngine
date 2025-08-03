@@ -1,4 +1,5 @@
-﻿using UOEngine.Core;
+﻿using System.Diagnostics;
+using UOEngine.Core;
 using UOEngine.Interop;
 
 namespace UOEngine
@@ -22,12 +23,14 @@ namespace UOEngine
             //RenderContextNative.SetShaderInstance(shaderInstance.NativeHandle);
         }
 
-        public static unsafe void SetBindlessTextures(Texture2D[] textures)
+        public static unsafe void SetBindlessTextures(ReadOnlySpan<Texture2D> textures)
         {
             Span<UIntPtr> handles = stackalloc UIntPtr[textures.Length];
 
             for(int i = 0; i < textures.Length; i++)
             {
+                Debug.Assert(textures[i] != null);
+
                 handles[i] = textures[i].NativeHandle;
             }
 

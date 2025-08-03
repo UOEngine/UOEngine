@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Drawing;
 using System.Runtime.Versioning;
 using System.Runtime.InteropServices;
+using System.Diagnostics.CodeAnalysis;
 
 namespace UOEngine.UOAssets
 {
@@ -15,11 +16,38 @@ namespace UOEngine.UOAssets
         public uint Width = 0;
         public uint Height = 0;
 
+        public bool IsEmpty => this == Empty();
+
         public UOBitmap(uint width, uint height, Span<uint> texels)
         {
             Width = width;
             Height = height;
             Texels = texels;
+        }
+
+        public static bool operator == (UOBitmap left, UOBitmap right)
+        {
+            if(left.Width != right.Height)
+            {
+                return false;
+            }
+
+            if (left.Height != right.Height)
+            {
+                return false;
+            }
+
+            if(left.Texels == right.Texels)
+            {
+                return true;
+            }
+
+            return true;
+        }
+
+        public static bool operator != (UOBitmap left, UOBitmap right)
+        {
+            return !(left == right);
         }
 
         public void DeserialiseFromUOPackageFileResource(byte[] data)
@@ -103,6 +131,11 @@ namespace UOEngine.UOAssets
             //bitmap.UnlockBits(bd);
 
             //bitmap.Save(filename);
+        }
+
+        public static UOBitmap Empty()
+        {
+            return new UOBitmap(0, 0, []);
         }
     }
 }

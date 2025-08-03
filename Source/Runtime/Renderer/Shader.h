@@ -69,7 +69,7 @@ public:
 
 	bool								Load(const String& FilePath);
 
-	uint8*								GetBytecode() const						{return mDxil.GetData();}
+	uint8*								GetBytecode() 						    {return mDxil.GetData();}
 	uint32								GetBytecodeLength() const				{return mDxil.Num();}
 
 	uint32								GetNumSignatureParameters()	const		{ return mNumSignatureParameters; }

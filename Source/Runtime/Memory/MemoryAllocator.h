@@ -6,6 +6,8 @@ class MemoryAllocator
 {
 public:
 
+								MemoryAllocator();
+
 	static MemoryAllocator&		Get();
 
 	void						Initialise();
@@ -22,5 +24,6 @@ private:
 	static void					OutputHandler(const char* Message, void* Arg);
 
 	uint64						mTotalAllocationSizeBytes;
+	uint64						mMaxAllowedAllocationBytes;
 
 };
