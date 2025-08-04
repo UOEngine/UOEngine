@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using UOEngine.Core;
@@ -19,9 +21,11 @@ public class Editor : IUOEngineApp
 
     private Memory<Texture2D> _textures;
 
-    private Memory<PerInstanceData> _modelToWorld;
+    private Memory<PerInstanceData> _perInstanceData;
     private RenderBuffer _renderBuffer;
     private uint _numTexturesProcessed = 0;
+
+    private MapEntity _mapEntity;
 
     public bool PreEngineInit()
     {
@@ -34,9 +38,10 @@ public class Editor : IUOEngineApp
     {
         Debug.WriteLine($"Game.Initialise: Start");
 
-        var mapEntity = EntityManager.Instance.NewEntity<MapEntity>();
+        _mapEntity = EntityManager.Instance.NewEntity<MapEntity>();
 
-        mapEntity.Load(_assetLoader.Maps[0]);
+        _mapEntity.Load(_assetLoader.Maps[0]);
+
 
         uint screen_height = 2160;
         uint screen_width = 3840;
@@ -52,7 +57,7 @@ public class Editor : IUOEngineApp
 
         uint max = max_index;
 
-        _modelToWorld = new PerInstanceData[max];
+        _perInstanceData = new PerInstanceData[max];
 
         _textures = new Texture2D[max];
 
@@ -90,12 +95,12 @@ public class Editor : IUOEngineApp
 
                 _textures.Span[num_textures_processed] = texture;
 
-                Matrix4x4 modelToWorld = new Matrix4x4();
+                //Matrix4x4 modelToWorld = new Matrix4x4();
 
-                modelToWorld = Matrix4x4.Translate(new Vector3(xPos, yPos, 0.0f));
+                //modelToWorld = Matrix4x4.Translate(new Vector3(xPos, yPos, 0.0f));
 
-                _modelToWorld.Span[num_textures_processed].ModelToWorld = modelToWorld;
-                _modelToWorld.Span[num_textures_processed].TextureIndex = (uint)num_textures_processed;
+                //_perInstanceData.Span[num_textures_processed].ModelToWorld = modelToWorld;
+                //_perInstanceData.Span[num_textures_processed].TextureIndex = (uint)num_textures_processed;
 
                 num_textures_processed++;
 
@@ -116,9 +121,11 @@ public class Editor : IUOEngineApp
 
         _renderBuffer = new RenderBuffer((uint)num_textures_processed, (uint)Unsafe.SizeOf<PerInstanceData>());
 
-        _renderBuffer.SetData<PerInstanceData>(_modelToWorld.Span.Slice(0, (int)num_textures_processed));
+        //_renderBuffer.SetData<PerInstanceData>(_perInstanceData.Span.Slice(0, (int)num_textures_processed));
 
         RenderContext.SetBindlessTextures(_textures.Span.Slice(0, num_textures_processed));
+
+        ChunkTest();
 
         return true;
     }
@@ -129,6 +136,42 @@ public class Editor : IUOEngineApp
 
         shaderInstance.SetBuffer("sbPerInstanceData", _renderBuffer);
 
-        RenderContext.Draw((uint)_textures.Length);
+        RenderContext.Draw(64);
+    }
+    
+    private void ChunkTest()
+    {
+        Chunk chunk = _mapEntity.GetChunk(200, 200);
+
+        for (int y = 0; y < 8; y++)
+        {
+            uint xPos = 0;
+            uint yPos = (uint)y * 44;
+
+            for (int x = 0; x < 8; x++)
+            {
+                int index = x + y * 8;
+
+                Matrix4x4 modelToWorld = new Matrix4x4();
+
+                modelToWorld = Matrix4x4.Translate(new Vector3(xPos, yPos, 0.0f));
+
+                _perInstanceData.Span[index].ModelToWorld = modelToWorld;
+
+                // Graphic id looks up land data. 
+
+                ushort texId = _assetLoader.LandTiles[chunk.Entities[x, y].GraphicId].TexID;
+
+                _perInstanceData.Span[index].TextureIndex = texId;
+
+                xPos += 44;
+
+                Console.WriteLine($"{x} {y} {texId}");
+
+            }
+        }
+
+        _renderBuffer.SetData<PerInstanceData>(_perInstanceData.Span.Slice(0, 64));
+
     }
 }

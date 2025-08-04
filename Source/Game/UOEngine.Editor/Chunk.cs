@@ -13,7 +13,7 @@ internal class Chunk
     public readonly LandEntity[,] Entities = new LandEntity[8,8];
     public void Load(IndexMap indexMap, int blockX, int blockY)
     {
-        indexMap.MapFile.Reader.BaseStream.Seek(0, SeekOrigin.Begin);
+        indexMap.MapFile.Reader.BaseStream.Seek((long)indexMap.MapAddress, SeekOrigin.Begin);
 
         var mapBlock = indexMap.MapFile.Reader.Read<MapBlock>();
 
@@ -25,16 +25,18 @@ internal class Chunk
             int pos = y << 3;
             ushort tileY = (ushort)(cornerY + y);
 
-            for (int x = 0; x < 8; x++)
+            for (int x = 0; x < 8; x++, ++pos)
             {
                 ushort tileID = (ushort)(mapBlock.Cells[pos].TileID & 0x3FFF);
                 ushort tileX = (ushort)(cornerX + x);
+
+
 
                 LandEntity land = EntityManager.Instance.NewEntity(() => new LandEntity(tileID));
 
                 int tileIndex = tileY + 8 * tileX;
 
-                Entities[tileX, tileY] = land;
+                Entities[x, y] = land;
             }
         }
     }

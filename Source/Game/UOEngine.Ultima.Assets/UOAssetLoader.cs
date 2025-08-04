@@ -12,6 +12,8 @@ public class UOAssetLoader
 
     public Map[] Maps = new Map[NumMaps];
 
+    public LandTile[] LandTiles { get; private set; } = [];
+
     public UOPackageFile Art { get; private set; }
 
     public void LoadAllFiles(string ultimaOnlineDirectory)
@@ -22,6 +24,8 @@ public class UOAssetLoader
         //MapAssets.Load(ultimaOnlineDirectory);
 
         MountArt(ultimaOnlineDirectory);
+
+        LoadTileData(ultimaOnlineDirectory);
     }
 
     public UOBitmap GetGump(int idx)
@@ -41,6 +45,15 @@ public class UOAssetLoader
         }
 
         return GetArtInternal((uint)(idx & ~0x4000));
+    }
+
+    private void LoadTileData(string ultimaOnlineDirectory)
+    {
+        var tileDataAssets = Path.Combine(ultimaOnlineDirectory, "tiledata.mul");
+        using var tileData = new UOPackageFile(tileDataAssets);
+        var tileDataDeserialiser = new TileDataDeserialiser();
+
+        LandTiles = tileData.Deserialise(tileDataDeserialiser);
     }
 
     private UOBitmap GetArtInternal(uint idx)

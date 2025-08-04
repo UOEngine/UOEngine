@@ -2,6 +2,7 @@
 using System.IO.Compression;
 using System.IO.MemoryMappedFiles;
 using System.Runtime.CompilerServices;
+using UOEngine.UOAssets;
 
 namespace UOEngine.PackageFile;
 
@@ -98,6 +99,16 @@ public class UOPackageFile : IDisposable
         Stream = _file.CreateViewStream(0, size, MemoryMappedFileAccess.Read);
 
         Reader = new BinaryReader(Stream);
+    }
+
+    public T Deserialise<T>(IUOAssetDeserialiser<T> deserialiser)
+    {
+        if(IsMounted == false)
+        {
+            Mount();
+        }
+
+        return deserialiser.Deserialise(Reader);
     }
 
     public void Load(string packedFilePattern, bool bHasExtra)

@@ -35,8 +35,21 @@ public:
 
 	void SetBlendState()
 	{
-		// All false currently.
-		mBlend.mDesc.RenderTarget[0].RenderTargetWriteMask = 0b1111;
+
+		D3D12_RENDER_TARGET_BLEND_DESC rt_blend_desc = {};
+
+		rt_blend_desc.BlendEnable = true;
+		rt_blend_desc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
+		rt_blend_desc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+		rt_blend_desc.BlendOp = D3D12_BLEND_OP_ADD;
+
+		rt_blend_desc.SrcBlendAlpha = D3D12_BLEND_ONE;
+		rt_blend_desc.DestBlendAlpha = D3D12_BLEND_ZERO;
+		rt_blend_desc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
+
+		rt_blend_desc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+
+		mBlend.mDesc.RenderTarget[0] = rt_blend_desc;
 	}
 
 	void SetInputLayout()
