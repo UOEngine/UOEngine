@@ -71,6 +71,9 @@ public:
 
 	float						operator()(uint32 inRow, uint32 inColumn);
 
+	float&						operator()(uint32 index);
+	float&						operator[](uint32 index);
+
 	static constexpr uint32		Rows = 4;
 	static constexpr uint32		Columns = 4;
 	static constexpr uint32		NumElements = Rows * Columns;

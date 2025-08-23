@@ -81,3 +81,17 @@ float Matrix4x4::operator()(uint32 inRow, uint32 inColumn)
 
 	return mElements[inColumn * Rows + inRow];
 }
+
+float& Matrix4x4::operator()(uint32 index)
+{
+	GAssert(index < NumElements);
+
+	return mElements[index];
+}
+
+float& Matrix4x4::operator[](uint32 index)
+{
+	GAssert(index < NumElements);
+
+	return mElements[index];
+}

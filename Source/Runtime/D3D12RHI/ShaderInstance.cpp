@@ -13,6 +13,24 @@ void ShaderInstance::Init(Shader* inVertexProgram, Shader* inPixelProgram)
 	mBoundData[vertex_program_index].mData.SetNum(inVertexProgram->GetBindingInfo()->mBindings.Num());
 	mBoundData[pixel_program_index].mData.SetNum(inPixelProgram->GetBindingInfo()->mBindings.Num());
 
+	for (int32 i = 0; i < inVertexProgram->GetBindingInfo()->mBindings.Num(); i++)
+	{
+		Slot& slot = mBoundData[vertex_program_index].mData[i];
+		const ShaderBinding& binding_info = inVertexProgram->GetBindingInfo()->mBindings[i];
+
+		slot.mBindingInfo = binding_info;
+		slot.mData.SetNum(binding_info.mSizeBytes);
+	}
+
+	for (int32 i = 0; i < inPixelProgram->GetBindingInfo()->mBindings.Num(); i++)
+	{
+		Slot& slot = mBoundData[pixel_program_index].mData[i];
+		const ShaderBinding& binding_info = inPixelProgram->GetBindingInfo()->mBindings[i];
+
+		slot.mBindingInfo = binding_info;
+		slot.mData.SetNum(binding_info.mSizeBytes);
+	}
+
 }
 
 //int32 ShaderInstance::GetSrvRootSignatureIndex(EShaderType inShaderType, uint32 inIndex) const
@@ -39,7 +57,9 @@ void ShaderInstance::SetTexture(ShaderBindingHandle inBindingHandle, RenderTextu
 {
 	GAssert(inBindingHandle.IsValid());
 
-	mBoundData[inBindingHandle.mShaderType].mData[inBindingHandle.mHandle].mTexture = inTexture;
+	RenderTexture* buffer[] = {inTexture};
+
+	mBoundData[inBindingHandle.mShaderType].mData[inBindingHandle.mHandle].mData.Copy((uint8*)buffer, sizeof(RenderTexture*));
 }
 
 void ShaderInstance::SetTexture(const char* inName, RenderTexture* inTexture)
@@ -63,7 +83,10 @@ void ShaderInstance::SetBuffer(ShaderBindingHandle inBindingHandle, RenderBuffer
 {
 	GAssert(inBindingHandle.IsValid());
 
-	mBoundData[inBindingHandle.mShaderType].mData[inBindingHandle.mHandle].mBuffer = inBuffer;
+	RenderBuffer* buffer[] = {inBuffer};
+
+	mBoundData[inBindingHandle.mShaderType].mData[inBindingHandle.mHandle].mData.Copy((uint8*)buffer, sizeof(RenderBuffer*));
+
 }
 
 void ShaderInstance::SetBuffer(const char* inName, RenderBuffer* inBuffer)
@@ -95,3 +118,38 @@ void ShaderInstance::SetBuffer(const char* inName, RenderBuffer* inBuffer)
 	GUnreachable;
 }
 
+void ShaderInstance::SetVariable(const char* inName, const Matrix4x4& inMatrix)
+{
+	bool found = false;
+
+	for (int i = 0; i < sNumShaderTypes; i++)
+	{
+		if (mShaderPrograms[i] == nullptr)
+		{
+			continue;
+		}
+
+		ShaderBindingHandle handle = mShaderPrograms[i]->GetParameter(inName);
+
+		if (handle.IsValid())
+		{
+			SetVariable(handle, inMatrix);
+
+			found = true;
+		}
+	}
+
+	if (found)
+	{
+		return;
+	}
+
+	GUnreachable;
+}
+
+void ShaderInstance::SetVariable(ShaderBindingHandle inBindingHandle, const Matrix4x4& inMatrix)
+{
+	GAssert(inBindingHandle.IsValid());
+
+	mBoundData[inBindingHandle.mShaderType].mData[inBindingHandle.mHandle].mData.Copy((uint8*)&inMatrix, sizeof(Matrix4x4));
+}

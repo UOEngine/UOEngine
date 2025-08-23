@@ -206,17 +206,12 @@ void RenderCommandContext::Bind()
 
 			GAssert(binding_info.mType != EShaderBindingType::Invalid);
 
-			if (binding_info.mType == EShaderBindingType::ConstantBuffer)
-			{
-				continue;
-			}
-
 			if (binding_info.mType == EShaderBindingType::Sampler)
 			{
 				continue;
 			}
 
-			const Slot& slot = shader_bound_data->mData[binding_index];
+			const Slot& slot = shader_bound_data->mData[element];
 
 			switch (binding_info.mType)
 			{
@@ -225,7 +220,7 @@ void RenderCommandContext::Bind()
 					// Mostly using bindless anyway but temp. 
 					TArray<RenderTexture*> texture;
 
-					texture.Add(slot.mTexture);
+					texture.Add((RenderTexture*)slot.mData.GetData());
 
 					SetTextures(shader_program_type, binding_index, texture);
 
@@ -234,7 +229,9 @@ void RenderCommandContext::Bind()
 
 				case EShaderBindingType::StructuredBuffer:
 				{
-					SetBuffer(shader_program_type, binding_index, slot.mBuffer);
+					RenderBuffer** structured_buffer = (RenderBuffer**)slot.mData.GetData();
+
+					SetBuffer(shader_program_type, binding_index, structured_buffer[0]);
 
 					break;
 				}
@@ -242,6 +239,17 @@ void RenderCommandContext::Bind()
 				case EShaderBindingType::BindlessTexture:
 				{
 					SetTextures(shader_program_type, binding_index, mBindlessTextures);
+
+					break;
+				}
+
+				case EShaderBindingType::ConstantBuffer:
+				{
+					uint32 num_32_bit_values = slot.mData.Num() / 4;
+
+					mCommandList->GetGraphicsCommandList()->SetGraphicsRoot32BitConstants(0, num_32_bit_values, slot.mData.GetData(), 0);
+
+					continue;
 
 					break;
 				}

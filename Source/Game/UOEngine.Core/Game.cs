@@ -9,21 +9,33 @@ public class Engine(IUOEngineApp app) : IDisposable
 {
     readonly IUOEngineApp _app = app;
 
+    [DllImport("kernel32.dll")]
+    static extern IntPtr SetUnhandledExceptionFilter(UnhandledExceptionFilterDelegate lpTopLevelExceptionFilter);
+
+    delegate int UnhandledExceptionFilterDelegate(IntPtr exceptionPointers);
+
     public int Run(string[] args)
     {
         int code = -1;
 
-        //bool waitForDebugger = true;
+        SetUnhandledExceptionFilter(CrashHandler);
 
-        //if(waitForDebugger && (Debugger.IsAttached == false))
-        //{
-        //    Console.WriteLine("Waiting for debugger to attach ...");
+        AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
+        {
+            Console.WriteLine("AppDomain.CurrentDomain.UnhandledException", e.ExceptionObject as Exception);
+        };
 
-        //    while (Debugger.IsAttached == false)
-        //    {
-        //        Thread.Sleep(0);
-        //    }
-        //}
+        bool waitForDebugger = false;
+
+        if (waitForDebugger && (Debugger.IsAttached == false))
+        {
+            Console.WriteLine("Waiting for debugger to attach ...");
+
+            while (Debugger.IsAttached == false)
+            {
+                Thread.Sleep(0);
+            }
+        }
 
         try
         {
@@ -45,6 +57,8 @@ public class Engine(IUOEngineApp app) : IDisposable
         {
             Dispose();
         }
+
+        Console.WriteLine("Exiting...");
 
         return code;
     }
@@ -94,6 +108,13 @@ public class Engine(IUOEngineApp app) : IDisposable
             EngineInterop.EnginePostUpdate();
         }
 
+
+        return 0;
+    }
+
+    static private int CrashHandler(IntPtr exceptionPointers)
+    {
+        Console.WriteLine("Native crash happened.");
 
         return 0;
     }

@@ -1,37 +1,7 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace UOEngine;
-
-public struct Vector4
-{
-    public float X;
-    public float Y;
-    public float Z;
-    public float W;
-
-    public Vector4(float x, float y, float z, float w)
-    {
-        X = x;
-        Y = y;
-        Z = z;
-        W = w;
-    }
-}
-
-public struct Vector3
-{
-    public float X;
-    public float Y;
-    public float Z;
-
-    public Vector3(float x, float y, float z)
-    {
-        X = x; 
-        Y = y; 
-        Z = z;
-    }
-}
+namespace UOEngine.Core;
 
 public enum EMatrix4x4Init
 {
@@ -80,6 +50,30 @@ public struct Matrix4x4
         this[1, 1] = 1.0f;
         this[2, 2] = 1.0f;
         this[3, 3] = 1.0f;
+    }
+
+
+    public static Matrix4x4 CreateOrthographic(float left, float right, float bottom, float top, float near, float far)
+    {
+        Matrix4x4 matrix = Identity;
+
+        float x = 2.0f / (right - left);
+        float y = 2.0f / (top - bottom);
+        float z = -2.0f / (far - near);
+        float tx = -(right + left) / (right - left);
+        float ty = -(top + bottom) / (top - bottom);
+        float tz = -(far + near) / (far - near);
+
+        matrix[0, 0] = x;
+        matrix[0, 3] = tx;
+
+        matrix[1, 1] = y;
+        matrix[1, 3] = ty;
+
+        matrix[2, 2] = z;
+        matrix[2, 3] = tz;
+
+        return matrix;
     }
 
     public float this[int index]
@@ -162,4 +156,30 @@ public struct Matrix4x4
         return matrix;
     }
 
+    public static Matrix4x4 operator* (Matrix4x4 lhs, Matrix4x4 rhs)
+    {
+        Matrix4x4 result = new Matrix4x4();
+
+        for (int row = 0; row < 4; row++)
+        {
+            for (int col = 0; col < 4; col++)
+            {
+                float sum = 0.0f;
+
+                for (int k = 0; k < 4; k++)
+                {
+                    sum += lhs[row, k] * rhs[k, col];
+                }
+
+                result[row, col] = sum;
+            }
+        }
+
+        return Identity;
+    }
+
+    public ReadOnlySpan<float> AsSpan()
+    {
+        return MemoryMarshal.CreateReadOnlySpan(ref Unsafe.As<Matrix4x4, float>(ref this), 16);
+    }
 }

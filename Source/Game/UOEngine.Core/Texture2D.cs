@@ -31,14 +31,14 @@ public class Texture2D
     {
         if(NativeHandle == UIntPtr.Zero)
         {
-            NativeHandle = RendererInterop.CreateTexture((int)Width, (int)Height, Name);
+            NativeHandle = RendererInterop.CreateTexture(Width, Height, Name);
         }
 
         ReadOnlySpan<byte> pixelBytes = MemoryMarshal.AsBytes(_pixels.Span);
 
         fixed(byte* start = pixelBytes)
         {
-            RendererInterop.SetTextureData(NativeHandle, (UIntPtr)start, pixelBytes.Length);
+            RendererInterop.SetTextureData(NativeHandle, (UIntPtr)start, (uint)pixelBytes.Length);
         }
     }
 

@@ -12,3 +12,15 @@ void SetBuffer(ShaderInstance* inShaderInstance, const char* inParameterName, Re
 	inShaderInstance->SetBuffer(inParameterName, inBuffer);
 
 }
+
+void SetMatrix(ShaderInstance* inShaderInstance, const char* inParameterName, float* inMatrix)
+{
+	Matrix4x4 matrix;
+
+	for (int32 i = 0; i < Matrix4x4::NumElements; i++)
+	{
+		matrix[i] = inMatrix[i];
+	}
+
+	inShaderInstance->SetVariable(inParameterName, matrix);
+}

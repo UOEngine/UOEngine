@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Core/Math/Matrix4x4.h"
 #include "Shader.h"
 
 class RenderBuffer;
@@ -7,12 +8,8 @@ class RenderTexture;
 
 struct Slot
 {
-	union
-	{
-		RenderTexture*	mTexture;
-		RenderBuffer*	mBuffer;
-	};
-	uint32 mNumResources = 0;
+	ShaderBinding mBindingInfo;
+	TArray<uint8> mData;
 };
 
 struct ShaderBoundData
@@ -34,13 +31,15 @@ public:
 	void						SetBuffer(ShaderBindingHandle inBindingHandle, RenderBuffer* inBuffer);
 	void						SetBuffer(const char* inName, RenderBuffer* inBuffer);
 
+	void						SetVariable(const char* inName, const Matrix4x4& inMatrix);
+	void						SetVariable(ShaderBindingHandle inBindingHandle, const Matrix4x4& inMatrix);
+
 	const ShaderBoundData*		GetBoundData(EShaderType inShaderType) const								{return &mBoundData[static_cast<uint32>(inShaderType)];}
 
 	Shader*						GetShader(EShaderType inShaderType)	const									{return GetShader(static_cast<uint32>(inShaderType));}
 	Shader*						GetShader(uint32 inIndex) const												{return mShaderPrograms[inIndex]; }
 
 private:
-
 
 	static constexpr uint32		sNumShaderTypes = static_cast<uint32>(EShaderType::Count);
 

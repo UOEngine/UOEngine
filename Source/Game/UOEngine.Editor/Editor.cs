@@ -1,7 +1,4 @@
-﻿using System;
-using System.Diagnostics;
-using System.Reflection;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using UOEngine.Core;
 using UOEngine.UOAssets;
@@ -27,6 +24,10 @@ public class Editor : IUOEngineApp
 
     private MapEntity _mapEntity;
 
+    private CameraEntity _camera = new();
+
+    private Window _window = new();
+
     public bool PreEngineInit()
     {
         _assetLoader.LoadAllFiles(@"D:\Program Files (x86)\Electronic Arts\Ultima Online Classic");
@@ -36,12 +37,11 @@ public class Editor : IUOEngineApp
 
     public bool Initialise()
     {
-        Debug.WriteLine($"Game.Initialise: Start");
+        //Debug.WriteLine($"Game.Initialise: Start");
 
         _mapEntity = EntityManager.Instance.NewEntity<MapEntity>();
 
         _mapEntity.Load(_assetLoader.Maps[0]);
-
 
         uint screen_height = 2160;
         uint screen_width = 3840;
@@ -132,8 +132,15 @@ public class Editor : IUOEngineApp
 
     public void Update(float tick)
     {
+        Vector2Int viewport = _window.Viewport;
+
+        _camera.Projection = Matrix4x4.CreateOrthographic(0.0f, viewport.X, viewport.Y, 0.0f, -1.0f, 1.0f);
+
+        Matrix4x4 viewProjection = _camera.View * _camera.Projection;
+
         ShaderInstance shaderInstance = RenderContext.GetShaderInstance();
 
+        shaderInstance.SetMatrix("cbPerFrameData", _camera.Projection);
         shaderInstance.SetBuffer("sbPerInstanceData", _renderBuffer);
 
         RenderContext.Draw(64);
@@ -165,9 +172,6 @@ public class Editor : IUOEngineApp
                 _perInstanceData.Span[index].TextureIndex = texId;
 
                 xPos += 44;
-
-                Console.WriteLine($"{x} {y} {texId}");
-
             }
         }
 

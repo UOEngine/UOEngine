@@ -32,4 +32,32 @@ struct Vector2D
 	T	Y;
 };
 
-using IntVector2D = Vector2D<int32>;
+struct IntVector2D
+{
+	IntVector2D()
+	{
+		X = 0;
+		Y = 0;
+	}
+
+	IntVector2D(int32 InX, int32 InY)
+	{
+		X = InX;
+		Y = InY;
+	}
+
+	IntVector2D(int32 XY)
+	{
+		X = XY;
+		Y = XY;
+	}
+
+	bool operator==(const IntVector2D& Other) const
+	{
+		return X == Other.X && Y == Other.Y;
+	}
+
+	int32	X;
+	int32	Y;
+};
+

@@ -16,6 +16,10 @@ public class ShaderInstance
         NativeHandle = nativeHandle;
     }
 
+    public ShaderInstance()
+    {
+    }
+
     public void SetTexture(string name, Texture2D texture)
     {
         ShaderInstanceNative.SetTexture(NativeHandle, name, texture.NativeHandle);
@@ -26,8 +30,12 @@ public class ShaderInstance
         ShaderInstanceNative.SetBuffer(NativeHandle, name, buffer.NativeHandle);
     }
 
-    public void SetMatrix(string name, Matrix4x4 matrix)
+    public unsafe void SetMatrix(string name, Matrix4x4 matrix)
     {
+        fixed(float* ptr = matrix.AsSpan())
+        {
+            ShaderInstanceNative.SetMatrix(NativeHandle, name, (UIntPtr)ptr);
+        }
     }
 
     public void SetInt(string name, int value)

@@ -208,6 +208,8 @@ void Shader::BuildRootSignature(TArray<D3D12_ROOT_PARAMETER1>& OutRootSignatureD
 			{
 				shader_binding.mType = EShaderBindingType::StructuredBuffer;
 			}
+
+			shader_binding.mSizeBytes = sizeof(uint64); // Pointer?
 		}
 		else if (bound_desc.Type == D3D_SIT_SAMPLER)
 		{
@@ -217,6 +219,12 @@ void Shader::BuildRootSignature(TArray<D3D12_ROOT_PARAMETER1>& OutRootSignatureD
 		}
 		else if (bound_desc.Type == D3D_SIT_CBUFFER)
 		{
+			ID3D12ShaderReflectionVariable* variable = mReflection->GetVariableByName(bound_desc.Name);
+			ID3D12ShaderReflectionType* struct_type = variable->GetType();
+
+			D3D12_SHADER_TYPE_DESC struct_type_desc;
+			struct_type->GetDesc(&struct_type_desc);
+
 			ID3D12ShaderReflectionConstantBuffer* constant_buffer = mReflection->GetConstantBufferByName(bound_desc.Name);
 
 			D3D12_SHADER_BUFFER_DESC constant_buffer_desc;
@@ -239,6 +247,7 @@ void Shader::BuildRootSignature(TArray<D3D12_ROOT_PARAMETER1>& OutRootSignatureD
 			root_parameter.Constants.RegisterSpace = bound_desc.Space;
 
 			shader_binding.mType = EShaderBindingType::ConstantBuffer;
+			shader_binding.mSizeBytes = constant_buffer_desc.Size;
 
 		}
 		else
@@ -269,7 +278,7 @@ ShaderBindingHandle Shader::GetParameter(const char* inName)
 	{
 		if (mBindingInfo.mBindings[i].mName == inName)
 		{
-			return ShaderBindingHandle{ mBindingInfo.mBindings[i].mBindIndex, static_cast<uint8>(mType)};
+			return ShaderBindingHandle{ i, static_cast<uint8>(mType)};
 		}
 	}
 

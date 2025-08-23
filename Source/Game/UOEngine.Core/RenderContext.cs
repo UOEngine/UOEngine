@@ -6,9 +6,14 @@ namespace UOEngine
 {
     public static class RenderContext
     {
-        public static void SetShaderBindingData(Texture2D texture)
+        //public static void SetShaderBindingData(Texture2D texture)
+        //{
+        //    RenderContextNative.SetShaderBindingData(texture.NativeHandle);
+        //}
+
+        public static void SetShaderBindingData<T>(ref T data) where T: struct
         {
-            RenderContextNative.SetShaderBindingData(texture.NativeHandle);
+            //RenderContextNative.SetShaderBindingData(texture.NativeHandle);
         }
 
         public static ShaderInstance GetShaderInstance()
@@ -18,8 +23,8 @@ namespace UOEngine
             return new ShaderInstance(shaderHandle);
         }
 
-        public static void SetShaderInstance(ShaderInstance shaderInstance)
-        {
+        public static void SetShaderInstance(ShaderInstance shaderInstance) 
+        { 
             //RenderContextNative.SetShaderInstance(shaderInstance.NativeHandle);
         }
 
@@ -36,13 +41,15 @@ namespace UOEngine
 
             fixed(UIntPtr* start = handles)
             {
-                RenderContextNative.SetBindlessTextures((nuint)start, textures.Length);
+                RenderContextNative.SetBindlessTextures((nuint)start, (uint)textures.Length);
             }
         }
 
         public static void Draw(uint numInstances = 1)
         {
-            RenderContextNative.Draw((int)numInstances);
+            RenderContextNative.Draw(numInstances);
         }
+
+
     }
 }

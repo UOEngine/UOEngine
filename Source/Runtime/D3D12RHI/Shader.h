@@ -54,6 +54,7 @@ struct ShaderBinding
 	uint8					mRootParameterIndex;
 	EShaderBindingType		mType = EShaderBindingType::Invalid;
 	EShaderUpdateFrequency	mUpdateFrequency = EShaderUpdateFrequency::Invalid;
+	uint32					mSizeBytes = 0;
 };
 
 struct ShaderBindingInfo

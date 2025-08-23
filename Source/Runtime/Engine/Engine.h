@@ -20,7 +20,9 @@ public:
 
 	void				Run();
 
-	int					GetReturnCode() {return 0;}
+	int					GetReturnCode()		{ return 0;}
+
+	IPlatformWindow*	GetWindow() const	{ return mGameWindow;}
 
 private:
 
