@@ -175,7 +175,7 @@ public struct Matrix4x4
             }
         }
 
-        return Identity;
+        return result;
     }
 
     public ReadOnlySpan<float> AsSpan()

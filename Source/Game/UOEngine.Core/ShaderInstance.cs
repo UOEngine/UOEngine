@@ -37,8 +37,4 @@ public class ShaderInstance
             ShaderInstanceNative.SetMatrix(NativeHandle, name, (UIntPtr)ptr);
         }
     }
-
-    public void SetInt(string name, int value)
-    {
-    }
 }

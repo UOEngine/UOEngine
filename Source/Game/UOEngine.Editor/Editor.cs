@@ -140,7 +140,7 @@ public class Editor : IUOEngineApp
 
         ShaderInstance shaderInstance = RenderContext.GetShaderInstance();
 
-        shaderInstance.SetMatrix("cbPerFrameData", _camera.Projection);
+        shaderInstance.SetMatrix("cbPerFrameData", viewProjection);
         shaderInstance.SetBuffer("sbPerInstanceData", _renderBuffer);
 
         RenderContext.Draw(64);
