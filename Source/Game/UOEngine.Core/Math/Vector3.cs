@@ -1,5 +1,8 @@
-﻿namespace UOEngine.Core;
+﻿using System.Diagnostics;
 
+namespace UOEngine.Core;
+
+[DebuggerDisplay("X = {X} Y = {Y} Z = {Z}")]
 public struct Vector3
 {
     public float X;

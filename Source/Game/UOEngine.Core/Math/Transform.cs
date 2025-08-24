@@ -22,6 +22,7 @@ public class Transform
     {
         Forward = Vector3.Forward;
         Up = Vector3.Up;
+        Rotation = Quaternion.Identity;
 
     }
 

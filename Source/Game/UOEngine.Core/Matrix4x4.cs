@@ -164,6 +164,32 @@ public struct Matrix4x4
         return matrix;
     }
 
+    public static Matrix4x4 Rotate(Quaternion rotation)
+    {
+
+        float x = rotation.X * 2.0f;
+        float y = rotation.Y * 2.0f;
+        float z = rotation.Z * 2.0f;
+        float xx = rotation.X * x;
+        float yy = rotation.Y * y;
+        float zz = rotation.Z * z;
+        float xy = rotation.X * y;
+        float xz = rotation.X * z;
+        float yz = rotation.Y * z;
+        float wx = rotation.W * x;
+        float wy = rotation.W * y;
+        float wz = rotation.W * z;
+
+        Matrix4x4 m;
+
+        m.M00 = 1.0f - (yy + zz); m.M10 = xy + wz; m.M20 = xz - wy; m.M30 = 0.0F;
+        m.M01 = xy - wz; m.M11 = 1.0f - (xx + zz); m.M21 = yz + wx; m.M31 = 0.0F;
+        m.M02 = xz + wy; m.M12 = yz - wx; m.M22 = 1.0f - (xx + yy); m.M32 = 0.0F;
+        m.M03 = 0.0F; m.M13 = 0.0F; m.M23 = 0.0F; m.M33 = 1.0F;
+
+        return m;
+    }
+
     public static Matrix4x4 operator* (Matrix4x4 lhs, Matrix4x4 rhs)
     {
         Matrix4x4 result = new Matrix4x4();

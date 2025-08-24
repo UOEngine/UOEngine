@@ -137,6 +137,7 @@ public class Editor : IUOEngineApp
         Vector2Int viewport = _window.Viewport;
 
         _camera.Projection = Matrix4x4.CreateOrthographic(0.0f, viewport.X, viewport.Y, 0.0f, -1.0f, 1.0f);
+        _camera.Transform.Rotation = Quaternion.CreateFromAxisAngle(Vector3.Up, 0.5f * 0.5f * MathF.PI);
 
         Matrix4x4 viewProjection = _camera.Projection  * _camera.WorldToCameraMatrix;
 

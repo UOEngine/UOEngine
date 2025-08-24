@@ -26,6 +26,10 @@ public class CameraEntity : IEntity
 
         Vector3 worldToCamera = -cameraToWorld;
 
-        return Matrix4x4.Translate(worldToCamera);
+        Matrix4x4 worldToCameraMatrix = Matrix4x4.Rotate(Transform.Rotation);
+
+        worldToCameraMatrix.SetColumn(3, worldToCamera);
+
+        return worldToCameraMatrix;
     }
 }

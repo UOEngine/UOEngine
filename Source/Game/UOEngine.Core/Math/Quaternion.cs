@@ -15,12 +15,26 @@ public struct Quaternion
     public float Z;
     public float W;
 
+    public Quaternion()
+    {
+        this = Identity;
+    }
+
     public Quaternion(float x, float y, float z, float w) 
     {
         X = x; 
         Y = y; 
         Z = z; 
         W = w;
+    }
+
+    public static Quaternion CreateFromAxisAngle(Vector3 axis, float angle)
+    {
+        float half = angle * 0.5f;
+        float sin = MathF.Sin(half);
+        float cos = MathF.Cos(half);
+
+        return new Quaternion(axis.X * sin, axis.Y * sin, axis.Z * sin, cos);
     }
 
 }
