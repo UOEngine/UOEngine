@@ -1,5 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Transactions;
 
 namespace UOEngine.Core;
 
@@ -38,6 +39,13 @@ public struct Matrix4x4
     public float M13;
     public float M23;
     public float M33;
+
+    public Vector3 Position
+    {
+        get { return new Vector3(M03, M13, M23); }
+        set { SetColumn(3, value); }
+    }
+
 
     public Matrix4x4()
     {
@@ -181,5 +189,12 @@ public struct Matrix4x4
     public ReadOnlySpan<float> AsSpan()
     {
         return MemoryMarshal.CreateReadOnlySpan(ref Unsafe.As<Matrix4x4, float>(ref this), 16);
+    }
+
+    public void SetColumn(int column, Vector3 value)
+    {
+        this[0, column] = value.X;
+        this[1, column] = value.Y;
+        this[2, column] = value.Z;
     }
 }

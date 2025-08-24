@@ -39,6 +39,8 @@ public class Editor : IUOEngineApp
     {
         //Debug.WriteLine($"Game.Initialise: Start");
 
+        _camera.Transform.Position = new Vector3(-44.0f, -44.0f, 0.0f);
+
         _mapEntity = EntityManager.Instance.NewEntity<MapEntity>();
 
         _mapEntity.Load(_assetLoader.Maps[0]);
@@ -136,7 +138,7 @@ public class Editor : IUOEngineApp
 
         _camera.Projection = Matrix4x4.CreateOrthographic(0.0f, viewport.X, viewport.Y, 0.0f, -1.0f, 1.0f);
 
-        Matrix4x4 viewProjection = _camera.View * _camera.Projection;
+        Matrix4x4 viewProjection = _camera.Projection  * _camera.WorldToCameraMatrix;
 
         ShaderInstance shaderInstance = RenderContext.GetShaderInstance();
 
