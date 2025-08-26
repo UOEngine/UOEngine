@@ -24,3 +24,9 @@ void SetMatrix(ShaderInstance* inShaderInstance, const char* inParameterName, fl
 
 	inShaderInstance->SetVariable(inParameterName, matrix);
 }
+
+void SetVariable(ShaderInstance* inShaderInstance, const char* inParameterName, void* inVariable, uint32 inSize)
+{
+	inShaderInstance->SetVariable(inParameterName, inVariable, inSize);
+
+}

@@ -15,6 +15,16 @@ struct Slot
 struct ShaderBoundData
 {
 	TArray<Slot> mData;
+
+	void Copy(uint32 inSlotIndex, void* inData, uint32 inSize)
+	{
+		uint8* destination = mData[inSlotIndex].mData.GetData();
+		uint32 destination_size = mData[inSlotIndex].mData.Num();
+
+		GAssert(destination_size == inSize);
+
+		Memory::MemCopy(destination, destination_size, inData, inSize);
+	}
 };
 
 class ShaderInstance
@@ -24,6 +34,7 @@ public:
 	void						Init(Shader* inVertexProgram, Shader* inPixelProgram);
 
 	ShaderBindingHandle			GetParameter(EShaderType inShaderType, const char* inName) const;
+	ShaderBindingHandle			GetParameter(const char* inName) const;
 
 	void						SetTexture(ShaderBindingHandle inBindingHandle, RenderTexture* inTexture);
 	void						SetTexture(const char* inName, RenderTexture* inTexture);
@@ -32,6 +43,7 @@ public:
 	void						SetBuffer(const char* inName, RenderBuffer* inBuffer);
 
 	void						SetVariable(const char* inName, const Matrix4x4& inMatrix);
+	void						SetVariable(const char* inName, void* inVariable, uint32 inSize);
 	void						SetVariable(ShaderBindingHandle inBindingHandle, const Matrix4x4& inMatrix);
 
 	const ShaderBoundData*		GetBoundData(EShaderType inShaderType) const								{return &mBoundData[static_cast<uint32>(inShaderType)];}

@@ -13,5 +13,8 @@ namespace UOEngine.Interop
 		[LibraryImport("UOEngine.Native.dll", StringMarshalling = StringMarshalling.Utf8)]
 		public static partial void SetMatrix(UIntPtr inShaderInstance, string inParameterName, UIntPtr inMatrix);
 
+		[LibraryImport("UOEngine.Native.dll", StringMarshalling = StringMarshalling.Utf8)]
+		public static partial void SetVariable(UIntPtr inShaderInstance, string inParameterName, UIntPtr inVariable, uint inSize);
+
 	}
 }

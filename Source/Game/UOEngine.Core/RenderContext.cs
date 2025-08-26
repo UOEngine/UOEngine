@@ -28,20 +28,24 @@ namespace UOEngine
             //RenderContextNative.SetShaderInstance(shaderInstance.NativeHandle);
         }
 
-        public static unsafe void SetBindlessTextures(ReadOnlySpan<Texture2D> textures)
+        public static unsafe void SetBindlessTextures(ReadOnlySpan<Texture2D> textures, uint? numTextures = null)
         {
-            Span<UIntPtr> handles = stackalloc UIntPtr[textures.Length];
+            uint length = numTextures ?? (uint)textures.Length;
 
-            for(int i = 0; i < textures.Length; i++)
+            Span<UIntPtr> handles = stackalloc UIntPtr[(int)length];
+
+            for(int i = 0; i < length; i++)
             {
                 Debug.Assert(textures[i] != null);
 
                 handles[i] = textures[i].NativeHandle;
             }
 
+
+
             fixed(UIntPtr* start = handles)
             {
-                RenderContextNative.SetBindlessTextures((nuint)start, (uint)textures.Length);
+                RenderContextNative.SetBindlessTextures((nuint)start, length);
             }
         }
 

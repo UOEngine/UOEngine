@@ -225,6 +225,17 @@ void Shader::BuildRootSignature(TArray<D3D12_ROOT_PARAMETER1>& OutRootSignatureD
 			D3D12_SHADER_TYPE_DESC struct_type_desc;
 			struct_type->GetDesc(&struct_type_desc);
 
+			for (int32 struct_member_index = 0; struct_member_index < struct_type_desc.Members; struct_member_index++)
+			{
+				ID3D12ShaderReflectionType* member_type = struct_type->GetMemberTypeByIndex(struct_member_index);
+
+				D3D12_SHADER_TYPE_DESC member_desc;
+
+				member_type->GetDesc(&member_desc);
+
+				bool a = true;
+			}
+
 			ID3D12ShaderReflectionConstantBuffer* constant_buffer = mReflection->GetConstantBufferByName(bound_desc.Name);
 
 			D3D12_SHADER_BUFFER_DESC constant_buffer_desc;

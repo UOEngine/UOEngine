@@ -53,6 +53,28 @@ ShaderBindingHandle ShaderInstance::GetParameter(EShaderType inShaderType, const
 	return handle;
 }
 
+ShaderBindingHandle ShaderInstance::GetParameter(const char* inName) const
+{
+	for (int i = 0; i < sNumShaderTypes; i++)
+	{
+		if (mShaderPrograms[i] == nullptr)
+		{
+			continue;
+		}
+
+		ShaderBindingHandle handle = mShaderPrograms[i]->GetParameter(inName);
+
+		if (handle.IsValid())
+		{
+			return handle;
+		}
+	}
+
+	GUnreachable;
+
+	return ShaderBindingHandle{};
+}
+
 void ShaderInstance::SetTexture(ShaderBindingHandle inBindingHandle, RenderTexture* inTexture)
 {
 	GAssert(inBindingHandle.IsValid());
@@ -151,5 +173,12 @@ void ShaderInstance::SetVariable(ShaderBindingHandle inBindingHandle, const Matr
 {
 	GAssert(inBindingHandle.IsValid());
 
-	mBoundData[inBindingHandle.mShaderType].mData[inBindingHandle.mHandle].mData.Copy((uint8*)&inMatrix, sizeof(Matrix4x4));
+	mBoundData[inBindingHandle.mShaderType].Copy(inBindingHandle.mHandle, (void*)&inMatrix, sizeof(Matrix4x4));
+}
+
+void ShaderInstance::SetVariable(const char* inName, void* inVariable, uint32 inSize)
+{
+	ShaderBindingHandle binding_handle = GetParameter(inName);
+
+	mBoundData[binding_handle.mShaderType].Copy(binding_handle.mHandle, inVariable, inSize);
 }

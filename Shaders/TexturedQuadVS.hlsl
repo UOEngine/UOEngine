@@ -29,6 +29,7 @@ static const float2 cQuadUVs[4] =
 struct PerFrameData
 {
     float4x4 Projection;
+    float4x4 mWorldToCamera;
 };
 
 ConstantBuffer<PerFrameData> cbPerFrameData: register(b0, PER_FRAME_UPDATE);
@@ -43,7 +44,7 @@ VsToPs main( uint vid : SV_VertexID, uint instance_id : SV_InstanceID )
     
     float4 vertex_world_space = mul(model, vert);
 
-    output.position = mul(cbPerFrameData.Projection, vertex_world_space);
+    output.position = mul(cbPerFrameData.Projection, mul(cbPerFrameData.mWorldToCamera, vertex_world_space));
     output.uv = cQuadUVs[vid];
     
     output.instanceIndex = instance_id;

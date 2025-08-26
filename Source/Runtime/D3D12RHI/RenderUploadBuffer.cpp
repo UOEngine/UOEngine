@@ -24,9 +24,9 @@ RenderUploadBufferAllocation* RenderUploadBuffer::Allocate(uint64 inRequestedSiz
 
 	if (bytes_left < inRequestedSize)
 	{
-		GAssert(false);
+		mUsed = 0;
 
-		Flush();
+		return Allocate(inRequestedSize);
 	}
 
 	mUsed += inRequestedSize;

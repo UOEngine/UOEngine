@@ -15,6 +15,9 @@ public class UOAssetLoader
     public LandTile[] LandTiles { get; private set; } = [];
 
     public UOPackageFile Art { get; private set; }
+    public static UOAssetLoader Instance => _instance.Value;
+
+    private static readonly Lazy<UOAssetLoader> _instance = new(() => new UOAssetLoader());
 
     public void LoadAllFiles(string ultimaOnlineDirectory)
     {

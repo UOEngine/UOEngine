@@ -21,10 +21,10 @@ namespace UOEngine
             A = (byte)((colour >> 24) & 0xFF);
         }
 
-        byte R;
-        byte G;
-        byte B;
-        byte A;
+        public byte R;
+        public byte G;
+        public byte B;
+        public byte A;
 
         public static readonly Colour Red = new(255, 0, 0, 255);
     }

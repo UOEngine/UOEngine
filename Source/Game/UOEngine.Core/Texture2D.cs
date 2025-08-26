@@ -1,6 +1,9 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+
 using UOEngine.Interop;
 
 namespace UOEngine;
@@ -62,5 +65,42 @@ public class Texture2D
         {
             _pixels.Span[i] = new Colour(texels[i]);
         }
+    }
+
+    public void SetPixels(Colour colour)
+    {
+        foreach(ref Colour texel in _pixels.Span)
+        {
+            texel = colour;
+        }
+    }
+
+    public Colour GetPixel(uint x, uint y)
+    {
+        uint index = y * Width + x;
+
+        return GetPixel(index);
+    }
+
+    public Colour GetPixel(uint index)
+    {
+        return _pixels.Span[(int)index];
+    }
+
+    public void SaveAsPng(string filename)
+    {
+        using var image = new Image<Rgba32>((int)Width, (int)Height);
+
+        for (uint y = 0; y < Height; y++)
+        {
+            for (uint x = 0; x < Width; x++)
+            {
+                var pixel = GetPixel(x, y);
+
+                image[(int)x, (int)y] = new Rgba32(pixel.R, pixel.G, pixel.B, pixel.A);
+            }
+        }
+
+        image.SaveAsPng(filename);
     }
 }
