@@ -21,8 +21,13 @@ internal class MapEntity: IEntity
         _chunks = new Chunk[map.BlockSizeX *  map.BlockSizeY];
     }
 
-    public Chunk GetChunk(int chunkX, int chunkY)
+    public Chunk? GetChunk(int chunkX, int chunkY)
     {
+        if (chunkX < 0 || chunkY < 0)
+        {
+            return null;
+        }
+
         int chunkIndex = GetChunkIndex(chunkX, chunkY);
 
         ref Chunk chunk = ref _chunks[chunkIndex];
@@ -41,6 +46,11 @@ internal class MapEntity: IEntity
 
     public int GetChunkIndex(int chunkX, int chunkY)
     {
+        if(chunkX < 0 || chunkY < 0)
+        {
+            return -1;
+        }
+
         int index = chunkY + _map.BlockSizeY * chunkX;
 
         return index;

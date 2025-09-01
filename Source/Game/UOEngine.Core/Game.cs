@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using UOEngine.Core;
 using UOEngine.Interop;
 
 namespace UOEngine;
@@ -8,6 +9,8 @@ namespace UOEngine;
 public class Engine(IUOEngineApp app) : IDisposable
 {
     readonly IUOEngineApp _app = app;
+
+    public CameraEntity? ActiveCamera = null;
 
     [DllImport("kernel32.dll")]
     static extern IntPtr SetUnhandledExceptionFilter(UnhandledExceptionFilterDelegate lpTopLevelExceptionFilter);
@@ -99,11 +102,15 @@ public class Engine(IUOEngineApp app) : IDisposable
 
         Console.WriteLine($"Startup time: {startupMeasurement.ElapsedMilliseconds} ms");
 
+        Stopwatch frameTime = new Stopwatch();
+        
         while (EngineInterop.EnginePreUpdate() == 1)
         {
-            float deltaTime = 0.0f;
+            float deltaTimeSeconds = (float)frameTime.Elapsed.TotalSeconds;
 
-            _app.Update(deltaTime);
+            frameTime.Restart();
+
+            _app.Update(deltaTimeSeconds);
 
             EngineInterop.EnginePostUpdate();
         }

@@ -46,7 +46,6 @@ public struct Matrix4x4
         set { SetColumn(3, value); }
     }
 
-
     public Matrix4x4()
     {
 
@@ -182,10 +181,22 @@ public struct Matrix4x4
 
         Matrix4x4 m;
 
-        m.M00 = 1.0f - (yy + zz); m.M10 = xy + wz; m.M20 = xz - wy; m.M30 = 0.0F;
-        m.M01 = xy - wz; m.M11 = 1.0f - (xx + zz); m.M21 = yz + wx; m.M31 = 0.0F;
-        m.M02 = xz + wy; m.M12 = yz - wx; m.M22 = 1.0f - (xx + yy); m.M32 = 0.0F;
-        m.M03 = 0.0F; m.M13 = 0.0F; m.M23 = 0.0F; m.M33 = 1.0F;
+        m.M00 = 1.0f - (yy + zz); 
+        m.M10 = xy + wz; 
+        m.M20 = xz - wy; 
+        m.M30 = 0.0F;
+        m.M01 = xy - wz; 
+        m.M11 = 1.0f - (xx + zz); 
+        m.M21 = yz + wx; 
+        m.M31 = 0.0F;
+        m.M02 = xz + wy;
+        m.M12 = yz - wx; 
+        m.M22 = 1.0f - (xx + yy); 
+        m.M32 = 0.0F;
+        m.M03 = 0.0F; 
+        m.M13 = 0.0F; 
+        m.M23 = 0.0F; 
+        m.M33 = 1.0F;
 
         return m;
     }
@@ -210,6 +221,39 @@ public struct Matrix4x4
         }
 
         return result;
+    }
+
+    public static void CreateLookAt(in Vector3 cameraPosition, in Vector3 cameraTarget, in Vector3 cameraUpVector, out Matrix4x4 result)
+    {
+        Vector3 forwardAxis = Vector3.Normalise(-cameraPosition + cameraTarget);
+        Vector3 rightAxis = Vector3.Normalise(Vector3.Cross(forwardAxis, cameraUpVector.Normalise()));
+        Vector3 upAxis = Vector3.Cross(forwardAxis, rightAxis);
+
+        result = Identity;
+
+        //rightAxis = Vector3.Forward;
+        //upAxis = Vector3.Right;
+        //tor3 forwardAxis = -Vector3.Up;
+
+        result[0,0] = rightAxis.X;
+        result[0,1] = upAxis.X;
+        result[0,2] = forwardAxis.X;;
+        result[0,3] = 0.0f;
+
+        result[1,0] = rightAxis.Y;
+        result[1,1] = upAxis.Y;
+        result[1,2] = forwardAxis.Y;
+        result[1,3] = 0.0f;
+
+        result[2,0] = rightAxis.Z;
+        result[2,1] = upAxis.Z;
+        result[2,2] = forwardAxis.Z;
+        result[2,3] = 0.0f;
+
+        result[3,0] = -Vector3.Dot(rightAxis, cameraPosition);
+        result[3,1] = -Vector3.Dot(upAxis, cameraPosition);
+        result[3,2] = -Vector3.Dot(forwardAxis, cameraPosition);
+        result[3,3] = 1.0f;
     }
 
     public ReadOnlySpan<float> AsSpan()

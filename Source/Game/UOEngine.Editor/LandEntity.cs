@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UOEngine.Renderer;
 using UOEngine.UOAssets;
 
 namespace UOEngine;
@@ -22,5 +23,17 @@ internal class LandEntity: IEntity
         GraphicId = graphicId;
         IsStretched = tileData.TexID == 0 && tileData.IsWet;
         CanDraw = graphicId > 2;
+
+        if(TextureCache.Instance.Contains(graphicId) == false)
+        {
+            var bitmap = UOAssetLoader.Instance.GetLand(GraphicId);
+
+            Texture2D texture = new(bitmap.Width, bitmap.Height, $"T_Land_{GraphicId}");
+
+            texture.SetPixels(bitmap.Texels);
+            texture.Apply();
+
+            TextureCache.Instance.AddTexture(graphicId, texture);
+        }
     }
 }

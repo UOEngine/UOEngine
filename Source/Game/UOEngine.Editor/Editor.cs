@@ -1,7 +1,9 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+
 using UOEngine.Core;
 using UOEngine.UOAssets;
+using UOEngine.Renderer;
 
 namespace UOEngine.Editor;
 
@@ -23,20 +25,14 @@ public class Editor : IUOEngineApp
 {
     readonly UOAssetLoader _assetLoader = UOAssetLoader.Instance;
 
-    private Memory<Texture2D> _textures;
-
     private Memory<PerInstanceData> _perInstanceData;
     private RenderBuffer _renderBuffer;
-    private uint _numTexturesProcessed = 0;
 
     private MapEntity _mapEntity;
 
     private CameraEntity _camera = new();
 
     private Window _window = new();
-
-    private uint _numChunksX = 4;
-    private uint _numChunksY = 1;
 
     public bool PreEngineInit()
     {
@@ -49,141 +45,103 @@ public class Editor : IUOEngineApp
     {
         Console.WriteLine($"Game.Initialise: Start");
 
+        _camera.Transform.Position = new Vector3(0.0f, 0.0f, 10.0f);
+
         //_camera.Transform.Position = new Vector3(-44.0f * 8 * 2, 44.0f * 8 * 2, 0.0f);
 
         _mapEntity = EntityManager.Instance.NewEntity<MapEntity>();
 
         _mapEntity.Load(_assetLoader.Maps[0]);
 
-        uint maxTextures = 16000;
-
         uint maxInstances = 1024;
 
         _perInstanceData = new PerInstanceData[maxInstances];
 
-        _textures = new Texture2D[maxTextures];
-
         _renderBuffer = new RenderBuffer(maxInstances, (uint)Unsafe.SizeOf<PerInstanceData>());
-
-        ChunkTest();
 
         return true;
     }
 
     public void Update(float tick)
     {
-        Vector2Int viewport = _window.Viewport;
+        Vector2Int halfViewport = _window.Viewport / 2;
 
-        _camera.Projection = Matrix4x4.CreateOrthographic(0.0f, viewport.X, viewport.Y, 0.0f, -1.0f, 1.0f);
-        _camera.Transform.Rotation = Quaternion.CreateFromAxisAngle(Vector3.Up, 0.5f * 0.5f * MathF.PI);
+        _camera.Projection = Matrix4x4.CreateOrthographic(-halfViewport.X, halfViewport.X, halfViewport.Y, -halfViewport.Y, -1.0f, 1.0f);
+        _camera.Transform.Rotation = Quaternion.CreateFromAxisAngle(Vector3.Up, -0.5f * 0.5f * MathF.PI);
 
         ShaderInstance shaderInstance = RenderContext.GetShaderInstance();
 
         PerFrameData perFrameData = new PerFrameData();
+
         perFrameData.Projection = _camera.Projection;
+        perFrameData.WorldToCamera = _camera.WorldToCameraMatrix;
 
-        Vector3 offset = _camera.WorldToCameraMatrix.Position;
+        int numInstances = UpdateVisibleChunks();
 
-        Matrix4x4 m = Matrix4x4.Identity;
-
-        m.SetColumn(3, offset);
-
-        perFrameData.WorldToCamera = m;
-
-        shaderInstance.SetVariable("cbPerFrameData", ref perFrameData);
+        shaderInstance.SetVariable("cbPerFrameData", perFrameData);
         shaderInstance.SetBuffer("sbPerInstanceData", _renderBuffer);
 
-        uint numTiles = _numChunksX * _numChunksY * 64;
-
-        RenderContext.Draw(numTiles);
+        RenderContext.Draw((uint)numInstances);
     }
-    
-    private void ChunkTest()
+
+    private int UpdateVisibleChunks()
     {
-        uint chunkStartX = 0;
-        uint chunkStartY = 0;
+        Vector2Int viewport = _window.Viewport;
 
-        uint texelPerDim = 44;
+        Vector3 cameraPosition = _camera.Transform.Position;
 
-        uint chunkSize = texelPerDim * 8;
+        int texelPerDim = (int)Math.Sqrt(2 *22 * 22);
 
-        int num_chunks = 0;
+        int chunkSize = texelPerDim * 8;
 
-        int graphicIdToTextureIndex = 0;
+        int numChunksX = viewport.X / chunkSize;
+        int numChunksY = viewport.Y / chunkSize;
 
-        int[] graphicIdToTextureIndices = new int[16000];
+        int halfChunkX = numChunksX / 2;
+        int halfChunkY = numChunksY / 2;
 
-        Array.Fill(graphicIdToTextureIndices, -1);
+        int cameraTileX = (int)cameraPosition.X;
+        int cameraTileY = (int)cameraPosition.Y;
 
-        for (uint chunkY = 0; chunkY < _numChunksY; chunkY++)
+        int instanceIndex = 0;
+
+        for (int chunkX = (cameraTileX - halfChunkX); chunkX <= (cameraTileX + halfChunkX); chunkX++)
         {
-            for(uint chunkX = 0; chunkX < _numChunksX; chunkX++)
+            for (int chunkY = (cameraTileY - halfChunkY); chunkY <= (cameraTileY + halfChunkY); chunkY++)
             {
-                Chunk chunk = _mapEntity.GetChunk((int)chunkStartX + (int)chunkX, (int)chunkStartY + (int)chunkY);
+                Chunk chunk = _mapEntity.GetChunk(chunkX, chunkY);
 
-                uint chunkIndex = chunkX + chunkY * _numChunksX;
-
-                for (int y = 0; y < 8; y++)
+                if (chunk == null)
                 {
-                    uint xPos = chunkX * chunkSize;
-                    uint yPos = chunkY * chunkSize * (uint)y * 44;
+                    continue;
+                }
 
-                    for (int x = 0; x < 8; x++)
+                int chunkIndex = _mapEntity.GetChunkIndex(chunkX, chunkY);
+
+                for (int x = 0; x < 8; x++)
+                {
+                    for (int y = 0; y < 8; y++)
                     {
-                        int index = (64 * (int)chunkIndex) + (x + y * 8);
+                        int tileX = chunkX * 8 + x;
+                        int tileY = chunkY * 8 + y;
 
-                        int tileX = (int)chunkX * 8 + x;
-                        int tileY = (int)chunkY * 8 + y;
+                        Matrix4x4 modelToWorld = Matrix4x4.Translate(new Vector3(tileX * texelPerDim, tileY * texelPerDim, 0.0f));
 
-                        Matrix4x4 modelToWorld = new Matrix4x4();
+                        ref var entity = ref chunk.Entities[x, y];
+                        ref var instanceData = ref _perInstanceData.Span[instanceIndex];
 
-                        (int screenX, int screenY) = MapToScreen(tileX, tileY);
+                        instanceData.ModelToWorld = modelToWorld;
+                        instanceData.TextureIndex = (uint)TextureCache.Instance.GetRenderResourceId(entity.GraphicId);
 
-                        modelToWorld = Matrix4x4.Translate(new Vector3(screenX, screenY, 0.0f));
-
-                        _perInstanceData.Span[index].ModelToWorld = modelToWorld;
-
-                        var entity = chunk.Entities[x, y];
-
-                        int textureIndex = graphicIdToTextureIndices[entity.GraphicId];
-
-                        if (textureIndex == -1)
-                        {
-                            var bitmap = _assetLoader.GetLand(entity.GraphicId);
-
-                            Texture2D texture = new(bitmap.Width, bitmap.Height, $"T_Land_{y}");
-
-                            texture.SetPixels(bitmap.Texels);
-                            texture.Apply();
-
-                            textureIndex = graphicIdToTextureIndex;
-
-                            _textures.Span[textureIndex] = texture;
-                            graphicIdToTextureIndices[entity.GraphicId] = textureIndex;
-
-                            graphicIdToTextureIndex++;
-
-                        }
-
-                        _perInstanceData.Span[index].TextureIndex = (uint)textureIndex;
-
-                        xPos += 44;
+                        instanceIndex++;
                     }
+
                 }
             }
         }
 
         _renderBuffer.SetData<PerInstanceData>(_perInstanceData.Span);
-        RenderContext.SetBindlessTextures(_textures.Span, (uint)graphicIdToTextureIndex);
-    }
 
-    (int screenX, int screenY) MapToScreen(int x, int y)
-    {
-        int TileWidth = 44;
-        int TileHeight = 44;
-
-        int screenX = (x - y) * (TileWidth / 2);
-        int screenY = (x + y) * (TileHeight / 2);
-        return (screenX, screenY);
+        return instanceIndex;
     }
 }

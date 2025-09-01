@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using UOEngine.Core;
 
-namespace UOEngine.Core;
+namespace UOEngine.Renderer;
 
 public class Shader<T>where T: struct
 {

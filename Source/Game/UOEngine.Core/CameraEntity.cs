@@ -15,6 +15,7 @@ public class CameraEntity : IEntity
 
     public Matrix4x4 WorldToCameraMatrix => GetWorldToCameraMatrix();
 
+
     public CameraEntity()
     {
         Transform = new Transform();
@@ -26,7 +27,9 @@ public class CameraEntity : IEntity
 
         Vector3 worldToCamera = -cameraToWorld;
 
-        Matrix4x4 worldToCameraMatrix = Matrix4x4.Rotate(Transform.Rotation);
+        Quaternion inverseRotation = Quaternion.Inverse(Transform.Rotation);
+
+        Matrix4x4 worldToCameraMatrix = Matrix4x4.Rotate(inverseRotation);
 
         worldToCameraMatrix.SetColumn(3, worldToCamera);
 

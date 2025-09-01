@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -37,4 +38,22 @@ public struct Quaternion
         return new Quaternion(axis.X * sin, axis.Y * sin, axis.Z * sin, cos);
     }
 
+    public static Quaternion Inverse(Quaternion value)
+    {
+        Debug.Assert(value.IsNormalised());
+
+        Quaternion inverse = new Quaternion(-value.X, -value.Y, -value.Z, value.W);
+
+        return inverse;
+    }
+
+    public float LengthSquared()
+    {
+        return X * X + Y * Y +  Z * Z + W * W;
+    }
+
+    public bool IsNormalised()
+    {
+        return Math.Abs(LengthSquared() - 1.0f) < 1e-4;
+    }
 }

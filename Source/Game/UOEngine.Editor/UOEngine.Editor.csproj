@@ -16,6 +16,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\UOEngine.Core\UOEngine.Core.csproj" />
 		<ProjectReference Include="..\UOEngine.Interop\UOEngine.Interop.csproj" />
+		<ProjectReference Include="..\UOEngine.Renderer\UOEngine.Renderer.csproj" />
 		<ProjectReference Include="..\UOEngine.Ultima.Assets\UOEngine.UOAssets.csproj" />
 	</ItemGroup>
 

@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UOEngine.Interop;
 
-namespace UOEngine.Core;
+namespace UOEngine.Renderer;
 
 public class ShaderInstance
 {
@@ -39,7 +39,7 @@ public class ShaderInstance
     //    }
     //}
 
-    public void SetVariable<T>(string name, ref T value) where T: unmanaged
+    public void SetVariable<T>(string name, in T value) where T: unmanaged
     {
         uint size = (uint)Marshal.SizeOf<T>();
 
