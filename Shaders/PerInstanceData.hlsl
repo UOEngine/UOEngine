@@ -6,8 +6,8 @@
 
 struct PerInstanceData
 {
-    float4x4 ModelToWorld;
-    uint     mTextureIndex;
+    float3  mTileCorner;
+    uint    mTextureIndex;
 };
 
 StructuredBuffer<PerInstanceData> sbPerInstanceData: register(t0, PER_FRAME_UPDATE);

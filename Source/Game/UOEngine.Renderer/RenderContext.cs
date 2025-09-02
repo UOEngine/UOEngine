@@ -51,6 +51,11 @@ public static class RenderContext
 
     public static void Draw(uint numInstances = 1)
     {
+        if(numInstances == 0)
+        {
+            return;
+        }
+
         RenderContextNative.Draw(numInstances);
     }
 

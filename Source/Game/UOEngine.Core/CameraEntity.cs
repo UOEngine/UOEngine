@@ -21,6 +21,11 @@ public class CameraEntity : IEntity
         Transform = new Transform();
     }
 
+    public void SetPosition(in Vector3 position)
+    {
+        Transform.Position = position;
+    }
+
     private Matrix4x4 GetWorldToCameraMatrix()
     {
         Vector3 cameraToWorld = Transform.Position;
@@ -35,4 +40,5 @@ public class CameraEntity : IEntity
 
         return worldToCameraMatrix;
     }
+
 }

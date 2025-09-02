@@ -12,10 +12,10 @@ static const float height = 44.0;
 
 static const float4 cQuadVertsNDC[4] =
 {
-    { 1.0, 0.0,  0.0, 1.0},
+    { width, 0.0,  0.0, 1.0},
     { 0.0, 0.0,  0.0, 1.0},
-    { 1.0, 1.0,  0.0, 1.0},
-    { 0.0, 1.0f, 0.0, 1.0},
+    { width, width,  0.0, 1.0},
+    { 0.0, width, 0.0, 1.0},
 };
 
 static const float2 cQuadUVs[4] =
@@ -38,13 +38,16 @@ VsToPs main( uint vid : SV_VertexID, uint instance_id : SV_InstanceID )
 {
     VsToPs output;
 
-    float4x4 model = sbPerInstanceData[instance_id].ModelToWorld;
+    float3 tileCorner = sbPerInstanceData[instance_id].mTileCorner;
 
-    float4 vert = float4(width * cQuadVertsNDC[vid].x, height * cQuadVertsNDC[vid].y, 0.0, 1.0);
-    
-    float4 vertex_world_space = mul(model, vert);
+    float4 vert = cQuadVertsNDC[vid];
+    float4 adjustedTileCorner = mul(cbPerFrameData.mWorldToCamera, float4(tileCorner, 1.0f));
 
-    output.position = mul(cbPerFrameData.Projection, mul(cbPerFrameData.mWorldToCamera, vertex_world_space));
+    output.position =  mul(cbPerFrameData.Projection, adjustedTileCorner + vert);
+
+    output.position.z = 0.0f;
+	output.position.w = 1.0f;
+
     output.uv = cQuadUVs[vid];
     
     output.instanceIndex = instance_id;
