@@ -45,7 +45,18 @@ public class Editor : IUOEngineApp
     {
         Console.WriteLine($"Game.Initialise: Start");
 
-        _camera.Transform.Position = new Vector3(0, 0, 0.0f);
+        _camera.Transform.Position = new Vector3(0, 0, 1.0f);
+
+        var rotationAroundRight = new Quaternion(_camera.Transform.Rotation.RightVector, 0.5f * MathF.PI);
+
+        Vector3 newCamForward = rotationAroundRight.Rotate(_camera.Transform.Rotation.ForwardVector);
+
+        var rotationAroundForward = new Quaternion(newCamForward, 0.5f * MathF.PI);
+
+        _camera.Transform.Rotation = rotationAroundForward * rotationAroundRight;
+
+        _camera.Transform.Rotation = new Quaternion(0.5f, 0.5f, -0.5f, 0.5f);
+
 
         _mapEntity = EntityManager.Instance.NewEntity<MapEntity>();
 
@@ -63,26 +74,31 @@ public class Editor : IUOEngineApp
     public void Update(float tick)
     {
         Vector2Int viewport = _window.Viewport;
-        Vector2Int halfViewport = _window.Viewport / 2;
 
-        Vector3 position = _camera.Transform.Position;
+        _camera.Projection = Matrix4x4.CreateOrthographic(0, viewport.X, viewport.Y, 0.0f, -1.0f, 1.0f);
+        //_camera.Projection = Matrix4x4.CreateOrthographic(viewport.X, viewport.Y, 1.0f, 1.0f);
 
-        int speed = 100;
+        //_camera.Transform.Rotation = Quaternion.CreateFromAxisAngle(Vector3.Right, -0.5f * MathF.PI);
 
-        position.Y += tick * speed;
-        position.X += tick * speed;
 
-        //_camera.Transform.Position = position;
+        //Rotator rotation2 = _camera.Transform.Rotation.ToEulerAngles().ToDegrees();
 
-        _camera.Projection = Matrix4x4.CreateOrthographic(-halfViewport.X, halfViewport.X, halfViewport.Y, -halfViewport.Y, -1.0f, 1.0f);
-        _camera.Transform.Rotation = Quaternion.CreateFromAxisAngle(Vector3.Up, -0.5f * 0.5f * MathF.PI);
+        Matrix4x4 renderMatrix = new Matrix4x4(new Vector4(0, 1, 0, 0),
+                                               new Vector4(0, 0, 1, 0),
+                                               new Vector4(1, 0, 0, 0),
+                                               new Vector4(0, 0, 0, 1));
+
 
         ShaderInstance shaderInstance = RenderContext.GetShaderInstance();
 
         PerFrameData perFrameData = new PerFrameData();
 
         perFrameData.Projection = _camera.Projection;
-        perFrameData.WorldToCamera = _camera.WorldToCameraMatrix;
+        //perFrameData.WorldToCamera = _camera.WorldToCameraMatrix;
+
+        var camMatrix = _camera.WorldToCameraMatrix;
+
+        perFrameData.WorldToCamera = renderMatrix * camMatrix;
 
         int numInstances = UpdateVisibleChunks();
 

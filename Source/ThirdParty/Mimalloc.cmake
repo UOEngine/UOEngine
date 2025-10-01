@@ -4,6 +4,10 @@ FetchContent_Declare(
   GIT_TAG        dfa50c37d951128b1e77167dd9291081aa88eea4 # v3.1.5
 )
 
+#set(MI_DEBUG_FULL TRUE)
+#set(MI_SECURE TRUE)
+#set(MI_TRACK_ASAN TRUE)
+
 FetchContent_MakeAvailable(mimalloc)
 
 #add_subdirectory(${mimalloc_SOURCE_DIR} ${mimalloc_BINARY_DIR} EXCLUDE_FROM_ALL)

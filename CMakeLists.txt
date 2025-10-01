@@ -25,6 +25,9 @@ set(CMAKE_BINARY_DIR                    "${UOENGINE_MAIN_SRC_DIR}/Intermediate")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY      "${UOENGINE_MAIN_SRC_DIR}/Binaries/Win64")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY      "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 
+set(CMAKE_CXX_FLAGS_DEVELOPMENT "-O2" CACHE STRING "Flags for Development build" FORCE)
+set(CMAKE_C_FLAGS_DEVELOPMENT   "-O2" CACHE STRING "Flags for Development build" FORCE)
+
 if(WIN32 AND MSVC)
     include(CMake/Win64.cmake)
 else()

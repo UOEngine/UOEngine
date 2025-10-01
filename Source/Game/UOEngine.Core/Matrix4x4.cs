@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace UOEngine.Core;
@@ -58,6 +59,42 @@ public struct Matrix4x4
         this[3, 3] = 1.0f;
     }
 
+    public Matrix4x4(in Vector4 row0, in Vector4 row1, in Vector4 row2, in Vector4 row3)
+    {
+        this[0, 0] = row0.X;
+        this[0, 1] = row0.Y;
+        this[0, 2] = row0.Z;
+        this[0, 3] = row0.W;
+
+        this[1, 0] = row1.X;
+        this[1, 1] = row1.Y;
+        this[1, 2] = row1.Z;
+        this[1, 3] = row1.W;
+
+        this[2, 0] = row2.X;
+        this[2, 1] = row2.Y;
+        this[2, 2] = row2.Z;
+        this[2, 3] = row2.W;
+
+        this[3, 0] = row3.X;
+        this[3, 1] = row3.Y;
+        this[3, 2] = row3.Z;
+        this[3, 3] = row3.W;
+    }
+
+    public static Matrix4x4 CreateOrthographic(float width, float height, float zScale, float zOffset)
+    {
+        Matrix4x4 matrix = Identity;
+
+        matrix[0, 0] = 1.0f / width;
+        matrix[1, 1] = 1.0f / height;
+        matrix[2, 2] = zScale;
+
+        matrix[3, 2] = zOffset * zScale;
+        matrix[3, 3] = 1.0f;
+
+        return matrix;
+    }
 
     public static Matrix4x4 CreateOrthographic(float left, float right, float bottom, float top, float near, float far)
     {
@@ -65,19 +102,19 @@ public struct Matrix4x4
 
         float x = 2.0f / (right - left);
         float y = 2.0f / (top - bottom);
-        float z = -2.0f / (far - near);
-        float tx = -(right + left) / (right - left);
-        float ty = -(top + bottom) / (top - bottom);
-        float tz = -(far + near) / (far - near);
+        float z = 2.0f / (far - near);
+        //float tx = -(right + left) / (right - left);
+        //float ty = -(top + bottom) / (top - bottom);
+        //float tz = -(far + near) / (far - near);
 
         matrix[0, 0] = x;
-        matrix[0, 3] = tx;
+        //matrix[0, 3] = tx;
 
         matrix[1, 1] = y;
-        matrix[1, 3] = ty;
+       // matrix[1, 3] = ty;
 
         matrix[2, 2] = z;
-        matrix[2, 3] = tz;
+        //matrix[2, 3] = tz;
 
         return matrix;
     }

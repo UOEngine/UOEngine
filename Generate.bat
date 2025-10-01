@@ -15,7 +15,7 @@ if %ERRORLEVEL%==0 (
 echo Using cmake at %CMAKE_BIN%
 
 @echo on
-%CMAKE_BIN% -B %BUILD_DIR% -G "Visual Studio 17 2022" -DUSE_LIVEPP=OFF
+%CMAKE_BIN% -B %BUILD_DIR% -G "Visual Studio 17 2022" -DUSE_LIVEPP=OFF -DENABLE_ASAN=OFF
 @echo off
 
 if /I NOT "%GITHUB_ACTIONS%"=="true" (
