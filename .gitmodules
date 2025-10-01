@@ -1,0 +1,12 @@
+[submodule "ThirdParty/ClassicUO"]
+	path = ThirdParty/ClassicUO
+	url = https://github.com/ClassicUO/ClassicUO.git
+[submodule "ThirdParty/ServUO"]
+	path = ThirdParty/ServUO
+	url = https://github.com/ServUO/ServUO.git
+[submodule "ThirdParty/FNA"]
+	path = ThirdParty/FNA
+	url = https://github.com/FNA-XNA/FNA.git
+[submodule "ThirdParty/ImGui.NET"]
+	path = ThirdParty/ImGui.NET
+	url = https://github.com/ImGuiNET/ImGui.NET.git

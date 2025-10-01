@@ -1,0 +1,27 @@
+<Project>
+	<PropertyGroup>
+		<UoEngineRoot>$(MSBuildThisFileDirectory)\..\</UoEngineRoot>
+		<IntermediatePath>$(UoEngineRoot)\Intermediate</IntermediatePath>
+		<OutputPath>$(UoEngineRoot)\Binaries\Win64\$(Configuration)\</OutputPath>
+		<BaseIntermediateOutputPath>$(IntermediatePath)\DotNet\$(Configuration)\$(MSBuildProjectName)</BaseIntermediateOutputPath>
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+		<UoEngineThirdParty>$(UoEngineRoot)\ThirdParty\</UoEngineThirdParty>
+		<!--<TargetFramework>net9.0</TargetFramework-->
+		<!--<PlatformTarget>x64</PlatformTarget>
+		<Platforms>x64</Platforms>-->
+		<!--<Platforms>x64;x86</Platforms>-->
+		<!--<Configurations>Debug;Development</Configurations>-->
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)' == 'Development'">
+		<Optimize>true</Optimize>
+		<DebugType>pdbonly</DebugType>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+		<GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+	</PropertyGroup>
+
+</Project>
