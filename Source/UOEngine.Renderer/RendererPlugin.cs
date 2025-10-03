@@ -9,6 +9,5 @@ public class RendererPlugin : IPlugin
 
     public void Startup()
     {
-        throw new NotImplementedException();
     }
 }

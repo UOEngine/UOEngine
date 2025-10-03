@@ -7,21 +7,21 @@ namespace UOEngine.UI;
 
 public class UIPlugin : IPlugin
 {
-    private readonly RendererPlugin _rendererPlugin;
+    //private readonly RendererPlugin _rendererPlugin;
 
-    public UIPlugin(RendererPlugin rendererPlugin)
+    public UIPlugin()
     {
-        _rendererPlugin = rendererPlugin;
+        //_rendererPlugin = rendererPlugin;
 
-        _rendererPlugin.OnFrameBegin += (sender, message) =>
-        {
-            ImGui.NewFrame();
-        };
+        //_rendererPlugin.OnFrameBegin += (sender, message) =>
+        //{
+        //    ImGui.NewFrame();
+        //};
 
-        _rendererPlugin.OnFrameEnd += (sender, message) =>
-        {
-            ImGui.EndFrame();
-        };
+        //_rendererPlugin.OnFrameEnd += (sender, message) =>
+        //{
+        //    ImGui.EndFrame();
+        //};
     }
 
     public void Startup()

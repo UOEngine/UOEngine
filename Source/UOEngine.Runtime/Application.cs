@@ -13,6 +13,7 @@ public class Application: Game
     public static string? ExePath => Assembly.GetEntryAssembly().Location;
 
     public static string? BaseDirectory => Path.GetDirectoryName(ExePath);
+    public static string? PluginDirectory => Path.Combine(BaseDirectory, "Plugins");
 
     private readonly ServiceCollection _services = new ServiceCollection();
     private ServiceProvider? _serviceProvider;
@@ -31,7 +32,8 @@ public class Application: Game
 
     protected override void Initialize()
     {
-        LoadPlugins();
+        LoadPlugins(BaseDirectory);
+        LoadPlugins(PluginDirectory, true);
 
         _serviceProvider = _services.BuildServiceProvider();
 
@@ -39,6 +41,8 @@ public class Application: Game
 
         foreach (var plugin in plugins)
         {
+            Services.AddService(plugin.GetType(), plugin);
+
             plugin.Startup();
         }
 
@@ -57,9 +61,17 @@ public class Application: Game
         base.Draw(gameTime);
     }
 
-    private void LoadPlugins()
+    private void LoadPlugins(string directory, bool recurse = false)
     {
-        foreach (var dll in Directory.GetFiles(BaseDirectory, "*.dll"))
+        if (recurse)
+        {
+            foreach (var subdir in Directory.GetDirectories(directory))
+            {
+                LoadPlugins(subdir, true);
+            }
+        }
+
+        foreach (var dll in Directory.GetFiles(directory, "*.dll"))
         {
             Assembly assembly;
             try

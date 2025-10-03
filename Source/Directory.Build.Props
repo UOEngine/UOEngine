@@ -3,6 +3,7 @@
 		<UoEngineRoot>$(MSBuildThisFileDirectory)\..\</UoEngineRoot>
 		<IntermediatePath>$(UoEngineRoot)\Intermediate</IntermediatePath>
 		<OutputPath>$(UoEngineRoot)\Binaries\Win64\$(Configuration)\</OutputPath>
+		<PluginOutputPath>$(OutputPath)\Plugins\$(MSBuildProjectName)</PluginOutputPath>
 		<BaseIntermediateOutputPath>$(IntermediatePath)\DotNet\$(Configuration)\$(MSBuildProjectName)</BaseIntermediateOutputPath>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>

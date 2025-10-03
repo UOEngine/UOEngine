@@ -1,5 +1,9 @@
 <Solution>
+  <Folder Name="/Plugins/">
+    <Project Path="Source/Plugins/UOEngine.CUO/UOEngine.CUO.csproj" Id="7138a544-7684-4df9-b310-8ab35a8a9f24" />
+  </Folder>
   <Folder Name="/Source/">
+    <File Path="Source/Directory.Build.Props" />
     <Project Path="Source/UOEngine.Client/UOEngine.Client.csproj" Id="1ee3024a-6900-451f-9fb6-22773e28aa00" />
     <Project Path="Source/UOEngine.Editor/UOEngine.Editor.csproj">
       <BuildType Project="Debug" />

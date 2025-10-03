@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Lib.Harmony" Version="2.4.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\ThirdParty\ClassicUO\src\ClassicUO.Client\ClassicUO.Client.csproj" />
+    <ProjectReference Include="..\..\UOEngine.Client\UOEngine.Client.csproj" />
+    <ProjectReference Include="..\..\UOEngine.Plugin\UOEngine.Plugin.csproj" />
+  </ItemGroup>
+
+	<PropertyGroup>
+		<OutputPath>$(PluginOutputPath)</OutputPath>
+		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="$(UoEngineThirdParty)\ClassicUO\external\x64\SDL2.dll" CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
+
+</Project>
