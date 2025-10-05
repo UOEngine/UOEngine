@@ -12,8 +12,8 @@ public class ServerPlugin : IPlugin
 
     public async Task StartServerAsync(string[] args)
     {
-        Task serverTask = Task.Run(() => Server.Core.Main(args));
+        //Task serverTask = Task.Run(() => Server.Core.Main(args));
 
-        await serverTask;
+        //await serverTask;
     }
 }

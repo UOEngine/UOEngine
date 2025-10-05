@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\UOEngine.Plugin\UOEngine.Plugin.csproj" />
+    <ProjectReference Include="..\..\Runtime\UOEngine.Plugin\UOEngine.Plugin.csproj" />
   </ItemGroup>
 
 </Project>
