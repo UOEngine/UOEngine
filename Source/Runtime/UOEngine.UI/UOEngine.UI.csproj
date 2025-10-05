@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\ThirdParty\ImGui.NET\src\ImGui.NET\ImGui.NET.csproj" />
+    <ProjectReference Include="..\..\..\ThirdParty\ImGui.NET\src\ImGui.NET\ImGui.NET.csproj" />
     <ProjectReference Include="..\UOEngine.Plugin\UOEngine.Plugin.csproj" />
     <ProjectReference Include="..\UOEngine.Renderer\UOEngine.Renderer.csproj" />
   </ItemGroup>

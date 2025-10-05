@@ -2,17 +2,19 @@
   <Folder Name="/Plugins/">
     <Project Path="Source/Plugins/UOEngine.CUO/UOEngine.CUO.csproj" Id="7138a544-7684-4df9-b310-8ab35a8a9f24" />
   </Folder>
+  <Folder Name="/Runtime/">
+    <Project Path="Source/Runtime/UOEngine.Plugin/UOEngine.Plugin.csproj" Id="29a147bb-dddb-4de6-a719-49ebcee908dd" />
+    <Project Path="Source/Runtime/UOEngine.Renderer/UOEngine.Renderer.csproj" Id="32715c80-999a-4e18-93a2-59a8c4addd62" />
+    <Project Path="Source/Runtime/UOEngine.Runtime/UOEngine.Runtime.csproj" Id="cf99cafa-d9ec-4dcf-a635-947b2299e8df" />
+    <Project Path="Source/Runtime/UOEngine.UI/UOEngine.UI.csproj" Id="a4500abb-2b74-4bd6-bdc2-423bb8a11d48" />
+  </Folder>
   <Folder Name="/Source/">
     <File Path="Source/Directory.Build.Props" />
     <Project Path="Source/UOEngine.Client/UOEngine.Client.csproj" Id="1ee3024a-6900-451f-9fb6-22773e28aa00" />
     <Project Path="Source/UOEngine.Editor/UOEngine.Editor.csproj">
       <BuildType Project="Debug" />
     </Project>
-    <Project Path="Source/UOEngine.Plugin/UOEngine.Plugin.csproj" Id="29a147bb-dddb-4de6-a719-49ebcee908dd" />
-    <Project Path="Source/UOEngine.Renderer/UOEngine.Renderer.csproj" Id="32715c80-999a-4e18-93a2-59a8c4addd62" />
-    <Project Path="Source/UOEngine.Runtime/UOEngine.Runtime.csproj" Id="cf99cafa-d9ec-4dcf-a635-947b2299e8df" />
     <Project Path="Source/UOEngine.Server/UOEngine.Server.csproj" Id="87308a0e-20b3-452f-8616-e7e22031f470" />
-    <Project Path="Source/UOEngine.UI/UOEngine.UI.csproj" Id="a4500abb-2b74-4bd6-bdc2-423bb8a11d48" />
   </Folder>
   <Folder Name="/ThirdParty/">
     <Project Path="ThirdParty/FNA/FNA.Core.csproj" />
