@@ -18,6 +18,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Runtime\UOEngine.Runtime\UOEngine.Runtime.csproj" />
     <ProjectReference Include="..\..\Runtime\UOEngine.UI\UOEngine.UI.csproj" />
+    <ProjectReference Include="..\..\Ultima\UOEngine.Ultima.Assets\UOEngine.Ultima.UOAssets.csproj" />
   </ItemGroup>
 
 	<PropertyGroup>

@@ -3,7 +3,7 @@ using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 
 using Microsoft.Xna.Framework;
-
+using Microsoft.Xna.Framework.Graphics;
 using UOEngine.Plugin;
 
 namespace UOEngine.Runtime;
@@ -18,6 +18,11 @@ public class Application: Game
     private readonly ServiceCollection _services = new ServiceCollection();
     private ServiceProvider? _serviceProvider;
 
+    private ApplicationLoop _applicationLoop = null!;
+    private Renderer.Renderer _renderer = null!; 
+
+    private GraphicsDeviceManager _graphicsDeviceManager = null!;
+
     public void RegisterPlugin<T>() where T : IPlugin
     {
         _services.AddSingleton(typeof(IPlugin), typeof(T));
@@ -25,17 +30,28 @@ public class Application: Game
 
     public void Start()
     {
-        new GraphicsDeviceManager(this);
+        _graphicsDeviceManager = new GraphicsDeviceManager(this);
+
 
         Run();
     }
 
     protected override void Initialize()
     {
+        _services.AddSingleton<EntityManager>();
+        _services.AddSingleton<ApplicationLoop>();
+        _services.AddSingleton<Input>();
+
+
+        _services.AddSingleton(typeof(GraphicsDevice), _graphicsDeviceManager.GraphicsDevice);
+
         LoadPlugins(BaseDirectory);
         LoadPlugins(PluginDirectory, true);
 
         _serviceProvider = _services.BuildServiceProvider();
+
+        _applicationLoop = _serviceProvider.GetRequiredService<ApplicationLoop>();
+        _renderer = _serviceProvider.GetRequiredService<Renderer.Renderer>();
 
         var plugins = _serviceProvider.GetServices<IPlugin>();
 
@@ -52,13 +68,13 @@ public class Application: Game
     protected override void Update(GameTime gameTime)
     {
         base.Update(gameTime);
+
+        _applicationLoop.Update(gameTime.ElapsedGameTime);
     }
 
     protected override void Draw(GameTime gameTime)
     {
-        GraphicsDevice.Clear(Color.Black);
-
-        base.Draw(gameTime);
+        _renderer.Draw(gameTime.ElapsedGameTime);
     }
 
     private void LoadPlugins(string directory, bool recurse = false)
@@ -96,6 +112,10 @@ public class Application: Game
                 }
 
                 Console.WriteLine($"Loading plugin {dll}");
+
+                var configureServicesMethod = type.GetMethod("ConfigureServices");
+
+                configureServicesMethod?.Invoke(null, [_services]);
 
                 _services.AddSingleton(typeof(IPlugin), type);
             }

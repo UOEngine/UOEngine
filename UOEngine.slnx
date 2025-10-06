@@ -12,7 +12,7 @@
   </Folder>
   <Folder Name="/Runtime/">
     <Project Path="Source/Runtime/UOEngine.Plugin/UOEngine.Plugin.csproj" Id="29a147bb-dddb-4de6-a719-49ebcee908dd" />
-    <Project Path="Source/Runtime/UOEngine.Renderer/UOEngine.Renderer.csproj" Id="32715c80-999a-4e18-93a2-59a8c4addd62" />
+    <Project Path="Source/Runtime/UOEngine.Renderer/UOEngine.Runtime.Renderer.csproj" Id="32715c80-999a-4e18-93a2-59a8c4addd62" />
     <Project Path="Source/Runtime/UOEngine.Runtime/UOEngine.Runtime.csproj" Id="cf99cafa-d9ec-4dcf-a635-947b2299e8df" />
     <Project Path="Source/Runtime/UOEngine.UI/UOEngine.UI.csproj" Id="a4500abb-2b74-4bd6-bdc2-423bb8a11d48" />
   </Folder>
@@ -38,6 +38,14 @@
       <Platform Project="x64" />
     </Project>
     <Project Path="ThirdParty/ServUO/Ultima/Ultima.csproj">
+      <Platform Project="x64" />
+    </Project>
+  </Folder>
+  <Folder Name="/Ultima/">
+    <Project Path="Source/Ultima/UOEngine.PackageFile/UOEngine.Ultima.PackageFile.csproj">
+      <Platform Project="x64" />
+    </Project>
+    <Project Path="Source/Ultima/UOEngine.Ultima.Assets/UOEngine.Ultima.UOAssets.csproj">
       <Platform Project="x64" />
     </Project>
   </Folder>

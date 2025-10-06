@@ -1,27 +1,27 @@
 ﻿using ImGuiNET;
 
 using UOEngine.Plugin;
-using UOEngine.Renderer;
+using UOEngine.Runtime.Renderer;
 
 namespace UOEngine.UI;
 
 public class UIPlugin : IPlugin
 {
-    //private readonly RendererPlugin _rendererPlugin;
+    private readonly Renderer _renderer;
 
-    public UIPlugin()
+    public UIPlugin(Renderer renderer)
     {
-        //_rendererPlugin = rendererPlugin;
+        _renderer = renderer;
 
-        //_rendererPlugin.OnFrameBegin += (sender, message) =>
-        //{
-        //    ImGui.NewFrame();
-        //};
+        _renderer.OnFrameBegin += () =>
+        {
+            ImGui.NewFrame();
+        };
 
-        //_rendererPlugin.OnFrameEnd += (sender, message) =>
-        //{
-        //    ImGui.EndFrame();
-        //};
+        _renderer.OnFrameEnd += () =>
+        {
+            ImGui.EndFrame();
+        };
     }
 
     public void Startup()

@@ -9,6 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\ThirdParty\FNA\FNA.Core.csproj" />
     <ProjectReference Include="..\UOEngine.Plugin\UOEngine.Plugin.csproj" />
+    <ProjectReference Include="..\UOEngine.Renderer\UOEngine.Runtime.Renderer.csproj" />
   </ItemGroup>
 
 	<ItemGroup>

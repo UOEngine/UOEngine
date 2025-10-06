@@ -1,7 +1,10 @@
-﻿
+﻿using Microsoft.Extensions.DependencyInjection;
+
 namespace UOEngine.Plugin;
 
 public interface IPlugin
 {
-    void Startup();
+    static void ConfigureServices(IServiceCollection services){}
+
+    void Startup(){}
 }

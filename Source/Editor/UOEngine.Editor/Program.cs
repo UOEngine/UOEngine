@@ -2,7 +2,7 @@
 using HarmonyLib;
 using UOEngine.Runtime;
 
-namespace UOEngine2;
+namespace UOEngine.Editor;
 
 internal class Program
 {
@@ -13,50 +13,17 @@ internal class Program
 
         using (var app = new Application())
         {
-            //app.RegisterPlugin<ClientPlugin>();
-            //app.RegisterPlugin<ServerPlugin>();
-            //app.RegisterPlugin<EditorPlugin>();
-            //app.RegisterPlugin<UIPlugin>();
-
             app.Start();
         }
-        //Task clientTask = Task.Run(() =>
-        //{
-        //    var asm = Assembly.LoadFrom("cuo.dll");
-        //    var type = asm.GetType("ClassicUO.Bootstrap");
-
-        //    var method = type.GetMethod("Main");
-
-        //    var result = method.Invoke(null, new object[] { args });
-        //});
-
-        //Patcher.Patch(typeof(Server.Core), typeof(PatchServUO), nameof(PatchServUO.PatchExePath), "ExePath");
-
-        ////Server.Core.Main(args);
-
-        //Task serverTask = Task.Run(() => Server.Core.Main(args));
-
-        //Task.WaitAll(clientTask, serverTask);
     }
 
-    private static Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
+    private static Assembly? CurrentDomain_AssemblyResolve(object? sender, ResolveEventArgs args)
     {
         Console.WriteLine("Failed to resolve assembly: " + args.Name);
-        // You can attempt to load it manually if you want:
-        // return Assembly.LoadFrom("path_to_dll");
+
         return null;
     }
 
-}
-
-public static class PatchServUO
-{
-    public static bool PatchExePath(ref string __result)
-    {
-        __result = "D:\\UODev\\UOEngine2\\ThirdParty\\ServUO\\ServUO.exe";
-
-        return false;
-    }
 }
 
 public static class Patcher

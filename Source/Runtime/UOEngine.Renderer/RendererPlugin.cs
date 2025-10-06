@@ -1,13 +1,16 @@
-﻿using UOEngine.Plugin;
+﻿using Microsoft.Extensions.DependencyInjection;
+using UOEngine.Plugin;
 
-namespace UOEngine.Renderer;
+namespace UOEngine.Runtime.Renderer;
 
 public class RendererPlugin : IPlugin
 {
-    public event EventHandler? OnFrameBegin;
-    public event EventHandler? OnFrameEnd;
+    public static void ConfigureServices(IServiceCollection services)
+    {
+        services.AddSingleton<Renderer>();
+    }
 
-    public void Startup()
+    public void Startup(IServiceProvider serviceProvider)
     {
     }
 }
