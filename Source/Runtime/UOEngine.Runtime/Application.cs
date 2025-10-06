@@ -72,9 +72,23 @@ public class Application: Game
         _applicationLoop.Update(gameTime.ElapsedGameTime);
     }
 
-    protected override void Draw(GameTime gameTime)
+    protected override bool BeginDraw()
     {
-        _renderer.Draw(gameTime.ElapsedGameTime);
+        if( base.BeginDraw() == false)
+        {
+            return false;
+        }
+
+        _renderer.RaiseFrameBegin();
+
+        return true;
+    }
+
+    protected override void EndDraw()
+    {
+        _renderer.RaiseFrameEnd();
+
+        base.EndDraw();
     }
 
     private void LoadPlugins(string directory, bool recurse = false)
