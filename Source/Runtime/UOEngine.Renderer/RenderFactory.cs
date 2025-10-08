@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using UOEngine.Runtime.Renderer.Resources;
 
 namespace UOEngine.Runtime.Renderer;
 
@@ -7,9 +8,8 @@ public class RenderFactory
 {
     private readonly GraphicsDevice _graphicsDevice;
 
-    public RenderFactory(GraphicsDevice graphicsDevice)
+    public RenderFactory()
     {
-        _graphicsDevice = graphicsDevice;
     }
 
     public UOETexture CreateTexture(int width, int height)
@@ -18,4 +18,10 @@ public class RenderFactory
 
         return texture;
     }
+
+    public ShaderInstance CreateShaderInstance(byte[] shaderBytecode)
+    {
+        return new ShaderInstance(_graphicsDevice, shaderBytecode);
+    }
+
 }

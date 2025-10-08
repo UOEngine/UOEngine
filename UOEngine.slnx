@@ -13,9 +13,11 @@
   <Folder Name="/Runtime/">
     <Project Path="Source/Runtime/UOEngine.Plugin/UOEngine.Plugin.csproj" Id="29a147bb-dddb-4de6-a719-49ebcee908dd" />
     <Project Path="Source/Runtime/UOEngine.Renderer/UOEngine.Runtime.Renderer.csproj" Id="32715c80-999a-4e18-93a2-59a8c4addd62" />
+    <Project Path="Source/Runtime/UOEngine.Runtime.D3D12/UOEngine.Runtime.D3D12.csproj" Id="52931984-095a-4fa4-a764-42735f2c5baa" />
     <Project Path="Source/Runtime/UOEngine.Runtime/UOEngine.Runtime.csproj" Id="cf99cafa-d9ec-4dcf-a635-947b2299e8df" />
     <Project Path="Source/Runtime/UOEngine.UI/UOEngine.UI.csproj" Id="a4500abb-2b74-4bd6-bdc2-423bb8a11d48" />
   </Folder>
+  <Folder Name="/Shaders/" />
   <Folder Name="/ThirdParty/">
     <Project Path="ThirdParty/FNA/FNA.Core.csproj" />
     <Project Path="ThirdParty/ImGui.NET/src/ImGui.NET/ImGui.NET.csproj" />

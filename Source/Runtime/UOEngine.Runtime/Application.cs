@@ -23,6 +23,8 @@ public class Application: Game
 
     private GraphicsDeviceManager _graphicsDeviceManager = null!;
 
+    private CameraEntity _camera = null!;
+
     public void RegisterPlugin<T>() where T : IPlugin
     {
         _services.AddSingleton(typeof(IPlugin), typeof(T));
@@ -30,7 +32,7 @@ public class Application: Game
 
     public void Start()
     {
-        _graphicsDeviceManager = new GraphicsDeviceManager(this);
+        //_graphicsDeviceManager = new GraphicsDeviceManager(this);
 
 
         Run();
@@ -38,12 +40,13 @@ public class Application: Game
 
     protected override void Initialize()
     {
+        Window.AllowUserResizing = true;
+
         _services.AddSingleton<EntityManager>();
         _services.AddSingleton<ApplicationLoop>();
         _services.AddSingleton<Input>();
 
-
-        _services.AddSingleton(typeof(GraphicsDevice), _graphicsDeviceManager.GraphicsDevice);
+        //_services.AddSingleton(typeof(GraphicsDevice), _graphicsDeviceManager.GraphicsDevice);
 
         LoadPlugins(BaseDirectory);
         LoadPlugins(PluginDirectory, true);
@@ -62,6 +65,10 @@ public class Application: Game
             plugin.Startup();
         }
 
+        var entityManager = _serviceProvider.GetRequiredService<EntityManager>();
+
+        _camera = entityManager.NewEntity<CameraEntity>();
+
         base.Initialize();
     }
 
@@ -78,6 +85,13 @@ public class Application: Game
         {
             return false;
         }
+
+        var bounds = Window.ClientBounds;
+
+        //_camera.SetProjection(bounds.Width, bounds.Height, -1.0f, 1.0f);
+        _camera.SetProjection(1, 1, -1.0f, 1.0f);
+
+        _renderer.RenderContext.View = _camera.Projection * _camera.View;
 
         _renderer.RaiseFrameBegin();
 
@@ -113,7 +127,18 @@ public class Application: Game
                 continue; // skip invalid DLLs
             }
 
-            foreach (var type in assembly.GetTypes())
+            Type[] types;
+
+            try
+            {
+                types = assembly.GetTypes();
+            }
+            catch
+            {
+                continue;
+            }
+
+            foreach (var type in types)
             {
                 if (typeof(IPlugin).IsAssignableFrom(type) == false)
                 {

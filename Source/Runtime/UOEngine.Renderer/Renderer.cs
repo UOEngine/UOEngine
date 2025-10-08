@@ -8,23 +8,23 @@ public class Renderer
     public event Action<RenderContext>? OnFrameEnd;
 
     private readonly GraphicsDevice _graphicsDevice;
-    private readonly RenderContext _renderContext;
+    public readonly RenderContext RenderContext;
 
-    public Renderer(GraphicsDevice graphicsDevice)
+    public Renderer()
     {
-        _graphicsDevice = graphicsDevice;
-        _renderContext = new RenderContext(_graphicsDevice);
+        //_graphicsDevice = graphicsDevice;
+        //RenderContext = new RenderContext(_graphicsDevice);
     }
 
     public void RaiseFrameBegin()
     {
-        _renderContext.Clear();
+        RenderContext.Clear();
 
-        OnFrameBegin?.Invoke(_renderContext);
+        OnFrameBegin?.Invoke(RenderContext);
     }
 
     public void RaiseFrameEnd()
     {
-        OnFrameEnd?.Invoke(_renderContext);
+        OnFrameEnd?.Invoke(RenderContext);
     }
 }

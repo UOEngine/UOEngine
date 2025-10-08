@@ -2,6 +2,7 @@
 using UOEngine.Plugin;
 using UOEngine.Runtime;
 using UOEngine.Runtime.Renderer;
+using UOEngine.Runtime.Renderer.Resources;
 using UOEngine.Ultima.UOAssets;
 
 namespace UOEngine.Editor;
@@ -16,7 +17,7 @@ internal class EditorPlugin : IPlugin
     private readonly UOAssetLoader _assetLoader;
     private MapEntity _map = null!;
     private UOETexture _testTexture = null!;
-
+    private ShaderInstance _shaderInstance;
     public EditorPlugin(IServiceProvider serviceProvider) 
     {
         _entityManager = serviceProvider.GetRequiredService<EntityManager>();
@@ -26,25 +27,27 @@ internal class EditorPlugin : IPlugin
 
         _renderer.OnFrameBegin += OnFrameBegin;
 
+        //_renderFactory.CreateShaderInstance(null);
+
         //serviceProvider.GetRequiredService<ApplicationLoop>().OnUpdate += Update;
     }
 
     public void Startup()
     {
-        _assetLoader.LoadAllFiles("D:\\Program Files (x86)\\Electronic Arts\\Ultima Online Classic");
+        //_assetLoader.LoadAllFiles("D:\\Program Files (x86)\\Electronic Arts\\Ultima Online Classic");
 
-        _camera = _entityManager.NewEntity<CameraEntity>();
-        _map = _entityManager.NewEntity<MapEntity>();
+        //_camera = _entityManager.NewEntity<CameraEntity>();
+        //_map = _entityManager.NewEntity<MapEntity>();
 
-        _map.Load(_assetLoader.Maps[0]);
+        //_map.Load(_assetLoader.Maps[0]);
 
-        var water = _map.GetChunk(0, 0).Entities[0, 0];
+        //var water = _map.GetChunk(0, 0).Entities[0, 0];
 
-        var bitmap = _assetLoader.GetLand(water.GraphicId);
+        //var bitmap = _assetLoader.GetLand(water.GraphicId);
 
-        _testTexture = _renderFactory.CreateTexture((int)bitmap.Width, (int)bitmap.Height);
+        //_testTexture = _renderFactory.CreateTexture((int)bitmap.Width, (int)bitmap.Height);
 
-        _testTexture.SetTexels(bitmap.Texels.ToArray());
+        //_testTexture.SetTexels(bitmap.Texels.ToArray());
 
     }
 

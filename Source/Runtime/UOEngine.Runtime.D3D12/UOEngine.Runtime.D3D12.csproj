@@ -7,9 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\ThirdParty\FNA\FNA.Core.csproj" />
+    <PackageReference Include="SharpGen.Runtime" Version="2.2.0-beta" />
+    <PackageReference Include="Vortice.Direct3D12" Version="3.6.2" />
+    <PackageReference Include="Vortice.DirectX" Version="3.6.2" />
+    <PackageReference Include="Vortice.Mathematics" Version="1.9.2" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\UOEngine.Plugin\UOEngine.Plugin.csproj" />
-    <ProjectReference Include="..\UOEngine.Runtime.D3D12\UOEngine.Runtime.D3D12.csproj" />
   </ItemGroup>
 
 </Project>
