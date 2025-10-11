@@ -12,12 +12,29 @@ internal class D3D12Device
 {
     public ID3D12Device Handle { get; private set; } = null!;
 
-    public void Startup(bool debugDevice)
-    {
-        IDXGIFactory2 dxgiFactory2 = CreateDXGIFactory2<IDXGIFactory2>(debugDevice);
+    private readonly D3D12DescriptorAllocator _renderTargetViewDescriptorAllocator;
+    private readonly D3D12DescriptorAllocator _srvViewDescriptorAllocator;
+    private readonly D3D12DescriptorAllocator _samplerViewDescriptorAllocator;
+    private readonly D3D12DescriptorAllocator _staticSamplerViewDescriptorAllocator;
 
+    private readonly D3D12GpuDescriptorAllocator _gpuDescriptorAllocator;
+
+    private readonly D3D12CommandQueue[] _commandQueues = [];
+
+    public D3D12Device()
+    {
+        _renderTargetViewDescriptorAllocator = new D3D12DescriptorAllocator(DescriptorHeapType.RenderTargetView, 2);
+        _srvViewDescriptorAllocator = new D3D12DescriptorAllocator(DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView, 16384);
+        _samplerViewDescriptorAllocator = new D3D12DescriptorAllocator(DescriptorHeapType.Sampler, 8);
+
+        _gpuDescriptorAllocator = new D3D12GpuDescriptorAllocator(this, DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView, 8);
+
+    }
+
+    public void Startup(IDXGIFactory2 dxgiFactory2, bool debugDevice)
+    {
         ulong maxMemorySize = 0;
-        IDXGIAdapter adapterToUse = null;
+        IDXGIAdapter adapterToUse = null!;
 
         for (uint adapterIndex = 0; dxgiFactory2.EnumAdapters1(adapterIndex, out var adapter).Success; adapterIndex++)
         {
@@ -53,6 +70,13 @@ internal class D3D12Device
 
         }
 
+        _renderTargetViewDescriptorAllocator.Startup(this);
+        
+    }
+
+    public D3D12CommandQueue GetQueue(CommandListType type)
+    {
+        return _commandQueues[(int)type];
     }
 
     private void DebugCallback(MessageCategory category, MessageSeverity severity, MessageId id, string description)

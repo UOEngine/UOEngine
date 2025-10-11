@@ -45,6 +45,7 @@ public class Application: Game
         _services.AddSingleton<EntityManager>();
         _services.AddSingleton<ApplicationLoop>();
         _services.AddSingleton<Input>();
+        _services.AddSingleton(new Window(Window));
 
         //_services.AddSingleton(typeof(GraphicsDevice), _graphicsDeviceManager.GraphicsDevice);
 

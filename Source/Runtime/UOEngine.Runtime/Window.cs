@@ -1,12 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Microsoft.Xna.Framework;
 
-namespace UOEngine.Runtime
+namespace UOEngine.Runtime;
+
+public class Window
 {
-    internal class Window
+    public IntPtr Handle { get; private set; }
+
+    public Window(GameWindow gameWindow)
     {
+        Handle = gameWindow.Handle;
     }
 }

@@ -1,16 +1,21 @@
 ﻿using Vortice.Direct3D12;
 using Vortice.Direct3D12.Debug;
+using Vortice.DXGI;
 using static Vortice.Direct3D12.D3D12;
+using static Vortice.DXGI.DXGI;
 
 namespace UOEngine.Runtime.D3D12;
 
 internal class D3D12Renderer
 {
     private readonly D3D12Device _device = new();
-    private readonly D3D12Swapchain _viewport = new();
+    private readonly Window _window;
 
-    public D3D12Renderer()
+    private D3D12Swapchain _viewport = null!;
+
+    public D3D12Renderer(Window window)
     {
+        _window = window;
     }
 
     public void Startup()
@@ -31,14 +36,18 @@ internal class D3D12Renderer
         {
             // Turn on auto-breadcrumbs and page fault reporting.
             dredSettings!.SetAutoBreadcrumbsEnablement(DredEnablement.ForcedOn);
-            dredSettings!.SetPageFaultEnablement(DredEnablement.ForcedOn);
-            dredSettings!.SetBreadcrumbContextEnablement(DredEnablement.ForcedOn);
+            dredSettings.SetPageFaultEnablement(DredEnablement.ForcedOn);
+            dredSettings.SetBreadcrumbContextEnablement(DredEnablement.ForcedOn);
 
             dredSettings.Dispose();
         }
 
-        _device.Startup(useValidation);
+        IDXGIFactory2 dxgiFactory2 = CreateDXGIFactory2<IDXGIFactory2>(useValidation);
 
-        _viewport.Startup(_device);
+        _device.Startup(dxgiFactory2, useValidation);
+
+        _viewport = new D3D12Swapchain(_device);
+
+        _viewport.Startup(dxgiFactory2, _window.Handle);
     }
 }
