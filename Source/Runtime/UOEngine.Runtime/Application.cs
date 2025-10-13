@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using UOEngine.Plugin;
+using UOEngine.Runtime.Platform;
 
 namespace UOEngine.Runtime;
 
@@ -45,7 +46,7 @@ public class Application: Game
         _services.AddSingleton<EntityManager>();
         _services.AddSingleton<ApplicationLoop>();
         _services.AddSingleton<Input>();
-        _services.AddSingleton(new Window(Window));
+        _services.AddSingleton<IWindow>(new Window(Window));
 
         //_services.AddSingleton(typeof(GraphicsDevice), _graphicsDeviceManager.GraphicsDevice);
 

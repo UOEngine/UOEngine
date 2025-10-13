@@ -19,7 +19,7 @@ internal class D3D12Device
 
     private readonly D3D12GpuDescriptorAllocator _gpuDescriptorAllocator;
 
-    private readonly D3D12CommandQueue[] _commandQueues = [];
+    private readonly D3D12CommandQueue[] _commandQueues = new D3D12CommandQueue[(int)D3D12QueueType.Count];
 
     public D3D12Device()
     {
@@ -47,7 +47,6 @@ internal class D3D12Device
                 continue;
             }
 
-
             if (adapter.Description.DedicatedVideoMemory > maxMemorySize)
             {
                 adapterToUse = adapter;
@@ -71,6 +70,16 @@ internal class D3D12Device
         }
 
         _renderTargetViewDescriptorAllocator.Startup(this);
+
+        foreach(var type in Enum.GetValues<D3D12QueueType>())
+        {
+            if(type == D3D12QueueType.Count)
+            {
+                break;
+            }
+
+            _commandQueues[(int)type] = new D3D12CommandQueue(this, type.ToCommandListType());
+        }
         
     }
 

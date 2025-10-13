@@ -4,16 +4,18 @@ using Vortice.DXGI;
 using static Vortice.Direct3D12.D3D12;
 using static Vortice.DXGI.DXGI;
 
+using UOEngine.Runtime.Platform;
+
 namespace UOEngine.Runtime.D3D12;
 
 internal class D3D12Renderer
 {
     private readonly D3D12Device _device = new();
-    private readonly Window _window;
+    private readonly IWindow _window;
 
     private D3D12Swapchain _viewport = null!;
 
-    public D3D12Renderer(Window window)
+    public D3D12Renderer(IWindow window)
     {
         _window = window;
     }
@@ -48,6 +50,6 @@ internal class D3D12Renderer
 
         _viewport = new D3D12Swapchain(_device);
 
-        _viewport.Startup(dxgiFactory2, _window.Handle);
+        _viewport.Startup(dxgiFactory2, _window.Handle, _window.Width, _window.Height);
     }
 }

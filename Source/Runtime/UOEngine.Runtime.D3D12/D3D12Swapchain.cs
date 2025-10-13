@@ -17,13 +17,19 @@ internal class D3D12Swapchain
     private IDXGISwapChain1 _swapChain = null!;
     private D3D12CommandQueue _commandQueue = null!;
 
+    private int _width = 0;
+    private int _height = 0;
+
     public D3D12Swapchain(D3D12Device device)
     {
         _device = device;
     }
 
-    public void Startup(IDXGIFactory2 dxgiFactory2)
+    public void Startup(IDXGIFactory2 dxgiFactory2, IntPtr nativeWindowHandle, int windowWidth, int windowHeight)
     {
+        _width = windowWidth;
+        _height = windowHeight;
+
         for (int i = 0; i < _backbufferCount; i++)
         {
             _backbufferTextures[i] = new D3D12Texture();
@@ -31,21 +37,21 @@ internal class D3D12Swapchain
 
         _commandQueue = _device.GetQueue(CommandListType.Direct);
 
-        nint windowHandle = 0;
-
         SwapChainDescription1 description = new()
         {
+            Width = (uint)windowWidth,
+            Height = (uint)windowHeight,
             Format = _format,
             Stereo = false,
             SampleDescription = SampleDescription.Default,
             BufferUsage = Usage.RenderTargetOutput,
             BufferCount = _backbufferCount,
-            SwapEffect = SwapEffect.Discard,
+            SwapEffect = SwapEffect.FlipDiscard,
             Scaling = Scaling.None,
             AlphaMode = AlphaMode.Unspecified
         };
 
-        _swapChain = dxgiFactory2.CreateSwapChainForHwnd(_commandQueue.As<IUnknown>(), windowHandle, description);
+        _swapChain = dxgiFactory2.CreateSwapChainForHwnd(_commandQueue.Handle.As<IUnknown>(), nativeWindowHandle, description);
 
         CreateBackbufferTextures();
     }
