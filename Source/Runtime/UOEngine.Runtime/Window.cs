@@ -9,8 +9,8 @@ public class Window: IWindow
 {
     public IntPtr Handle { get; }
 
-    public int Width => _gameWindow.ClientBounds.Width;
-    public int Height => _gameWindow.ClientBounds.Height;
+    public uint Width => (uint)_gameWindow.ClientBounds.Width;
+    public uint Height => (uint)_gameWindow.ClientBounds.Height;
 
 
     private readonly GameWindow _gameWindow;

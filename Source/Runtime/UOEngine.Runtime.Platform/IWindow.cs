@@ -3,7 +3,7 @@
 public interface IWindow
 {
     public IntPtr Handle { get; }
-    public int Width { get; }
-    public int Height { get; }
+    public uint Width { get; }
+    public uint Height { get; }
 
 }

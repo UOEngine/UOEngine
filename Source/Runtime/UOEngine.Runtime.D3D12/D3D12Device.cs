@@ -88,6 +88,16 @@ internal class D3D12Device
         return _commandQueues[(int)type];
     }
 
+    public void BeginFrame()
+    {
+
+    }
+
+    public void EndFrame()
+    {
+
+    }
+
     private void DebugCallback(MessageCategory category, MessageSeverity severity, MessageId id, string description)
     {
         Console.WriteLine($"{category}: {description}");

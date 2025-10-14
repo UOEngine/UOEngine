@@ -14,6 +14,7 @@ internal class D3D12Renderer
     private readonly IWindow _window;
 
     private D3D12Swapchain _viewport = null!;
+    private readonly D3D12CommandContext _commandContext;
 
     public D3D12Renderer(IWindow window)
     {
@@ -51,5 +52,19 @@ internal class D3D12Renderer
         _viewport = new D3D12Swapchain(_device);
 
         _viewport.Startup(dxgiFactory2, _window.Handle, _window.Width, _window.Height);
+    }
+
+    public void BeginFrame()
+    {
+        _device.BeginFrame();
+
+        _commandContext.RenderTarget = _viewport.Backbuffer;
+    }
+
+    public void EndFrame()
+    {
+        _viewport.Present(_commandContext);
+
+        _device.EndFrame();
     }
 }
