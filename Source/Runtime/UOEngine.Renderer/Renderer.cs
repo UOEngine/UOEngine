@@ -18,13 +18,13 @@ public class Renderer
 
     public void RaiseFrameBegin()
     {
-        RenderContext.Clear();
+        RenderContext?.Clear();
 
-        OnFrameBegin?.Invoke(RenderContext);
+        //OnFrameBegin?.Invoke(RenderContext);
     }
 
     public void RaiseFrameEnd()
     {
-        OnFrameEnd?.Invoke(RenderContext);
+        //OnFrameEnd?.Invoke(RenderContext);
     }
 }

@@ -8,4 +8,9 @@ internal class D3D12GpuDescriptorAllocator
     {
 
     }
+
+    public void Reset()
+    {
+
+    }
 }

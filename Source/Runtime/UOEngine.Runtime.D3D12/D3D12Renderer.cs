@@ -8,17 +8,18 @@ using UOEngine.Runtime.Platform;
 
 namespace UOEngine.Runtime.D3D12;
 
-internal class D3D12Renderer
+internal class D3D12Renderer: IDisposable
 {
-    private readonly D3D12Device _device = new();
+    private readonly D3D12Device _device;
     private readonly IWindow _window;
 
     private D3D12Swapchain _viewport = null!;
     private readonly D3D12CommandContext _commandContext;
 
-    public D3D12Renderer(IWindow window)
+    public D3D12Renderer(IWindow window, D3D12Device device)
     {
         _window = window;
+        _device = device;
     }
 
     public void Startup()
@@ -66,5 +67,9 @@ internal class D3D12Renderer
         _viewport.Present(_commandContext);
 
         _device.EndFrame();
+    }
+
+    public void Dispose()
+    {
     }
 }

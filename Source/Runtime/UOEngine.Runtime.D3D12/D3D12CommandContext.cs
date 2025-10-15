@@ -28,7 +28,7 @@ internal class D3D12CommandContext
     {
         CommandList.Close();
 
-        _device.GetQueue(_type).ExecuteCommandList();
+        //_device.GetQueue(_type).ExecuteCommandList(CommandList);
     }
 
     public void Draw(uint numInstances)

@@ -35,7 +35,7 @@ internal class D3D12Swapchain
 
         for (int i = 0; i < _backbufferCount; i++)
         {
-            _backbufferTextures[i] = new D3D12Texture();
+            _backbufferTextures[i] = new D3D12Texture(_device);
         }
 
         _commandQueue = _device.GetQueue(CommandListType.Direct);
@@ -54,7 +54,7 @@ internal class D3D12Swapchain
             AlphaMode = AlphaMode.Unspecified
         };
 
-        _swapChain = dxgiFactory2.CreateSwapChainForHwnd(_commandQueue.Handle.As<IUnknown>(), nativeWindowHandle, description).QueryInterface<IDXGISwapChain3>();
+        _swapChain = dxgiFactory2.CreateSwapChainForHwnd(_device.DirectQueue.Handle.As<IUnknown>(), nativeWindowHandle, description).QueryInterface<IDXGISwapChain3>();
 
         CreateBackbufferTextures();
     }
@@ -92,7 +92,7 @@ internal class D3D12Swapchain
 
             backbuffer.Name = $"Backbuffer{i}";
 
-            _backbufferTextures[i].InitFromExternalResorce(_device, backbuffer);
+            _backbufferTextures[i].InitFromExternalResource(_device, backbuffer, true);
         }
     }
 }

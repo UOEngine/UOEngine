@@ -6,6 +6,9 @@ internal class D3D12CommandQueue
 {
     public readonly ID3D12CommandQueue Handle;
 
+    public ulong SubmissionFenceValue;
+    public ID3D12Fence SubmissionFence;
+
     private readonly CommandListType _type;
     private readonly D3D12Device _device;
     private readonly ID3D12Fence _fence;

@@ -15,6 +15,7 @@
     <Project Path="Source/Runtime/UOEngine.Renderer/UOEngine.Runtime.Renderer.csproj" Id="32715c80-999a-4e18-93a2-59a8c4addd62" />
     <Project Path="Source/Runtime/UOEngine.Runtime.D3D12/UOEngine.Runtime.D3D12.csproj" Id="52931984-095a-4fa4-a764-42735f2c5baa" />
     <Project Path="Source/Runtime/UOEngine.Runtime.Platform/UOEngine.Runtime.Platform.csproj" Id="31a13229-81f6-4884-b261-802f1c405e42" />
+    <Project Path="Source/Runtime/UOEngine.Runtime.RHI/UOEngine.Runtime.RHI.csproj" Id="d3fc4504-cc7a-403e-a656-e6241be6cb89" />
     <Project Path="Source/Runtime/UOEngine.Runtime/UOEngine.Runtime.csproj" Id="cf99cafa-d9ec-4dcf-a635-947b2299e8df" />
     <Project Path="Source/Runtime/UOEngine.UI/UOEngine.UI.csproj" Id="a4500abb-2b74-4bd6-bdc2-423bb8a11d48" />
   </Folder>

@@ -11,6 +11,11 @@ namespace UOEngine.Runtime.D3D12;
 internal class D3D12Device
 {
     public ID3D12Device Handle { get; private set; } = null!;
+    public uint FrameCount { get; private set; } = 0;
+    public uint FrameDataIndex => FrameCount & 0x1;
+
+    public D3D12CommandQueue DirectQueue => GetQueue(CommandListType.Direct);
+    public D3D12CommandQueue CopyQueue => GetQueue(CommandListType.Copy);
 
     private readonly D3D12DescriptorAllocator _renderTargetViewDescriptorAllocator;
     private readonly D3D12DescriptorAllocator _srvViewDescriptorAllocator;
@@ -21,9 +26,10 @@ internal class D3D12Device
 
     private readonly D3D12CommandQueue[] _commandQueues = new D3D12CommandQueue[(int)D3D12QueueType.Count];
 
+    private readonly FrameData[] _FrameData = { new FrameData(), new FrameData()};
     public D3D12Device()
     {
-        _renderTargetViewDescriptorAllocator = new D3D12DescriptorAllocator(DescriptorHeapType.RenderTargetView, 2);
+        _renderTargetViewDescriptorAllocator = new D3D12DescriptorAllocator(DescriptorHeapType.RenderTargetView, 3);
         _srvViewDescriptorAllocator = new D3D12DescriptorAllocator(DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView, 16384);
         _samplerViewDescriptorAllocator = new D3D12DescriptorAllocator(DescriptorHeapType.Sampler, 8);
 
@@ -88,14 +94,37 @@ internal class D3D12Device
         return _commandQueues[(int)type];
     }
 
+    public void CreateRenderTargetView(ID3D12Resource resource, out D3D12DescriptorHandleCPU outHandle)
+    {
+        _renderTargetViewDescriptorAllocator.Allocate(out outHandle);
+
+        Handle.CreateRenderTargetView(resource, null, outHandle.Handle);
+    }
+
     public void BeginFrame()
     {
+        var frameData = _FrameData[FrameDataIndex];
 
+        var spinner = new SpinWait();
+
+        // Wait to ensure we have finished before we reset an in-use frame.
+        while (frameData.Fence.CompletedValue < frameData.SubmissionFenceValue)
+        {
+            spinner.SpinOnce();
+        }
+
+        frameData.SrvGpuDescriptorAllocator.Reset();
     }
 
     public void EndFrame()
     {
+        var frameData = _FrameData[FrameDataIndex];
 
+        // Add fence to know this frame's data has been used.
+        frameData.SubmissionFenceValue = DirectQueue.SubmissionFenceValue;
+        frameData.Fence = DirectQueue.SubmissionFence;
+
+        FrameCount++;
     }
 
     private void DebugCallback(MessageCategory category, MessageSeverity severity, MessageId id, string description)

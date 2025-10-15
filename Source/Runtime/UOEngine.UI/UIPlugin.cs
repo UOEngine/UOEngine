@@ -4,17 +4,18 @@ using ImGuiNET;
 using UOEngine.Plugin;
 using UOEngine.Runtime;
 using UOEngine.Runtime.Renderer;
+using UOEngine.Runtime.RHI;
 
 namespace UOEngine.UI;
 
 public class UIPlugin : IPlugin
 {
     private readonly Renderer _renderer;
-    private readonly RenderFactory _renderFactory;
+    private readonly IRenderResourceFactory _renderFactory;
 
-    private readonly List<UOETexture> _textures = [];
+    private readonly List<IRenderTexture> _textures = [];
 
-    public UIPlugin(Renderer renderer, RenderFactory renderFactory, ApplicationLoop applicationLoop)
+    public UIPlugin(Renderer renderer, IRenderResourceFactory renderFactory, ApplicationLoop applicationLoop)
     {
         _renderer = renderer;
         _renderFactory = renderFactory;
@@ -62,7 +63,7 @@ public class UIPlugin : IPlugin
 
         var tex2d = _renderFactory.CreateTexture(width, height);
 
-        tex2d.SetDataPointer(pixelData, width * height * bytesPerPixel);
+        //tex2d.SetDataPointer((UIntPtr)pixelData, width * height * bytesPerPixel);
 
         _textures.Add(tex2d);
 

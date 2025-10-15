@@ -1,15 +1,13 @@
-﻿using System.Diagnostics;
-using System.Reflection;
+﻿using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using UOEngine.Plugin;
 using UOEngine.Runtime.Platform;
 
 namespace UOEngine.Runtime;
 
-public class Application: Game
+public class Application: IDisposable
 {
     public static string? ExePath => Assembly.GetEntryAssembly().Location;
 
@@ -22,9 +20,11 @@ public class Application: Game
     private ApplicationLoop _applicationLoop = null!;
     private Renderer.Renderer _renderer = null!; 
 
-    private GraphicsDeviceManager _graphicsDeviceManager = null!;
-
     private CameraEntity _camera = null!;
+
+    private Window _window = new();
+
+    private bool _runApplication = true;
 
     public void RegisterPlugin<T>() where T : IPlugin
     {
@@ -33,20 +33,36 @@ public class Application: Game
 
     public void Start()
     {
-        //_graphicsDeviceManager = new GraphicsDeviceManager(this);
+        Initialize();
 
+        GameTime gameTime = new GameTime();
 
-        Run();
+        while(_runApplication)
+        {
+
+            Update(gameTime);
+            BeginDraw();
+            EndDraw();
+        }
+
+        _window.Dispose();
+
+        var plugins = _serviceProvider.GetServices<IPlugin>();
+
+        foreach (var plugin in plugins)
+        {
+            plugin.Shutdown();
+        }
     }
 
-    protected override void Initialize()
+    void Initialize()
     {
-        Window.AllowUserResizing = true;
+        _window.Startup();
 
         _services.AddSingleton<EntityManager>();
         _services.AddSingleton<ApplicationLoop>();
         _services.AddSingleton<Input>();
-        _services.AddSingleton<IWindow>(new Window(Window));
+        _services.AddSingleton<IWindow>(_window);
 
         //_services.AddSingleton(typeof(GraphicsDevice), _graphicsDeviceManager.GraphicsDevice);
 
@@ -62,49 +78,41 @@ public class Application: Game
 
         foreach (var plugin in plugins)
         {
-            Services.AddService(plugin.GetType(), plugin);
-
             plugin.Startup();
         }
 
         var entityManager = _serviceProvider.GetRequiredService<EntityManager>();
 
         _camera = entityManager.NewEntity<CameraEntity>();
-
-        base.Initialize();
     }
 
-    protected override void Update(GameTime gameTime)
+    private void Update(GameTime gameTime)
     {
-        base.Update(gameTime);
+        if(_window.PollEvents())
+        {
+            _runApplication = false;
+
+            return;
+        }
 
         _applicationLoop.Update(gameTime.ElapsedGameTime);
     }
 
-    protected override bool BeginDraw()
+    private bool BeginDraw()
     {
-        if( base.BeginDraw() == false)
-        {
-            return false;
-        }
-
-        var bounds = Window.ClientBounds;
-
         //_camera.SetProjection(bounds.Width, bounds.Height, -1.0f, 1.0f);
         _camera.SetProjection(1, 1, -1.0f, 1.0f);
 
-        _renderer.RenderContext.View = _camera.Projection * _camera.View;
+        //_renderer.RenderContext.View = _camera.Projection * _camera.View;
 
         _renderer.RaiseFrameBegin();
 
         return true;
     }
 
-    protected override void EndDraw()
+    private void EndDraw()
     {
         _renderer.RaiseFrameEnd();
-
-        base.EndDraw();
     }
 
     private void LoadPlugins(string directory, bool recurse = false)
@@ -161,5 +169,8 @@ public class Application: Game
                 _services.AddSingleton(typeof(IPlugin), type);
             }
         }
+    }
+    public void Dispose()
+    {
     }
 }

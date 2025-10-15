@@ -6,9 +6,4 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\ThirdParty\FNA\FNA.Core.csproj" />
-    <ProjectReference Include="..\UOEngine.Plugin\UOEngine.Plugin.csproj" />
-  </ItemGroup>
-
 </Project>

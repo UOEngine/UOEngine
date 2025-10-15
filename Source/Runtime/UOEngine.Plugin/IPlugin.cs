@@ -7,4 +7,5 @@ public interface IPlugin
     static void ConfigureServices(IServiceCollection services){}
 
     void Startup(){}
+    void Shutdown() {}
 }

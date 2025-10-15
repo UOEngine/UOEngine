@@ -3,14 +3,14 @@ using UOEngine.Plugin;
 using UOEngine.Runtime;
 using UOEngine.Runtime.Renderer;
 using UOEngine.Runtime.Renderer.Resources;
+using UOEngine.Runtime.RHI;
 using UOEngine.Ultima.UOAssets;
-
 namespace UOEngine.Editor;
 
 internal class EditorPlugin : IPlugin
 {
     private readonly EntityManager _entityManager;
-    private readonly RenderFactory _renderFactory;
+    private readonly IRenderResourceFactory _renderFactory;
     private readonly Renderer _renderer;
 
     private CameraEntity? _camera;
@@ -22,7 +22,7 @@ internal class EditorPlugin : IPlugin
     {
         _entityManager = serviceProvider.GetRequiredService<EntityManager>();
         _assetLoader = serviceProvider.GetRequiredService<UOAssetLoader>();
-        _renderFactory = serviceProvider.GetRequiredService<RenderFactory>();
+        _renderFactory = serviceProvider.GetRequiredService<IRenderResourceFactory>();
         _renderer = serviceProvider.GetRequiredService<Renderer>();
 
         _renderer.OnFrameBegin += OnFrameBegin;
