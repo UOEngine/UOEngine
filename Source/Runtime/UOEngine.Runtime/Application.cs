@@ -87,7 +87,6 @@ public class Application: IDisposable
 
     private void InitialiseInternal()
     {
-        var as1 = AppDomain.CurrentDomain.GetAssemblies();
         _window.Startup();
 
         _services.AddSingleton<EntityManager>();

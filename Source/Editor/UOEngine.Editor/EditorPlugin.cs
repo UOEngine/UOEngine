@@ -1,31 +1,33 @@
-﻿//using Microsoft.Extensions.DependencyInjection;
-//using UOEngine.Plugin;
-//using UOEngine.Runtime;
+﻿//using System.Numerics;
+//using Microsoft.Extensions.DependencyInjection;
+//using UOEngine.Runtime.Core;
+//using UOEngine.Runtime.Plugin;
 //using UOEngine.Runtime.Renderer;
-//using UOEngine.Runtime.Renderer.Resources;
 //using UOEngine.Runtime.RHI;
+//using UOEngine.Runtime.RHI.Resources;
 //using UOEngine.Ultima.UOAssets;
+
 //namespace UOEngine.Editor;
 
 //internal class EditorPlugin : IPlugin
 //{
 //    private readonly EntityManager _entityManager;
 //    private readonly IRenderResourceFactory _renderFactory;
-//    private readonly Renderer _renderer;
+//    private readonly RenderSystem _rendererSystem;
 
 //    private CameraEntity? _camera;
 //    private readonly UOAssetLoader _assetLoader;
 //    private MapEntity _map = null!;
 //    private UOETexture _testTexture = null!;
 //    private ShaderInstance _shaderInstance;
-//    public EditorPlugin(IServiceProvider serviceProvider) 
+//    public EditorPlugin(IServiceProvider serviceProvider)
 //    {
 //        _entityManager = serviceProvider.GetRequiredService<EntityManager>();
 //        _assetLoader = serviceProvider.GetRequiredService<UOAssetLoader>();
 //        _renderFactory = serviceProvider.GetRequiredService<IRenderResourceFactory>();
-//        _renderer = serviceProvider.GetRequiredService<Renderer>();
+//        _rendererSystem = serviceProvider.GetRequiredService<RenderSystem>();
 
-//        _renderer.OnFrameBegin += OnFrameBegin;
+//        _rendererSystem.OnFrameBegin += OnFrameBegin;
 
 //        //_renderFactory.CreateShaderInstance(null);
 
@@ -51,10 +53,24 @@
 
 //    }
 
-//    public void OnFrameBegin(RenderContext renderContext)
+//    public void OnFrameBegin(IRenderContext renderContext)
 //    {
-//        renderContext.SetTexture(_testTexture);
-//        renderContext.Draw();
+//        Matrix4x4 projection = Matrix4x4.Identity;
+
+//        var mvp = new ModelViewProjection
+//        {
+//            Projection = Matrix4x4.Identity,
+//            View = Matrix4x4.CreateTranslation(-0.5f, -0.5f, 0.0f)
+//        };
+
+//        _shaderInstance.SetData(_projectionBinding, mvp);
+//        _shaderInstance.SetTexture(_textureBindingHandle, _checkerboardTexture);
+//        _shaderInstance.SetSampler(_samplerBindingHandle, new RhiSampler { Filter = SamplerFilter.Point });
+
+//        context.GraphicsPipline = _pipeline;
+//        context.ShaderInstance = _shaderInstance;
+
+//        context.DrawIndexedPrimitives(1);
 //    }
 
 //    public static void ConfigureServices(IServiceCollection services)

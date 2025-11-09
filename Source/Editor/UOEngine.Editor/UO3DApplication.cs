@@ -1,12 +1,16 @@
 ﻿using System.Numerics;
+using Microsoft.Extensions.DependencyInjection;
 
 using UOEngine.Runtime.Core;
+using UOEngine.Runtime.Plugin;
+using UOEngine.Runtime.Renderer;
 using UOEngine.Runtime.RHI;
 using UOEngine.Runtime.RHI.Resources;
+using UOEngine.Ultima.UOAssets;
 
 namespace UO3D;
 
-internal class UO3DApplication: Application
+internal class UO3DApplication: IPlugin
 {
     private RhiShaderResource _shaderResource = null!;
     private ShaderInstance _shaderInstance = null!;
@@ -17,20 +21,37 @@ internal class UO3DApplication: Application
     private IRenderTexture _greenTexture = null!;
     private IRenderTexture _checkerboardTexture = null!;
 
+    private IRenderTexture _waterTexture = null!;
+
     private ShaderBindingHandle _textureBindingHandle = ShaderBindingHandle.Invalid;
     private ShaderBindingHandle _samplerBindingHandle = ShaderBindingHandle.Invalid;
 
-    protected override void Initialise()
+    private readonly EntityManager _entityManager;
+    private readonly RenderSystem _rendererSystem;
+    private readonly IRenderResourceFactory _renderFactory;
+    private CameraEntity? _camera;
+    private readonly UOAssetLoader _assetLoader;
+    //private MapEntity _map = null!;
+
+    public UO3DApplication(IServiceProvider serviceProvider)
     {
-        var renderFactory = GetService<IRenderResourceFactory>();
+        _entityManager = serviceProvider.GetRequiredService<EntityManager>();
+        _assetLoader = serviceProvider.GetRequiredService<UOAssetLoader>();
+        _renderFactory = serviceProvider.GetRequiredService<IRenderResourceFactory>();
+        _rendererSystem = serviceProvider.GetRequiredService<RenderSystem>();
+    }
 
-        string vertexShader = @"D:\UODev\Work\UO3D\Source\Shaders\TexturedQuadVS.hlsl";
-        string pixelShader = @"D:\UODev\Work\UO3D\Source\Shaders\TexturedQuadPS.hlsl";
+    public void PostStartup()
+    {
+        _rendererSystem.OnFrameBegin += OnFrameBegin;
 
-        _shaderResource = renderFactory.NewShaderResource();
+        string vertexShader = @"D:\UODev\UOEngineGithub\Source\Shaders\TexturedQuadVS.hlsl";
+        string pixelShader = @"D:\UODev\UOEngineGithub\Source\Shaders\TexturedQuadPS.hlsl";
+
+        _shaderResource = _renderFactory.NewShaderResource();
         _shaderResource.Load(vertexShader, pixelShader);
 
-        _shaderInstance = renderFactory.NewShaderInstance(_shaderResource);
+        _shaderInstance = _renderFactory.NewShaderInstance(_shaderResource);
 
         _textureBindingHandle = _shaderInstance.GetBindingHandleTexturePixel("Texture");
         _samplerBindingHandle = _shaderInstance.GetBindingHandleSamplerPixel("Sampler");
@@ -43,14 +64,19 @@ internal class UO3DApplication: Application
 
         _projectionBinding = _shaderInstance.GetBindingHandleConstantVertex("PerViewData");
 
-        _pipeline = renderFactory.CreateGraphicsPipeline(new GraphicsPipelineDescription
+        _pipeline = _renderFactory.CreateGraphicsPipeline(new GraphicsPipelineDescription
         {
             Name = "TestPipeline",
             ShaderResource = _shaderResource
         });
     }
 
-    protected override void BeginDraw(IRenderContext context)
+    public static void ConfigureServices(IServiceCollection services)
+    {
+        services.AddSingleton<UOAssetLoader>();
+    }
+
+    public void OnFrameBegin(IRenderContext context)
     {
         Matrix4x4 projection = Matrix4x4.Identity;
 
@@ -72,9 +98,7 @@ internal class UO3DApplication: Application
 
     private IRenderTexture CreateTestTexture(uint colour, string name)
     {
-        var renderFactory = GetService<IRenderResourceFactory>();
-
-        var texture = renderFactory.CreateTexture(new RenderTextureDescription
+        var texture = _renderFactory.CreateTexture(new RenderTextureDescription
         {
             Width = 22,
             Height = 22,
@@ -93,9 +117,7 @@ internal class UO3DApplication: Application
 
     private IRenderTexture CreateCheckerboardTexture(uint width, uint height, in Colour colour, string name)
     {
-        var renderFactory = GetService<IRenderResourceFactory>();
-
-        var texture = renderFactory.CreateTexture(new RenderTextureDescription
+        var texture = _renderFactory.CreateTexture(new RenderTextureDescription
         {
             Width = width,
             Height = height,
