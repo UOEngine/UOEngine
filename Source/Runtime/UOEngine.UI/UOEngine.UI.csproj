@@ -5,10 +5,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <Platforms>x64</Platforms>
+	  <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\ThirdParty\ImGui.NET\src\ImGui.NET\ImGui.NET.csproj" />
     <ProjectReference Include="..\UOEngine.Plugin\UOEngine.Plugin.csproj" />
     <ProjectReference Include="..\UOEngine.Renderer\UOEngine.Runtime.Renderer.csproj" />
     <ProjectReference Include="..\UOEngine.Runtime.RHI\UOEngine.Runtime.RHI.csproj" />
@@ -17,6 +18,10 @@
 
     <ItemGroup>
     	<None Include="$(UoEngineThirdParty)ImGui.NET\deps\cimgui\win-x64\cimgui.dll" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Hexa.NET.ImGui" Version="2.2.9" />
     </ItemGroup>
 
 </Project>

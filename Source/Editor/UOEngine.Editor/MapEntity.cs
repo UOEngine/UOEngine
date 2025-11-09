@@ -1,4 +1,4 @@
-﻿using UOEngine.Runtime;
+﻿using UOEngine.Runtime.Core;
 using UOEngine.Ultima.UOAssets;
 
 namespace UOEngine.Editor;
@@ -58,7 +58,7 @@ internal class MapEntity: IEntity
         return index;
     }
 
-    public void Update(TimeSpan time)
+    public void Update(float time)
     {
     }
 }

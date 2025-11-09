@@ -8,6 +8,7 @@
     <!--<PublishAot>true</PublishAot>-->
     <InvariantGlobalization>true</InvariantGlobalization>
     <PlatformTarget>AnyCPU</PlatformTarget>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>

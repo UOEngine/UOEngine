@@ -1,6 +1,6 @@
-﻿namespace UOEngine.Runtime;
+﻿namespace UOEngine.Runtime.Core;
 
 public interface IEntity
 {
-    void Update(TimeSpan time);
+    void Update(float time);
 }

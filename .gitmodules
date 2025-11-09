@@ -10,3 +10,6 @@
 [submodule "ThirdParty/ImGui.NET"]
 	path = ThirdParty/ImGui.NET
 	url = https://github.com/ImGuiNET/ImGui.NET.git
+[submodule "ThirdParty/SDL3-CS"]
+	path = ThirdParty/SDL3-CS
+	url = https://github.com/flibitijibibo/SDL3-CS.git

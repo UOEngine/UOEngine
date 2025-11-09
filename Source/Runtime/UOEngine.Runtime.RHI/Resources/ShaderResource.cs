@@ -1,0 +1,95 @@
+﻿using System.Diagnostics;
+
+namespace UOEngine.Runtime.RHI.Resources;
+
+public enum RhiShaderInputType
+{
+    Buffer,
+    Texture,
+    Sampler,
+    Constant,
+    Count,
+    Invalid
+}
+
+[DebuggerDisplay("{Name}")]
+public struct ShaderVariable
+{
+    public string Name;
+    public uint Size;
+    public uint Offset;
+}
+
+[DebuggerDisplay("{Name}")]
+public readonly struct ShaderParameter
+{
+    public readonly string Name { get; init; }
+    public readonly uint StartOffset { get; init; }
+    public readonly uint Size { get; init; }
+    public readonly RhiShaderInputType InputType { get; init; }
+    public readonly uint SlotIndex { get; init; }
+    public readonly ShaderVariable[] Variables { get; init; }
+}
+
+[DebuggerDisplay("{SemanticName}, {SemanticIndex}")]
+public struct ShaderStreamBinding
+{
+    public string SemanticName;
+    public uint SemanticIndex;
+}
+
+public readonly struct ShaderBindingHandle
+{
+    public readonly ushort Handle;
+    public readonly ShaderProgramType ProgramType;
+    public const ushort InvalidHandle = 0xFF;
+    public static readonly ShaderBindingHandle Invalid = new(InvalidHandle, ShaderProgramType.Invalid);
+
+    public bool IsValid => Handle != InvalidHandle;
+
+    public ShaderBindingHandle(ushort handle, ShaderProgramType shaderProgramType)
+    {
+        ProgramType = shaderProgramType;
+        Handle = handle;
+    }
+}
+
+public struct ShaderProgramBindings
+{
+    public ShaderParameter[] Parameters;
+}
+
+public abstract class RhiShaderResource
+{
+    public ShaderProgramBindings[] ProgramBindings { get; protected set; } = new ShaderProgramBindings[ShaderProgramType.Count.ToInt()];
+
+    protected uint[] _numTextures = new uint[(int)ShaderProgramType.Count];
+    protected uint[] _numSamplers = new uint[(int)ShaderProgramType.Count];
+
+    public abstract void Load(string vertexShader, string fragmentShader);
+
+    public ShaderBindingHandle GetBindingHandle(ShaderProgramType programType, RhiShaderInputType inputType, string name)
+    {
+        for (int i = 0; i < ProgramBindings[(int)programType].Parameters.Length; i++)
+        {
+            ref var param = ref ProgramBindings[(int)programType].Parameters[i];
+
+            if (param.Name == name && param.InputType == inputType)
+            {
+                return new ShaderBindingHandle((ushort)i, programType);
+            }
+        }
+
+        throw new UnreachableException("Could not find shader binding handle in vertex shader.");
+    }
+
+    public uint GetNumTextures(ShaderProgramType programType)
+    {
+        return _numTextures[(int)programType];
+    }
+
+    public uint GetNumSamplers(ShaderProgramType programType)
+    {
+        return _numSamplers[(int)programType];
+    }
+}

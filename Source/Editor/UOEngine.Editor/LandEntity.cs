@@ -1,4 +1,4 @@
-﻿using UOEngine.Runtime;
+﻿using UOEngine.Runtime.Core;
 using UOEngine.Ultima.UOAssets;
 
 namespace UOEngine.Editor;
@@ -32,7 +32,7 @@ internal class LandEntity: IEntity
         //}
     }
 
-    public void Update(TimeSpan time)
+    public void Update(float time)
     {
     }
 }

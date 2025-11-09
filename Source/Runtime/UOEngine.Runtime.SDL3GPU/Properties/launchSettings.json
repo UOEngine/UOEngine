@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "UOEngine.Runtime.SDL3GPU": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

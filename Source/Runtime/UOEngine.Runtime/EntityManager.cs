@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
-namespace UOEngine.Runtime;
+namespace UOEngine.Runtime.Core;
 
 public class EntityManager
 {
@@ -28,7 +28,7 @@ public class EntityManager
         return newEntity;
     }
 
-    internal void Update(TimeSpan time)
+    internal void Update(float time)
     {
         foreach (var entity in _entities)
         {

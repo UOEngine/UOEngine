@@ -4,11 +4,12 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\ThirdParty\FNA\FNA.Core.csproj" />
     <ProjectReference Include="..\UOEngine.Plugin\UOEngine.Plugin.csproj" />
+    <ProjectReference Include="..\UOEngine.Runtime.RHI\UOEngine.Runtime.RHI.csproj" />
   </ItemGroup>
 
 </Project>

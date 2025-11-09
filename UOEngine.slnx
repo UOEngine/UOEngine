@@ -1,38 +1,79 @@
 <Solution>
+  <Configurations>
+    <Platform Name="x64" />
+  </Configurations>
   <Folder Name="/Editor/">
     <File Path="Source/Directory.Build.Props" />
-    <Project Path="Source/Editor/UOEngine.Client/UOEngine.Client.csproj" Id="1ee3024a-6900-451f-9fb6-22773e28aa00" />
-    <Project Path="Source/Editor/UOEngine.Editor/UOEngine.Editor.csproj">
-      <BuildType Project="Debug" />
+    <Project Path="Source/Editor/UOEngine.Client/UOEngine.Client.csproj" Id="1ee3024a-6900-451f-9fb6-22773e28aa00">
+      <Platform Project="x64" />
     </Project>
-    <Project Path="Source/Editor/UOEngine.Server/UOEngine.Server.csproj" Id="87308a0e-20b3-452f-8616-e7e22031f470" />
+    <Project Path="Source/Editor/UOEngine.Editor/UOEngine.Editor.csproj">
+      <Platform Project="x64" />
+    </Project>
+    <Project Path="Source/Editor/UOEngine.Server/UOEngine.Server.csproj" Id="87308a0e-20b3-452f-8616-e7e22031f470">
+      <Platform Project="x64" />
+    </Project>
   </Folder>
   <Folder Name="/Plugins/">
-    <Project Path="Source/Plugins/UOEngine.CUO/UOEngine.CUO.csproj" Id="7138a544-7684-4df9-b310-8ab35a8a9f24" />
+    <Project Path="Source/Plugins/UOEngine.CUO/UOEngine.CUO.csproj" Id="7138a544-7684-4df9-b310-8ab35a8a9f24">
+      <Platform Project="x64" />
+    </Project>
   </Folder>
   <Folder Name="/Runtime/">
-    <Project Path="Source/Runtime/UOEngine.Plugin/UOEngine.Plugin.csproj" Id="29a147bb-dddb-4de6-a719-49ebcee908dd" />
-    <Project Path="Source/Runtime/UOEngine.Renderer/UOEngine.Runtime.Renderer.csproj" Id="32715c80-999a-4e18-93a2-59a8c4addd62" />
-    <Project Path="Source/Runtime/UOEngine.Runtime.D3D12/UOEngine.Runtime.D3D12.csproj" Id="52931984-095a-4fa4-a764-42735f2c5baa" />
-    <Project Path="Source/Runtime/UOEngine.Runtime.Platform/UOEngine.Runtime.Platform.csproj" Id="31a13229-81f6-4884-b261-802f1c405e42" />
-    <Project Path="Source/Runtime/UOEngine.Runtime.RHI/UOEngine.Runtime.RHI.csproj" Id="d3fc4504-cc7a-403e-a656-e6241be6cb89" />
-    <Project Path="Source/Runtime/UOEngine.Runtime/UOEngine.Runtime.csproj" Id="cf99cafa-d9ec-4dcf-a635-947b2299e8df" />
-    <Project Path="Source/Runtime/UOEngine.UI/UOEngine.UI.csproj" Id="a4500abb-2b74-4bd6-bdc2-423bb8a11d48" />
+    <Project Path="Source/Runtime/UOEngine.Plugin/UOEngine.Plugin.csproj" Id="29a147bb-dddb-4de6-a719-49ebcee908dd">
+      <Platform Project="x64" />
+    </Project>
+    <Project Path="Source/Runtime/UOEngine.Renderer/UOEngine.Runtime.Renderer.csproj" Id="32715c80-999a-4e18-93a2-59a8c4addd62">
+      <Platform Project="x64" />
+    </Project>
+    <Project Path="Source/Runtime/UOEngine.Runtime.Platform/UOEngine.Runtime.Platform.csproj" Id="31a13229-81f6-4884-b261-802f1c405e42">
+      <Platform Project="x64" />
+    </Project>
+    <Project Path="Source/Runtime/UOEngine.Runtime.RHI/UOEngine.Runtime.RHI.csproj" Id="d3fc4504-cc7a-403e-a656-e6241be6cb89">
+      <Platform Project="x64" />
+    </Project>
+    <Project Path="Source/Runtime/UOEngine.Runtime.SDL3GPU/UOEngine.Runtime.SDL3GPU.csproj">
+      <Platform Project="x64" />
+    </Project>
+    <Project Path="Source/Runtime/UOEngine.Runtime/UOEngine.Runtime.csproj" Id="cf99cafa-d9ec-4dcf-a635-947b2299e8df">
+      <Platform Project="x64" />
+    </Project>
+    <Project Path="Source/Runtime/UOEngine.UI/UOEngine.UI.csproj" Id="a4500abb-2b74-4bd6-bdc2-423bb8a11d48">
+      <Platform Project="x64" />
+    </Project>
   </Folder>
   <Folder Name="/Shaders/" />
   <Folder Name="/ThirdParty/">
-    <Project Path="ThirdParty/FNA/FNA.Core.csproj" />
-    <Project Path="ThirdParty/ImGui.NET/src/ImGui.NET/ImGui.NET.csproj" />
+    <Project Path="ThirdParty/FNA/FNA.Core.csproj">
+      <Platform Project="x64" />
+    </Project>
+    <Project Path="ThirdParty/SDL3-CS/SDL3/SDL3.Core.csproj" />
   </Folder>
   <Folder Name="/ThirdParty/CUO/">
-    <Project Path="ThirdParty/ClassicUO/external/FileEmbed/FileEmbed/FileEmbed.csproj" />
-    <Project Path="ThirdParty/ClassicUO/external/FNA/FNA.Core.csproj" />
-    <Project Path="ThirdParty/ClassicUO/external/MP3Sharp/MP3Sharp/MP3Sharp.csproj" />
-    <Project Path="ThirdParty/ClassicUO/src/ClassicUO.Assets/ClassicUO.Assets.csproj" />
-    <Project Path="ThirdParty/ClassicUO/src/ClassicUO.Client/ClassicUO.Client.csproj" />
-    <Project Path="ThirdParty/ClassicUO/src/ClassicUO.IO/ClassicUO.IO.csproj" />
-    <Project Path="ThirdParty/ClassicUO/src/ClassicUO.Renderer/ClassicUO.Renderer.csproj" />
-    <Project Path="ThirdParty/ClassicUO/src/ClassicUO.Utility/ClassicUO.Utility.csproj" />
+    <Project Path="ThirdParty/ClassicUO/external/FileEmbed/FileEmbed/FileEmbed.csproj">
+      <Platform Project="x64" />
+    </Project>
+    <Project Path="ThirdParty/ClassicUO/external/FNA/FNA.Core.csproj">
+      <Platform Project="x64" />
+    </Project>
+    <Project Path="ThirdParty/ClassicUO/external/MP3Sharp/MP3Sharp/MP3Sharp.csproj">
+      <Platform Project="x64" />
+    </Project>
+    <Project Path="ThirdParty/ClassicUO/src/ClassicUO.Assets/ClassicUO.Assets.csproj">
+      <Platform Project="x64" />
+    </Project>
+    <Project Path="ThirdParty/ClassicUO/src/ClassicUO.Client/ClassicUO.Client.csproj">
+      <Platform Project="x64" />
+    </Project>
+    <Project Path="ThirdParty/ClassicUO/src/ClassicUO.IO/ClassicUO.IO.csproj">
+      <Platform Project="x64" />
+    </Project>
+    <Project Path="ThirdParty/ClassicUO/src/ClassicUO.Renderer/ClassicUO.Renderer.csproj">
+      <Platform Project="x64" />
+    </Project>
+    <Project Path="ThirdParty/ClassicUO/src/ClassicUO.Utility/ClassicUO.Utility.csproj">
+      <Platform Project="x64" />
+    </Project>
   </Folder>
   <Folder Name="/ThirdParty/ServUO/">
     <Project Path="ThirdParty/ServUO/Scripts/Scripts.csproj">

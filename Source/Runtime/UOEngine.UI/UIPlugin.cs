@@ -1,30 +1,30 @@
-﻿using System.Runtime.InteropServices;
-using ImGuiNET;
+﻿using Hexa.NET.ImGui;
 
-using UOEngine.Plugin;
-using UOEngine.Runtime;
+using UOEngine.Runtime.Core;
+using UOEngine.Runtime.Plugin;
 using UOEngine.Runtime.Renderer;
 using UOEngine.Runtime.RHI;
+using UOEngine.Runtime.RHI.Resources;
 
-namespace UOEngine.UI;
+namespace UOEngine.Runtime.UI;
 
 public class UIPlugin : IPlugin
 {
-    private readonly Renderer _renderer;
+    private readonly RenderSystem _rendererSystem;
     private readonly IRenderResourceFactory _renderFactory;
 
     private readonly List<IRenderTexture> _textures = [];
 
-    public UIPlugin(Renderer renderer, IRenderResourceFactory renderFactory, ApplicationLoop applicationLoop)
+    public UIPlugin(RenderSystem renderer, IRenderResourceFactory renderFactory, ApplicationLoop applicationLoop)
     {
-        _renderer = renderer;
+        _rendererSystem = renderer;
         _renderFactory = renderFactory;
 
-        _renderer.OnFrameBegin += OnFrameBegin;
+        //_rendererSystem.OnFrameBegin += OnFrameBegin;
 
-        _renderer.OnFrameEnd += OnFrameEnd;
+        //_rendererSystem.OnFrameEnd += OnFrameEnd;
 
-        applicationLoop.OnUpdate += Update;
+        //applicationLoop.OnUpdate += Update;
     }
 
     public void Startup()
@@ -33,10 +33,10 @@ public class UIPlugin : IPlugin
 
         ImGui.SetCurrentContext(context);
 
-        RebuildFontAtlas();
+        //RebuildFontAtlas();
     }
 
-    private void Update(TimeSpan time)
+    private void Update(float time)
     {
         var io = ImGui.GetIO();
 
@@ -44,31 +44,45 @@ public class UIPlugin : IPlugin
         io.DisplayFramebufferScale = new System.Numerics.Vector2(1f, 1f);
     }
 
-    private void OnFrameBegin(RenderContext renderContext)
+    private void OnFrameBegin(IRenderContext renderContext)
     {
         ImGui.NewFrame();
     }
 
-    private void OnFrameEnd(RenderContext renderContext)
+    private void OnFrameEnd(IRenderContext renderContext)
     {
         ImGui.EndFrame();
         ImGui.Render();
+
+        ImDrawDataPtr drawData = ImGui.GetDrawData();
+
+        renderContext.BeginRenderPass(new RenderPassInfo
+        {
+            Name = "UI",
+            RenderTarget = _rendererSystem.UIOverlay
+        });
+
+        for(int i = 0; i < drawData.CmdListsCount; i++)
+        {
+            // Build vertex buffers
+        }
+
+        renderContext.EndRenderPass();
     }
 
     public unsafe void RebuildFontAtlas()
     {
         var io = ImGui.GetIO();
 
-        io.Fonts.GetTexDataAsRGBA32(out IntPtr pixelData, out int width, out int height, out int bytesPerPixel);
+        var texData = io.Fonts.TexData;
 
-        var tex2d = _renderFactory.CreateTexture(width, height);
+        //var tex2d = _renderFactory.CreateTexture((uint)texData.Width, (uint)texData.Height);
 
         //tex2d.SetDataPointer((UIntPtr)pixelData, width * height * bytesPerPixel);
 
-        _textures.Add(tex2d);
+        //_textures.Add(tex2d);
 
         // Let ImGui know where to find the texture
-        io.Fonts.SetTexID(0);
         io.Fonts.ClearTexData(); // Clears CPU side texture data
     }
 }

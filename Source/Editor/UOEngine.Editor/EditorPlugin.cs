@@ -1,64 +1,64 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using UOEngine.Plugin;
-using UOEngine.Runtime;
-using UOEngine.Runtime.Renderer;
-using UOEngine.Runtime.Renderer.Resources;
-using UOEngine.Runtime.RHI;
-using UOEngine.Ultima.UOAssets;
-namespace UOEngine.Editor;
+﻿//using Microsoft.Extensions.DependencyInjection;
+//using UOEngine.Plugin;
+//using UOEngine.Runtime;
+//using UOEngine.Runtime.Renderer;
+//using UOEngine.Runtime.Renderer.Resources;
+//using UOEngine.Runtime.RHI;
+//using UOEngine.Ultima.UOAssets;
+//namespace UOEngine.Editor;
 
-internal class EditorPlugin : IPlugin
-{
-    private readonly EntityManager _entityManager;
-    private readonly IRenderResourceFactory _renderFactory;
-    private readonly Renderer _renderer;
+//internal class EditorPlugin : IPlugin
+//{
+//    private readonly EntityManager _entityManager;
+//    private readonly IRenderResourceFactory _renderFactory;
+//    private readonly Renderer _renderer;
 
-    private CameraEntity? _camera;
-    private readonly UOAssetLoader _assetLoader;
-    private MapEntity _map = null!;
-    private UOETexture _testTexture = null!;
-    private ShaderInstance _shaderInstance;
-    public EditorPlugin(IServiceProvider serviceProvider) 
-    {
-        _entityManager = serviceProvider.GetRequiredService<EntityManager>();
-        _assetLoader = serviceProvider.GetRequiredService<UOAssetLoader>();
-        _renderFactory = serviceProvider.GetRequiredService<IRenderResourceFactory>();
-        _renderer = serviceProvider.GetRequiredService<Renderer>();
+//    private CameraEntity? _camera;
+//    private readonly UOAssetLoader _assetLoader;
+//    private MapEntity _map = null!;
+//    private UOETexture _testTexture = null!;
+//    private ShaderInstance _shaderInstance;
+//    public EditorPlugin(IServiceProvider serviceProvider) 
+//    {
+//        _entityManager = serviceProvider.GetRequiredService<EntityManager>();
+//        _assetLoader = serviceProvider.GetRequiredService<UOAssetLoader>();
+//        _renderFactory = serviceProvider.GetRequiredService<IRenderResourceFactory>();
+//        _renderer = serviceProvider.GetRequiredService<Renderer>();
 
-        _renderer.OnFrameBegin += OnFrameBegin;
+//        _renderer.OnFrameBegin += OnFrameBegin;
 
-        //_renderFactory.CreateShaderInstance(null);
+//        //_renderFactory.CreateShaderInstance(null);
 
-        //serviceProvider.GetRequiredService<ApplicationLoop>().OnUpdate += Update;
-    }
+//        //serviceProvider.GetRequiredService<ApplicationLoop>().OnUpdate += Update;
+//    }
 
-    public void Startup()
-    {
-        //_assetLoader.LoadAllFiles("D:\\Program Files (x86)\\Electronic Arts\\Ultima Online Classic");
+//    public void Startup()
+//    {
+//        //_assetLoader.LoadAllFiles("D:\\Program Files (x86)\\Electronic Arts\\Ultima Online Classic");
 
-        //_camera = _entityManager.NewEntity<CameraEntity>();
-        //_map = _entityManager.NewEntity<MapEntity>();
+//        //_camera = _entityManager.NewEntity<CameraEntity>();
+//        //_map = _entityManager.NewEntity<MapEntity>();
 
-        //_map.Load(_assetLoader.Maps[0]);
+//        //_map.Load(_assetLoader.Maps[0]);
 
-        //var water = _map.GetChunk(0, 0).Entities[0, 0];
+//        //var water = _map.GetChunk(0, 0).Entities[0, 0];
 
-        //var bitmap = _assetLoader.GetLand(water.GraphicId);
+//        //var bitmap = _assetLoader.GetLand(water.GraphicId);
 
-        //_testTexture = _renderFactory.CreateTexture((int)bitmap.Width, (int)bitmap.Height);
+//        //_testTexture = _renderFactory.CreateTexture((int)bitmap.Width, (int)bitmap.Height);
 
-        //_testTexture.SetTexels(bitmap.Texels.ToArray());
+//        //_testTexture.SetTexels(bitmap.Texels.ToArray());
 
-    }
+//    }
 
-    public void OnFrameBegin(RenderContext renderContext)
-    {
-        renderContext.SetTexture(_testTexture);
-        renderContext.Draw();
-    }
+//    public void OnFrameBegin(RenderContext renderContext)
+//    {
+//        renderContext.SetTexture(_testTexture);
+//        renderContext.Draw();
+//    }
 
-    public static void ConfigureServices(IServiceCollection services)
-    {
-        services.AddSingleton<UOAssetLoader>();
-    }
-}
+//    public static void ConfigureServices(IServiceCollection services)
+//    {
+//        services.AddSingleton<UOAssetLoader>();
+//    }
+//}

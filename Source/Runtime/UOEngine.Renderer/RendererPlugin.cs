@@ -1,16 +1,25 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using UOEngine.Plugin;
+
+using UOEngine.Runtime.Plugin;
 
 namespace UOEngine.Runtime.Renderer;
 
 public class RendererPlugin : IPlugin
 {
-    public static void ConfigureServices(IServiceCollection services)
+    private readonly RenderSystem _renderSystem;
+
+    public RendererPlugin(RenderSystem renderSystem)
     {
-        services.AddSingleton<Renderer>();
+        _renderSystem = renderSystem;
     }
 
-    public void Startup(IServiceProvider serviceProvider)
+    public static void ConfigureServices(IServiceCollection services)
     {
+        services.AddSingleton<RenderSystem>();
+    }
+
+    public void PostStartup()
+    {
+        _renderSystem.Startup();
     }
 }

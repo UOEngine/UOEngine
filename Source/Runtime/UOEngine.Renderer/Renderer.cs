@@ -1,30 +1,74 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+﻿using UOEngine.Runtime.RHI;
+using UOEngine.Runtime.RHI.Resources;
 
 namespace UOEngine.Runtime.Renderer;
 
-public class Renderer
+public class RenderSystem
 {
-    public event Action<RenderContext>? OnFrameBegin;
-    public event Action<RenderContext>? OnFrameEnd;
+    public event Action<IRenderContext>? OnFrameBegin;
+    public event Action<IRenderContext>? OnFrameEnd;
 
-    private readonly GraphicsDevice _graphicsDevice;
-    public readonly RenderContext RenderContext;
+    public RenderTarget GBufferDiffuse;
+    public RenderTarget UIOverlay;
 
-    public Renderer()
+    private IRenderContext _context = null!;
+    private readonly IRenderer _rhiRenderer;
+    private readonly IRenderResourceFactory _resourceFactory;
+
+    private RenderPassInfo _mainPass;
+
+    private IRenderIndexBuffer _indexBuffer;
+
+    private uint _frameNumber = 0;
+
+    public RenderSystem(IRenderer rhiRenderer, IRenderResourceFactory resourceFactory)
     {
-        //_graphicsDevice = graphicsDevice;
-        //RenderContext = new RenderContext(_graphicsDevice);
+        _rhiRenderer = rhiRenderer;
+        _resourceFactory = resourceFactory;
+
+        _mainPass = new RenderPassInfo
+        {
+            RenderTarget = GBufferDiffuse,
+            Name = "MainPass"
+        };
     }
 
-    public void RaiseFrameBegin()
+    public void Startup()
     {
-        RenderContext?.Clear();
+        _context = _rhiRenderer.CreateRenderContext();
+        _indexBuffer = _resourceFactory.CreateIndexBuffer(6, "MainIndexBuffer");
 
-        //OnFrameBegin?.Invoke(RenderContext);
+        _indexBuffer.SetData([0, 1, 2, 0, 2, 3]);
+
+        _indexBuffer.Upload();
     }
 
-    public void RaiseFrameEnd()
+    public void FrameBegin()
     {
-        //OnFrameEnd?.Invoke(RenderContext);
+        _context.BeginRecording();
+
+        GBufferDiffuse = _rhiRenderer.SwapChain.Acquire(_context);
+
+        _mainPass.RenderTarget = GBufferDiffuse;
+
+        _context.IndexBuffer = _indexBuffer;
+        _context.BeginRenderPass(_mainPass);
+
+        OnFrameBegin?.Invoke(_context);
+    }
+
+    public void FrameEnd()
+    {
+        OnFrameEnd?.Invoke(_context);
+
+        _context.EndRenderPass();
+        _context.EndRecording();
+
+        _frameNumber++;
+    }
+
+    public void ResizeSwapchain(uint width,  uint height)
+    {
+
     }
 }

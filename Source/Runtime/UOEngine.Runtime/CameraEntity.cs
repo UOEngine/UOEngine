@@ -1,27 +1,26 @@
-﻿using Microsoft.Xna.Framework;
-
-namespace UOEngine.Runtime;
+﻿
+namespace UOEngine.Runtime.Core;
 
 public class CameraEntity: IEntity
 {
     private bool _dirty = true;
-    private Matrix _transform;
-    private Vector2 _viewport;
+    //private Matrix _transform;
+    //private Vector2 _viewport;
 
-    public Matrix Projection { get; private set; }
-    public Matrix View { get; private set; }
+    //public Matrix Projection { get; private set; }
+    //public Matrix View { get; private set; }
 
     public CameraEntity()
     {
-        View = Matrix.Identity;// CreateLookAt(Vector3.Zero, Vector3.Forward, Vector3.Up);
+        //View = Matrix.Identity;// CreateLookAt(Vector3.Zero, Vector3.Forward, Vector3.Up);
     }
 
-    public void Update(TimeSpan time)
+    public void Update(float time)
     {
     }
 
     public void SetProjection(float width, float height, float zNearPlane, float zFarPlane)
     {
-        Projection = Matrix.CreateOrthographic(width, height, zNearPlane, zFarPlane);
+        //Projection = Matrix.CreateOrthographic(width, height, zNearPlane, zFarPlane);
     }
 }

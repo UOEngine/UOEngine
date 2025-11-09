@@ -1,4 +1,4 @@
-﻿using UOEngine.Runtime;
+﻿using UOEngine.Runtime.Core;
 using UOEngine.Ultima.UOAssets;
 using UOEngine.Ultima.PackageFile;
 
@@ -44,7 +44,8 @@ internal class Chunk: IEntity
         }
     }
 
-    public void Update(TimeSpan time)
+    public void Update(float time)
     {
+        throw new NotImplementedException();
     }
 }

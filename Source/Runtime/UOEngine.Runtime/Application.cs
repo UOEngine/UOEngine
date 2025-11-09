@@ -1,11 +1,14 @@
 ﻿using System.Reflection;
+using System.Reflection.Metadata.Ecma335;
+using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 
-using Microsoft.Xna.Framework;
-using UOEngine.Plugin;
 using UOEngine.Runtime.Platform;
+using UOEngine.Runtime.Plugin;
+using UOEngine.Runtime.Renderer;
+using UOEngine.Runtime.RHI;
 
-namespace UOEngine.Runtime;
+namespace UOEngine.Runtime.Core;
 
 public class Application: IDisposable
 {
@@ -18,13 +21,21 @@ public class Application: IDisposable
     private ServiceProvider? _serviceProvider;
 
     private ApplicationLoop _applicationLoop = null!;
-    private Renderer.Renderer _renderer = null!; 
+
+    private RenderSystem _renderSystem = null!; 
 
     private CameraEntity _camera = null!;
 
     private Window _window = new();
 
     private bool _runApplication = true;
+
+    private readonly Assembly[] _loadedAssemblies = [];
+
+    public Application()
+    {
+        _loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
+    }
 
     public void RegisterPlugin<T>() where T : IPlugin
     {
@@ -33,16 +44,16 @@ public class Application: IDisposable
 
     public void Start()
     {
-        Initialize();
+        InitialiseInternal();
+        Initialise();
 
-        GameTime gameTime = new GameTime();
+        float deltaSeconds = 0.0f;
 
-        while(_runApplication)
+        while (_runApplication)
         {
-
-            Update(gameTime);
-            BeginDraw();
-            EndDraw();
+            Update(deltaSeconds);
+            _renderSystem.FrameBegin();
+            _renderSystem.FrameEnd();
         }
 
         _window.Dispose();
@@ -55,8 +66,28 @@ public class Application: IDisposable
         }
     }
 
-    void Initialize()
+    public T GetService<T>()
     {
+        return _serviceProvider.GetRequiredService<T>();
+    }
+
+    virtual protected void Initialise()
+    {
+
+    }
+
+    virtual protected void BeginDraw(IRenderContext context) 
+    {
+    }
+
+    virtual protected void EndDraw(IRenderContext context)
+    {
+
+    }
+
+    private void InitialiseInternal()
+    {
+        var as1 = AppDomain.CurrentDomain.GetAssemblies();
         _window.Startup();
 
         _services.AddSingleton<EntityManager>();
@@ -64,15 +95,13 @@ public class Application: IDisposable
         _services.AddSingleton<Input>();
         _services.AddSingleton<IWindow>(_window);
 
-        //_services.AddSingleton(typeof(GraphicsDevice), _graphicsDeviceManager.GraphicsDevice);
-
         LoadPlugins(BaseDirectory);
         LoadPlugins(PluginDirectory, true);
 
         _serviceProvider = _services.BuildServiceProvider();
 
-        _applicationLoop = _serviceProvider.GetRequiredService<ApplicationLoop>();
-        _renderer = _serviceProvider.GetRequiredService<Renderer.Renderer>();
+        _applicationLoop = GetService<ApplicationLoop>();
+        _renderSystem = GetService<RenderSystem>();
 
         var plugins = _serviceProvider.GetServices<IPlugin>();
 
@@ -81,12 +110,25 @@ public class Application: IDisposable
             plugin.Startup();
         }
 
-        var entityManager = _serviceProvider.GetRequiredService<EntityManager>();
+        foreach (var plugin in plugins)
+        {
+            plugin.PostStartup();
+        }
+
+        var entityManager = GetService<EntityManager>();
 
         _camera = entityManager.NewEntity<CameraEntity>();
+
+        _renderSystem.OnFrameBegin += BeginDraw;
+        _renderSystem.OnFrameEnd += EndDraw;
+
+        _window.OnResized += (window) =>
+        {
+            _renderSystem.ResizeSwapchain(window.Width, window.Height);
+        };
     }
 
-    private void Update(GameTime gameTime)
+    private void Update(float gameTime)
     {
         if(_window.PollEvents())
         {
@@ -95,28 +137,16 @@ public class Application: IDisposable
             return;
         }
 
-        _applicationLoop.Update(gameTime.ElapsedGameTime);
-    }
-
-    private bool BeginDraw()
-    {
-        //_camera.SetProjection(bounds.Width, bounds.Height, -1.0f, 1.0f);
-        _camera.SetProjection(1, 1, -1.0f, 1.0f);
-
-        //_renderer.RenderContext.View = _camera.Projection * _camera.View;
-
-        _renderer.RaiseFrameBegin();
-
-        return true;
-    }
-
-    private void EndDraw()
-    {
-        _renderer.RaiseFrameEnd();
+        _applicationLoop.Update(gameTime);
     }
 
     private void LoadPlugins(string directory, bool recurse = false)
     {
+        if(Directory.Exists(directory) == false)
+        {
+            return;
+        }
+
         if (recurse)
         {
             foreach (var subdir in Directory.GetDirectories(directory))
@@ -128,6 +158,12 @@ public class Application: IDisposable
         foreach (var dll in Directory.GetFiles(directory, "*.dll"))
         {
             Assembly assembly;
+
+            if(Path.GetFileName(dll).StartsWith("UOEngine") == false)
+            {
+                continue;
+            }
+
             try
             {
                 assembly = Assembly.LoadFrom(dll);
@@ -137,11 +173,23 @@ public class Application: IDisposable
                 continue; // skip invalid DLLs
             }
 
-            Type[] types;
+            Console.WriteLine($"Loaded {dll}.");
+
+            Type[] types = null!;
 
             try
             {
                 types = assembly.GetTypes();
+            }
+            catch(ReflectionTypeLoadException ex)
+            {
+                var sb = new StringBuilder();
+                sb.AppendLine($"Error loading types from {assembly.FullName}:");
+                foreach (var t in ex.Types)
+                    sb.AppendLine($"Type: {t?.FullName ?? "(null)"}");
+                foreach (var le in ex.LoaderExceptions)
+                    sb.AppendLine($"LoaderException: {le.Message}");
+                Console.WriteLine(sb.ToString());
             }
             catch
             {
@@ -172,5 +220,15 @@ public class Application: IDisposable
     }
     public void Dispose()
     {
+    }
+
+    private bool IsAssemblyLoaded(string path)
+    {
+        var loadedAssembly = _loadedAssemblies.FirstOrDefault(p =>
+        {
+            return p.Location == path;
+        });
+
+        return loadedAssembly != null;
     }
 }
