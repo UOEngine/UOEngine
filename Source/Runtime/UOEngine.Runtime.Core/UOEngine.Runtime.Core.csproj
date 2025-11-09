@@ -9,9 +9,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\ThirdParty\SDL3-CS\SDL3\SDL3.Core.csproj" />
-    <ProjectReference Include="..\UOEngine.Plugin\UOEngine.Plugin.csproj" />
-    <ProjectReference Include="..\UOEngine.Renderer\UOEngine.Runtime.Renderer.csproj" />
     <ProjectReference Include="..\UOEngine.Runtime.Platform\UOEngine.Runtime.Platform.csproj" />
+    <ProjectReference Include="..\UOEngine.Runtime.Plugin\UOEngine.Runtime.Plugin.csproj" />
+    <ProjectReference Include="..\UOEngine.Runtime.Renderer\UOEngine.Runtime.Renderer.csproj" />
     <ProjectReference Include="..\UOEngine.Runtime.RHI\UOEngine.Runtime.RHI.csproj" />
   </ItemGroup>
 

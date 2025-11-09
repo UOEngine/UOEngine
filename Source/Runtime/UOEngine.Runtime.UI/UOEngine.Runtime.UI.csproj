@@ -10,10 +10,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\UOEngine.Plugin\UOEngine.Plugin.csproj" />
-    <ProjectReference Include="..\UOEngine.Renderer\UOEngine.Runtime.Renderer.csproj" />
+    <ProjectReference Include="..\UOEngine.Runtime.Core\UOEngine.Runtime.Core.csproj" />
+    <ProjectReference Include="..\UOEngine.Runtime.Plugin\UOEngine.Runtime.Plugin.csproj" />
+    <ProjectReference Include="..\UOEngine.Runtime.Renderer\UOEngine.Runtime.Renderer.csproj" />
     <ProjectReference Include="..\UOEngine.Runtime.RHI\UOEngine.Runtime.RHI.csproj" />
-    <ProjectReference Include="..\UOEngine.Runtime\UOEngine.Runtime.csproj" />
   </ItemGroup>
 
     <ItemGroup>

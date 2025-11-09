@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="$(UoEngineThirdParty)\ServUO\Server\Server.csproj" />
-    <ProjectReference Include="..\..\Runtime\UOEngine.Plugin\UOEngine.Plugin.csproj" />
+    <ProjectReference Include="..\..\Runtime\UOEngine.Plugin\UOEngine.Runtime.Plugin.csproj" />
   </ItemGroup>
 
 </Project>

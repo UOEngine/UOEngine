@@ -14,7 +14,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\ThirdParty\ClassicUO\src\ClassicUO.Client\ClassicUO.Client.csproj" />
     <ProjectReference Include="..\..\Editor\UOEngine.Client\UOEngine.Client.csproj" />
-    <ProjectReference Include="..\..\Runtime\UOEngine.Plugin\UOEngine.Plugin.csproj" />
+    <ProjectReference Include="..\..\Runtime\UOEngine.Plugin\UOEngine.Runtime.Plugin.csproj" />
   </ItemGroup>
 
 	<PropertyGroup>

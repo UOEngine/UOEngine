@@ -99,9 +99,6 @@ public class Application: IDisposable
 
         _serviceProvider = _services.BuildServiceProvider();
 
-        _applicationLoop = GetService<ApplicationLoop>();
-        _renderSystem = GetService<RenderSystem>();
-
         var plugins = _serviceProvider.GetServices<IPlugin>();
 
         foreach (var plugin in plugins)
@@ -113,6 +110,9 @@ public class Application: IDisposable
         {
             plugin.PostStartup();
         }
+
+        _applicationLoop = GetService<ApplicationLoop>();
+        _renderSystem = GetService<RenderSystem>();
 
         var entityManager = GetService<EntityManager>();
 
