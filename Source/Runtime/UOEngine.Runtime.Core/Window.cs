@@ -13,6 +13,9 @@ public class Window: IWindow
     public uint Width { get; private set; }
     public uint Height { get; private set; }
 
+    public uint RenderTargetWidth { get; private set; }
+    public uint RenderTargetHeight { get; private set; }
+
     public void Startup()
     {
         if (!SDL_Init(SDL_InitFlags.SDL_INIT_VIDEO))
@@ -33,6 +36,8 @@ public class Window: IWindow
         {
             throw new Exception("SDL_CreateWindow failed: " + SDL_GetError());
         }
+
+        UpdateRenderTargetSize();
 
         // Win32 handle if needed
         //Handle = SDL.SDL_GetPointerProperty(SDL.SDL_GetWindowProperties(_sdlHandle), SDL.SDL_PROP_WINDOW_WIN32_HWND_POINTER, IntPtr.Zero);
@@ -57,6 +62,8 @@ public class Window: IWindow
                         Width = (uint)evt.window.data1;
                         Height = (uint)evt.window.data2;
 
+                        UpdateRenderTargetSize();
+
                         OnResized?.Invoke(this);
 
                     }
@@ -68,6 +75,14 @@ public class Window: IWindow
         }
 
         return false;
+    }
+
+    public void UpdateRenderTargetSize()
+    {
+        SDL_GetWindowSizeInPixels(Handle, out var width, out var height);
+
+        RenderTargetWidth = (uint)width;
+        RenderTargetHeight = (uint)height;
     }
 
     public void Dispose()

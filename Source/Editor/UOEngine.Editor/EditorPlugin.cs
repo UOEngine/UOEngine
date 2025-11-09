@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 
 using UOEngine.Runtime.Core;
+using UOEngine.Runtime.Platform;
 using UOEngine.Runtime.Plugin;
 using UOEngine.Runtime.Renderer;
 using UOEngine.Runtime.RHI;
@@ -21,7 +22,6 @@ internal class UO3DApplication : IPlugin
     private IRenderTexture _greenTexture = null!;
     private IRenderTexture _checkerboardTexture = null!;
 
-
     private ShaderBindingHandle _textureBindingHandle = ShaderBindingHandle.Invalid;
     private ShaderBindingHandle _samplerBindingHandle = ShaderBindingHandle.Invalid;
 
@@ -32,6 +32,7 @@ internal class UO3DApplication : IPlugin
     private readonly UOAssetLoader _assetLoader;
     private MapEntity _map = null!;
     private IRenderTexture _waterTexture = null!;
+    private readonly IWindow _window;
 
     public UO3DApplication(IServiceProvider serviceProvider)
     {
@@ -39,6 +40,8 @@ internal class UO3DApplication : IPlugin
         _assetLoader = serviceProvider.GetRequiredService<UOAssetLoader>();
         _renderFactory = serviceProvider.GetRequiredService<IRenderResourceFactory>();
         _rendererSystem = serviceProvider.GetRequiredService<RenderSystem>();
+
+        _window = serviceProvider.GetRequiredService<IWindow>();
     }
 
     public void PostStartup()
@@ -101,12 +104,15 @@ internal class UO3DApplication : IPlugin
 
     public void OnFrameBegin(IRenderContext context)
     {
-        Matrix4x4 projection = Matrix4x4.Identity;
+        var width = _window.RenderTargetWidth;
+        var height = _window.RenderTargetHeight;
+
+        Matrix4x4 projection = Matrix4x4.CreateOrthographic(width, height, -1.0f, 1.0f);
 
         var mvp = new ModelViewProjection
         {
-            Projection = Matrix4x4.Identity,
-            View = Matrix4x4.CreateTranslation(-0.5f, -0.5f, 0.0f)
+            Projection = projection,
+            View = Matrix4x4.Identity
         };
 
         _shaderInstance.SetData(_projectionBinding, mvp);

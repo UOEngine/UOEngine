@@ -7,8 +7,8 @@ namespace UOEngine.Runtime.RHI;
 [StructLayout(LayoutKind.Sequential, Pack = 16)]
 public struct ModelViewProjection
 {
-    public Matrix4x4 Projection;
     public Matrix4x4 View;
+    public Matrix4x4 Projection;
 }
 
 public interface IRenderContext

@@ -6,8 +6,8 @@ struct VsToPs
     uint instanceIndex: SV_InstanceID;
 };
 
-static const float width = 1.0f;//44.0;
-static const float height = 1.0f;//44.0;
+static const float width = 44.0;
+static const float height = 44.0;
 
 static const float4 cQuadVertsNDC[4] =
 {

@@ -1,7 +1,8 @@
-﻿using UOEngine.Runtime.Platform;
+﻿using static SDL3.SDL;
+
+using UOEngine.Runtime.Platform;
 using UOEngine.Runtime.RHI;
 using UOEngine.Runtime.RHI.Resources;
-using static SDL3.SDL;
 
 namespace UOEngine.Runtime.SDL3GPU;
 
