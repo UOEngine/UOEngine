@@ -46,6 +46,5 @@ internal class Chunk: IEntity
 
     public void Update(float time)
     {
-        throw new NotImplementedException();
     }
 }
