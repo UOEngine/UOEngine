@@ -1,6 +1,4 @@
-﻿using System.Drawing;
-
-namespace Microsoft.Xna.Framework.Graphics;
+﻿namespace Microsoft.Xna.Framework.Graphics;
 
 public class GraphicsDevice
 {
@@ -9,4 +7,22 @@ public class GraphicsDevice
     public RasterizerState RasterizerState;
     public DepthStencilState DepthStencilState;
     public SamplerStateCollection SamplerStates;
+
+    public void SetVertexBuffer(VertexBuffer vertexBuffer)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IndexBuffer Indices
+    {
+        get;
+        set;
+    }
+
+    public Rectangle ScissorRectangle;
+
+    public void DrawIndexedPrimitives(PrimitiveType primitiveType, int baseVertex, int minVertexIndex, int numVertices, int startIndex, int primitiveCount)
+    {
+        throw new NotImplementedException();
+    }
 }
