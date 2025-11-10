@@ -2,16 +2,8 @@
 
 public struct VertexElement
 {
-    public VertexElement(
-    int offset,
-    VertexElementFormat elementFormat,
-    VertexElementUsage elementUsage,
-    int usageIndex
-) : this()
+    public VertexElement(int offset, VertexElementFormat elementFormat, VertexElementUsage elementUsage, int usageIndex) 
     {
-        Offset = offset;
-        UsageIndex = usageIndex;
-        VertexElementFormat = elementFormat;
-        VertexElementUsage = elementUsage;
+        throw new NotImplementedException();
     }
 }
