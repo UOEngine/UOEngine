@@ -13,3 +13,6 @@
 [submodule "ThirdParty/SDL3-CS"]
 	path = ThirdParty/SDL3-CS
 	url = https://github.com/flibitijibibo/SDL3-CS.git
+[submodule "ThirdParty/centredsharp"]
+	path = ThirdParty/centredsharp
+	url = https://github.com/UOEngine/centredsharp.git
