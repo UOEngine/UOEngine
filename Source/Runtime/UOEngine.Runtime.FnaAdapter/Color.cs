@@ -3,6 +3,12 @@
 
 public struct Color
 {
+    public byte B;
+    public byte G;
+    public byte R;
+    public byte A;
+
+    public static Color Black;
     public static Color White;
 
     static Color()

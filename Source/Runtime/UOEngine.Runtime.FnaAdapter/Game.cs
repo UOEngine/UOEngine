@@ -1,7 +1,18 @@
-﻿namespace Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework.Graphics;
+
+namespace Microsoft.Xna.Framework;
 
 public class Game
 {
+    public GameWindow Window
+    {
+        get;
+        private set;
+    }
+
+    public bool IsActive;
+    public GraphicsDevice GraphicsDevice;
+
     protected virtual void Initialize()
     {
 
@@ -17,7 +28,7 @@ public class Game
 
     }
 
-    protected virtual void Update()
+    protected virtual void Update(GameTime gameTime)
     {
 
     }
@@ -32,7 +43,7 @@ public class Game
 
     }
 
-    protected virtual void Draw()
+    protected virtual void Draw(GameTime gameTime)
     {
 
     }
