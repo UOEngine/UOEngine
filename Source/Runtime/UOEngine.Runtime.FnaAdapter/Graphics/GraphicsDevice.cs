@@ -1,4 +1,6 @@
-﻿namespace Microsoft.Xna.Framework.Graphics;
+﻿using System.Numerics;
+
+namespace Microsoft.Xna.Framework.Graphics;
 
 public class GraphicsDevice
 {
@@ -34,6 +36,16 @@ public class GraphicsDevice
     public void Present(Rectangle? sourceRectangle, Rectangle? destinationRectangle, IntPtr overrideWindowHandle)
     {
 
+    }
+
+    public void Clear(Color color)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void Clear(ClearOptions options, Color color, float depth, int stencil)
+    {
+        throw new NotImplementedException();
     }
 }
 

@@ -4,6 +4,7 @@ namespace Microsoft.Xna.Framework.Graphics;
 public class BasicEffect: Effect
 {
     public BasicEffect(GraphicsDevice device)
+        : base(device, Resources.BasicEffect)
     {
 
     }

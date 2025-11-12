@@ -13,6 +13,11 @@ public class Game
     public bool IsActive;
     public GraphicsDevice GraphicsDevice;
 
+    public void Exit()
+    {
+        throw new NotImplementedException();
+    }
+
     protected virtual void Initialize()
     {
 
@@ -35,7 +40,7 @@ public class Game
 
     protected virtual bool BeginDraw()
     {
-
+        throw new NotImplementedException();
     }
 
     protected virtual void EndDraw()
@@ -47,4 +52,6 @@ public class Game
     {
 
     }
+
+
 }

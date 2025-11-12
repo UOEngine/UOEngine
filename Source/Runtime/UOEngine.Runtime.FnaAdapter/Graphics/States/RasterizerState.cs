@@ -4,7 +4,7 @@ public class RasterizerState
 {
     public CullMode CullMode;
 
-    public static CullMode CullNone;
+    public static RasterizerState CullNone;
 
     public float DepthBias;
     public FillMode FillMode;
