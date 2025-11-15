@@ -9,6 +9,11 @@ public struct Viewport
         throw new NotImplementedException();
     }
 
+    public Viewport(Rectangle bounds)
+    {
+        throw new NotImplementedException();
+    }
+
     public Vector3 Unproject(Vector3 source, Matrix projection, Matrix view, Matrix world)
     {
         throw new NotImplementedException();

@@ -5,6 +5,14 @@ public class Texture2D: Texture
     public int Width;
     public int Height;
 
+    public Rectangle Bounds
+    {
+        get
+        {
+            return new Rectangle(0, 0, Width, Height);
+        }
+    }
+
     public Texture2D(
         GraphicsDevice graphicsDevice,
         int width,

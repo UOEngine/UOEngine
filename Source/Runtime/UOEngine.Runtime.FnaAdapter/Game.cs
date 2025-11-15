@@ -25,22 +25,22 @@ public class Game: IDisposable
 
     protected virtual void Initialize()
     {
-
+        throw new NotImplementedException();
     }
 
     protected virtual void BeginRun()
     {
-
+        throw new NotImplementedException();
     }
 
     protected virtual void UnloadContent()
     {
-
+        throw new NotImplementedException();
     }
 
     protected virtual void Update(GameTime gameTime)
     {
-
+        throw new NotImplementedException();
     }
 
     protected virtual bool BeginDraw()
@@ -50,12 +50,12 @@ public class Game: IDisposable
 
     protected virtual void EndDraw()
     {
-
+        throw new NotImplementedException();
     }
 
     protected virtual void Draw(GameTime gameTime)
     {
-
+        throw new NotImplementedException();
     }
 
     public void Dispose()

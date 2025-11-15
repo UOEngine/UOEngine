@@ -8,4 +8,9 @@ public class EffectParameter
     {
         throw new NotImplementedException();
     }
+
+    public void SetValue(Matrix value)
+    {
+        throw new NotImplementedException();
+    }
 }
