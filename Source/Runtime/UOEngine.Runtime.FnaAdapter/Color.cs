@@ -1,6 +1,5 @@
 ﻿namespace Microsoft.Xna.Framework;
 
-
 public struct Color
 {
     public byte B;
@@ -10,6 +9,16 @@ public struct Color
 
     public static Color Black;
     public static Color White;
+
+    public Color(float r, float g, float b)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Color(float r, float g, float b, float alpha)
+    {
+        throw new NotImplementedException();
+    }
 
     static Color()
     {

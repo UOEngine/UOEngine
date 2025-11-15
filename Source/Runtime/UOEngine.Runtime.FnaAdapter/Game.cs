@@ -2,7 +2,7 @@
 
 namespace Microsoft.Xna.Framework;
 
-public class Game
+public class Game: IDisposable
 {
     public GameWindow Window
     {
@@ -16,6 +16,11 @@ public class Game
     public void Exit()
     {
         throw new NotImplementedException();
+    }
+
+    public void Run()
+    {
+
     }
 
     protected virtual void Initialize()
@@ -53,5 +58,7 @@ public class Game
 
     }
 
-
+    public void Dispose()
+    {
+    }
 }

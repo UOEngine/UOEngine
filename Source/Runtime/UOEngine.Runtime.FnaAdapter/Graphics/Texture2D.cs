@@ -16,6 +16,11 @@ public class Texture2D: Texture
         throw new NotImplementedException();
     }
 
+    public Texture2D(GraphicsDevice graphicsDevice, int width, int height)
+    {
+
+    }
+
     public void SetData<T>(T[] data) where T : struct
     {
         throw new NotImplementedException();
@@ -27,6 +32,11 @@ public class Texture2D: Texture
     }
 
     public static Texture2D FromStream(GraphicsDevice graphicsDevice, Stream stream)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void SetDataPointerEXT(int level, Rectangle? rect, IntPtr data, int dataLength)
     {
         throw new NotImplementedException();
     }
