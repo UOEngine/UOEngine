@@ -4,6 +4,6 @@ public class GraphicsAdapter
 {
     public bool IsProfileSupported(GraphicsProfile profile)
     {
-        throw new NotImplementedException();
+        return true;
     }
 }

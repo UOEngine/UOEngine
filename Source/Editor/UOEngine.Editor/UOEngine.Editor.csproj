@@ -17,10 +17,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Runtime\UOEngine.Runtime.FnaAdapter\UOEngine.Runtime.FnaAdapter.csproj" />
     <ProjectReference Include="..\..\Runtime\UOEngine.Runtime.Plugin\UOEngine.Runtime.Plugin.csproj" />
     <ProjectReference Include="..\..\Runtime\UOEngine.Runtime.RHI\UOEngine.Runtime.RHI.csproj" />
     <ProjectReference Include="..\..\Runtime\UOEngine.Runtime.UI\UOEngine.Runtime.UI.csproj" />
     <ProjectReference Include="..\..\Ultima\UOEngine.Ultima.Assets\UOEngine.Ultima.UOAssets.csproj" />
+    <ProjectReference Include="..\UOEngine.Editor.CentredSharp\UOEngine.Editor.CentredSharp.csproj" />
   </ItemGroup>
 
 	<PropertyGroup>

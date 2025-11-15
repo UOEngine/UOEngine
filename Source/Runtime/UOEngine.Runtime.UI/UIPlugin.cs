@@ -29,9 +29,9 @@ public class UIPlugin : IPlugin
 
     public void Startup()
     {
-        var context = ImGui.CreateContext();
+        //var context = ImGui.CreateContext();
 
-        ImGui.SetCurrentContext(context);
+        //ImGui.SetCurrentContext(context);
 
         //RebuildFontAtlas();
     }

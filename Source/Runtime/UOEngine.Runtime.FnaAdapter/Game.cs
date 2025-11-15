@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
+using UOEngine.Runtime.FnaAdapter;
 
 namespace Microsoft.Xna.Framework;
 
@@ -13,6 +14,12 @@ public class Game: IDisposable
     public bool IsActive;
     public GraphicsDevice GraphicsDevice;
 
+
+    public Game()
+    {
+        Window = new GameWindow();
+    }
+
     public void Exit()
     {
         throw new NotImplementedException();
@@ -20,7 +27,12 @@ public class Game: IDisposable
 
     public void Run()
     {
+        throw new NotImplementedException();
+    }
 
+    public void DoInitialise()
+    {
+        Initialize();
     }
 
     protected virtual void Initialize()

@@ -6,18 +6,18 @@ public class GraphicsDeviceManager
 {
     public bool IsFullScreen;
     public DepthFormat PreferredDepthStencilFormat;
-    public GraphicsDevice GraphicsDevice;
+    public readonly GraphicsDevice GraphicsDevice;
     public GraphicsProfile GraphicsProfile;
 
     public event EventHandler<PreparingDeviceSettingsEventArgs> PreparingDeviceSettings;
 
     public GraphicsDeviceManager(Game game)
     {
-        throw new NotImplementedException();
+        GraphicsDevice = new GraphicsDevice();
     }
 
     public void ApplyChanges()
     {
-        throw new NotImplementedException();
+
     }
 }

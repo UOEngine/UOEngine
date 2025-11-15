@@ -20,6 +20,11 @@ public class GraphicsDevice
 
     public TextureCollection Textures;
 
+    public GraphicsDevice()
+    {
+        Adapter = new GraphicsAdapter();
+    }
+
     public void SetVertexBuffer(VertexBuffer vertexBuffer)
     {
         throw new NotImplementedException();

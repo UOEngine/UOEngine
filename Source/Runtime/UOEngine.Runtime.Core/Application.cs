@@ -217,6 +217,7 @@ public class Application: IDisposable
             }
         }
     }
+
     public void Dispose()
     {
     }

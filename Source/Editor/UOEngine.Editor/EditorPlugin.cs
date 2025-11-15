@@ -7,6 +7,7 @@ using UOEngine.Runtime.Plugin;
 using UOEngine.Runtime.Renderer;
 using UOEngine.Runtime.RHI;
 using UOEngine.Runtime.RHI.Resources;
+using UOEngine.Runtime.FnaAdapter;
 using UOEngine.Ultima.UOAssets;
 
 namespace UOEngine.Editor;
@@ -100,6 +101,7 @@ internal class UO3DApplication : IPlugin
     public static void ConfigureServices(IServiceCollection services)
     {
         services.AddSingleton<UOAssetLoader>();
+        services.AddSingleton<IPlugin, FnaAdapterPlugin>();
     }
 
     public void OnFrameBegin(IRenderContext context)

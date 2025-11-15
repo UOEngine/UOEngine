@@ -17,10 +17,6 @@
   </ItemGroup>
 
     <ItemGroup>
-    	<None Include="$(UoEngineThirdParty)ImGui.NET\deps\cimgui\win-x64\cimgui.dll" CopyToOutputDirectory="PreserveNewest" />
-    </ItemGroup>
-
-    <ItemGroup>
       <PackageReference Include="Hexa.NET.ImGui" Version="2.2.9" />
     </ItemGroup>
 
