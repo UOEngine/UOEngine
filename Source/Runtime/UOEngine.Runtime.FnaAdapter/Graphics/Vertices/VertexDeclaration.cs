@@ -5,16 +5,18 @@ namespace Microsoft.Xna.Framework.Graphics;
 
 public class VertexDeclaration
 {
-//    public VertexDeclaration(
-//    params VertexElement[] elements
-//) : this(GetVertexStride(elements), elements)
-//    {
-//    }
-
-    public VertexDeclaration(
-        int vertexStride,
-        params VertexElement[] elements
-    )
+    public VertexDeclaration(params VertexElement[] elements)
     {
+        throw new NotImplementedException();
+    }
+
+    public VertexDeclaration(int vertexStride, params VertexElement[] elements)
+    {
+        throw new NotImplementedException();
+    }
+
+    internal static VertexDeclaration FromType(Type vertexType)
+    {
+        throw new NotImplementedException();
     }
 }

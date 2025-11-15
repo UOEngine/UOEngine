@@ -1,6 +1,6 @@
 ﻿namespace Microsoft.Xna.Framework.Graphics;
 
-public class Texture2D
+public class Texture2D: Texture
 {
     public int Width;
     public int Height;

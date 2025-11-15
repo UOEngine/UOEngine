@@ -12,6 +12,11 @@ public class IndexBuffer
         throw new NotImplementedException();
     }
 
+    public void SetData<T>(T[] data) where T : struct
+    {
+        throw new NotImplementedException();
+    }
+
     public void Dispose()
     {
 

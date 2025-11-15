@@ -18,6 +18,8 @@ public class GraphicsDevice
 
     public Viewport Viewport;
 
+    public TextureCollection Textures;
+
     public void SetVertexBuffer(VertexBuffer vertexBuffer)
     {
         throw new NotImplementedException();
@@ -35,7 +37,7 @@ public class GraphicsDevice
 
     public void Present(Rectangle? sourceRectangle, Rectangle? destinationRectangle, IntPtr overrideWindowHandle)
     {
-
+        throw new NotImplementedException();
     }
 
     public void Clear(Color color)
@@ -46,6 +48,12 @@ public class GraphicsDevice
     public void Clear(ClearOptions options, Color color, float depth, int stencil)
     {
         throw new NotImplementedException();
+    }
+
+    public void SetRenderTarget(RenderTarget2D renderTarget)
+    {
+        throw new NotImplementedException();
+
     }
 }
 
