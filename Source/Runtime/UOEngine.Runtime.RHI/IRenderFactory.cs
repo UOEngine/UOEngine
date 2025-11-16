@@ -11,5 +11,7 @@ public interface IRenderResourceFactory
 
     public IGraphicsPipeline CreateGraphicsPipeline(in GraphicsPipelineDescription graphicsPipelineDescription);
 
-    public IRenderIndexBuffer CreateIndexBuffer(uint length, string name);
+    public IRhiIndexBuffer CreateIndexBuffer(uint length, string name);
+
+    public IRhiVertexBuffer CreateVertexBuffer(in RhiVertexBufferDescription description);
 }

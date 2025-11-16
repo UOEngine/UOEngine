@@ -17,7 +17,7 @@ public interface IRenderContext
 
     public IGraphicsPipeline GraphicsPipline { get; set; }
 
-    public IRenderIndexBuffer IndexBuffer { get; set; }
+    public IRhiIndexBuffer IndexBuffer { get; set; }
 
     public ModelViewProjection MVP { get; set; }
 

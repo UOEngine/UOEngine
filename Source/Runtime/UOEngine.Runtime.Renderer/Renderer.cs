@@ -17,7 +17,7 @@ public class RenderSystem
 
     private RenderPassInfo _mainPass;
 
-    private IRenderIndexBuffer _indexBuffer;
+    private IRhiIndexBuffer _indexBuffer;
 
     private uint _frameNumber = 0;
 

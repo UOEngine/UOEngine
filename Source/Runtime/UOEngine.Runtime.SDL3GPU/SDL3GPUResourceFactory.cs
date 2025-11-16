@@ -53,10 +53,17 @@ internal class SDL3GPUResourceFactory : IRenderResourceFactory
         return pipeline;
     }
 
-    public IRenderIndexBuffer CreateIndexBuffer(uint length, string name)
+    public IRhiIndexBuffer CreateIndexBuffer(uint length, string name)
     {
         var indexBuffer = new Sdl3GpuIndexBuffer(_device, length, name);
 
         return indexBuffer;
+    }
+
+    public IRhiVertexBuffer CreateVertexBuffer(in RhiVertexBufferDescription description)
+    {
+        var vertexBuffer = new Sdl3GpuVertexBuffer(description);
+
+        return vertexBuffer;
     }
 }

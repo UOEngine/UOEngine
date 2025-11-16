@@ -44,7 +44,7 @@ internal class SDL3GPURenderContext: IRenderContext
         }
     }
 
-    public IRenderIndexBuffer IndexBuffer
+    public IRhiIndexBuffer IndexBuffer
     {
         get => _indexBuffer;
         set

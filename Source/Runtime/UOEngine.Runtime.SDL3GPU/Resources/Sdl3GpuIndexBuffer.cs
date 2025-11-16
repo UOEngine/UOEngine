@@ -1,8 +1,9 @@
-﻿using UOEngine.Runtime.RHI.Resources;
+﻿using UOEngine.Runtime.RHI;
+using UOEngine.Runtime.RHI.Resources;
 
 namespace UOEngine.Runtime.SDL3GPU.Resources;
 
-internal class Sdl3GpuIndexBuffer: Sdl3GpuBuffer<ushort>, IRenderIndexBuffer
+internal class Sdl3GpuIndexBuffer: Sdl3GpuBuffer<ushort>, IRhiIndexBuffer
 {
     public ushort[] Indices => Data;
 
