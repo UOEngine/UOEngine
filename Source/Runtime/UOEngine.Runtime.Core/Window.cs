@@ -44,38 +44,38 @@ public class Window: IWindow
 
     }
 
-    public bool PollEvents()
-    {
-        SDL_Event evt;
+    //public bool PollEvents()
+    //{
+    //    SDL_Event evt;
 
-        while (SDL_PollEvent(out evt))
-        {
-            switch ((SDL_EventType)evt.type)
-            {
-                case SDL_EventType.SDL_EVENT_QUIT:
-                    {
-                        return true;
-                    }
+    //    while (SDL_PollEvent(out evt))
+    //    {
+    //        switch ((SDL_EventType)evt.type)
+    //        {
+    //            case SDL_EventType.SDL_EVENT_QUIT:
+    //                {
+    //                    return true;
+    //                }
 
-                case SDL_EventType.SDL_EVENT_WINDOW_RESIZED:
-                    {
-                        Width = (uint)evt.window.data1;
-                        Height = (uint)evt.window.data2;
+    //            case SDL_EventType.SDL_EVENT_WINDOW_RESIZED:
+    //                {
+    //                    Width = (uint)evt.window.data1;
+    //                    Height = (uint)evt.window.data2;
 
-                        UpdateRenderTargetSize();
+    //                    UpdateRenderTargetSize();
 
-                        OnResized?.Invoke(this);
+    //                    OnResized?.Invoke(this);
 
-                    }
-                    break;
+    //                }
+    //                break;
 
-                default:
-                    break;
-            }
-        }
+    //            default:
+    //                break;
+    //        }
+    //    }
 
-        return false;
-    }
+    //    return false;
+    //}
 
     public void UpdateRenderTargetSize()
     {

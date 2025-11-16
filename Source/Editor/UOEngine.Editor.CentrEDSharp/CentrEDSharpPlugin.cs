@@ -1,8 +1,9 @@
-﻿using CentrED;
+﻿using System.Reflection;
+using CentrED;
 using CentrED.Client;
 using CentrED.Server;
 using CentrED.Utils;
-
+using UOEngine.Runtime.FnaAdapter;
 using UOEngine.Runtime.Plugin;
 
 namespace UOEngine.Editor.CentredSharp;
@@ -18,15 +19,57 @@ public class CentrEdSharpPlugin: IPlugin
 
     public CentrEdSharpPlugin()
     {
-
-    }
-
-    public void Startup() 
-    {
     }
 
     public void PostStartup() 
     {
+        string mapEffectNew = @"D:\UODev\UOEngineGithub\Source\Shaders\CentrEdSharp\MapEffect.hlsl";
+        string mapEffect = @"D:\UODev\UOEngineGitHub\ThirdParty\centredsharp\CentrED\Renderer\Shaders\MapEffect.fxc";
+
+        var terrainTechnique = new Technique
+        {
+            Name = "Terrain",
+            VertexMain = "TileVSMain",
+            PixelMain = "TerrainPSMain"
+        };
+
+        var terrainGrid = new Technique
+        {
+            Name = "TerrainGrid",
+            VertexMain = "TerrainGridVSMain",
+            PixelMain = "TerrainGridPSMain"
+        };
+
+        var statics = new Technique
+        {
+            Name = "Statics",
+            VertexMain = "TileVSMain",
+            PixelMain = "StaticsPSMain"
+        };
+
+        var selection = new Technique
+        {
+            Name = "Selection",
+            VertexMain = "TileVSMain",
+            PixelMain = "SelectionPSMain"
+        };
+
+        var virtualLayer = new Technique
+        {
+            Name = "VirtualLayer",
+            VertexMain = "VirtualLayerVSMain",
+            PixelMain = "VirtualLayerPSMain"
+        };
+
+        Remapper.RemapTechniques(mapEffect, mapEffectNew,
+        [
+            terrainTechnique, 
+            terrainGrid,
+            statics,
+            selection,
+            virtualLayer
+        ]);
+
         Config.Initialize();
 
         CEDGame = new CentrEDGame();

@@ -121,6 +121,11 @@ public class ShaderInstance
         }
     }
 
+    public string[] GetParameterNames()
+    {
+        return _shaderResource.GetParameterNames();
+    }
+
     public uint GetNumTextures(ShaderProgramType programType)
     {
         return _shaderResource.GetNumTextures(programType);

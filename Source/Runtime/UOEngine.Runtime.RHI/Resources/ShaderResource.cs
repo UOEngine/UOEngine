@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Xml.Linq;
 
 namespace UOEngine.Runtime.RHI.Resources;
 
@@ -67,6 +68,8 @@ public abstract class RhiShaderResource
     protected uint[] _numSamplers = new uint[(int)ShaderProgramType.Count];
 
     public abstract void Load(string vertexShader, string fragmentShader);
+    public abstract void Load(string shaderFile, string vertexMainName, string pixelNameMain);
+
 
     public ShaderBindingHandle GetBindingHandle(ShaderProgramType programType, RhiShaderInputType inputType, string name)
     {
@@ -91,5 +94,30 @@ public abstract class RhiShaderResource
     public uint GetNumSamplers(ShaderProgramType programType)
     {
         return _numSamplers[(int)programType];
+    }
+
+    public string[] GetParameterNames()
+    {
+        List<string> parameterNames = [];
+
+        for(int programType = 0; programType < (int)ShaderProgramType.Count; programType++)
+        {
+            if(ProgramBindings[programType].Parameters == null)
+            {
+                continue;
+            }
+
+            for (int i = 0; i < ProgramBindings[programType].Parameters.Length; i++)
+            {
+                ref var param = ref ProgramBindings[programType].Parameters[i];
+
+                foreach(var variable in param.Variables)
+                {
+                    parameterNames.Add(variable.Name);
+                }
+            }
+        }
+
+        return parameterNames.ToArray();
     }
 }

@@ -7,64 +7,79 @@
  */
 #endregion
 
-namespace Microsoft.Xna.Framework.Graphics
+using UOEngine.Runtime.RHI;
+
+namespace Microsoft.Xna.Framework.Graphics;
+
+/// <summary>
+/// Defines usage for vertex elements.
+/// </summary>
+public enum VertexElementUsage
 {
 	/// <summary>
-	/// Defines usage for vertex elements.
+	/// Position data.
 	/// </summary>
-	public enum VertexElementUsage
+	Position,
+	/// <summary>
+	/// Color data.
+	/// </summary>
+	Color,
+	/// <summary>
+	/// Texture coordinate data or can be used for user-defined data.
+	/// </summary>
+	TextureCoordinate,
+	/// <summary>
+	/// Normal data.
+	/// </summary>
+	Normal,
+	/// <summary>
+	/// Binormal data.
+	/// </summary>
+	Binormal,
+	/// <summary>
+	/// Tangent data.
+	/// </summary>
+	Tangent,
+	/// <summary>
+	/// Blending indices data.
+	/// </summary>
+	BlendIndices,
+	/// <summary>
+	/// Blending weight data.
+	/// </summary>
+	BlendWeight,
+	/// <summary>
+	/// Depth data.
+	/// </summary>
+	Depth,
+	/// <summary>
+	/// Fog data.
+	/// </summary>
+	Fog,
+	/// <summary>
+	/// Point size data. Usable for drawing point sprites.
+	/// </summary>
+	PointSize,
+	/// <summary>
+	/// Sampler data for specifies the displacement value to look up.
+	/// </summary>
+	Sample,
+	/// <summary>
+	/// Single, positive float value, specifies a tessellation factor used in the tessellation unit to control the rate of tessellation.
+	/// </summary>
+	TessellateFactor
+}
+
+public static class VertexElementUsageExtensions
+{
+    public static RhiVertexAttributeType ToRhiVertexAttributeType(this VertexElementUsage usage)
 	{
-		/// <summary>
-		/// Position data.
-		/// </summary>
-		Position,
-		/// <summary>
-		/// Color data.
-		/// </summary>
-		Color,
-		/// <summary>
-		/// Texture coordinate data or can be used for user-defined data.
-		/// </summary>
-		TextureCoordinate,
-		/// <summary>
-		/// Normal data.
-		/// </summary>
-		Normal,
-		/// <summary>
-		/// Binormal data.
-		/// </summary>
-		Binormal,
-		/// <summary>
-		/// Tangent data.
-		/// </summary>
-		Tangent,
-		/// <summary>
-		/// Blending indices data.
-		/// </summary>
-		BlendIndices,
-		/// <summary>
-		/// Blending weight data.
-		/// </summary>
-		BlendWeight,
-		/// <summary>
-		/// Depth data.
-		/// </summary>
-		Depth,
-		/// <summary>
-		/// Fog data.
-		/// </summary>
-		Fog,
-		/// <summary>
-		/// Point size data. Usable for drawing point sprites.
-		/// </summary>
-		PointSize,
-		/// <summary>
-		/// Sampler data for specifies the displacement value to look up.
-		/// </summary>
-		Sample,
-		/// <summary>
-		/// Single, positive float value, specifies a tessellation factor used in the tessellation unit to control the rate of tessellation.
-		/// </summary>
-		TessellateFactor
+		switch(usage)
+		{
+			case VertexElementUsage.Position: return RhiVertexAttributeType.Position;
+			case VertexElementUsage.TextureCoordinate: return RhiVertexAttributeType.TextureCoordinate;
+			default:
+				throw new NotImplementedException();
+		}
 	}
 }

@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using System.Reflection.Metadata.Ecma335;
+using System.Runtime.Loader;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -27,6 +28,7 @@ public class Application: IDisposable
     private CameraEntity _camera = null!;
 
     private Window _window = new();
+    private PlatformEventLoop _platformEventLoop = null!;
 
     private bool _runApplication = true;
 
@@ -35,6 +37,14 @@ public class Application: IDisposable
     public Application()
     {
         _loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+        AssemblyLoadContext.Default.Resolving += (context, name) =>
+        {
+            string path = Path.Combine(AppContext.BaseDirectory, $"{name.Name}.dll");
+            return File.Exists(path)
+                ? context.LoadFromAssemblyPath(path)
+                : null;
+        };
     }
 
     public void RegisterPlugin<T>() where T : IPlugin
@@ -45,7 +55,7 @@ public class Application: IDisposable
     public void Start()
     {
         InitialiseInternal();
-        Initialise();
+        //Initialise();
 
         float deltaSeconds = 0.0f;
 
@@ -71,28 +81,30 @@ public class Application: IDisposable
         return _serviceProvider.GetRequiredService<T>();
     }
 
-    virtual protected void Initialise()
-    {
+    //virtual protected void Initialise()
+    //{
 
-    }
+    //}
 
-    virtual protected void BeginDraw(IRenderContext context) 
-    {
-    }
+    //virtual protected void BeginDraw(IRenderContext context) 
+    //{
+    //}
 
-    virtual protected void EndDraw(IRenderContext context)
-    {
+    //virtual protected void EndDraw(IRenderContext context)
+    //{
 
-    }
+    //}
 
     private void InitialiseInternal()
     {
+
         _window.Startup();
 
         _services.AddSingleton<EntityManager>();
         _services.AddSingleton<ApplicationLoop>();
-        _services.AddSingleton<Input>();
+        _services.AddSingleton<InputManager>();
         _services.AddSingleton<IWindow>(_window);
+        _services.AddSingleton<PlatformEventLoop>();
 
         LoadPlugins(BaseDirectory);
         LoadPlugins(PluginDirectory, true);
@@ -113,13 +125,14 @@ public class Application: IDisposable
 
         _applicationLoop = GetService<ApplicationLoop>();
         _renderSystem = GetService<RenderSystem>();
+        _platformEventLoop = GetService<PlatformEventLoop>();
 
         var entityManager = GetService<EntityManager>();
 
         _camera = entityManager.NewEntity<CameraEntity>();
 
-        _renderSystem.OnFrameBegin += BeginDraw;
-        _renderSystem.OnFrameEnd += EndDraw;
+        //_renderSystem.OnFrameBegin += BeginDraw;
+        //_renderSystem.OnFrameEnd += EndDraw;
 
         _window.OnResized += (window) =>
         {
@@ -129,7 +142,7 @@ public class Application: IDisposable
 
     private void Update(float gameTime)
     {
-        if(_window.PollEvents())
+        if(_platformEventLoop.PollEvents())
         {
             _runApplication = false;
 

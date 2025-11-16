@@ -1,9 +1,17 @@
-﻿namespace Microsoft.Xna.Framework.Input;
+﻿using UOEngine.Runtime.Core.Input;
+using UOEngine.Runtime.FnaAdapter;
+
+namespace Microsoft.Xna.Framework.Input;
 
 public class Mouse
 {
     public static MouseState GetState()
     {
-        throw new NotImplementedException();
+        var state = FnaAdapterPlugin.Instance.InputManager.Mouse.State;
+
+        return new MouseState
+        {
+
+        };
     }
 }

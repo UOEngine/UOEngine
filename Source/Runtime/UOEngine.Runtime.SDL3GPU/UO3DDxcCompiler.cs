@@ -19,7 +19,7 @@ struct ShaderProgramCompileResult
 
 internal class UOEngineDxcCompiler
 {
-    public static void Compile(string shaderFile, ShaderProgramType type, out ShaderProgramCompileResult outCompileResult)
+    public static void Compile(string shaderFile, ShaderProgramType type, out ShaderProgramCompileResult outCompileResult, string programMainName = "main")
     {
         if(File.Exists(shaderFile) == false)
         {
@@ -42,7 +42,7 @@ internal class UOEngineDxcCompiler
 
         string[] arguments = new[]
 {
-            "-E",               "main",
+            "-E",               programMainName,
             "-T",               targetProfile,
             "-Zi",                                  // Debug info
             "-Qembed_debug",                        // Embed debug info in the shader

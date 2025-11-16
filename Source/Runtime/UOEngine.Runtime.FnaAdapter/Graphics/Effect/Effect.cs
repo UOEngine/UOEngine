@@ -1,8 +1,17 @@
-﻿namespace Microsoft.Xna.Framework.Graphics;
+﻿using System.Security.Cryptography;
+using UOEngine.Runtime.FnaAdapter;
+using UOEngine.Runtime.RHI.Resources;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+
+namespace Microsoft.Xna.Framework.Graphics;
 
 public class Effect
 {
     public EffectTechnique CurrentTechnique;
+
+    private readonly GraphicsDevice _device;
+    private readonly ShaderInstance _shaderInstance;
+
     public EffectParameterCollection Parameters
     {
         get;
@@ -17,6 +26,8 @@ public class Effect
 
     public Effect(GraphicsDevice device, byte[] effectCode)
     {
-        throw new NotImplementedException();
+        _device = device;
+
+        Parameters = new EffectParameterCollection(effectCode);
     }
 }

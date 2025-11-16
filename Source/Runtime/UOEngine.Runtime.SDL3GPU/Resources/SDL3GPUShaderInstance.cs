@@ -16,11 +16,24 @@ internal class Sdl3GpuShaderResource: RhiShaderResource
 
     public override void Load(string vertexShader, string fragmentShader)
     {
-        UOEngineDxcCompiler.Compile(vertexShader, ShaderProgramType.Vertex, out var vertexCompileResult);
-        UOEngineDxcCompiler.Compile(fragmentShader, ShaderProgramType.Pixel, out var fragmentCompileResult);
+        UOEngineDxcCompiler.Compile(vertexShader, ShaderProgramType.Vertex, out var vertexCompileResult, "main");
+        UOEngineDxcCompiler.Compile(fragmentShader, ShaderProgramType.Pixel, out var pixelCompileResult, "main");
 
+        LoadCommon(vertexCompileResult, pixelCompileResult);
+    }
+
+    public override void Load(string shaderFile, string vertexMainName, string pixelNameMain)
+    {
+        UOEngineDxcCompiler.Compile(shaderFile, ShaderProgramType.Vertex, out var vertexCompileResult, vertexMainName);
+        UOEngineDxcCompiler.Compile(shaderFile, ShaderProgramType.Pixel, out var pixelCompileResult, pixelNameMain);
+
+        LoadCommon(vertexCompileResult, pixelCompileResult);
+    }
+
+    private void LoadCommon(in ShaderProgramCompileResult vertexCompileResult, in ShaderProgramCompileResult pixelCompileResult)
+    {
         VertexProgram = new SDL3GPUShaderProgram(_device, ShaderProgramType.Vertex, vertexCompileResult);
-        PixelProgram = new SDL3GPUShaderProgram(_device, ShaderProgramType.Pixel, fragmentCompileResult);
+        PixelProgram = new SDL3GPUShaderProgram(_device, ShaderProgramType.Pixel, pixelCompileResult);
 
         ProgramBindings[ShaderProgramType.Vertex.ToInt()].Parameters = [.. VertexProgram.InputBindings];
         ProgramBindings[ShaderProgramType.Pixel.ToInt()].Parameters = [.. PixelProgram.InputBindings];
