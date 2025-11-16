@@ -97,9 +97,6 @@ public class Application: IDisposable
 
     private void InitialiseInternal()
     {
-
-        _window.Startup();
-
         _services.AddSingleton<EntityManager>();
         _services.AddSingleton<ApplicationLoop>();
         _services.AddSingleton<InputManager>();
@@ -110,6 +107,8 @@ public class Application: IDisposable
         LoadPlugins(PluginDirectory, true);
 
         _serviceProvider = _services.BuildServiceProvider();
+
+        _window.Startup(GetService<PlatformEventLoop>());
 
         var plugins = _serviceProvider.GetServices<IPlugin>();
 

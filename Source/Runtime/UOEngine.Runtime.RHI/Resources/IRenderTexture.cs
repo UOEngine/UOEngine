@@ -1,4 +1,4 @@
-﻿namespace UOEngine.Runtime.RHI.Resources;
+﻿namespace UOEngine.Runtime.RHI;
 
 public enum RenderTextureUsage
 {
@@ -11,7 +11,7 @@ public struct RenderTextureDescription
     public required uint Width;
     public required uint Height;
     public required RenderTextureUsage Usage;
-    public required string Name;
+    public string Name;
 }
 
 public interface IRenderTexture
@@ -19,6 +19,9 @@ public interface IRenderTexture
     public string Name { get; set; }
 
     public IntPtr Handle { get; }
+
+    public uint Width { get; }
+    public uint Height { get; }
 
     //public void SetData(Span<uint> texels);
 

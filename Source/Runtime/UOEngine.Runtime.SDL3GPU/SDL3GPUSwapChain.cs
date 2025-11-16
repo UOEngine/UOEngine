@@ -16,7 +16,7 @@ internal class SDL3GPUSwapChain: IRenderSwapChain
 
     private readonly SDL_GPUTextureFormat _format;
 
-    RenderTarget _backbufferRenderTarget = new();
+    RhiRenderTarget _backbufferRenderTarget = new();
 
     public TextureFormat BackbufferFormat => _format.ToRhiFormat();
 
@@ -28,7 +28,7 @@ internal class SDL3GPUSwapChain: IRenderSwapChain
         _format = SDL_GetGPUSwapchainTextureFormat(_device.Handle, windowHandle);
     }
 
-    public RenderTarget? Acquire(IRenderContext context)
+    public RhiRenderTarget? Acquire(IRenderContext context)
     {
         SDL3GPURenderContext sdl3GpuContext = (context as SDL3GPURenderContext)!;
 

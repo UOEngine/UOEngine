@@ -1,6 +1,6 @@
-﻿namespace UOEngine.Runtime.RHI.Resources;
+﻿namespace UOEngine.Runtime.RHI;
 
-public class RenderTarget
+public class RhiRenderTarget
 {
     public IRenderTexture Texture { get; private set; }
 

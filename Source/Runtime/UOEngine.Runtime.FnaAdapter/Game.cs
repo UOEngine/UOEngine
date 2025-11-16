@@ -1,5 +1,7 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using UOEngine.Runtime.FnaAdapter;
+using UOEngine.Runtime.Platform;
+using UOEngine.Runtime.RHI;
 
 namespace Microsoft.Xna.Framework;
 
@@ -14,10 +16,20 @@ public class Game: IDisposable
     public bool IsActive;
     public GraphicsDevice GraphicsDevice;
 
+    public IRenderResourceFactory RenderResourceFactory => _renderResourceFactory;
+
+    private static IRenderResourceFactory _renderResourceFactory = null!;
+    private static IWindow _window = null!;
+
+    public static void PreSetup(IRenderResourceFactory renderResourceFactory, IWindow window)
+    {
+        _window = window;
+        _renderResourceFactory = renderResourceFactory;
+    }
 
     public Game()
     {
-        Window = new GameWindow();
+        Window = new GameWindow(_window);
     }
 
     public void Exit()
@@ -32,12 +44,12 @@ public class Game: IDisposable
 
     public void DoInitialise()
     {
+
         Initialize();
     }
 
     protected virtual void Initialize()
     {
-        throw new NotImplementedException();
     }
 
     protected virtual void BeginRun()

@@ -13,7 +13,7 @@ public class GraphicsDeviceManager
 
     public GraphicsDeviceManager(Game game)
     {
-        GraphicsDevice = new GraphicsDevice();
+        GraphicsDevice = new GraphicsDevice(game.RenderResourceFactory);
     }
 
     public void ApplyChanges()

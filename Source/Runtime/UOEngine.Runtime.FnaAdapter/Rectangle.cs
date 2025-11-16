@@ -1,15 +1,21 @@
-﻿namespace Microsoft.Xna.Framework;
+﻿using UoeRectangle = UOEngine.Runtime.Core.Rectangle;
+
+namespace Microsoft.Xna.Framework;
 
 public struct Rectangle
 {
-    public int Width;
-    public int Height;
-    public int X;
-    public int Y;
+    public int Width => _rectangle.Width;
+    public int Height => _rectangle.Height;
+    public int X => _rectangle.X;
+    public int Y => _rectangle.Y;
+
+
+    private UoeRectangle _rectangle;
+
 
     public Rectangle(int x, int y, int width, int height)
     {
-        throw new NotImplementedException();
+        _rectangle = new UoeRectangle(x, y, width, height);
     }
 
     public bool Contains(int x, int y)

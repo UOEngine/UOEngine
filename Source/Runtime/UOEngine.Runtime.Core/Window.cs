@@ -16,12 +16,14 @@ public class Window: IWindow
     public uint RenderTargetWidth { get; private set; }
     public uint RenderTargetHeight { get; private set; }
 
-    public void Startup()
+    public void Startup(PlatformEventLoop eventLoop)
     {
         if (!SDL_Init(SDL_InitFlags.SDL_INIT_VIDEO))
         {
             throw new Exception("SDL_Init failed: " + SDL_GetError());
         }
+
+        eventLoop.OnWindowResized += OnWindowResize;
 
         string title = "UOEngine";
 
@@ -44,39 +46,6 @@ public class Window: IWindow
 
     }
 
-    //public bool PollEvents()
-    //{
-    //    SDL_Event evt;
-
-    //    while (SDL_PollEvent(out evt))
-    //    {
-    //        switch ((SDL_EventType)evt.type)
-    //        {
-    //            case SDL_EventType.SDL_EVENT_QUIT:
-    //                {
-    //                    return true;
-    //                }
-
-    //            case SDL_EventType.SDL_EVENT_WINDOW_RESIZED:
-    //                {
-    //                    Width = (uint)evt.window.data1;
-    //                    Height = (uint)evt.window.data2;
-
-    //                    UpdateRenderTargetSize();
-
-    //                    OnResized?.Invoke(this);
-
-    //                }
-    //                break;
-
-    //            default:
-    //                break;
-    //        }
-    //    }
-
-    //    return false;
-    //}
-
     public void UpdateRenderTargetSize()
     {
         SDL_GetWindowSizeInPixels(Handle, out var width, out var height);
@@ -89,5 +58,17 @@ public class Window: IWindow
     {
         SDL_DestroyWindow(Handle);
         SDL_QuitSubSystem(SDL_InitFlags.SDL_INIT_VIDEO);
+    }
+
+    private void OnWindowResize(IWindow window)
+    {
+        SDL_GetWindowSize(Handle, out int width, out int height);
+
+        Width = (uint)width;
+        Height = (uint)height;
+
+        UpdateRenderTargetSize();
+
+        OnResized?.Invoke(window);
     }
 }

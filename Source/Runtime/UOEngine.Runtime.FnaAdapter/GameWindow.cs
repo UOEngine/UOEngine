@@ -6,14 +6,26 @@ namespace Microsoft.Xna.Framework;
 public class GameWindow
 {
     public IntPtr Handle => _window.Handle;
-    public Rectangle ClientBounds;
+    public Rectangle ClientBounds => GetWindowBounds();
 
     public event EventHandler<EventArgs> ClientSizeChanged;
 
     private readonly IWindow _window;
 
-    public GameWindow()
+    public GameWindow(IWindow window)
     {
-        _window = FnaAdapterPlugin.Instance.Window;
+        _window = window;
+
+        _window.OnResized += OnWindowResized;
+
+    }
+
+    private void OnWindowResized(IWindow window)
+    {
+    }
+
+    public Rectangle GetWindowBounds()
+    {
+        return new Rectangle(0, 0, (int)_window.Width, (int)_window.Height);
     }
 }

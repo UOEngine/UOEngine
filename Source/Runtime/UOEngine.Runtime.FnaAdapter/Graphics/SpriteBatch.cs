@@ -2,9 +2,11 @@
 
 public class SpriteBatch
 {
+    private readonly GraphicsDevice _graphicsDevice;
+
     public SpriteBatch(GraphicsDevice graphicsDevice)
     {
-        throw new NotImplementedException();
+        _graphicsDevice = graphicsDevice;
     }
 
     public void Begin()

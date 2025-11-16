@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-using UOEngine.Runtime.RHI.Resources;
+using UOEngine.Runtime.RHI;
 
 using static SDL3.SDL;
 
@@ -17,6 +17,9 @@ internal struct SDL3GPUTextureDescription
 
 internal class SDL3GPUTexture: Sdl3GpuResource, IRenderTexture
 {
+    public uint Width => Description.width;
+    public uint Height => Description.height;
+
     public readonly SDL_GPUTextureCreateInfo Description;
 
     public readonly byte[] Texels;

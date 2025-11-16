@@ -9,6 +9,6 @@ namespace UOEngine.Runtime.RHI.Resources;
 public interface IRenderSwapChain
 {
     public TextureFormat BackbufferFormat { get; }
-    public RenderTarget? Acquire(IRenderContext context);
+    public RhiRenderTarget? Acquire(IRenderContext context);
 
 }

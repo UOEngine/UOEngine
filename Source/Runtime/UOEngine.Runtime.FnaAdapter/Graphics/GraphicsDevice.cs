@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using UOEngine.Runtime.RHI;
 
 namespace Microsoft.Xna.Framework.Graphics;
 
@@ -20,8 +21,12 @@ public class GraphicsDevice
 
     public TextureCollection Textures;
 
-    public GraphicsDevice()
+    public readonly IRenderResourceFactory RenderResourceFactory;
+
+    public GraphicsDevice(IRenderResourceFactory renderResourceFactory)
     {
+        RenderResourceFactory = renderResourceFactory;
+
         Adapter = new GraphicsAdapter();
     }
 

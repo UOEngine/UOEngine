@@ -1,5 +1,4 @@
 ﻿using UOEngine.Runtime.RHI;
-using UOEngine.Runtime.RHI.Resources;
 
 namespace UOEngine.Runtime.Renderer;
 
@@ -8,8 +7,8 @@ public class RenderSystem
     public event Action<IRenderContext>? OnFrameBegin;
     public event Action<IRenderContext>? OnFrameEnd;
 
-    public RenderTarget GBufferDiffuse;
-    public RenderTarget UIOverlay;
+    public RhiRenderTarget GBufferDiffuse;
+    public RhiRenderTarget UIOverlay;
 
     private IRenderContext _context = null!;
     private readonly IRenderer _rhiRenderer;
