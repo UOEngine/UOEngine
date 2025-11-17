@@ -13,7 +13,9 @@ public class GraphicsDeviceManager
 
     public GraphicsDeviceManager(Game game)
     {
-        GraphicsDevice = new GraphicsDevice(game.RenderResourceFactory);
+        game.Services.AddService(typeof(GraphicsDeviceManager), this);
+
+        GraphicsDevice = new GraphicsDevice(game.ServiceProvider);
     }
 
     public void ApplyChanges()

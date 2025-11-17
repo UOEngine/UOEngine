@@ -4,16 +4,16 @@ public struct KeyboardState
 {
     public bool IsKeyDown(Keys key)
     {
-        throw new NotImplementedException();
+        return false;
     }
 
     public bool IsKeyUp(Keys key)
     {
-        throw new NotImplementedException();
+        return false;
     }
 
     public Keys[] GetPressedKeys()
     {
-        throw new NotImplementedException();
+        return [];
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using Microsoft.Extensions.DependencyInjection;
+using UOEngine.Runtime.Renderer;
 using UOEngine.Runtime.RHI;
 
 namespace Microsoft.Xna.Framework.Graphics;
@@ -23,9 +24,17 @@ public class GraphicsDevice
 
     public readonly IRenderResourceFactory RenderResourceFactory;
 
-    public GraphicsDevice(IRenderResourceFactory renderResourceFactory)
+    private IRenderContext _renderContext;
+
+    public GraphicsDevice(IServiceProvider serviceProvider)
     {
-        RenderResourceFactory = renderResourceFactory;
+        RenderResourceFactory = serviceProvider.GetRequiredService<IRenderResourceFactory>();
+
+        // We need to set this each frame and then record into it what is done.
+        serviceProvider.GetRequiredService<RenderSystem>().OnFrameBegin += (renderContext) =>
+        {
+            _renderContext = renderContext;
+        };
 
         Adapter = new GraphicsAdapter();
     }
@@ -38,6 +47,7 @@ public class GraphicsDevice
     public void DrawIndexedPrimitives(PrimitiveType primitiveType, int baseVertex, int minVertexIndex, int numVertices, int startIndex, int primitiveCount)
     {
         throw new NotImplementedException();
+        //_renderContext.DrawIndexedPrimitives();
     }
 
     public void Reset(PresentationParameters presentationParameters)

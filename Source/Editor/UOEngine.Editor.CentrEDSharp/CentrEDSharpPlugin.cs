@@ -3,6 +3,7 @@ using CentrED;
 using CentrED.Client;
 using CentrED.Server;
 using CentrED.Utils;
+using UOEngine.Runtime.Core;
 using UOEngine.Runtime.FnaAdapter;
 using UOEngine.Runtime.Platform;
 using UOEngine.Runtime.Plugin;
@@ -23,11 +24,16 @@ public class CentrEdSharpPlugin: IPlugin
 
     private readonly IRenderResourceFactory _renderResourceFactory;
     private readonly IWindow _window;
+    private readonly ApplicationLoop _applicationLoop;
+    private readonly IServiceProvider _serviceProvider;
 
-    public CentrEdSharpPlugin(IRenderResourceFactory renderResourceFactory, IWindow window)
+    public CentrEdSharpPlugin(IRenderResourceFactory renderResourceFactory, IWindow window, ApplicationLoop applicationLoop,
+        IServiceProvider serviceProvider)
     {
         _renderResourceFactory = renderResourceFactory;
         _window = window;
+        _applicationLoop = applicationLoop;
+        _serviceProvider = serviceProvider;
     }
 
     public void PostStartup() 
@@ -81,7 +87,7 @@ public class CentrEdSharpPlugin: IPlugin
 
         Config.Initialize();
 
-        CentrEDGame.PreSetup(_renderResourceFactory, _window);
+        CentrEDGame.PreSetup(_serviceProvider);
 
         CEDGame = new CentrEDGame();
 

@@ -1,6 +1,9 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Xna.Framework.Graphics;
+using UOEngine.Runtime.Core;
 using UOEngine.Runtime.FnaAdapter;
 using UOEngine.Runtime.Platform;
+using UOEngine.Runtime.Renderer;
 using UOEngine.Runtime.RHI;
 
 namespace Microsoft.Xna.Framework;
@@ -14,22 +17,58 @@ public class Game: IDisposable
     }
 
     public bool IsActive;
-    public GraphicsDevice GraphicsDevice;
+
+    public GraphicsDevice GraphicsDevice
+    {
+        get
+        {
+            if (_graphicsDeviceManager == null)
+            {
+                _graphicsDeviceManager = Services.GetService<GraphicsDeviceManager>();
+
+                if (_graphicsDeviceManager == null)
+                {
+                    throw new InvalidOperationException(
+                        "No Graphics Device Service"
+                    );
+                }
+            }
+            return _graphicsDeviceManager.GraphicsDevice;
+        }
+    }
 
     public IRenderResourceFactory RenderResourceFactory => _renderResourceFactory;
+    public IServiceProvider ServiceProvider => _serviceProvider;
+
+    public readonly GameServiceContainer Services = new(); 
+
+    private readonly GameTime _gameTime = new();
 
     private static IRenderResourceFactory _renderResourceFactory = null!;
-    private static IWindow _window = null!;
+    private static IServiceProvider _serviceProvider = null!;
 
-    public static void PreSetup(IRenderResourceFactory renderResourceFactory, IWindow window)
+    private GraphicsDeviceManager? _graphicsDeviceManager;
+
+
+    public static void PreSetup(IServiceProvider serviceProvider)
     {
-        _window = window;
-        _renderResourceFactory = renderResourceFactory;
+        // Set up with what is required from UOEngine.
+        _serviceProvider = serviceProvider;
     }
 
     public Game()
     {
-        Window = new GameWindow(_window);
+        Window = new GameWindow(GetService<IWindow>());
+
+        _renderResourceFactory = GetService<IRenderResourceFactory>();
+        var applicationLoop = GetService<ApplicationLoop>();
+
+        applicationLoop.OnUpdate += UpdateInternal;
+
+        var inputManager = GetService<InputManager>();
+
+        GetService<RenderSystem>().OnFrameBegin += DrawInternal;
+
     }
 
     public void Exit()
@@ -64,25 +103,38 @@ public class Game: IDisposable
 
     protected virtual void Update(GameTime gameTime)
     {
-        throw new NotImplementedException();
     }
 
     protected virtual bool BeginDraw()
     {
-        throw new NotImplementedException();
+        return true;
     }
 
     protected virtual void EndDraw()
     {
-        throw new NotImplementedException();
     }
 
     protected virtual void Draw(GameTime gameTime)
     {
-        throw new NotImplementedException();
     }
 
     public void Dispose()
     {
     }
+
+    private void UpdateInternal(float deltaSeconds)
+    {
+        Update(_gameTime);
+    }
+
+    private void DrawInternal(IRenderContext renderContext)
+    {
+        if(BeginDraw())
+        {
+            Draw(_gameTime);
+            EndDraw();
+        }
+    }
+
+    private T GetService<T>() => _serviceProvider.GetRequiredService<T>();
 }

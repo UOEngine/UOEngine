@@ -4,6 +4,5 @@ public class Keyboard
 {
     public Keyboard(PlatformEventLoop platformEventLoop, ApplicationLoop applicationLoop)
     {
-
     }
 }

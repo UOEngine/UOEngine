@@ -40,6 +40,17 @@ public class RenderSystem
         _indexBuffer.SetData([0, 1, 2, 0, 2, 3]);
 
         _indexBuffer.Upload();
+
+        UIOverlay = new RhiRenderTarget();
+
+        var uiTexture = _resourceFactory.CreateTexture(new RenderTextureDescription
+        {
+            Width = 1920,
+            Height = 1080,
+            Usage = RenderTextureUsage.ColourTarget
+        });
+
+        UIOverlay.Setup(uiTexture);
     }
 
     public void FrameBegin()

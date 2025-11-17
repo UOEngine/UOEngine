@@ -1,5 +1,5 @@
 ﻿using Hexa.NET.ImGui;
-
+using Hexa.NET.ImGui.Backends.SDL3;
 using UOEngine.Runtime.Core;
 using UOEngine.Runtime.Plugin;
 using UOEngine.Runtime.Renderer;
@@ -24,14 +24,16 @@ public class UIPlugin : IPlugin
 
         //_rendererSystem.OnFrameEnd += OnFrameEnd;
 
-        //applicationLoop.OnUpdate += Update;
+        applicationLoop.OnUpdate += Update;
     }
 
     public void Startup()
     {
-        //var context = ImGui.CreateContext();
+        var context = ImGui.CreateContext();
 
-        //ImGui.SetCurrentContext(context);
+        ImGui.SetCurrentContext(context);
+        
+        //ImGuiImplSDL3.SetCurrentContext(context);
 
         //RebuildFontAtlas();
     }
@@ -40,8 +42,11 @@ public class UIPlugin : IPlugin
     {
         var io = ImGui.GetIO();
 
-        io.DisplaySize = new System.Numerics.Vector2(1, 1);
-        io.DisplayFramebufferScale = new System.Numerics.Vector2(1f, 1f);
+        uint width = _rendererSystem.UIOverlay.Width;
+        uint height = _rendererSystem.UIOverlay.Height;
+
+        io.DisplaySize = new System.Numerics.Vector2(width, height);
+        io.DisplayFramebufferScale = new System.Numerics.Vector2(width, height);
     }
 
     private void OnFrameBegin(IRenderContext renderContext)
