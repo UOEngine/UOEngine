@@ -8,6 +8,7 @@
     <Nullable>enable</Nullable>
     <Platforms>x64</Platforms>
 	  <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+	  <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>

@@ -17,4 +17,16 @@ public class SamplerStateCollection
 
     private readonly SamplerState[] samplers;
     private readonly bool[] modifiedSamplers;
+
+    internal SamplerStateCollection(int slots, bool[] modSamplers)
+    {
+        samplers = new SamplerState[slots];
+
+        modifiedSamplers = modSamplers;
+
+        for (int i = 0; i < samplers.Length; i += 1)
+        {
+            //samplers[i] = SamplerState.LinearWrap;
+        }
+    }
 }

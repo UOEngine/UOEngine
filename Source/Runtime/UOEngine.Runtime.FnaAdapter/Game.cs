@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xna.Framework.Graphics;
 using UOEngine.Runtime.Core;
 using UOEngine.Runtime.FnaAdapter;
@@ -49,6 +50,8 @@ public class Game: IDisposable
 
     private GraphicsDeviceManager? _graphicsDeviceManager;
 
+    private Stopwatch _gameTimer;
+    private long _previousTicks = 0;
 
     public static void PreSetup(IServiceProvider serviceProvider)
     {
@@ -85,6 +88,8 @@ public class Game: IDisposable
     {
 
         Initialize();
+
+        _gameTimer = Stopwatch.StartNew();
     }
 
     protected virtual void Initialize()
@@ -124,6 +129,12 @@ public class Game: IDisposable
 
     private void UpdateInternal(float deltaSeconds)
     {
+        long currentTicks = _gameTimer.Elapsed.Ticks;
+        TimeSpan timeAdvanced = TimeSpan.FromTicks(currentTicks - _previousTicks);
+        _gameTime.ElapsedGameTime = timeAdvanced;
+
+        _previousTicks = currentTicks;
+
         Update(_gameTime);
     }
 

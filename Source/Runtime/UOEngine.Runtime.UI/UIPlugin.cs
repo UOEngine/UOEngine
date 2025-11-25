@@ -24,14 +24,14 @@ public class UIPlugin : IPlugin
 
         //_rendererSystem.OnFrameEnd += OnFrameEnd;
 
-        applicationLoop.OnUpdate += Update;
+        //applicationLoop.OnUpdate += Update;
     }
 
     public void Startup()
     {
-        var context = ImGui.CreateContext();
+        //var context = ImGui.CreateContext();
 
-        ImGui.SetCurrentContext(context);
+        //ImGui.SetCurrentContext(context);
         
         //ImGuiImplSDL3.SetCurrentContext(context);
 
@@ -51,7 +51,7 @@ public class UIPlugin : IPlugin
 
     private void OnFrameBegin(IRenderContext renderContext)
     {
-        ImGui.NewFrame();
+        //ImGui.NewFrame();
     }
 
     private void OnFrameEnd(IRenderContext renderContext)

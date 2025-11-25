@@ -4,9 +4,11 @@ namespace Microsoft.Xna.Framework.Graphics;
 
 public struct Viewport
 {
+    //private _rhiViewport _rhiViewport;
+
     public Viewport(int x, int y, int width, int height)
     {
-        throw new NotImplementedException();
+        //throw new NotImplementedException();
     }
 
     public Viewport(Rectangle bounds)

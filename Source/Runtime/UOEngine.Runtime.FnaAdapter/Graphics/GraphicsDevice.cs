@@ -10,7 +10,7 @@ public class GraphicsDevice
     public BlendState BlendState;
     public RasterizerState RasterizerState;
     public DepthStencilState DepthStencilState;
-    public SamplerStateCollection SamplerStates;
+    public SamplerStateCollection SamplerStates { get; private set; }
 
     public GraphicsAdapter Adapter;
     public PresentationParameters PresentationParameters;
@@ -26,6 +26,12 @@ public class GraphicsDevice
 
     private IRenderContext _renderContext;
 
+    private RenderTarget2D? _renderTarget;
+    private Color _clearColour;
+
+    private VertexBuffer _vertexBuffer;
+    private bool _vertexBuffersUpdated = false;
+
     public GraphicsDevice(IServiceProvider serviceProvider)
     {
         RenderResourceFactory = serviceProvider.GetRequiredService<IRenderResourceFactory>();
@@ -36,12 +42,15 @@ public class GraphicsDevice
             _renderContext = renderContext;
         };
 
+        SamplerStates = new SamplerStateCollection(1, []); 
+
         Adapter = new GraphicsAdapter();
     }
 
     public void SetVertexBuffer(VertexBuffer vertexBuffer)
     {
-        throw new NotImplementedException();
+        _vertexBuffer = vertexBuffer;
+        _vertexBuffersUpdated = true;
     }
 
     public void DrawIndexedPrimitives(PrimitiveType primitiveType, int baseVertex, int minVertexIndex, int numVertices, int startIndex, int primitiveCount)
@@ -62,7 +71,7 @@ public class GraphicsDevice
 
     public void Clear(Color color)
     {
-        throw new NotImplementedException();
+        _clearColour = color;
     }
 
     public void Clear(ClearOptions options, Color color, float depth, int stencil)
@@ -70,9 +79,9 @@ public class GraphicsDevice
         throw new NotImplementedException();
     }
 
-    public void SetRenderTarget(RenderTarget2D renderTarget)
+    public void SetRenderTarget(RenderTarget2D? renderTarget)
     {
-        throw new NotImplementedException();
+        _renderTarget = renderTarget;
 
     }
 }

@@ -78,6 +78,7 @@ public static class VertexElementUsageExtensions
 		{
 			case VertexElementUsage.Position: return RhiVertexAttributeType.Position;
 			case VertexElementUsage.TextureCoordinate: return RhiVertexAttributeType.TextureCoordinate;
+			case VertexElementUsage.Color: return RhiVertexAttributeType.Colour;
 			default:
 				throw new NotImplementedException();
 		}
