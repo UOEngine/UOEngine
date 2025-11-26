@@ -34,70 +34,75 @@ public class CentrEdSharpPlugin: IPlugin
         _window = window;
         _applicationLoop = applicationLoop;
         _serviceProvider = serviceProvider;
+
+        _applicationLoop.OnUpdate += OnUpdate;
     }
 
     public void PostStartup() 
     {
-        string mapEffectNew = @"D:\UODev\UOEngineGithub\Source\Shaders\CentrEdSharp\MapEffect.hlsl";
-        string mapEffect = @"D:\UODev\UOEngineGitHub\ThirdParty\centredsharp\CentrED\Renderer\Shaders\MapEffect.fxc";
+        //string mapEffectNew = @"D:\UODev\UOEngineGithub\Source\Shaders\CentrEdSharp\MapEffect.hlsl";
+        //string mapEffect = @"D:\UODev\UOEngineGitHub\ThirdParty\centredsharp\CentrED\Renderer\Shaders\MapEffect.fxc";
 
-        var terrainTechnique = new Technique
-        {
-            Name = "Terrain",
-            VertexMain = "TileVSMain",
-            PixelMain = "TerrainPSMain"
-        };
+        //var terrainTechnique = new Technique
+        //{
+        //    Name = "Terrain",
+        //    VertexMain = "TileVSMain",
+        //    PixelMain = "TerrainPSMain"
+        //};
 
-        var terrainGrid = new Technique
-        {
-            Name = "TerrainGrid",
-            VertexMain = "TerrainGridVSMain",
-            PixelMain = "TerrainGridPSMain"
-        };
+        //var terrainGrid = new Technique
+        //{
+        //    Name = "TerrainGrid",
+        //    VertexMain = "TerrainGridVSMain",
+        //    PixelMain = "TerrainGridPSMain"
+        //};
 
-        var statics = new Technique
-        {
-            Name = "Statics",
-            VertexMain = "TileVSMain",
-            PixelMain = "StaticsPSMain"
-        };
+        //var statics = new Technique
+        //{
+        //    Name = "Statics",
+        //    VertexMain = "TileVSMain",
+        //    PixelMain = "StaticsPSMain"
+        //};
 
-        var selection = new Technique
-        {
-            Name = "Selection",
-            VertexMain = "TileVSMain",
-            PixelMain = "SelectionPSMain"
-        };
+        //var selection = new Technique
+        //{
+        //    Name = "Selection",
+        //    VertexMain = "TileVSMain",
+        //    PixelMain = "SelectionPSMain"
+        //};
 
-        var virtualLayer = new Technique
-        {
-            Name = "VirtualLayer",
-            VertexMain = "VirtualLayerVSMain",
-            PixelMain = "VirtualLayerPSMain"
-        };
+        //var virtualLayer = new Technique
+        //{
+        //    Name = "VirtualLayer",
+        //    VertexMain = "VirtualLayerVSMain",
+        //    PixelMain = "VirtualLayerPSMain"
+        //};
 
-        Remapper.RemapTechniques(mapEffect, mapEffectNew,
-        [
-            terrainTechnique, 
-            terrainGrid,
-            statics,
-            selection,
-            virtualLayer
-        ]);
+        //Remapper.RemapTechniques(mapEffect, mapEffectNew,
+        //[
+        //    terrainTechnique, 
+        //    terrainGrid,
+        //    statics,
+        //    selection,
+        //    virtualLayer
+        //]);
 
         Config.Initialize();
-
-        CentrEDGame.PreSetup(_serviceProvider);
 
         CEDGame = new CentrEDGame();
 
         CentredApplication.SetFromUOEngine(CEDGame);
 
-        CEDGame.DoInitialise();
+        //CEDGame.DoInitialise();
     }
 
     public void Shutdown()
     {
         CEDGame.Dispose();
+    }
+
+    private void OnUpdate(float time)
+    {
+        CEDGame.RunOneFrame();
     }
 }

@@ -1,4 +1,5 @@
-﻿using UOEngine.Runtime.Core;
+﻿using Microsoft.Xna.Framework;
+using UOEngine.Runtime.Core;
 using UOEngine.Runtime.Platform;
 using UOEngine.Runtime.Plugin;
 using UOEngine.Runtime.RHI;
@@ -24,4 +25,11 @@ public class FnaAdapterPlugin: IPlugin
         InputManager = inputmanager;
         RenderResourceFactory = renderResourceFactory;
     }
+
+
+    public void Startup() 
+    {
+        FNAPlatform.SetupPlatform(Window);
+    }
+
 }

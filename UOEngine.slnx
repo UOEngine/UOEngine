@@ -52,7 +52,13 @@
   </Folder>
   <Folder Name="/Shaders/" />
   <Folder Name="/ThirdParty/">
+    <Project Path="ThirdParty/FAudio/csharp/FAudio-CS.Core.csproj">
+      <Platform Project="x64" />
+    </Project>
     <Project Path="ThirdParty/SDL3-CS/SDL3/SDL3.Core.csproj" />
+    <Project Path="ThirdParty/Theorafile/csharp/Theorafile-CS.Core.csproj">
+      <Platform Project="x64" />
+    </Project>
   </Folder>
   <Folder Name="/ThirdParty/CentrEDSharp/">
     <Project Path="ThirdParty/centredsharp/CentrED/CentrED.csproj">

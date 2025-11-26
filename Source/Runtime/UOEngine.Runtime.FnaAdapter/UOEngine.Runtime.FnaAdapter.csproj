@@ -12,11 +12,20 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="FNA\FNAPlatform\FNAPlatform.cs" />
+    <Compile Remove="FNA\FNAPlatform\SDL2_FNAPlatform.cs" />
+    <Compile Remove="FNA\FNAPlatform\SDL3_FNAPlatform.cs" />
+    <Compile Remove="FNA\Graphics\FNA3D.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="StbImageSharp" Version="2.30.15" />
     <PackageReference Include="System.IO.Hashing" Version="10.0.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\ThirdParty\FAudio\csharp\FAudio-CS.Core.csproj" />
+    <ProjectReference Include="..\..\..\ThirdParty\Theorafile\csharp\Theorafile-CS.Core.csproj" />
     <ProjectReference Include="..\UOEngine.Runtime.Core\UOEngine.Runtime.Core.csproj" />
     <ProjectReference Include="..\UOEngine.Runtime.Platform\UOEngine.Runtime.Platform.csproj" />
     <ProjectReference Include="..\UOEngine.Runtime.Plugin\UOEngine.Runtime.Plugin.csproj" />

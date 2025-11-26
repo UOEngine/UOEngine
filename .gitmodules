@@ -16,3 +16,9 @@
 [submodule "ThirdParty/centredsharp"]
 	path = ThirdParty/centredsharp
 	url = https://github.com/UOEngine/centredsharp.git
+[submodule "ThirdParty/FAudio"]
+	path = ThirdParty/FAudio
+	url = https://github.com/FNA-XNA/FAudio.git
+[submodule "ThirdParty/Theorafile"]
+	path = ThirdParty/Theorafile
+	url = https://github.com/FNA-XNA/Theorafile.git
