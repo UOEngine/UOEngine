@@ -17,7 +17,7 @@ public class SDL3GPUPlugin: IPlugin
     {
         services.AddSingleton<IRenderer, SDL3GPURenderer>();
         services.AddSingleton<IRenderResourceFactory, SDL3GPUResourceFactory>();
-        services.AddSingleton<Sdl3GpuDevice>();
+        services.AddSingleton<IRenderDevice, Sdl3GpuDevice>();
     }
 
     public void Startup()

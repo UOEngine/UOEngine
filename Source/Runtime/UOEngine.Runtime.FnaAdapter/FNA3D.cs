@@ -11,12 +11,14 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using UOEngine.Runtime.FnaAdapter;
+using UOEngine.Runtime.RHI;
 #endregion
 
 namespace Microsoft.Xna.Framework.Graphics;
 
 [System.Security.SuppressUnmanagedCodeSecurity]
-internal static class FNA3D
+internal static partial class FNA3D
 {
     #region Private Constants
 
@@ -180,10 +182,10 @@ internal static class FNA3D
 
     /* IntPtr refers to an FNA3D_Device* */
 
-    public static IntPtr FNA3D_CreateDevice(
-        ref FNA3D_PresentationParameters presentationParameters,
-        byte debugMode
-    ) => throw new NotImplementedException();
+    public static IntPtr FNA3D_CreateDevice(ref FNA3D_PresentationParameters presentationParameters, byte debugMode)
+    {
+        return _Fna3DUOEngine.RenderDevice.Handle;
+    }
 
 
     public static void FNA3D_DestroyDevice(IntPtr device) => throw new NotImplementedException();
@@ -277,16 +279,16 @@ internal static class FNA3D
     #region Mutable Render States
 
 
-    public static void FNA3D_SetViewport(
-        IntPtr device,
-        ref FNA3D_Viewport viewport
-    ) => throw new NotImplementedException();
+    public static void FNA3D_SetViewport( IntPtr device, ref FNA3D_Viewport viewport)
+    {
+
+    }
 
 
-    public static void FNA3D_SetScissorRect(
-        IntPtr device,
-        ref Rectangle scissor
-    ) => throw new NotImplementedException();
+    public static void FNA3D_SetScissorRect(IntPtr device, ref Rectangle scissor)
+    {
+
+    }
 
 
     public static void FNA3D_GetBlendFactor(
@@ -400,10 +402,10 @@ internal static class FNA3D
     #region Backbuffer Functions
 
 
-    public static void FNA3D_ResetBackbuffer(
-        IntPtr device,
-        ref FNA3D_PresentationParameters presentationParameters
-    ) => throw new NotImplementedException();
+    public static void FNA3D_ResetBackbuffer(IntPtr device, ref FNA3D_PresentationParameters presentationParameters)
+    {
+
+    }
 
 
     public static void FNA3D_ReadBackbuffer(
@@ -701,7 +703,10 @@ internal static class FNA3D
         int length,
         out IntPtr effect,
         out IntPtr effectData
-    ) => throw new NotImplementedException();
+    )
+    {
+        throw new NotImplementedException();
+    }
 
     /* IntPtr refers to an FNA3D_Effect* */
 
@@ -724,7 +729,12 @@ internal static class FNA3D
         IntPtr device,
         IntPtr effect,
         IntPtr technique
-    ) => throw new NotImplementedException();
+    )
+    {
+        var shaderInstance = _Fna3DUOEngine.ShaderRemapper.GetShaderInstance(effect, technique);
+
+        _Fna3DUOEngine.RenderSystem.CurrentRenderContext.ShaderInstance = shaderInstance;
+    }
 
 
     public static void FNA3D_ApplyEffect(
@@ -810,18 +820,19 @@ internal static class FNA3D
     public static byte FNA3D_SupportsSRGBRenderTargets(IntPtr device) => throw new NotImplementedException();
 
 
-    public static void FNA3D_GetMaxTextureSlots(
-        IntPtr device,
-        out int textures,
-        out int vertexTextures
-    ) => throw new NotImplementedException();
+    public static void FNA3D_GetMaxTextureSlots(IntPtr device, out int textures, out int vertexTextures)
+    {
+        // Enough?
+        textures = 16;
+        vertexTextures = 16;
+    }
 
 
-    public static int FNA3D_GetMaxMultiSampleCount(
-        IntPtr device,
-        SurfaceFormat format,
-        int preferredMultiSampleCount
-    ) => throw new NotImplementedException();
+    public static int FNA3D_GetMaxMultiSampleCount(IntPtr device, SurfaceFormat format, int preferredMultiSampleCount)
+    {
+        return 0;
+    }
+
 
     #endregion
 

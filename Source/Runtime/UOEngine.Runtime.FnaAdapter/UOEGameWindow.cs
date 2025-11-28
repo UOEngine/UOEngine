@@ -6,6 +6,8 @@ namespace UOEngine.Runtime.FnaAdapter;
 public class UOEGameWindow : GameWindow
 {
     private readonly IWindow _window;
+
+    private bool _wantsFullScreen = false;
     public UOEGameWindow(IWindow window)
     {
         _window = window;
@@ -23,12 +25,12 @@ public class UOEGameWindow : GameWindow
 
     public override void BeginScreenDeviceChange(bool willBeFullScreen)
     {
-        throw new NotImplementedException();
+        _wantsFullScreen = willBeFullScreen;
     }
 
     public override void EndScreenDeviceChange(string screenDeviceName, int clientWidth, int clientHeight)
     {
-        throw new NotImplementedException();
+        // Resize window here.
     }
 
     protected override void SetTitle(string title)

@@ -26,66 +26,68 @@ public class CentrEdSharpPlugin: IPlugin
     private readonly IWindow _window;
     private readonly ApplicationLoop _applicationLoop;
     private readonly IServiceProvider _serviceProvider;
+    private readonly Remapper _shaderRemapper;
 
     public CentrEdSharpPlugin(IRenderResourceFactory renderResourceFactory, IWindow window, ApplicationLoop applicationLoop,
-        IServiceProvider serviceProvider)
+        IServiceProvider serviceProvider, Remapper shaderRemapper)
     {
         _renderResourceFactory = renderResourceFactory;
         _window = window;
         _applicationLoop = applicationLoop;
         _serviceProvider = serviceProvider;
+        _shaderRemapper = shaderRemapper;
 
         _applicationLoop.OnUpdate += OnUpdate;
     }
 
     public void PostStartup() 
     {
-        //string mapEffectNew = @"D:\UODev\UOEngineGithub\Source\Shaders\CentrEdSharp\MapEffect.hlsl";
-        //string mapEffect = @"D:\UODev\UOEngineGitHub\ThirdParty\centredsharp\CentrED\Renderer\Shaders\MapEffect.fxc";
+        string mapEffectNew = @"D:\UODev\UOEngineGithub\Source\Shaders\CentrEdSharp\MapEffect.hlsl";
+        string mapEffect = @"D:\UODev\UOEngineGitHub\ThirdParty\centredsharp\CentrED\Renderer\Shaders\MapEffect.fxc";
 
-        //var terrainTechnique = new Technique
-        //{
-        //    Name = "Terrain",
-        //    VertexMain = "TileVSMain",
-        //    PixelMain = "TerrainPSMain"
-        //};
+        var terrainTechnique = new Technique
+        {
+            Name = "Terrain",
+            VertexMain = "TileVSMain",
+            PixelMain = "TerrainPSMain"
+        };
 
-        //var terrainGrid = new Technique
-        //{
-        //    Name = "TerrainGrid",
-        //    VertexMain = "TerrainGridVSMain",
-        //    PixelMain = "TerrainGridPSMain"
-        //};
+        var terrainGrid = new Technique
+        {
+            Name = "TerrainGrid",
+            VertexMain = "TerrainGridVSMain",
+            PixelMain = "TerrainGridPSMain"
+        };
 
-        //var statics = new Technique
-        //{
-        //    Name = "Statics",
-        //    VertexMain = "TileVSMain",
-        //    PixelMain = "StaticsPSMain"
-        //};
+        var statics = new Technique
+        {
+            Name = "Statics",
+            VertexMain = "TileVSMain",
+            PixelMain = "StaticsPSMain"
+        };
 
-        //var selection = new Technique
-        //{
-        //    Name = "Selection",
-        //    VertexMain = "TileVSMain",
-        //    PixelMain = "SelectionPSMain"
-        //};
+        var selection = new Technique
+        {
+            Name = "Selection",
+            VertexMain = "TileVSMain",
+            PixelMain = "SelectionPSMain"
+        };
 
-        //var virtualLayer = new Technique
-        //{
-        //    Name = "VirtualLayer",
-        //    VertexMain = "VirtualLayerVSMain",
-        //    PixelMain = "VirtualLayerPSMain"
-        //};
+        var virtualLayer = new Technique
+        {
+            Name = "VirtualLayer",
+            VertexMain = "VirtualLayerVSMain",
+            PixelMain = "VirtualLayerPSMain"
+        };
 
-        //Remapper.RemapTechniques(mapEffect, mapEffectNew,
-        //[
-        //    terrainTechnique, 
-        //    terrainGrid,
-        //    statics,
-        //    selection,
-        //    virtualLayer
-        //]);
+        _shaderRemapper.RemapTechniques(mapEffect, mapEffectNew,
+        [
+            terrainTechnique,
+            terrainGrid,
+            statics,
+            selection,
+            virtualLayer
+        ]);
 
         Config.Initialize();
 

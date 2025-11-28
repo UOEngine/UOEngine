@@ -10,6 +10,8 @@ public class RenderSystem
     public RhiRenderTarget GBufferDiffuse;
     public RhiRenderTarget UIOverlay;
 
+    public IRenderContext CurrentRenderContext { get; private set; }
+
     private IRenderContext _context = null!;
     private readonly IRenderer _rhiRenderer;
     private readonly IRenderResourceFactory _resourceFactory;
@@ -35,6 +37,7 @@ public class RenderSystem
     public void Startup()
     {
         _context = _rhiRenderer.CreateRenderContext();
+        CurrentRenderContext = _context;
         _indexBuffer = _resourceFactory.CreateIndexBuffer(6, "MainIndexBuffer");
 
         _indexBuffer.SetData([0, 1, 2, 0, 2, 3]);

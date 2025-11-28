@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,7 +14,7 @@ using UOEngine.Runtime.Platform;
 
 namespace Microsoft.Xna.Framework;
 
-public class FNAPlatform
+public partial class FNAPlatform
 {
     private static UOEGameWindow _gameWindow;
 
@@ -22,16 +23,26 @@ public class FNAPlatform
 
     }
 
-    public static void SetupPlatform(IWindow window)
+    public static IntPtr Malloc(int size)
     {
-        _gameWindow = new UOEGameWindow(window);
+        IntPtr block;
+
+        unsafe
+        {
+            void* memory = NativeMemory.Alloc((nuint)size);
+            block = (nint)memory;
+        }
+
+        return block;
     }
 
-    public delegate IntPtr MallocFunc(int size);
-    public static readonly MallocFunc Malloc;
-
-    public delegate void FreeFunc(IntPtr ptr);
-    public static readonly FreeFunc Free;
+    public static void Free(IntPtr ptr)
+    {
+        unsafe
+        {
+            NativeMemory.Free(&ptr);
+        }
+    }
 
     public delegate void SetEnvFunc(string name, string value);
     public static readonly SetEnvFunc SetEnv;
@@ -97,8 +108,14 @@ public class FNAPlatform
 
     }
 
-    public delegate GraphicsAdapter[] GetGraphicsAdaptersFunc();
-    public static readonly GetGraphicsAdaptersFunc GetGraphicsAdapters;
+    public static GraphicsAdapter[] GetGraphicsAdapters()
+    {
+        var testDisplayMode = new DisplayMode(1920, 1080, SurfaceFormat.Color);
+
+        var adapter = new GraphicsAdapter(new DisplayModeCollection([testDisplayMode]), "UOEngineAdapter", "UOEngine adapter for rendering.");
+
+        return [adapter];
+    }
 
     public delegate DisplayMode GetCurrentDisplayModeFunc(int adapterIndex);
     public static readonly GetCurrentDisplayModeFunc GetCurrentDisplayMode;
@@ -118,7 +135,7 @@ public class FNAPlatform
     public delegate void SetTextInputRectangleFunc(IntPtr window, Rectangle rectangle);
     public static readonly SetTextInputRectangleFunc SetTextInputRectangle;
 
-    public delegate void GetMouseStateFunc(
+    public static void GetMouseState(
         IntPtr window,
         out int x,
         out int y,
@@ -127,8 +144,16 @@ public class FNAPlatform
         out ButtonState right,
         out ButtonState x1,
         out ButtonState x2
-    );
-    public static readonly GetMouseStateFunc GetMouseState;
+    )
+    {
+        x = 0;
+        y = 0;
+        left = ButtonState.Released;
+        middle = ButtonState.Released;
+        right = ButtonState.Released;
+        x1 = ButtonState.Released;
+        x2 = ButtonState.Released;
+    }
 
     public delegate void SetMousePositionFunc(
         IntPtr window,

@@ -12,9 +12,9 @@ internal class SDL3GPUResourceFactory : IRenderResourceFactory
     //private readonly IntPtr _device;
     private readonly Sdl3GpuDevice _device;
 
-    public SDL3GPUResourceFactory(Sdl3GpuDevice device)
+    public SDL3GPUResourceFactory(IRenderDevice device)
     {
-        _device = device;
+        _device = (Sdl3GpuDevice)device;
     }
 
     public RhiShaderResource NewShaderResource()

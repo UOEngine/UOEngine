@@ -16,10 +16,10 @@ internal class SDL3GPURenderer : IRenderer
 
     private Sdl3GpuGlobalSamplers _globalSamplers;
 
-    public SDL3GPURenderer(IWindow window, Sdl3GpuDevice device)
+    public SDL3GPURenderer(IWindow window, IRenderDevice device)
     {
         _window = window;
-        _device = device;
+        _device = (Sdl3GpuDevice)device;
     }
 
     public void Startup()

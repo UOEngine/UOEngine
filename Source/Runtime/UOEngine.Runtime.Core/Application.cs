@@ -105,6 +105,7 @@ public class Application: IDisposable
 
         LoadPlugins(BaseDirectory);
         LoadPlugins(PluginDirectory, true);
+        LoadPlugin($"{BaseDirectory}/FNA.dll");
 
         _serviceProvider = _services.BuildServiceProvider();
 
@@ -168,65 +169,83 @@ public class Application: IDisposable
 
         foreach (var dll in Directory.GetFiles(directory, "*.dll"))
         {
-            Assembly assembly;
-
             if(Path.GetFileName(dll).StartsWith("UOEngine") == false)
             {
                 continue;
             }
 
-            try
+            LoadPlugin(dll);
+        }
+    }
+
+    private void LoadPlugin(string pluginAssemblyPath)
+    {
+        Assembly assembly;
+
+        Console.WriteLine($"Loading {pluginAssemblyPath}.");
+
+        try
+        {
+            assembly = Assembly.LoadFrom(pluginAssemblyPath);
+        }
+        catch
+        {
+            Console.WriteLine($"Loading {pluginAssemblyPath} failed.");
+
+            return;
+        }
+
+        Type[] types = null!;
+
+        try
+        {
+            types = assembly.GetTypes();
+        }
+        catch (ReflectionTypeLoadException ex)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine($"Error loading types from {assembly.FullName}:");
+            foreach (var t in ex.Types)
+                sb.AppendLine($"Type: {t?.FullName ?? "(null)"}");
+            foreach (var le in ex.LoaderExceptions)
+                sb.AppendLine($"LoaderException: {le.Message}");
+            Console.WriteLine(sb.ToString());
+
+            return;
+        }
+
+        foreach (var type in types)
+        {
+            if (typeof(IPlugin).IsAssignableFrom(type) == false)
             {
-                assembly = Assembly.LoadFrom(dll);
-            }
-            catch
-            {
-                continue; // skip invalid DLLs
+                continue; // skip non-plugins
             }
 
-            Console.WriteLine($"Loaded {dll}.");
-
-            Type[] types = null!;
-
-            try
-            {
-                types = assembly.GetTypes();
-            }
-            catch(ReflectionTypeLoadException ex)
-            {
-                var sb = new StringBuilder();
-                sb.AppendLine($"Error loading types from {assembly.FullName}:");
-                foreach (var t in ex.Types)
-                    sb.AppendLine($"Type: {t?.FullName ?? "(null)"}");
-                foreach (var le in ex.LoaderExceptions)
-                    sb.AppendLine($"LoaderException: {le.Message}");
-                Console.WriteLine(sb.ToString());
-            }
-            catch
+            if (type.IsAbstract || !type.IsClass)
             {
                 continue;
             }
 
-            foreach (var type in types)
+            var configureServicesMethod = type.GetMethod("ConfigureServices");
+
+            if(configureServicesMethod == null)
             {
-                if (typeof(IPlugin).IsAssignableFrom(type) == false)
+                configureServicesMethod = type.GetMethod("ConfigureServices", BindingFlags.NonPublic);
+
+                if(configureServicesMethod != null)
                 {
-                    continue; // skip non-plugins
+                    throw new InvalidOperationException("ConfigureServices is private, should be public.");
                 }
-
-                if (type.IsAbstract || !type.IsClass)
-                {
-                    continue;
-                }
-
-                Console.WriteLine($"Loading plugin {dll}");
-
-                var configureServicesMethod = type.GetMethod("ConfigureServices");
-
-                configureServicesMethod?.Invoke(null, [_services]);
-
-                _services.AddSingleton(typeof(IPlugin), type);
             }
+
+
+            configureServicesMethod?.Invoke(null, [_services]);
+
+            _services.AddSingleton(typeof(IPlugin), type);
+
+            Console.WriteLine($"Loaded plugin {pluginAssemblyPath}");
+
+            return;
         }
     }
 
