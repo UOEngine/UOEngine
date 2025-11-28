@@ -1,4 +1,4 @@
-﻿using UOEngine.Runtime.RHI.Resources;
+﻿using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Runtime.SDL3GPU.Resources;
 

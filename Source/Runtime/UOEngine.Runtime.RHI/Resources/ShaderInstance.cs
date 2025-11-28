@@ -2,7 +2,7 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
 
-namespace UOEngine.Runtime.RHI.Resources;
+namespace UOEngine.Runtime.RHI;
 
 //[StructLayout(LayoutKind.Explicit)]
 public struct ShaderBindingData
@@ -154,6 +154,11 @@ public class ShaderInstance
     public ShaderBindingHandle GetBindingHandle(ShaderProgramType programType, RhiShaderInputType inputType, string name)
     {
         return _shaderResource.GetBindingHandle(programType, inputType, name);
+    }
+
+    public void GetVariable(string name, out ShaderVariable shaderVariable)
+    {
+        _shaderResource.GetParameter(name, out shaderVariable);
     }
 
     public void SetParameter(ShaderBindingHandle bindingHandle, in Matrix4x4 matrix)

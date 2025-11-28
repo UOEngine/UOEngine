@@ -1,4 +1,4 @@
-﻿namespace UOEngine.Runtime.RHI.Resources;
+﻿namespace UOEngine.Runtime.RHI;
 
 public enum ShaderProgramType
 {

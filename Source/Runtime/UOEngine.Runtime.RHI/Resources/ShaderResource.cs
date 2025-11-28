@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics;
-using System.Xml.Linq;
 
-namespace UOEngine.Runtime.RHI.Resources;
+namespace UOEngine.Runtime.RHI;
 
 public enum RhiShaderInputType
 {
@@ -13,12 +12,25 @@ public enum RhiShaderInputType
     Invalid
 }
 
-[DebuggerDisplay("{Name}")]
+public enum RhiShaderVariableType
+{
+    Scalar,
+    Vector,
+    Matrix,
+    Struct,
+    Object,
+
+    Count,
+    Invalid
+}
+
+[DebuggerDisplay("{Name}, {Type}")]
 public struct ShaderVariable
 {
     public string Name;
     public uint Size;
     public uint Offset;
+    public RhiShaderVariableType Type;
 }
 
 [DebuggerDisplay("{Name}")]
@@ -119,5 +131,32 @@ public abstract class RhiShaderResource
         }
 
         return parameterNames.ToArray();
+    }
+
+    public void GetParameter(string name, out ShaderVariable shaderVariable)
+    {
+        for (int programType = 0; programType < (int)ShaderProgramType.Count; programType++)
+        {
+            if (ProgramBindings[programType].Parameters == null)
+            {
+                continue;
+            }
+
+            foreach (var parameter in ProgramBindings[programType].Parameters)
+            {
+                foreach(var variable in parameter.Variables)
+                {
+                    if (variable.Name == name)
+                    {
+                        shaderVariable = variable;
+
+                        return;
+                    }
+                }
+
+            }
+        }
+
+        throw new InvalidOperationException();
     }
 }

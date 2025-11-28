@@ -4,7 +4,8 @@ using Vortice.Direct3D;
 using Vortice.Direct3D12.Shader;
 using Vortice.Dxc;
 
-using UOEngine.Runtime.RHI.Resources;
+using UOEngine.Runtime.RHI;
+using System.Runtime.CompilerServices;
 
 namespace UOEngine.Runtime.SDL3GPU;
 
@@ -85,15 +86,61 @@ internal class UOEngineDxcCompiler
 
                 for (uint j = 0; j < constantBuffer.Variables.Length; j++)
                 {
-                    ShaderVariableDescription varDesc = constantBuffer.GetVariableByIndex(j).Description;
+                    var variable = constantBuffer.GetVariableByIndex(j);
+
+                    ShaderVariableDescription varDesc = variable.Description;
 
                     size += varDesc.Size;
+
+                    RhiShaderVariableType variableType = RhiShaderVariableType.Invalid;
+
+                    switch (variable.VariableType.Description.Class)
+                    {
+                        case ShaderVariableClass.MatrixRows:
+                        case ShaderVariableClass.MatrixColumns:
+                            {
+                                variableType = RhiShaderVariableType.Matrix;
+                                break;
+                            }
+
+                        case ShaderVariableClass.Scalar:
+                            {
+                                variableType = RhiShaderVariableType.Scalar;
+
+                                break;
+                            }
+
+                        case ShaderVariableClass.Vector:
+                            {
+                                variableType = RhiShaderVariableType.Vector;
+
+                                break;
+                            }
+
+                        case ShaderVariableClass.Object:
+                            {
+                                variableType = RhiShaderVariableType.Object;
+
+                                break;
+                            }
+
+                        case ShaderVariableClass.Struct:
+                            {
+                                variableType = RhiShaderVariableType.Struct;
+
+                                break;
+                            }
+
+                        default:
+                            throw new SwitchExpressionException("Unhandled ShaderVariableClass type");
+                    }
 
                     shaderVariables[j] = new ShaderVariable
                     {
                         Name = varDesc.Name,
                         Offset = varDesc.StartOffset,
-                        Size = varDesc.Size
+                        Size = varDesc.Size,
+                        Type = variableType
                     };
                 }
             }
@@ -103,14 +150,14 @@ internal class UOEngineDxcCompiler
 
                 if(resourceDescription.Space != 2)
                 {
-                    throw new Exception("Samplers must be in shader register space 2 for Sdl3Gpu");
+                    throw new ArgumentException("Samplers must be in shader register space 2 for Sdl3Gpu");
                 }
             }
             else if (resourceDescription.Type == ShaderInputType.Texture)
             {
                 if (resourceDescription.Space != 2)
                 {
-                    throw new Exception("Textures must be in shader register space 2 for Sdl3Gpu");
+                    throw new ArgumentException("Textures must be in shader register space 2 for Sdl3Gpu");
                 }
 
                 inputType = RhiShaderInputType.Texture;

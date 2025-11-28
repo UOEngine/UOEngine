@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
-using UOEngine.Runtime.RHI.Resources;
+
+using UOEngine.Runtime.RHI;
 using UOEngine.Runtime.SDL3GPU.Resources;
 
 namespace UOEngine.Runtime.SDL3GPU;

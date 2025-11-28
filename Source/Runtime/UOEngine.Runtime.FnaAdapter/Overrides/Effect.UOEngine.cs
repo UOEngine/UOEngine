@@ -1,9 +1,28 @@
-﻿using UOEngine.Runtime.RHI.Resources;
+﻿using System.Buffers;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using UOEngine.Runtime.RHI;
 
 namespace Microsoft.Xna.Framework.Graphics;
 
 public partial class Effect
 {
+    struct EffectData
+    {
+        public byte[] Value;
+        public GCHandle Handle;
+        public IntPtr Ptr;
+
+        public EffectData(uint size)
+        {
+            Value = new byte[size];
+            Handle = GCHandle.Alloc(Value, GCHandleType.Pinned);
+            Ptr = Handle.AddrOfPinnedObject();
+        }
+    }
+
+    private List<EffectData> _shaderData = [];
+
     private void ParseEffects(byte[] effectCode)
     {
         FNA3D.FNA3D_CreateEffect(effectCode, out var effect);
@@ -21,24 +40,34 @@ public partial class Effect
 
             foreach (var pass in technique.Passes)
             {
-                foreach (var programBindings in pass.BindingData)
+                var parameterNames = pass.GetParameterNames();
+
+                foreach(var parameterName in parameterNames)
                 {
-                    if (programBindings.Bindings == null)
+                    pass.GetVariable(parameterName, out var shaderVariable);
+
+                    EffectParameterClass effectParameterClass;
+
+                    switch (shaderVariable.Type)
                     {
-                        continue;
+                        case RhiShaderVariableType.Scalar: effectParameterClass = EffectParameterClass.Scalar; break;
+                        case RhiShaderVariableType.Vector: effectParameterClass = EffectParameterClass.Vector; break;
+                        case RhiShaderVariableType.Matrix: effectParameterClass = EffectParameterClass.Matrix; break;
+                        case RhiShaderVariableType.Struct: effectParameterClass = EffectParameterClass.Struct; break;
+                        case RhiShaderVariableType.Object: effectParameterClass = EffectParameterClass.Object; break;
+
+                        default: throw new SwitchExpressionException();
                     }
+                    EffectParameterType effectParameterType = EffectParameterType.Void;
 
-                    foreach (var binding in programBindings.Bindings)
-                    {
-                        if (binding.InputType == RhiShaderInputType.Sampler)
-                        {
-                            continue;
-                        }
+                    var effectData = new EffectData(shaderVariable.Size);
 
-                        //EffectParameter toAdd = new EffectParameter();
+                    _shaderData.Add(effectData);
 
-                        //parameters.Add(toAdd);
-                    }
+                    EffectParameter toAdd = new EffectParameter(parameterName, null, 0, 0, 0, effectParameterClass,
+                        effectParameterType, IntPtr.MaxValue, null, effectData.Ptr, shaderVariable.Size, this);
+
+                    parameters.Add(toAdd);
                 }
             }    
         }
