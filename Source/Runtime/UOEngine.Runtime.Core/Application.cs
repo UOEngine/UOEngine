@@ -1,13 +1,13 @@
-﻿using System.Reflection;
-using System.Reflection.Metadata.Ecma335;
+﻿using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.Loader;
 using System.Text;
+
 using Microsoft.Extensions.DependencyInjection;
 
 using UOEngine.Runtime.Platform;
 using UOEngine.Runtime.Plugin;
 using UOEngine.Runtime.Renderer;
-using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Runtime.Core;
 
@@ -34,6 +34,8 @@ public class Application: IDisposable
 
     private readonly Assembly[] _loadedAssemblies = [];
 
+    private readonly PluginRegistry _pluginRegistry = new();
+
     public Application()
     {
         _loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
@@ -45,11 +47,6 @@ public class Application: IDisposable
                 ? context.LoadFromAssemblyPath(path)
                 : null;
         };
-    }
-
-    public void RegisterPlugin<T>() where T : IPlugin
-    {
-        _services.AddSingleton(typeof(IPlugin), typeof(T));
     }
 
     public void Start()
@@ -97,15 +94,19 @@ public class Application: IDisposable
 
     private void InitialiseInternal()
     {
+        PluginRegistrationExtensions.CurrentRegistry = _pluginRegistry;
+
         _services.AddSingleton<EntityManager>();
         _services.AddSingleton<ApplicationLoop>();
         _services.AddSingleton<InputManager>();
         _services.AddSingleton<IWindow>(_window);
         _services.AddSingleton<PlatformEventLoop>();
 
-        LoadPlugins(BaseDirectory);
-        LoadPlugins(PluginDirectory, true);
-        LoadPlugin($"{BaseDirectory}/FNA.dll");
+        _pluginRegistry.LoadPlugins(BaseDirectory);
+        _pluginRegistry.LoadPlugins(PluginDirectory, true);
+
+        _pluginRegistry.Build(_services);
+
 
         _serviceProvider = _services.BuildServiceProvider();
 
@@ -152,103 +153,6 @@ public class Application: IDisposable
         _applicationLoop.Update(gameTime);
     }
 
-    private void LoadPlugins(string directory, bool recurse = false)
-    {
-        if(Directory.Exists(directory) == false)
-        {
-            return;
-        }
-
-        if (recurse)
-        {
-            foreach (var subdir in Directory.GetDirectories(directory))
-            {
-                LoadPlugins(subdir, true);
-            }
-        }
-
-        foreach (var dll in Directory.GetFiles(directory, "*.dll"))
-        {
-            if(Path.GetFileName(dll).StartsWith("UOEngine") == false)
-            {
-                continue;
-            }
-
-            LoadPlugin(dll);
-        }
-    }
-
-    private void LoadPlugin(string pluginAssemblyPath)
-    {
-        Assembly assembly;
-
-        Console.WriteLine($"Loading {pluginAssemblyPath}.");
-
-        try
-        {
-            assembly = Assembly.LoadFrom(pluginAssemblyPath);
-        }
-        catch
-        {
-            Console.WriteLine($"Loading {pluginAssemblyPath} failed.");
-
-            return;
-        }
-
-        Type[] types = null!;
-
-        try
-        {
-            types = assembly.GetTypes();
-        }
-        catch (ReflectionTypeLoadException ex)
-        {
-            var sb = new StringBuilder();
-            sb.AppendLine($"Error loading types from {assembly.FullName}:");
-            foreach (var t in ex.Types)
-                sb.AppendLine($"Type: {t?.FullName ?? "(null)"}");
-            foreach (var le in ex.LoaderExceptions)
-                sb.AppendLine($"LoaderException: {le.Message}");
-            Console.WriteLine(sb.ToString());
-
-            return;
-        }
-
-        foreach (var type in types)
-        {
-            if (typeof(IPlugin).IsAssignableFrom(type) == false)
-            {
-                continue; // skip non-plugins
-            }
-
-            if (type.IsAbstract || !type.IsClass)
-            {
-                continue;
-            }
-
-            var configureServicesMethod = type.GetMethod("ConfigureServices");
-
-            if(configureServicesMethod == null)
-            {
-                configureServicesMethod = type.GetMethod("ConfigureServices", BindingFlags.NonPublic);
-
-                if(configureServicesMethod != null)
-                {
-                    throw new InvalidOperationException("ConfigureServices is private, should be public.");
-                }
-            }
-
-
-            configureServicesMethod?.Invoke(null, [_services]);
-
-            _services.AddSingleton(typeof(IPlugin), type);
-
-            Console.WriteLine($"Loaded plugin {pluginAssemblyPath}");
-
-            return;
-        }
-    }
-
     public void Dispose()
     {
     }
@@ -262,4 +166,6 @@ public class Application: IDisposable
 
         return loadedAssembly != null;
     }
+
+
 }

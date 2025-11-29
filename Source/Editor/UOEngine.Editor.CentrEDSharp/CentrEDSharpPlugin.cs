@@ -13,6 +13,7 @@ using CentredApplication = CentrED.Application;
 
 namespace UOEngine.Editor.CentredSharp;
 
+[PluginDependency(typeof(FnaAdapterPlugin))]
 public class CentrEdSharpPlugin: IPlugin
 {
     static public string WorkDir { get; } = AppContext.BaseDirectory;

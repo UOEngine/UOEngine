@@ -101,7 +101,7 @@ internal class UO3DApplication : IPlugin
     public static void ConfigureServices(IServiceCollection services)
     {
         services.AddSingleton<UOAssetLoader>();
-        services.AddSingleton<IPlugin, FnaAdapterPlugin>();
+        services.AddPlugin<FnaAdapterPlugin>();
     }
 
     public void OnFrameBegin(IRenderContext context)
