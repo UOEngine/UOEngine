@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using System.Text;
+
 using Microsoft.Extensions.DependencyInjection;
 
 namespace UOEngine.Runtime.Plugin;
@@ -146,7 +147,11 @@ public class PluginRegistry
 
         foreach (var descriptor in TopologicalSort(_pluginDescriptors))
         {
-            services.AddSingleton(typeof(IPlugin), descriptor.Type);
+            // register the concrete type
+            services.AddSingleton(descriptor.Type);
+
+            // expose it as IPlugin without creating a second instance
+            services.AddSingleton(typeof(IPlugin), sp => (IPlugin)sp.GetRequiredService(descriptor.Type));
 
             Console.WriteLine($"Registered plugin {descriptor.Type.Name}");
         }

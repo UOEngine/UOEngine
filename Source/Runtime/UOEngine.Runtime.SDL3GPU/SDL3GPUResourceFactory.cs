@@ -4,6 +4,7 @@ using UOEngine.Runtime.RHI;
 using UOEngine.Runtime.RHI.Resources;
 
 using UOEngine.Runtime.SDL3GPU.Resources;
+using System.Runtime.CompilerServices;
 
 namespace UOEngine.Runtime.SDL3GPU;
 
@@ -27,8 +28,18 @@ internal class SDL3GPUResourceFactory : IRenderResourceFactory
         return new ShaderInstance(shaderResource);
     }
 
-    public IRenderTexture CreateTexture(in RenderTextureDescription description)
+    public IRenderTexture CreateTexture(in RhiTextureDescription description)
     {
+        SDL_GPUTextureUsageFlags gpuUsage;
+
+        switch(description.Usage)
+        {
+            case RhiRenderTextureUsage.Sampler: gpuUsage = SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_SAMPLER; break;
+            case RhiRenderTextureUsage.ColourTarget: gpuUsage = SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_COLOR_TARGET; break;
+            default:
+                throw new SwitchExpressionException("Unhandled usage type");
+        }
+
         var texture = new SDL3GPUTexture(_device, new SDL3GPUTextureDescription
         {
             CreateInfo = new SDL_GPUTextureCreateInfo

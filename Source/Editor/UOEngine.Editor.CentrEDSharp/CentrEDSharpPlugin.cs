@@ -25,20 +25,17 @@ public class CentrEdSharpPlugin: IPlugin
 
     private readonly IRenderResourceFactory _renderResourceFactory;
     private readonly IWindow _window;
-    private readonly ApplicationLoop _applicationLoop;
     private readonly IServiceProvider _serviceProvider;
     private readonly Remapper _shaderRemapper;
-
-    public CentrEdSharpPlugin(IRenderResourceFactory renderResourceFactory, IWindow window, ApplicationLoop applicationLoop,
-        IServiceProvider serviceProvider, Remapper shaderRemapper)
+    private readonly FnaAdapterPlugin _fnaCompatPlugin;
+    public CentrEdSharpPlugin(IRenderResourceFactory renderResourceFactory, IWindow window,
+        IServiceProvider serviceProvider, Remapper shaderRemapper, FnaAdapterPlugin fnaCompatPlugin)
     {
         _renderResourceFactory = renderResourceFactory;
         _window = window;
-        _applicationLoop = applicationLoop;
         _serviceProvider = serviceProvider;
         _shaderRemapper = shaderRemapper;
-
-        _applicationLoop.OnUpdate += OnUpdate;
+        _fnaCompatPlugin = fnaCompatPlugin;
     }
 
     public void PostStartup() 
@@ -98,15 +95,12 @@ public class CentrEdSharpPlugin: IPlugin
 
         CentredApplication.SetFromUOEngine(CEDGame);
 
-        CEDGame.DoInitialise();
+        _fnaCompatPlugin.RegisterGame(CEDGame);
+        
     }
 
     public void Shutdown()
     {
         CEDGame.Dispose();
-    }
-
-    private void OnUpdate(float time)
-    {
     }
 }

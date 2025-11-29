@@ -2,7 +2,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xna.Framework.Graphics;
 using UOEngine.Runtime.Core;
-using UOEngine.Runtime.FnaAdapter;
 using UOEngine.Runtime.Platform;
 using UOEngine.Runtime.Renderer;
 using UOEngine.Runtime.RHI;
@@ -43,15 +42,18 @@ public class Game: IDisposable
 
     public readonly GameServiceContainer Services = new(); 
 
-    private readonly GameTime _gameTime = new();
 
     private static IRenderResourceFactory _renderResourceFactory = null!;
     private static IServiceProvider _serviceProvider = null!;
 
     private GraphicsDeviceManager? _graphicsDeviceManager;
 
+    private readonly GameTime _gameTime = new();
     private Stopwatch _gameTimer;
+    private TimeSpan _accumulatedElapsedTime;
     private long _previousTicks = 0;
+
+    private bool _hasInitialized = false;
 
     public static void PreSetup(IServiceProvider serviceProvider)
     {
@@ -64,13 +66,10 @@ public class Game: IDisposable
         Window = new GameWindow(GetService<IWindow>());
 
         _renderResourceFactory = GetService<IRenderResourceFactory>();
-        var applicationLoop = GetService<ApplicationLoop>();
-
-        applicationLoop.OnUpdate += UpdateInternal;
 
         var inputManager = GetService<InputManager>();
 
-        GetService<RenderSystem>().OnFrameBegin += DrawInternal;
+        //GetService<RenderSystem>().OnFrameBegin += DrawInternal;
 
     }
 
@@ -90,6 +89,36 @@ public class Game: IDisposable
         Initialize();
 
         _gameTimer = Stopwatch.StartNew();
+    }
+
+    public void RunOneFrame()
+    {
+        if (!_hasInitialized)
+        {
+            DoInitialize();
+            _gameTimer = Stopwatch.StartNew();
+            _hasInitialized = true;
+        }
+
+        Tick();
+    }
+
+    public void Tick()
+    {
+        AdvanceElapsedTime();
+
+        _gameTime.ElapsedGameTime = _accumulatedElapsedTime;
+        _gameTime.TotalGameTime += _gameTime.ElapsedGameTime;
+
+        _accumulatedElapsedTime = TimeSpan.Zero;
+
+        Update(_gameTime);
+
+        if (BeginDraw())
+        {
+            Draw(_gameTime);
+            EndDraw();
+        }
     }
 
     protected virtual void Initialize()
@@ -148,4 +177,18 @@ public class Game: IDisposable
     }
 
     private T GetService<T>() => _serviceProvider.GetRequiredService<T>();
+
+    private TimeSpan AdvanceElapsedTime()
+    {
+        long currentTicks = _gameTimer.Elapsed.Ticks;
+        TimeSpan timeAdvanced = TimeSpan.FromTicks(currentTicks - _previousTicks);
+        _accumulatedElapsedTime += timeAdvanced;
+        _previousTicks = currentTicks;
+        return timeAdvanced;
+    }
+
+    private void DoInitialize()
+    {
+        Initialize();
+    }
 }

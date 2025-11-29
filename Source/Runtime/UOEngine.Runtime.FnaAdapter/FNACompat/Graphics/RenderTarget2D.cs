@@ -4,7 +4,7 @@ namespace Microsoft.Xna.Framework.Graphics;
 
 public class RenderTarget2D: Texture2D
 {
-    public int LevelCount{ get;}
+    public int LevelCount { get;}
 
     public DepthFormat DepthStencilFormat;
     public SurfaceFormat Format;
@@ -12,18 +12,11 @@ public class RenderTarget2D: Texture2D
     private RhiRenderTarget _rhiRenderTarget;
 
     public RenderTarget2D(GraphicsDevice graphicsDevice, int width, int height, bool mipMap, SurfaceFormat preferredFormat, DepthFormat preferredDepthFormat)
-        : base(graphicsDevice, width, height, mipMap, preferredFormat)
+        : base(graphicsDevice, width, height, mipMap, preferredFormat, RhiRenderTextureUsage.ColourTarget)
     {
-        var texture = graphicsDevice.RenderResourceFactory.CreateTexture(new RenderTextureDescription
-        {
-            Width = (uint)width,
-            Height = (uint)height,
-            Usage = RenderTextureUsage.ColourTarget
-        });
-
         _rhiRenderTarget = new RhiRenderTarget();
 
-        _rhiRenderTarget.Setup(texture);
+        _rhiRenderTarget.Setup(RhiTexture);
     }
 
     public void GetData<T>(int level, Rectangle? rect, T[] data, int startIndex, int elementCount) where T : struct

@@ -5,8 +5,8 @@ namespace Microsoft.Xna.Framework.Graphics;
 
 public class Texture2D: Texture
 {
-    public int Width => (int)_rhiTexture.Width;
-    public int Height => (int)_rhiTexture.Height;
+    public int Width => (int)RhiTexture.Width;
+    public int Height => (int)RhiTexture.Height;
 
     public Rectangle Bounds
     {
@@ -16,7 +16,7 @@ public class Texture2D: Texture
         }
     }
 
-    private readonly IRenderTexture _rhiTexture;
+    protected readonly IRenderTexture RhiTexture;
 
     public Texture2D(
         GraphicsDevice graphicsDevice,
@@ -24,20 +24,22 @@ public class Texture2D: Texture
         int height,
         bool mipMap,
         SurfaceFormat format
-    )
+    ): this(graphicsDevice, width, height, mipMap, format, RhiRenderTextureUsage.Sampler)
     {
-        //_rhiTexture = graphicsDevice.RenderResourceFactory.CreateTexture();
-
-        throw new NotImplementedException();
     }
 
     public Texture2D(GraphicsDevice graphicsDevice, int width, int height)
+        : this(graphicsDevice, width, height, false, SurfaceFormat.Color, RhiRenderTextureUsage.Sampler)
     {
-        _rhiTexture = graphicsDevice.RenderResourceFactory.CreateTexture(new RenderTextureDescription
+    }
+
+    protected Texture2D(GraphicsDevice graphicsDevice, int width, int height, bool mipMap, SurfaceFormat format, RhiRenderTextureUsage usage)
+    {
+        RhiTexture = graphicsDevice.RenderResourceFactory.CreateTexture(new RhiTextureDescription
         {
             Width = (uint)width,
             Height = (uint)height,
-            Usage = RenderTextureUsage.Sampler
+            Usage = usage
         });
     }
 
@@ -48,11 +50,11 @@ public class Texture2D: Texture
 
     public void SetData<T>(T[] data) where T : unmanaged
     {
-        var texels = _rhiTexture.GetTexelsAs<T>();
+        var texels = RhiTexture.GetTexelsAs<T>();
 
         data.CopyTo(texels);
 
-        _rhiTexture.Upload();
+        RhiTexture.Upload();
     }
 
     public void SetData<T>(int level, Rectangle? rect, T[] data, int startIndex, int elementCount) where T : struct

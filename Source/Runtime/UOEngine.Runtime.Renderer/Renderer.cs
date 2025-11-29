@@ -46,11 +46,11 @@ public class RenderSystem
 
         UIOverlay = new RhiRenderTarget();
 
-        var uiTexture = _resourceFactory.CreateTexture(new RenderTextureDescription
+        var uiTexture = _resourceFactory.CreateTexture(new RhiTextureDescription
         {
             Width = 1920,
             Height = 1080,
-            Usage = RenderTextureUsage.ColourTarget
+            Usage = RhiRenderTextureUsage.ColourTarget
         });
 
         UIOverlay.Setup(uiTexture);

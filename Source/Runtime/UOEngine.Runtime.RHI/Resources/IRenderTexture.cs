@@ -1,16 +1,16 @@
 ﻿namespace UOEngine.Runtime.RHI;
 
-public enum RenderTextureUsage
+public enum RhiRenderTextureUsage
 {
     Sampler,
     ColourTarget
 }
 
-public struct RenderTextureDescription
+public struct RhiTextureDescription
 {
     public required uint Width;
     public required uint Height;
-    public required RenderTextureUsage Usage;
+    public required RhiRenderTextureUsage Usage;
     public string Name;
 }
 

@@ -23,8 +23,10 @@ public class FnaAdapterPlugin: IPlugin
 
     private readonly Remapper _shaderRemapper;
 
+    private readonly List<Game> _hostedFNAGames = [];
+
     public FnaAdapterPlugin(IWindow window, InputManager inputmanager, IRenderResourceFactory renderResourceFactory,
-        IRenderDevice renderDevice, Remapper remapper, RenderSystem renderSystem)
+        IRenderDevice renderDevice, Remapper remapper, RenderSystem renderSystem, ApplicationLoop _applicationLoop)
     {
         Instance = this;
 
@@ -33,6 +35,14 @@ public class FnaAdapterPlugin: IPlugin
         InputManager = inputmanager;
         RenderResourceFactory = renderResourceFactory;
         _shaderRemapper = remapper;
+
+        _applicationLoop.OnUpdate += (float deltaTime) =>
+        {
+            foreach(var game in _hostedFNAGames)
+            {
+                game.RunOneFrame();
+            }
+        };
     }
 
     public static void ConfigureServices(IServiceCollection services) 
@@ -48,5 +58,10 @@ public class FnaAdapterPlugin: IPlugin
             VertexMain = "SpriteVertexShader",
             PixelMain = "SpritePixelShader"
         }]);
+    }
+
+    public void RegisterGame(Game game)
+    {
+        _hostedFNAGames.Add(game);
     }
 }

@@ -100,9 +100,11 @@ public class Effect
 
                     parameters.Add(toAdd);
                 }
+
+                passes.Add(new EffectPass(this, "", 0, 0));
             }
 
-            techniques.Add(new EffectTechnique(technique.Name, []));
+            techniques.Add(new EffectTechnique(technique.Name, passes));
 
             //EffectPassCollection passes = new EffectPassCollection(new EffectPass("pass", annotations, this, 0, 0));
 

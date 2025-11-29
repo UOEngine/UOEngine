@@ -18,6 +18,7 @@ public class EffectPass
 
     public void Apply()
     {
+        throw new NotImplementedException();
         //Parent.GraphicsDevice.ApplyEffectPass(this);
     }
 }

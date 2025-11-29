@@ -81,12 +81,12 @@ internal class UO3DApplication : IPlugin
 
         _map.Load(_assetLoader.Maps[0]);
 
-        _waterTexture = _renderFactory.CreateTexture(new RenderTextureDescription
+        _waterTexture = _renderFactory.CreateTexture(new RhiTextureDescription
         {
             Height = 44,
             Width = 44,
             Name = "Water",
-            Usage = RenderTextureUsage.Sampler
+            Usage = RhiRenderTextureUsage.Sampler
         });
 
         var water = _map.GetChunk(0, 0).Entities[0, 0];
@@ -129,12 +129,12 @@ internal class UO3DApplication : IPlugin
 
     private IRenderTexture CreateTestTexture(uint colour, string name)
     {
-        var texture = _renderFactory.CreateTexture(new RenderTextureDescription
+        var texture = _renderFactory.CreateTexture(new RhiTextureDescription
         {
             Width = 22,
             Height = 22,
             Name = name,
-            Usage = RenderTextureUsage.Sampler
+            Usage = RhiRenderTextureUsage.Sampler
         });
 
         Span<uint> white = texture.GetTexelsAs<uint>();
@@ -148,12 +148,12 @@ internal class UO3DApplication : IPlugin
 
     private IRenderTexture CreateCheckerboardTexture(uint width, uint height, in Colour colour, string name)
     {
-        var texture = _renderFactory.CreateTexture(new RenderTextureDescription
+        var texture = _renderFactory.CreateTexture(new RhiTextureDescription
         {
             Width = width,
             Height = height,
             Name = name,
-            Usage = RenderTextureUsage.Sampler
+            Usage = RhiRenderTextureUsage.Sampler
         });
 
         Span<Colour> texels = texture.GetTexelsAs<Colour>();
