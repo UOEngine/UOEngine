@@ -11,6 +11,8 @@ namespace UOEngine.Runtime.FnaAdapter;
 
 public class FnaAdapterPlugin: IPlugin
 {
+    public PluginLoadingPhase Priority => PluginLoadingPhase.Runtime;
+
     public static FnaAdapterPlugin Instance { get; private set; }
 
     // These are all public for the fake FNA classes to use what is required under the hood.
@@ -18,6 +20,8 @@ public class FnaAdapterPlugin: IPlugin
     public readonly InputManager InputManager;
 
     public readonly IRenderResourceFactory RenderResourceFactory;
+
+    private readonly Remapper _shaderRemapper;
 
     public FnaAdapterPlugin(IWindow window, InputManager inputmanager, IRenderResourceFactory renderResourceFactory,
         IRenderDevice renderDevice, Remapper remapper, RenderSystem renderSystem)
@@ -28,14 +32,7 @@ public class FnaAdapterPlugin: IPlugin
         Window = window;
         InputManager = inputmanager;
         RenderResourceFactory = renderResourceFactory;
-
-        FNA3D.UOEngineSetup(new FNA3D.FNDA3DUOEngine
-        {
-            RenderDevice = renderDevice,
-            RenderResourceFactory = renderResourceFactory,
-            ShaderRemapper = remapper,
-            RenderSystem = renderSystem
-        });
+        _shaderRemapper = remapper;
     }
 
     public static void ConfigureServices(IServiceCollection services) 
@@ -43,9 +40,13 @@ public class FnaAdapterPlugin: IPlugin
         services.AddSingleton<Remapper>();
     }
 
-    public void Startup() 
+    public void PostStartup() 
     {
-        FNAPlatform.SetupPlatform(Window);
+        _shaderRemapper.RemapEffect<SpriteEffect>(@"D:\UODev\UOEngineGitHub\Source\Shaders\FNACompat\SpriteEffect.hlsl", [new Technique
+        {
+            Name = "SpriteBatch",
+            VertexMain = "SpriteVertexShader",
+            PixelMain = "SpritePixelShader"
+        }]);
     }
-
 }

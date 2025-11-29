@@ -12,11 +12,20 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="FNA\FNAPlatform\FNAPlatform.cs" />
-    <Compile Remove="FNA\FNAPlatform\SDL2_FNAPlatform.cs" />
-    <Compile Remove="FNA\FNAPlatform\SDL3_FNAPlatform.cs" />
-    <Compile Remove="FNA\Graphics\Effect\Effect.cs" />
-    <Compile Remove="FNA\Graphics\FNA3D.cs" />
+    <Compile Remove="FNA\**" />
+    <Compile Remove="Overrides\**" />
+    <EmbeddedResource Remove="FNA\**" />
+    <EmbeddedResource Remove="Overrides\**" />
+    <None Remove="FNA\**" />
+    <None Remove="Overrides\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="FNA3D.cs" />
+    <Compile Remove="FNA3D.UOEngine.cs" />
+    <Compile Remove="FNAPlatform.cs" />
+    <Compile Remove="FNAPlatform.UOEngine.cs" />
+    <Compile Remove="UOEGameWindow.cs" />
   </ItemGroup>
 
   <ItemGroup>

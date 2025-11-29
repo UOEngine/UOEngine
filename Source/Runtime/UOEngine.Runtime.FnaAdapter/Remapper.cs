@@ -1,4 +1,8 @@
-﻿using System.IO.Hashing;
+﻿using System;
+using System.Collections.Generic;
+using System.IO.Hashing;
+using System.Reflection.Metadata.Ecma335;
+using Microsoft.Xna.Framework.Graphics;
 using UOEngine.Runtime.RHI;
 using UOEngine.Runtime.RHI.Resources;
 
@@ -20,14 +24,14 @@ public struct UOEEffectTechnique
 
 public struct UOEEffect
 {
-    public uint OriginalByteCodeHash;
-    public IntPtr Index;
     public UOEEffectTechnique[] Techniques;
 }
 
 public class Remapper
 {
-    private List<UOEEffect> _effects = [];
+    private Dictionary<uint, UOEEffect> _effectsByOriginalByteCodeHash = [];
+
+    private Dictionary<Type, UOEEffect> _effectsByOriginalType = [];
 
     private readonly IRenderResourceFactory _renderResourceFactory;
 
@@ -63,13 +67,39 @@ public class Remapper
             techniqueIndex++;
         }
 
-        IntPtr index = _effects.Count;
-
-        _effects.Add(new UOEEffect
+        _effectsByOriginalByteCodeHash.Add(hash, new UOEEffect
         {
-            OriginalByteCodeHash = hash,
             Techniques = [.. effectTechniques],
-            Index = index
+        });
+    }
+
+    public void RemapEffect<T>(string newShaderFile, Technique[] techniques) where T : Effect
+    {
+        var effectTechniques = new List<UOEEffectTechnique>(techniques.Length);
+
+        int techniqueIndex = 0;
+
+        foreach (var technique in techniques)
+        {
+            var shaderResource = _renderResourceFactory.NewShaderResource();
+
+            shaderResource.Load(newShaderFile, technique.VertexMain, technique.PixelMain);
+
+            var shaderInstance = _renderResourceFactory.NewShaderInstance(shaderResource);
+
+            effectTechniques.Add(new UOEEffectTechnique
+            {
+                Name = technique.Name,
+                Passes = [shaderInstance],
+                Index = techniqueIndex,
+            });
+
+            techniqueIndex++;
+        }
+
+        _effectsByOriginalType.Add(typeof(T), new UOEEffect
+        {
+            Techniques = [.. effectTechniques],
         });
     }
 
@@ -77,11 +107,13 @@ public class Remapper
     {
         uint hash = XxHash32.HashToUInt32(originalByteCode);
 
-        effect = _effects.First(e => e.OriginalByteCodeHash == hash);
+        effect = _effectsByOriginalByteCodeHash[hash];
     }
 
-    public ShaderInstance GetShaderInstance(IntPtr effect, IntPtr technique)
-    {
-        return _effects[(int)effect].Techniques[(int)technique].Passes[0];
-    }
+    public UOEEffect GetEffect<T>() where T: Effect => _effectsByOriginalType[typeof(T)];
+
+    //public ShaderInstance GetShaderInstance(IntPtr effect, IntPtr technique)
+    //{
+    //    return _effects[(int)effect].Techniques[(int)technique].Passes[0];
+    //}
 }

@@ -91,11 +91,13 @@ public class CentrEdSharpPlugin: IPlugin
 
         Config.Initialize();
 
+        CentrEDGame.PreSetup(_serviceProvider);
+
         CEDGame = new CentrEDGame();
 
         CentredApplication.SetFromUOEngine(CEDGame);
 
-        //CEDGame.DoInitialise();
+        CEDGame.DoInitialise();
     }
 
     public void Shutdown()
@@ -105,6 +107,5 @@ public class CentrEdSharpPlugin: IPlugin
 
     private void OnUpdate(float time)
     {
-        CEDGame.RunOneFrame();
     }
 }

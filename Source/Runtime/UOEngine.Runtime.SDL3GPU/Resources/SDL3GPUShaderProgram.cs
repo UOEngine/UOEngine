@@ -17,6 +17,8 @@ internal class SDL3GPUShaderProgram: Sdl3GpuResource
     public SDL3GPUShaderProgram(Sdl3GpuDevice device, ShaderProgramType type, in ShaderProgramCompileResult compileResult)
         : base(device)
     {
+        Debug.Assert(device.Handle != IntPtr.Zero);
+
         Type = type;
 
         SDL_GPUShaderStage stage = SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_VERTEX;
