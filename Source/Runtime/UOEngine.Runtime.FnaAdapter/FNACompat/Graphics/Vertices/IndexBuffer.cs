@@ -6,11 +6,11 @@ namespace Microsoft.Xna.Framework.Graphics;
 
 public class IndexBuffer
 {
-    private IRhiIndexBuffer _rhiIndexBuffer;
+    public IRhiIndexBuffer RhiIndexBuffer { get; private set; }
 
     public IndexBuffer(GraphicsDevice graphicsDevice, IndexElementSize indexElementSize, int indexCount, BufferUsage bufferUsage) 
     {
-        _rhiIndexBuffer = FnaAdapterPlugin.Instance.RenderResourceFactory.CreateIndexBuffer((uint)indexCount, "FnaIndexBuffer");
+        RhiIndexBuffer = FnaAdapterPlugin.Instance.RenderResourceFactory.CreateIndexBuffer((uint)indexCount, "FnaIndexBuffer");
     }
 
     public void SetDataPointerEXT(int offsetInBytes, IntPtr data, int dataLength, SetDataOptions options)
@@ -20,8 +20,8 @@ public class IndexBuffer
 
     public void SetData(short[] data)
     {
-        _rhiIndexBuffer.SetData(MemoryMarshal.Cast<short, ushort>(data));
-        _rhiIndexBuffer.Upload();
+        RhiIndexBuffer.SetData(MemoryMarshal.Cast<short, ushort>(data));
+        RhiIndexBuffer.Upload();
     }
 
     public void Dispose()

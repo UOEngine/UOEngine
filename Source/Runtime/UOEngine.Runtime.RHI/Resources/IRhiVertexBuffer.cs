@@ -1,5 +1,6 @@
 ﻿namespace UOEngine.Runtime.RHI;
 
-public class IRhiVertexBuffer
+public interface IRhiVertexBuffer
 {
+    public void SetData(int offsetInBytes, IntPtr data, int dataLength);
 }

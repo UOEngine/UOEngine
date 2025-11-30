@@ -25,13 +25,15 @@ public class Effect
 
     public EffectTechnique CurrentTechnique { get; set; }
 
+    private readonly UOEEffect _uoeEffectData; 
+
     public Effect(GraphicsDevice graphicsDevice, byte[] effectCode)
     {
         GraphicsDevice = graphicsDevice;
 
-        GraphicsDevice.EffectRemapper.GetEffect(effectCode, out var effect);
+        GraphicsDevice.EffectRemapper.GetEffect(effectCode, out _uoeEffectData);
 
-        Parse(effect, out Data);
+        Parse(_uoeEffectData, out Data);
 
         CurrentTechnique = Techniques[0];
     }
@@ -39,6 +41,8 @@ public class Effect
     public Effect(GraphicsDevice graphicsDevice, in UOEEffect uoeEffect)
     {
         GraphicsDevice = graphicsDevice;
+
+        _uoeEffectData = uoeEffect;
 
         Parse(uoeEffect, out Data);
 
@@ -50,6 +54,18 @@ public class Effect
         throw new NotImplementedException();
     }
 
+    internal void INTERNAL_applyEffect(EffectPass pass)
+    {
+        // The pass tells us which variables to use and set.
+        //var pass = CurrentTechnique.Passes[(int)passIndex];
+        //_uoeEffectData.Techniques[0].Passes[0].
+
+        ref var technique = ref _uoeEffectData.Techniques[pass.TechniqueIndex];
+
+        GraphicsDevice.ShaderInstance = technique.Passes[pass.PassIndex];
+        // Todo: Note effect may have some other graphics pipeline state that needs binding.
+    }
+
     protected Effect(Effect effect)
     {
         throw new NotImplementedException();
@@ -57,7 +73,7 @@ public class Effect
 
     protected internal virtual void OnApply()
     {
-        throw new NotImplementedException();
+
     }
 
     private void Parse(in UOEEffect effect, out EffectData effectData)
@@ -71,7 +87,7 @@ public class Effect
         {
             List<EffectPass> passes = [];
 
-            //techniques.Add(new EffectTechnique(technique.Name, technique.Index, passes, null));
+            //techniques.Add(new EffectTechnique(technique.Name, passes));
 
             foreach (var pass in technique.Passes)
             {
@@ -101,7 +117,7 @@ public class Effect
                     parameters.Add(toAdd);
                 }
 
-                passes.Add(new EffectPass(this, "", 0, 0));
+                passes.Add(new EffectPass("", this, techniques.Count, passes.Count));
             }
 
             techniques.Add(new EffectTechnique(technique.Name, passes));

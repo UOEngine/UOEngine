@@ -19,6 +19,8 @@ public interface IRenderContext
 
     public IRhiIndexBuffer IndexBuffer { get; set; }
 
+    public IRhiVertexBuffer VertexBuffer { get; set; }
+
     public ModelViewProjection MVP { get; set; }
 
     public void BeginRenderPass(in RenderPassInfo renderPassInfo);

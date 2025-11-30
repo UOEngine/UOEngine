@@ -1,12 +1,10 @@
-﻿using System.Reflection.Metadata;
-using System.Runtime.InteropServices;
-using UOEngine.Runtime.RHI;
+﻿using UOEngine.Runtime.RHI;
 
 namespace Microsoft.Xna.Framework.Graphics;
 
 public class VertexDeclaration
 {
-    private RhiVertexDefinition _vertexDefinition;
+    public RhiVertexDefinition RhiVertexDefinition;
 
     public VertexDeclaration(params VertexElement[] elements)
     {
@@ -16,10 +14,10 @@ public class VertexDeclaration
         {
             ref var element = ref elements[i];
 
-            vertexAttributes[i] = element.Attribute;
+            vertexAttributes[i] = new RhiVertexAttribute(MapUsage(element.ElementUsage), MapFormat(element.Format), (uint)element.Offset);
         }
 
-        _vertexDefinition = new RhiVertexDefinition(vertexAttributes);
+        RhiVertexDefinition = new RhiVertexDefinition(vertexAttributes);
     }
 
     public VertexDeclaration(int vertexStride, params VertexElement[] elements)
@@ -53,4 +51,19 @@ public class VertexDeclaration
 
         return vertexDeclaration;
     }
+
+    private static RhiVertexAttributeFormat MapFormat(VertexElementFormat f) => f switch
+    {
+        VertexElementFormat.Vector3     => RhiVertexAttributeFormat.Vector3,
+        VertexElementFormat.Vector4     => RhiVertexAttributeFormat.Vector4,
+        _ => throw new NotSupportedException($"VertexElementFormat {f} not supported")
+    };
+
+    private static RhiVertexAttributeType MapUsage(VertexElementUsage usage) => usage switch
+    {
+        VertexElementUsage.Position => RhiVertexAttributeType.Position,
+        VertexElementUsage.Color => RhiVertexAttributeType.Colour,
+        VertexElementUsage.TextureCoordinate => RhiVertexAttributeType.TextureCoordinate,
+        _ => throw new NotSupportedException()
+    };
 }

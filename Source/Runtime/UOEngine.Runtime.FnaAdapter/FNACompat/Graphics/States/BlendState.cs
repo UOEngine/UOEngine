@@ -14,6 +14,7 @@ public class BlendState
 
     public static readonly BlendState NonPremultiplied;
     public static readonly BlendState Additive;
+    public static readonly BlendState Opaque;
 
     public Blend AlphaDestinationBlend;
     public Blend AlphaSourceBlend;

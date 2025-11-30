@@ -1,8 +1,9 @@
-﻿namespace UOEngine.Runtime.RHI.Resources;
+﻿namespace UOEngine.Runtime.RHI;
 
-public enum RenderBufferType
+public enum RhiBufferType
 {
     Index,
+    Vertex,
     Count,
     Invalid
 }

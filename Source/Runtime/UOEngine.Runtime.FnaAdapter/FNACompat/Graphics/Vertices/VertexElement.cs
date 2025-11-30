@@ -1,22 +1,17 @@
-﻿using UOEngine.Runtime.RHI;
-
-namespace Microsoft.Xna.Framework.Graphics;
+﻿namespace Microsoft.Xna.Framework.Graphics;
 
 public struct VertexElement
 {
-    //public int Offset;
-    //public VertexElementFormat Format;
-    //public VertexElementUsage ElementUsage;
-    //public int UsageIndex;
-
-    public readonly RhiVertexAttribute Attribute;
+    public int Offset;
+    public VertexElementFormat Format;
+    public VertexElementUsage ElementUsage;
+    public int UsageIndex;
 
     public VertexElement(int offset, VertexElementFormat elementFormat, VertexElementUsage elementUsage, int usageIndex) 
     {
-        //Offset = offset;
-        //Format = elementFormat;
-        //ElementUsage = elementUsage;
-        //UsageIndex = usageIndex;
-        Attribute = new RhiVertexAttribute(elementUsage.ToRhiVertexAttributeType(), (uint)offset);
+        Offset = offset;
+        Format = elementFormat;
+        ElementUsage = elementUsage;
+        UsageIndex = usageIndex;
     }
 }

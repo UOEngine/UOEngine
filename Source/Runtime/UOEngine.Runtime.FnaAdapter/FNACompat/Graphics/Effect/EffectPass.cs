@@ -2,23 +2,23 @@
 
 public class EffectPass
 {
-    internal readonly Effect Parent;
-    internal readonly IntPtr Pipeline; // SDL_GPU_Pipeline*
-    internal readonly int UniformSlot; // binding slot for uniforms
-
     public string Name { get; }
 
-    internal EffectPass(Effect effect, string name, IntPtr pipeline, int uniformSlot)
+    public readonly Effect ParentEffect;
+    public readonly int TechniqueIndex;
+    public readonly int PassIndex;
+
+    internal EffectPass(string name, Effect parent, int techniqueIndex, int passIndex)
     {
-        Parent = effect;
         Name = name;
-        Pipeline = pipeline;
-        UniformSlot = uniformSlot;
+        ParentEffect = parent;
+        TechniqueIndex = techniqueIndex;
+        PassIndex = passIndex;
     }
 
     public void Apply()
     {
-        throw new NotImplementedException();
-        //Parent.GraphicsDevice.ApplyEffectPass(this);
+        ParentEffect.OnApply();
+        ParentEffect.INTERNAL_applyEffect(this);
     }
 }

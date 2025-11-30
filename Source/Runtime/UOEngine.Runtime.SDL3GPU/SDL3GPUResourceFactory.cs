@@ -73,7 +73,7 @@ internal class SDL3GPUResourceFactory : IRenderResourceFactory
 
     public IRhiVertexBuffer CreateVertexBuffer(in RhiVertexBufferDescription description)
     {
-        var vertexBuffer = new Sdl3GpuVertexBuffer(description);
+        var vertexBuffer = new Sdl3GpuVertexBuffer(_device, description);
 
         return vertexBuffer;
     }

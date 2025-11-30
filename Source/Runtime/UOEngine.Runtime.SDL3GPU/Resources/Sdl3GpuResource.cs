@@ -1,6 +1,6 @@
 ﻿using static SDL3.SDL;
 
-namespace UOEngine.Runtime.SDL3GPU.Resources;
+namespace UOEngine.Runtime.SDL3GPU;
 
 
 internal readonly struct Sdl3GpuResourceProperty

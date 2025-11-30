@@ -59,6 +59,21 @@ internal class SDL3GPURenderContext: IRenderContext
         }
     }
 
+    public IRhiVertexBuffer VertexBuffer
+    {
+        get => _vertexBuffer;
+        set
+        {
+            if (_vertexBuffer == value)
+            {
+                return;
+            }
+
+            _vertexBuffer = (Sdl3GpuVertexBuffer)value;
+            _vertexBufferDirty = true;
+        }
+    }
+
     public ModelViewProjection MVP 
     { 
         get => _sceneView; 
@@ -84,10 +99,12 @@ internal class SDL3GPURenderContext: IRenderContext
     private bool _pipelineDirty = true;
     private bool _indexBufferDirty = true;
     private bool _shaderInstanceDirty = true;
+    private bool _vertexBufferDirty;
 
     private RenderPassInfo? _activeRenderPass;
 
     private Sdl3GpuIndexBuffer _indexBuffer;
+    private Sdl3GpuVertexBuffer _vertexBuffer;
     private ModelViewProjection _sceneView;
 
     private readonly Sdl3GpuGlobalSamplers _globalSamplers;
