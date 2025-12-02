@@ -109,6 +109,23 @@ internal class SDL3GPURenderContext: IRenderContext
 
     private readonly Sdl3GpuGlobalSamplers _globalSamplers;
 
+    private readonly record struct PipelineKey(
+    IntPtr VertexShader,
+    IntPtr PixelShader,
+    //RhiVertexDefinition Layout,
+    RhiPrimitiveType PrimitiveType,
+    //RhiBlendState Blend,
+    //RhiDepthState Depth,
+    RhiRasteriserState RasteriserState
+    //RhiRenderTargetFormat ColorFormat,
+    //RhiDepthFormat DepthFormat
+    );
+
+    private readonly Dictionary<PipelineKey, Sdl3GpuGraphicsPipeline> _pipelineCache = [];
+
+    private PipelineKey _currentPipelineKey;
+    private Sdl3GpuGraphicsPipeline _currentPipeline;
+
     public SDL3GPURenderContext(Sdl3GpuDevice device, Sdl3GpuGlobalSamplers globalSamplers)
     {
         _device = device;
@@ -199,7 +216,36 @@ internal class SDL3GPURenderContext: IRenderContext
             _shaderInstanceDirty = false;
         }
         
-        SDL_DrawGPUIndexedPrimitives(_renderPass, (uint)_indexBuffer.Data.Length, numInstances, 0, 0, 0);
+        SDL_DrawGPUIndexedPrimitives(_renderPass, (uint)_indexBuffer.NumIndices, numInstances, 0, 0, 0);
+    }
+
+    public void SetGraphicsPipeline(ShaderInstance shaderInstance, RhiPrimitiveType primitiveType, in RhiRasteriserState rasteriserState)
+    {
+        var shaderResource = (Sdl3GpuShaderResource)shaderInstance.ShaderResource;
+
+        var key = new PipelineKey(shaderResource.VertexProgram.Handle, shaderResource.PixelProgram.Handle, primitiveType, rasteriserState);
+
+        if (key == _currentPipelineKey)
+        {
+            return;
+        }
+
+        _pipelineDirty = true;
+
+        if (_pipelineCache.TryGetValue(key, out _graphicsPipeline))
+        {
+            return;
+        }
+
+        var newPipeline = new Sdl3GpuGraphicsPipeline(_device, new GraphicsPipelineDescription
+        {
+
+        });
+
+        _pipelineCache.Add(key, newPipeline);
+
+        _graphicsPipeline = newPipeline;
+
     }
 
     private void BindShaderParameters()
@@ -300,5 +346,4 @@ internal class SDL3GPURenderContext: IRenderContext
 
         SDL_BindGPUFragmentSamplers(_renderPass,  0, samplerBindings, (uint)samplerBindings.Length);
     }
-
 }

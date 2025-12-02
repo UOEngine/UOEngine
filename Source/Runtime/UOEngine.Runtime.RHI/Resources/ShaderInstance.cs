@@ -92,6 +92,8 @@ public class ShaderInstance
 {
     public readonly ShaderProgramBindings1[] BindingData = new ShaderProgramBindings1[(int)ShaderProgramType.Count];
 
+    public RhiShaderResource ShaderResource => _shaderResource;
+
     private readonly RhiShaderResource _shaderResource;
 
     public ShaderInstance(RhiShaderResource shaderResource)

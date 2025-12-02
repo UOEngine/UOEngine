@@ -36,11 +36,21 @@ public class FnaAdapterPlugin: IPlugin
         RenderResourceFactory = renderResourceFactory;
         _shaderRemapper = remapper;
 
+        // Todo - below is dirty.
         _applicationLoop.OnUpdate += (float deltaTime) =>
         {
             foreach(var game in _hostedFNAGames)
             {
-                game.RunOneFrame();
+                game.Tick1();
+            }
+        };
+
+        renderSystem.OnFrameBegin += (IRenderContext renderContext) =>
+        {
+            foreach (var game in _hostedFNAGames)
+            {
+                game.GraphicsDevice._renderContext = renderContext;
+                game.Tick2();
             }
         };
     }

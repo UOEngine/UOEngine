@@ -31,4 +31,6 @@ public interface IRenderContext
 
     public void DrawIndexedPrimitives(uint numInstances);
 
+    public void SetGraphicsPipeline(ShaderInstance shaderInstance, RhiPrimitiveType primitiveType, in RhiRasteriserState rasteriserState);
+
 }

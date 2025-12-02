@@ -54,9 +54,11 @@ public class VertexDeclaration
 
     private static RhiVertexAttributeFormat MapFormat(VertexElementFormat f) => f switch
     {
+        VertexElementFormat.Vector2     => RhiVertexAttributeFormat.Vector2,
         VertexElementFormat.Vector3     => RhiVertexAttributeFormat.Vector3,
         VertexElementFormat.Vector4     => RhiVertexAttributeFormat.Vector4,
-        _ => throw new NotSupportedException($"VertexElementFormat {f} not supported")
+        VertexElementFormat.Color       => RhiVertexAttributeFormat.R8G8B8A8_UNorm,
+        _ => throw new NotSupportedException($"MapFormat: VertexElementFormat {f} not supported")
     };
 
     private static RhiVertexAttributeType MapUsage(VertexElementUsage usage) => usage switch
@@ -64,6 +66,6 @@ public class VertexDeclaration
         VertexElementUsage.Position => RhiVertexAttributeType.Position,
         VertexElementUsage.Color => RhiVertexAttributeType.Colour,
         VertexElementUsage.TextureCoordinate => RhiVertexAttributeType.TextureCoordinate,
-        _ => throw new NotSupportedException()
+        _ => throw new NotSupportedException($"MapUsage: VertexElementUsage {usage} not supported")
     };
 }

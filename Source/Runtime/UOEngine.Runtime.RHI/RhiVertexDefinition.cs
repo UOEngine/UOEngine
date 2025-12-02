@@ -16,8 +16,10 @@ public class RhiVertexDefinition
     }
     private static uint SizeOfFormat(RhiVertexAttributeFormat f) => f switch
     {
-        RhiVertexAttributeFormat.Vector3 => 12,
-        RhiVertexAttributeFormat.Vector4 => 16,
+        RhiVertexAttributeFormat.Vector2        => 8,
+        RhiVertexAttributeFormat.Vector3        => 12,
+        RhiVertexAttributeFormat.Vector4        => 16,
+        RhiVertexAttributeFormat.R8G8B8A8_UNorm => 4,
         _ => throw new NotSupportedException()
     };
 }

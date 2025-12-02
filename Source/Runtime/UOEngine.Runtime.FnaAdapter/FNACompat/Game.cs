@@ -121,6 +121,34 @@ public class Game: IDisposable
         }
     }
 
+    public void Tick1()
+    {
+        if (!_hasInitialized)
+        {
+            DoInitialize();
+            _gameTimer = Stopwatch.StartNew();
+            _hasInitialized = true;
+        }
+
+        AdvanceElapsedTime();
+
+        _gameTime.ElapsedGameTime = _accumulatedElapsedTime;
+        _gameTime.TotalGameTime += _gameTime.ElapsedGameTime;
+
+        _accumulatedElapsedTime = TimeSpan.Zero;
+
+        Update(_gameTime);
+    }
+
+    public void Tick2()
+    {
+        if (BeginDraw())
+        {
+            Draw(_gameTime);
+            EndDraw();
+        }
+    }
+
     protected virtual void Initialize()
     {
     }

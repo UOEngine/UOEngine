@@ -35,6 +35,8 @@ internal class UO3DApplication : IPlugin
     private IRenderTexture _waterTexture = null!;
     private readonly IWindow _window;
 
+    private IRhiIndexBuffer _indexBuffer;
+
     public UO3DApplication(IServiceProvider serviceProvider)
     {
         _entityManager = serviceProvider.GetRequiredService<EntityManager>();
@@ -96,6 +98,12 @@ internal class UO3DApplication : IPlugin
         bitmap.Texels.CopyTo(_waterTexture.GetTexelsAs<uint>());
 
         _waterTexture.Upload();
+
+        _indexBuffer = _renderFactory.CreateIndexBuffer(6, "MainIndexBuffer");
+
+        _indexBuffer.SetData([0, 1, 2, 0, 2, 3]);
+
+        _indexBuffer.Upload();
     }
 
     public static void ConfigureServices(IServiceCollection services)
@@ -123,6 +131,8 @@ internal class UO3DApplication : IPlugin
 
         context.GraphicsPipline = _pipeline;
         context.ShaderInstance = _shaderInstance;
+
+        context.IndexBuffer = _indexBuffer;
 
         context.DrawIndexedPrimitives(1);
     }

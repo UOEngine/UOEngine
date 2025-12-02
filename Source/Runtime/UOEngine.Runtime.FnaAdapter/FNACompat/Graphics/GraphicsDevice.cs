@@ -116,13 +116,13 @@ public class GraphicsDevice
 
     public Viewport Viewport;
 
-    public TextureCollection Textures;
+    public TextureCollection Textures { get; private set; }
 
     public readonly IRenderResourceFactory RenderResourceFactory;
 
     public readonly Remapper EffectRemapper;
 
-    private IRenderContext _renderContext;
+    public IRenderContext _renderContext;
 
     private RenderTarget2D? _renderTarget;
     private Color _clearColour;
@@ -166,16 +166,18 @@ public class GraphicsDevice
         RenderResourceFactory = serviceProvider.GetRequiredService<IRenderResourceFactory>();
 
         // We need to set this each frame and then record into it what is done.
-        serviceProvider.GetRequiredService<RenderSystem>().OnFrameBegin += (renderContext) =>
-        {
-            _renderContext = renderContext;
-        };
+        //serviceProvider.GetRequiredService<RenderSystem>().OnFrameBegin += (renderContext) =>
+        //{
+        //    _renderContext = renderContext;
+        //};
 
         SamplerStates = new SamplerStateCollection(1, _modifiedSamplers); 
 
         Adapter = new GraphicsAdapter();
 
         EffectRemapper = serviceProvider.GetRequiredService<Remapper>();
+
+        Textures = new TextureCollection(MAX_TEXTURE_SAMPLERS, _modifiedSamplers);
     }
 
     public void SetVertexBuffer(VertexBuffer vertexBuffer)
@@ -240,6 +242,10 @@ public class GraphicsDevice
             return;
         }
 
+        var blendState = GetBlendState();
+        var rasteriserState = GetRasteriserState();
+
+        _renderContext.SetGraphicsPipeline(_shaderInstance, RhiPrimitiveType.TriangleStrip, rasteriserState);
         //_renderContext.GraphicsPipline = ;
 
         _graphicsPipelineDirty = false;

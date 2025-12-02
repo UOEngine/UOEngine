@@ -2,18 +2,30 @@
 
 public class TextureCollection
 {
-    public Texture this[int index]
+    public Texture? this[int index]
     {
         get
         {
-            return textures[index];
+            return _textures[index];
         }
         set
         {
-            throw new NotImplementedException();
+            _textures[index] = value;
+            _modifiedSamplers[index] = true;
         }
     }
 
-    private readonly Texture[] textures;
+    private readonly Texture?[] _textures;
+    private readonly bool[] _modifiedSamplers;
 
+    internal TextureCollection(int slots, bool[] modSamplers)
+    {
+        _textures = new Texture[slots];
+        _modifiedSamplers = modSamplers;
+
+        for (int i = 0; i < _textures.Length; i += 1)
+        {
+            _textures[i] = null;
+        }
+    }
 }

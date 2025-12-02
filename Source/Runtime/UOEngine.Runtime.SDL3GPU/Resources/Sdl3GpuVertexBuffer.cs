@@ -1,4 +1,5 @@
-﻿using UOEngine.Runtime.RHI;
+﻿using System.Runtime.InteropServices;
+using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Runtime.SDL3GPU;
 
@@ -10,8 +11,6 @@ internal class Sdl3GpuVertexBuffer: Sdl3GpuBuffer, IRhiVertexBuffer
 
     }
 
-    public void SetData(int offsetInBytes, nint data, int dataLength)
-    {
-        throw new NotImplementedException();
-    }
+    public void SetData(ReadOnlySpan<ushort> data) => data.CopyTo(MemoryMarshal.Cast<byte, ushort>(Data));
+
 }

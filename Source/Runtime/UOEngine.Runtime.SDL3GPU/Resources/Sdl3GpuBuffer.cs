@@ -1,10 +1,9 @@
 ﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-
-using static SDL3.SDL;
-
+using System.Security.Cryptography;
 using UOEngine.Runtime.RHI;
+using static SDL3.SDL;
 
 namespace UOEngine.Runtime.SDL3GPU;
 
@@ -53,6 +52,19 @@ internal class Sdl3GpuBuffer: Sdl3GpuResource
         _bufferBinding.buffer = Handle;
 
         Data = new byte[sizeInBytes];
+    }
+
+    public void SetData(int offsetInBytes, nint data, int dataLength)
+    {
+        var destination = Data.AsSpan(offsetInBytes, dataLength);
+
+        unsafe
+        {
+            fixed (byte* destinationPtr = destination)
+            {
+                Buffer.MemoryCopy((void*)data, destinationPtr, dataLength, dataLength);
+            }
+        }
     }
 
     public void Upload()
