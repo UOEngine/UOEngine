@@ -1,8 +1,10 @@
 ﻿namespace UOEngine.Runtime.RHI;
 public enum RhiVertexAttributeFormat
 {
+    Float,
     Vector2,
     Vector3,
     Vector4,
-    R8G8B8A8_UNorm
+    R8G8B8A8_UNorm,
+    UInt32,
 }

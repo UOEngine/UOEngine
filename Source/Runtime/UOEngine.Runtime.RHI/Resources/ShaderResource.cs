@@ -49,6 +49,7 @@ public struct ShaderStreamBinding
 {
     public string SemanticName;
     public uint SemanticIndex;
+    public RhiVertexAttributeFormat Format;
 }
 
 public readonly struct ShaderBindingHandle

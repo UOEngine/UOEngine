@@ -161,6 +161,15 @@ public class GraphicsDevice
         return new RhiBlendState();
     });
 
+    private RhiDepthStencilState GetDepthStencilState() => _depthStencilState.Get((state) =>
+    {
+        return 0;
+    },
+    (state) =>
+    {
+        return new RhiDepthStencilState();
+    });
+
     public GraphicsDevice(IServiceProvider serviceProvider)
     {
         RenderResourceFactory = serviceProvider.GetRequiredService<IRenderResourceFactory>();
@@ -242,11 +251,15 @@ public class GraphicsDevice
             return;
         }
 
-        var blendState = GetBlendState();
-        var rasteriserState = GetRasteriserState();
-
-        _renderContext.SetGraphicsPipeline(_shaderInstance, RhiPrimitiveType.TriangleStrip, rasteriserState);
-        //_renderContext.GraphicsPipline = ;
+        _renderContext.SetGraphicsPipeline(new RhiGraphicsPipelineDescription
+        {
+            Shader = _shaderInstance,
+            PrimitiveType = RhiPrimitiveType.TriangleList,
+            Rasteriser = GetRasteriserState(),
+            BlendState = GetBlendState(),
+            DepthStencilState = GetDepthStencilState(),
+            VertexLayout = null
+        });
 
         _graphicsPipelineDirty = false;
     }

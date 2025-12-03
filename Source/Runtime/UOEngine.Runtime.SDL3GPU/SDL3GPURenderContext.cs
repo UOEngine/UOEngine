@@ -109,21 +109,9 @@ internal class SDL3GPURenderContext: IRenderContext
 
     private readonly Sdl3GpuGlobalSamplers _globalSamplers;
 
-    private readonly record struct PipelineKey(
-    IntPtr VertexShader,
-    IntPtr PixelShader,
-    //RhiVertexDefinition Layout,
-    RhiPrimitiveType PrimitiveType,
-    //RhiBlendState Blend,
-    //RhiDepthState Depth,
-    RhiRasteriserState RasteriserState
-    //RhiRenderTargetFormat ColorFormat,
-    //RhiDepthFormat DepthFormat
-    );
+    private readonly Dictionary<RhiGraphicsPipelineDescription, Sdl3GpuGraphicsPipeline> _pipelineCache = [];
 
-    private readonly Dictionary<PipelineKey, Sdl3GpuGraphicsPipeline> _pipelineCache = [];
-
-    private PipelineKey _currentPipelineKey;
+    private RhiGraphicsPipelineDescription _currentPipelineDescription;
     private Sdl3GpuGraphicsPipeline _currentPipeline;
 
     public SDL3GPURenderContext(Sdl3GpuDevice device, Sdl3GpuGlobalSamplers globalSamplers)
@@ -219,30 +207,26 @@ internal class SDL3GPURenderContext: IRenderContext
         SDL_DrawGPUIndexedPrimitives(_renderPass, (uint)_indexBuffer.NumIndices, numInstances, 0, 0, 0);
     }
 
-    public void SetGraphicsPipeline(ShaderInstance shaderInstance, RhiPrimitiveType primitiveType, in RhiRasteriserState rasteriserState)
+    public void SetGraphicsPipeline(in RhiGraphicsPipelineDescription graphicsPipelineDescription)
     {
-        var shaderResource = (Sdl3GpuShaderResource)shaderInstance.ShaderResource;
-
-        var key = new PipelineKey(shaderResource.VertexProgram.Handle, shaderResource.PixelProgram.Handle, primitiveType, rasteriserState);
-
-        if (key == _currentPipelineKey)
+        if (graphicsPipelineDescription == _currentPipelineDescription)
         {
             return;
         }
 
         _pipelineDirty = true;
 
-        if (_pipelineCache.TryGetValue(key, out _graphicsPipeline))
+        if (_pipelineCache.TryGetValue(graphicsPipelineDescription, out _graphicsPipeline))
         {
             return;
         }
 
         var newPipeline = new Sdl3GpuGraphicsPipeline(_device, new GraphicsPipelineDescription
         {
-
+            ShaderResource = graphicsPipelineDescription.Shader.ShaderResource,
         });
 
-        _pipelineCache.Add(key, newPipeline);
+        _pipelineCache.Add(graphicsPipelineDescription, newPipeline);
 
         _graphicsPipeline = newPipeline;
 

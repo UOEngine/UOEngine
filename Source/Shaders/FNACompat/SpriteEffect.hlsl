@@ -1,7 +1,7 @@
 Texture2D SpriteTexture : register(t0, space2);
 SamplerState SpriteSampler : register(s0, space2);
 
-cbuffer SpriteBatchBuffer : register(b0)
+cbuffer SpriteBatchBuffer : register(b0, space1)
 {
     float4x4 MatrixTransform;
 };

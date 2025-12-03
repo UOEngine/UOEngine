@@ -78,6 +78,11 @@ internal class UOEngineDxcCompiler
 
             if (resourceDescription.Type == ShaderInputType.ConstantBuffer)
             {
+                if (resourceDescription.Space != 1)
+                {
+                    //throw new ArgumentException("Constant buffer variables must be in shader register space 1 for Sdl3Gpu");
+                }
+
                 ID3D12ShaderReflectionConstantBuffer constantBuffer = reflection.GetConstantBufferByName(resourceDescription.Name);
 
                 inputType = RhiShaderInputType.Constant;
@@ -179,17 +184,38 @@ internal class UOEngineDxcCompiler
 
         outCompileResult.ShaderBindings = [.. shaderParameters];
 
-        outCompileResult.StreamBindings = new ShaderStreamBinding[reflection.InputParameters.Length];
+        List<ShaderStreamBinding> streamBindings = new List<ShaderStreamBinding>(reflection.InputParameters.Length);
 
-        for (uint i = 0; i < reflection.InputParameters.Length; i++)
+        for (int i = 0; i < reflection.InputParameters.Length; i++)
         {
             var param = reflection.InputParameters[i];
 
-            outCompileResult.StreamBindings[i] = new ShaderStreamBinding
+            if(param.SystemValueType != SystemValueType.Undefined)
+            {
+                // SV_InstanceID, SV_VertexID, etc.
+                continue;
+            }
+
+            // Is vertex attribute.
+
+            streamBindings.Add(new ShaderStreamBinding
             {
                 SemanticName = param.SemanticName,
-                SemanticIndex = param.Register
-            };
+                SemanticIndex = param.Register,
+                Format = ToRhiVertexFormat(param.ComponentType, (byte)param.UsageMask)
+            });
         }
+
+        outCompileResult.StreamBindings = [.. streamBindings];
     }
+
+    private static RhiVertexAttributeFormat ToRhiVertexFormat(RegisterComponentType type, byte mask) => (type, mask) switch
+    {
+        (RegisterComponentType.Float32, 0x1) => RhiVertexAttributeFormat.Float,
+        (RegisterComponentType.Float32, 0x3) => RhiVertexAttributeFormat.Vector2,
+        (RegisterComponentType.Float32, 0x7) => RhiVertexAttributeFormat.Vector3,
+        (RegisterComponentType.Float32, 0xF) => RhiVertexAttributeFormat.Vector4,
+        (RegisterComponentType.UInt32,  0x1) => RhiVertexAttributeFormat.UInt32,
+                                           _ => throw new NotSupportedException()
+    };
 }
