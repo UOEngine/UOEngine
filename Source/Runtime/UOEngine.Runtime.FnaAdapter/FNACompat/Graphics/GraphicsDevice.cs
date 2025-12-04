@@ -43,6 +43,46 @@ internal sealed class DeviceState<TFnaState, TRhiState>
     public DeviceState(TFnaState initial) => _value = initial;
 }
 
+internal sealed class DeviceState2<TFnaState, TRhiState>
+{
+    public TFnaState Value
+    {
+        get => _value;
+        set
+        {
+            if (ReferenceEquals(_value, value) || Equals(_value, value))
+            {
+                return;
+            }
+
+            _value = value;
+
+            // Clear as dirty, pull from cache later.
+            _last = default;
+        }
+    }
+
+    public TRhiState Get(Func<TFnaState, TRhiState> mapFunc)
+    {
+        if (_last != null) return _last;
+
+        if (_cache.TryGetValue(_value, out var cached))
+            return _last = cached;
+
+        var mappedValue = mapFunc(_value);
+
+        _cache.Add(_value, mappedValue);
+
+        return _last = mappedValue;
+    }
+
+    private TFnaState _value;
+    private readonly Dictionary<TFnaState, TRhiState> _cache = [];
+    private TRhiState? _last = default(TRhiState);
+
+    public DeviceState2(TFnaState initial) => _value = initial;
+}
+
 public class GraphicsDevice
 {
     // Per XNA4 General Spec
@@ -140,6 +180,7 @@ public class GraphicsDevice
     private readonly DeviceState<BlendState, RhiBlendState> _blendState = new(BlendState.Opaque);
     private readonly DeviceState<RasterizerState, RhiRasteriserState> _rasteriserState = new(RasterizerState.CullCounterClockwise);
     private readonly DeviceState<DepthStencilState, RhiDepthStencilState> _depthStencilState = new(DepthStencilState.None);
+    private readonly DeviceState2<SamplerState, RhiSampler> _samplerState = new(SamplerState.PointClamp);
 
     private ShaderInstance _shaderInstance;
     private bool _graphicsPipelineDirty = false;
@@ -197,13 +238,9 @@ public class GraphicsDevice
 
     public void DrawIndexedPrimitives(PrimitiveType primitiveType, int baseVertex, int minVertexIndex, int numVertices, int startIndex, int primitiveCount)
     {
-        BindVertexBufferIfNeeded();
-        BindIndexBufferIfNeeded();
-        BindGraphicsPipelineIfNeeded();
+        ApplyState();
 
-        throw new NotImplementedException();
-
-        //_renderContext.DrawIndexedPrimitives()
+        _renderContext.DrawIndexedPrimitives(1);
     }
 
     public void Reset(PresentationParameters presentationParameters)
@@ -273,6 +310,36 @@ public class GraphicsDevice
 
         _renderContext.VertexBuffer = _vertexBuffer.RhiVertexBuffer;
         _vertexBufferDirty = false;
+    }
+
+    private void ApplyState()
+    {
+        BindVertexBufferIfNeeded();
+        BindIndexBufferIfNeeded();
+        BindGraphicsPipelineIfNeeded();
+
+        ApplySamplers();
+    }
+
+    private void ApplySamplers()
+    {
+        var sampler = SamplerStates[0];
+
+        _samplerState.Value = sampler;
+
+        _renderContext.Sampler = _samplerState.Get((fnaSampler) =>
+        {
+            var filter = fnaSampler.Filter switch
+            {
+                TextureFilter.Point => RhiSamplerFilter.Point,
+                                  _ => throw new NotImplementedException()
+            };
+
+            return new RhiSampler
+            {
+                Filter = filter
+            };
+        });
     }
 }
 

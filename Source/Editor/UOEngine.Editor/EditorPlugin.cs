@@ -127,7 +127,7 @@ internal class UO3DApplication : IPlugin
 
         _shaderInstance.SetData(_projectionBinding, mvp);
         _shaderInstance.SetTexture(_textureBindingHandle, _waterTexture);
-        _shaderInstance.SetSampler(_samplerBindingHandle, new RhiSampler { Filter = SamplerFilter.Point });
+        _shaderInstance.SetSampler(_samplerBindingHandle, new RhiSampler { Filter = RhiSamplerFilter.Point });
 
         context.GraphicsPipline = _pipeline;
         context.ShaderInstance = _shaderInstance;

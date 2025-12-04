@@ -1,6 +1,6 @@
 ﻿namespace UOEngine.Runtime.RHI;
 
-public readonly record struct RhiGraphicsPipelineDescription
+public record struct RhiGraphicsPipelineDescription
 {
     public required ShaderInstance Shader { get; init; }
     public required RhiPrimitiveType PrimitiveType { get; init; }

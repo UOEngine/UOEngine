@@ -23,6 +23,9 @@ public interface IRenderContext
 
     public ModelViewProjection MVP { get; set; }
 
+    public RhiSampler Sampler { get; set; }
+
+
     public void BeginRenderPass(in RenderPassInfo renderPassInfo);
     public void EndRenderPass();
 

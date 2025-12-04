@@ -12,9 +12,14 @@ internal class Sdl3GpuGraphicsPipeline: Sdl3GpuResource, IGraphicsPipeline
     public readonly SDL3GPUShaderProgram VertexProgram;
     public readonly SDL3GPUShaderProgram PixelProgram;
 
+    public readonly GraphicsPipelineDescription PipelineDescription;
+    public readonly SDL_GPUGraphicsPipelineCreateInfo PipelineCreateInfo;
+
     public Sdl3GpuGraphicsPipeline(Sdl3GpuDevice device, in GraphicsPipelineDescription graphicsPipelineDescription)
         : base(device)
     {
+        PipelineDescription = graphicsPipelineDescription;
+
         Sdl3GpuShaderResource shaderResource = (Sdl3GpuShaderResource)graphicsPipelineDescription.ShaderResource;
 
         VertexProgram = shaderResource!.VertexProgram;

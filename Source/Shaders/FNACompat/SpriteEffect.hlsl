@@ -8,9 +8,9 @@ cbuffer SpriteBatchBuffer : register(b0, space1)
 
 struct VSInput
 {
-    float3 Position : POSITION; // xy = vertex position, z = layer depth
-    float4 Color : COLOR0;
-    float2 TexCoord : TEXCOORD0;
+    float4 Position : TEXCOORD0; // xy = vertex position, z = layer depth
+    float4 Color : TEXCOORD01;
+    float2 TexCoord: TEXCOORD2;
 };
 
 struct VSOutput

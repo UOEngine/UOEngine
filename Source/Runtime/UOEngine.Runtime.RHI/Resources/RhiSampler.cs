@@ -1,6 +1,6 @@
 ﻿namespace UOEngine.Runtime.RHI;
 
-public enum SamplerFilter: byte
+public enum RhiSamplerFilter: byte
 {
     Invalid,
     Point,
@@ -8,9 +8,9 @@ public enum SamplerFilter: byte
     Bilinear,
 }
 
-public readonly struct RhiSampler
+public readonly record struct RhiSampler
 {
-    public readonly SamplerFilter Filter { get; init; }
+    public readonly RhiSamplerFilter Filter { get; init; }
 
     //public RhiSampler(SamplerFilter filter)
     //{

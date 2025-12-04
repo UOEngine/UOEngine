@@ -1,9 +1,8 @@
-﻿using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography;
-using UOEngine.Runtime.RHI;
+﻿using System.Runtime.CompilerServices;
+
 using static SDL3.SDL;
+
+using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Runtime.SDL3GPU;
 
@@ -126,7 +125,7 @@ internal class Sdl3GpuBuffer: Sdl3GpuResource
                 }
             default:
                 {
-                    Debug.Assert(false);
+                    SDL_BindGPUVertexBuffers(renderPassHandle, 0, [_bufferBinding], 1);
                     break;
                 }
         }

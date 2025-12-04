@@ -6,11 +6,11 @@ namespace UOEngine.Runtime.SDL3GPU.Resources;
 
 internal static class SamplerExtensionMethods
 {
-    public static SDL_GPUFilter ToSdl3GpuFilter(this SamplerFilter filter)
+    public static SDL_GPUFilter ToSdl3GpuFilter(this RhiSamplerFilter filter)
     {
         switch(filter)
         {
-            case SamplerFilter.Point: return SDL_GPUFilter.SDL_GPU_FILTER_NEAREST;
+            case RhiSamplerFilter.Point: return SDL_GPUFilter.SDL_GPU_FILTER_NEAREST;
             default:
                 throw new NotImplementedException("Unimplemented Sampler filter.");
         }

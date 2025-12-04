@@ -24,8 +24,13 @@ internal class SDL3GPURenderContext: IRenderContext
                 return;
             }
 
+            //if(_shaderInstance.ShaderResource != _currentPipelineDescription.Shader.ShaderResource)
+            //{
+            //    SetDirtyState(DirtyState.Pipeline);
+            //}
+
             _shaderInstance = value;
-            _shaderInstanceDirty = true;
+            SetDirtyState(DirtyState.ShaderParams);
         }
     }
 
@@ -40,7 +45,8 @@ internal class SDL3GPURenderContext: IRenderContext
             }
 
             _graphicsPipeline = (Sdl3GpuGraphicsPipeline)value;
-            _pipelineDirty = true;
+
+            SetDirtyState(DirtyState.Pipeline);
         }
     }
 
@@ -55,7 +61,8 @@ internal class SDL3GPURenderContext: IRenderContext
             }
 
             _indexBuffer = (Sdl3GpuIndexBuffer)value;
-            _indexBufferDirty = true;
+
+            SetDirtyState(DirtyState.IndexBuffer);
         }
     }
 
@@ -70,7 +77,8 @@ internal class SDL3GPURenderContext: IRenderContext
             }
 
             _vertexBuffer = (Sdl3GpuVertexBuffer)value;
-            _vertexBufferDirty = true;
+
+            SetDirtyState(DirtyState.VertexBuffer);
         }
     }
 
@@ -91,15 +99,26 @@ internal class SDL3GPURenderContext: IRenderContext
         }
     }
 
+    public RhiSampler Sampler
+    {
+        get => _sampler;
+        set
+        {
+            if (_sampler == value)
+            {
+                return;
+            }
+
+            _sampler = value;
+        }
+    }
+
     private IntPtr _renderPass;
     private ShaderInstance _shaderInstance;
     private Sdl3GpuGraphicsPipeline? _graphicsPipeline;
     private readonly Sdl3GpuDevice _device;
 
-    private bool _pipelineDirty = true;
-    private bool _indexBufferDirty = true;
-    private bool _shaderInstanceDirty = true;
-    private bool _vertexBufferDirty;
+    private DirtyState _dirtyState = DirtyState.All;
 
     private RenderPassInfo? _activeRenderPass;
 
@@ -114,6 +133,19 @@ internal class SDL3GPURenderContext: IRenderContext
     private RhiGraphicsPipelineDescription _currentPipelineDescription;
     private Sdl3GpuGraphicsPipeline _currentPipeline;
 
+    private RhiSampler _sampler;
+
+    [Flags]
+    private enum DirtyState
+    {
+        None = 0,
+        Pipeline = 1 << 0,
+        VertexBuffer = 1 << 1,
+        IndexBuffer = 1 << 2,
+        ShaderParams = 1 << 3,
+        All = Pipeline|VertexBuffer|IndexBuffer|ShaderParams
+    }
+
     public SDL3GPURenderContext(Sdl3GpuDevice device, Sdl3GpuGlobalSamplers globalSamplers)
     {
         _device = device;
@@ -126,8 +158,9 @@ internal class SDL3GPURenderContext: IRenderContext
 
         _graphicsPipeline = null;
         _activeRenderPass = null;
-        _pipelineDirty = true;
         _indexBuffer = null;
+
+        SetDirtyState(DirtyState.All);
 
         Debug.Assert(RecordedCommands != IntPtr.Zero);
     }
@@ -182,29 +215,19 @@ internal class SDL3GPURenderContext: IRenderContext
 
     public void DrawIndexedPrimitives(uint numInstances)
     {
-        if(_pipelineDirty)
-        {
-            SDL_BindGPUGraphicsPipeline(_renderPass, _graphicsPipeline.Handle);
-
-            _pipelineDirty = false;
-            _shaderInstanceDirty = true;
-        }
-
-        if(_indexBufferDirty)
-        {
-            _indexBuffer.Bind(_renderPass);
-
-            _indexBufferDirty = false;
-        }
-
-        if(_shaderInstanceDirty)
-        {
-            BindShaderParameters();
-
-            _shaderInstanceDirty = false;
-        }
+        FlushIfNeeded();
         
         SDL_DrawGPUIndexedPrimitives(_renderPass, (uint)_indexBuffer.NumIndices, numInstances, 0, 0, 0);
+    }
+
+    public void DrawIndexedPrimitives(RhiPrimitiveType primitiveType, int baseVertex, int minVertexIndex, int numVertices, int startIndex, int primitiveCount)
+    {
+        throw new NotImplementedException();
+
+        FlushIfNeeded();
+        
+        //SDL_DrawGPUIndexedPrimitives(_renderPass, (uint)_indexBuffer.NumIndices, numInstances, 0, 0, 0);
+
     }
 
     public void SetGraphicsPipeline(in RhiGraphicsPipelineDescription graphicsPipelineDescription)
@@ -214,22 +237,15 @@ internal class SDL3GPURenderContext: IRenderContext
             return;
         }
 
-        _pipelineDirty = true;
+        SetDirtyState(DirtyState.ShaderParams);
 
-        if (_pipelineCache.TryGetValue(graphicsPipelineDescription, out _graphicsPipeline))
-        {
-            return;
-        }
+        ShaderInstance = graphicsPipelineDescription.Shader;
+        _currentPipelineDescription = graphicsPipelineDescription;
+    }
 
-        var newPipeline = new Sdl3GpuGraphicsPipeline(_device, new GraphicsPipelineDescription
-        {
-            ShaderResource = graphicsPipelineDescription.Shader.ShaderResource,
-        });
-
-        _pipelineCache.Add(graphicsPipelineDescription, newPipeline);
-
-        _graphicsPipeline = newPipeline;
-
+    public void SetSampler(in RhiSampler sampler)
+    {
+        _sampler = sampler;
     }
 
     private void BindShaderParameters()
@@ -313,7 +329,7 @@ internal class SDL3GPURenderContext: IRenderContext
 
                 case RhiShaderInputType.Sampler:
                     {
-                        samplerBinding.sampler = _globalSamplers.GetSampler(entry.Sampler).Handle;
+                        samplerBinding.sampler = _globalSamplers.GetSampler(_sampler).Handle;
                         break;
                     }
                 default:
@@ -330,4 +346,53 @@ internal class SDL3GPURenderContext: IRenderContext
 
         SDL_BindGPUFragmentSamplers(_renderPass,  0, samplerBindings, (uint)samplerBindings.Length);
     }
+
+    private void FlushIfNeeded()
+    {
+        if (IsStateDirty(DirtyState.Pipeline))
+        {
+            if (_pipelineCache.TryGetValue(_currentPipelineDescription, out _graphicsPipeline) == false)
+            {
+                _graphicsPipeline = new Sdl3GpuGraphicsPipeline(_device, new GraphicsPipelineDescription
+                {
+                    ShaderResource = _currentPipelineDescription.Shader.ShaderResource,
+                });
+
+                _pipelineCache.Add(_currentPipelineDescription, _graphicsPipeline);
+            }
+
+            SDL_BindGPUGraphicsPipeline(_renderPass, _graphicsPipeline.Handle);
+
+            SetDirtyState(DirtyState.ShaderParams);
+            ClearDirtyState(DirtyState.Pipeline);
+        }
+
+        if (IsStateDirty(DirtyState.IndexBuffer))
+        {
+            _indexBuffer.Bind(_renderPass);
+
+            ClearDirtyState(DirtyState.IndexBuffer);
+        }
+
+        if (IsStateDirty(DirtyState.VertexBuffer))
+        {
+            _vertexBuffer.Bind(_renderPass);
+
+            ClearDirtyState(DirtyState.VertexBuffer);
+        }
+
+        if (IsStateDirty(DirtyState.ShaderParams))
+        {
+            BindShaderParameters();
+
+            ClearDirtyState(DirtyState.ShaderParams);
+        }
+    }
+
+    private void SetDirtyState(DirtyState flags) => _dirtyState |= flags;
+
+    private bool IsStateDirty(DirtyState flags) => (_dirtyState & flags) != 0;
+
+    private void ClearDirtyState(DirtyState flags) => _dirtyState &= ~flags;
+
 }

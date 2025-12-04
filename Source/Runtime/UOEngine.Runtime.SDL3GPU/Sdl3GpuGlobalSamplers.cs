@@ -16,12 +16,12 @@ internal class Sdl3GpuGlobalSamplers
     {
         _device = device;
 
-        PointClamp = RegisterGlobalSampler(new RhiSampler { Filter = SamplerFilter.Point });
+        PointClamp = RegisterGlobalSampler(new RhiSampler { Filter = RhiSamplerFilter.Point });
     }
 
     public Sdl3GpuSampler GetSampler(RhiSampler rhiSampler)
     {
-        Debug.Assert(rhiSampler.Filter != SamplerFilter.Invalid);
+        Debug.Assert(rhiSampler.Filter != RhiSamplerFilter.Invalid);
 
         return _globalSamplers[rhiSampler.GetHashCode()];
     }
