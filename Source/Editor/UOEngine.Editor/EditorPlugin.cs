@@ -114,27 +114,27 @@ internal class UO3DApplication : IPlugin
 
     public void OnFrameBegin(IRenderContext context)
     {
-        var width = _window.RenderTargetWidth;
-        var height = _window.RenderTargetHeight;
+        //var width = _window.RenderTargetWidth;
+        //var height = _window.RenderTargetHeight;
 
-        Matrix4x4 projection = Matrix4x4.CreateOrthographic(width, height, -1.0f, 1.0f);
+        //Matrix4x4 projection = Matrix4x4.CreateOrthographic(width, height, -1.0f, 1.0f);
 
-        var mvp = new ModelViewProjection
-        {
-            Projection = projection,
-            View = Matrix4x4.Identity
-        };
+        //var mvp = new ModelViewProjection
+        //{
+        //    Projection = projection,
+        //    View = Matrix4x4.Identity
+        //};
 
-        _shaderInstance.SetData(_projectionBinding, mvp);
-        _shaderInstance.SetTexture(_textureBindingHandle, _waterTexture);
-        _shaderInstance.SetSampler(_samplerBindingHandle, new RhiSampler { Filter = RhiSamplerFilter.Point });
+        //_shaderInstance.SetData(_projectionBinding, mvp);
+        //_shaderInstance.SetTexture(_textureBindingHandle, _waterTexture);
+        //_shaderInstance.SetSampler(_samplerBindingHandle, new RhiSampler { Filter = RhiSamplerFilter.Point });
 
-        context.GraphicsPipline = _pipeline;
-        context.ShaderInstance = _shaderInstance;
+        //context.GraphicsPipline = _pipeline;
+        //context.ShaderInstance = _shaderInstance;
 
-        context.IndexBuffer = _indexBuffer;
+        //context.IndexBuffer = _indexBuffer;
 
-        context.DrawIndexedPrimitives(1);
+        //context.DrawIndexedPrimitives(1);
     }
 
     private IRenderTexture CreateTestTexture(uint colour, string name)

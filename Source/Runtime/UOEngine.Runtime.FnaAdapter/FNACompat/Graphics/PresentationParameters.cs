@@ -6,4 +6,10 @@ public class PresentationParameters
     public int BackBufferHeight;
     public int BackBufferWidth;
     public IntPtr DeviceWindowHandle;
+
+    public PresentationParameters()
+    {
+        BackBufferWidth = GraphicsDeviceManager.DefaultBackBufferWidth;
+        BackBufferHeight = GraphicsDeviceManager.DefaultBackBufferHeight;
+    }
 }

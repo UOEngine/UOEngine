@@ -19,6 +19,7 @@ public class VertexBuffer
     public void SetDataPointerEXT(int offsetInBytes, IntPtr data, int dataLength, SetDataOptions options)
     {
         RhiVertexBuffer.SetData(offsetInBytes, data, dataLength);
+        RhiVertexBuffer.Upload();
     }
 
     public void Dispose()

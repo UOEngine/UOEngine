@@ -16,8 +16,6 @@ public class Texture2D: Texture
         }
     }
 
-    protected readonly IRenderTexture RhiTexture;
-
     public Texture2D(
         GraphicsDevice graphicsDevice,
         int width,
@@ -42,11 +40,6 @@ public class Texture2D: Texture
             Usage = usage
         });
     }
-
-    //public void SetData<T>(T[] data) where T : struct
-    //{
-
-    //}
 
     public void SetData<T>(T[] data) where T : unmanaged
     {

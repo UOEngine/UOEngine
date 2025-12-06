@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Xml.Linq;
 
 namespace UOEngine.Runtime.RHI;
 
@@ -93,6 +94,51 @@ public abstract class RhiShaderResource
             if (param.Name == name && param.InputType == inputType)
             {
                 return new ShaderBindingHandle((ushort)i, programType);
+            }
+        }
+
+        throw new UnreachableException("Could not find shader binding handle in vertex shader.");
+    }
+
+    public ShaderBindingHandle GetBindingHandle(ShaderProgramType programType, RhiShaderInputType inputType, int index)
+    {
+        int resourceIndex = 0;
+
+        for (int i = 0; i < ProgramBindings[(int)programType].Parameters.Length; i++)
+        {
+            ref var param = ref ProgramBindings[(int)programType].Parameters[i];
+
+            if (param.InputType == inputType)
+            {
+                if(resourceIndex == index)
+                {
+                    return new ShaderBindingHandle((ushort)i, programType);
+                }
+                else
+                {
+                    resourceIndex++;
+                }
+            }
+        }
+
+        return new ShaderBindingHandle((ushort)index, programType);
+    }
+
+    public ShaderBindingHandle GetBindingHandle(string name)
+    {
+        for(int programType = 0; programType < (int)ShaderProgramType.Count; programType++)
+        {
+            for (int i = 0; i < ProgramBindings[programType].Parameters.Length; i++)
+            {
+                ref var param = ref ProgramBindings[programType].Parameters[i];
+
+                foreach (var variable in param.Variables)
+                {
+                    if (variable.Name == name)
+                    {
+                        return new ShaderBindingHandle((ushort)i, (ShaderProgramType)programType);
+                    }
+                }
             }
         }
 

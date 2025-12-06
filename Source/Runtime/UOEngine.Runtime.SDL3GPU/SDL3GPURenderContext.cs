@@ -138,10 +138,10 @@ internal class SDL3GPURenderContext: IRenderContext
     [Flags]
     private enum DirtyState
     {
-        None = 0,
-        Pipeline = 1 << 0,
+        None =              0,
+        Pipeline =     1 << 0,
         VertexBuffer = 1 << 1,
-        IndexBuffer = 1 << 2,
+        IndexBuffer =  1 << 2,
         ShaderParams = 1 << 3,
         All = Pipeline|VertexBuffer|IndexBuffer|ShaderParams
     }

@@ -11,6 +11,7 @@ internal static class SamplerExtensionMethods
         switch(filter)
         {
             case RhiSamplerFilter.Point: return SDL_GPUFilter.SDL_GPU_FILTER_NEAREST;
+            case RhiSamplerFilter.Bilinear: return SDL_GPUFilter.SDL_GPU_FILTER_LINEAR;
             default:
                 throw new NotImplementedException("Unimplemented Sampler filter.");
         }

@@ -64,7 +64,7 @@ internal sealed class DeviceState2<TFnaState, TRhiState>
 
     public TRhiState Get(Func<TFnaState, TRhiState> mapFunc)
     {
-        if (_last != null) return _last;
+        //if (_last != null) return _last;
 
         if (_cache.TryGetValue(_value, out var cached))
             return _last = cached;
@@ -213,6 +213,8 @@ public class GraphicsDevice
 
     public GraphicsDevice(IServiceProvider serviceProvider)
     {
+        PresentationParameters = new PresentationParameters();
+
         RenderResourceFactory = serviceProvider.GetRequiredService<IRenderResourceFactory>();
 
         // We need to set this each frame and then record into it what is done.
@@ -245,12 +247,17 @@ public class GraphicsDevice
 
     public void Reset(PresentationParameters presentationParameters)
     {
-        throw new NotImplementedException();
+        PresentationParameters = presentationParameters;
+
+        Viewport = new Viewport(0, 0, PresentationParameters.BackBufferWidth, PresentationParameters.BackBufferHeight);
+
+        ScissorRectangle = new Rectangle(0, 0, PresentationParameters.BackBufferWidth, PresentationParameters.BackBufferHeight
+);
     }
 
     public void Present(Rectangle? sourceRectangle, Rectangle? destinationRectangle, IntPtr overrideWindowHandle)
     {
-        throw new NotImplementedException();
+        //throw new NotImplementedException();
     }
 
     public void Clear(Color color)
@@ -271,14 +278,7 @@ public class GraphicsDevice
 
     private void BindIndexBufferIfNeeded()
     {
-        if (!_indicesDirty || _indices == null)
-        {
-            return;
-        }
-
         _renderContext.IndexBuffer = _indices.RhiIndexBuffer;
-
-        _indicesDirty = false;
     }
 
     private void BindGraphicsPipelineIfNeeded()
@@ -319,27 +319,43 @@ public class GraphicsDevice
         BindGraphicsPipelineIfNeeded();
 
         ApplySamplers();
+
     }
 
     private void ApplySamplers()
     {
-        var sampler = SamplerStates[0];
-
-        _samplerState.Value = sampler;
-
-        _renderContext.Sampler = _samplerState.Get((fnaSampler) =>
+        for(int i = 0; i < _modifiedSamplers.Length; i++)
         {
-            var filter = fnaSampler.Filter switch
+            if (_modifiedSamplers[i] == false)
             {
-                TextureFilter.Point => RhiSamplerFilter.Point,
-                                  _ => throw new NotImplementedException()
-            };
+                continue;
+            }
 
-            return new RhiSampler
+            var sampler = SamplerStates[i];
+
+            _samplerState.Value = sampler;
+
+            _renderContext.Sampler = _samplerState.Get((fnaSampler) =>
             {
-                Filter = filter
-            };
-        });
+                var filter = fnaSampler.Filter switch
+                {
+                    TextureFilter.Point => RhiSamplerFilter.Point,
+                    TextureFilter.Linear => RhiSamplerFilter.Bilinear,
+                    _ => throw new NotImplementedException()
+                };
+
+                return new RhiSampler
+                {
+                    Filter = filter
+                };
+            });
+
+            var texture = Textures[i];
+
+            var bindingHandle = _shaderInstance.GetBindingHandle(ShaderProgramType.Pixel, RhiShaderInputType.Texture, i);
+
+            _shaderInstance.SetTexture(bindingHandle, texture.RhiTexture);
+        }
     }
 }
 

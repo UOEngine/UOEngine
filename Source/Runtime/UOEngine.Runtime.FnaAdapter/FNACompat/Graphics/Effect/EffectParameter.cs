@@ -11,6 +11,8 @@ public class EffectParameter
     internal readonly ShaderVariable Info;
     internal IntPtr values { get; private set; }
 
+    internal ReadOnlySpan<byte> Data => _data;
+
     public string Name { get; }
 
     private readonly byte[] _data;

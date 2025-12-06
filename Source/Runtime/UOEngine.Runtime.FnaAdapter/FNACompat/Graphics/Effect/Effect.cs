@@ -62,6 +62,25 @@ public class Effect
 
         ref var technique = ref _uoeEffectData.Techniques[pass.TechniqueIndex];
 
+        var shaderInstance = technique.Passes[pass.PassIndex];
+
+        foreach(var parameter in Parameters)
+        {
+            var bindingHandle = shaderInstance.GetBindingHandle(parameter.Name);
+
+            switch(parameter.Info.Type)
+            {
+                case RhiShaderVariableType.Matrix:
+                {
+                    shaderInstance.SetData(bindingHandle, parameter.Data);
+                    break;
+                }
+
+                default: throw new NotImplementedException();
+            };
+
+        }
+
         GraphicsDevice.ShaderInstance = technique.Passes[pass.PassIndex];
         // Todo: Note effect may have some other graphics pipeline state that needs binding.
     }

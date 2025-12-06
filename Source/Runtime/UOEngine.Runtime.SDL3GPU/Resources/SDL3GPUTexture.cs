@@ -108,8 +108,8 @@ internal class SDL3GPUTexture: Sdl3GpuResource, IRenderTexture
         var textureRegion = new SDL_GPUTextureRegion
         {
             texture = Handle,
-            w = Description.height,
-            h = Description.width,
+            w = Description.width,
+            h = Description.height,
             d = 1
         };
 

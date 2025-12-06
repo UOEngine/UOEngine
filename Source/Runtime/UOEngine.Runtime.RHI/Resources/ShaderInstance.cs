@@ -62,9 +62,24 @@ public struct ShaderBindingDataEntry
 
     public void SetData<T>(T value) where T: struct
     {
-        Debug.Assert((InputType == RhiShaderInputType.Buffer) || (InputType == RhiShaderInputType.Constant));
+        Debug.Assert(InputType is RhiShaderInputType.Buffer or RhiShaderInputType.Constant);
 
         MemoryMarshal.Write(Data.Buffer.AsSpan(), value);
+    }
+
+    public void SetData<T>(in ReadOnlySpan<T> value) where T : struct
+    {
+        Debug.Assert(InputType is RhiShaderInputType.Buffer or RhiShaderInputType.Constant);
+
+        var dst = Data.Buffer.AsSpan();  
+        var src = MemoryMarshal.AsBytes(value);       
+
+        if (src.Length > dst.Length)
+        {
+            throw new ArgumentException("Destination too small", nameof(value));
+        }
+
+        src.CopyTo(dst);
     }
 
     public IRenderTexture GetTexture()
@@ -158,6 +173,16 @@ public class ShaderInstance
         return _shaderResource.GetBindingHandle(programType, inputType, name);
     }
 
+    public ShaderBindingHandle GetBindingHandle(ShaderProgramType programType, RhiShaderInputType inputType, int index)
+    {
+        return _shaderResource.GetBindingHandle(programType, inputType, index);
+    }
+
+    public ShaderBindingHandle GetBindingHandle(string name)
+    {
+        return _shaderResource.GetBindingHandle(name);
+    }
+
     public void GetVariable(string name, out ShaderVariable shaderVariable)
     {
         _shaderResource.GetParameter(name, out shaderVariable);
@@ -190,6 +215,13 @@ public class ShaderInstance
 
         entry.SetData(data);
 
+    }
+
+    public void SetData<T>(ShaderBindingHandle bindingHandle, ReadOnlySpan<T> data) where T : struct
+    {
+        ref var entry = ref GetBindingData(bindingHandle);
+
+        entry.SetData(data);
     }
 
     private ref ShaderBindingDataEntry GetBindingData(ShaderBindingHandle bindingHandle)

@@ -11,6 +11,9 @@ public class GraphicsDeviceManager
 
     public event EventHandler<PreparingDeviceSettingsEventArgs> PreparingDeviceSettings;
 
+    public static readonly int DefaultBackBufferWidth = 800;
+    public static readonly int DefaultBackBufferHeight = 480;
+
     public GraphicsDeviceManager(Game game)
     {
         game.Services.AddService(typeof(GraphicsDeviceManager), this);
