@@ -12,41 +12,59 @@ internal class Sdl3GpuGraphicsPipeline: Sdl3GpuResource, IGraphicsPipeline
     public readonly SDL3GPUShaderProgram VertexProgram;
     public readonly SDL3GPUShaderProgram PixelProgram;
 
-    public readonly GraphicsPipelineDescription PipelineDescription;
+    public readonly RhiGraphicsPipelineDescription PipelineDescription;
     public readonly SDL_GPUGraphicsPipelineCreateInfo PipelineCreateInfo;
 
-    public Sdl3GpuGraphicsPipeline(Sdl3GpuDevice device, in GraphicsPipelineDescription graphicsPipelineDescription)
+    public Sdl3GpuGraphicsPipeline(Sdl3GpuDevice device, in RhiGraphicsPipelineDescription graphicsPipelineDescription)
         : base(device)
     {
         PipelineDescription = graphicsPipelineDescription;
 
-        Sdl3GpuShaderResource shaderResource = (Sdl3GpuShaderResource)graphicsPipelineDescription.ShaderResource;
+        Sdl3GpuShaderResource shaderResource = (Sdl3GpuShaderResource)graphicsPipelineDescription.Shader.ShaderResource;
 
         VertexProgram = shaderResource!.VertexProgram;
-        PixelProgram = shaderResource.PixelProgram; ;
+        PixelProgram = shaderResource.PixelProgram;
 
         SDL_GPUColorTargetDescription colourTargetDesc = new SDL_GPUColorTargetDescription
         {
             format = SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM,
         };
 
-        SDL_GPUVertexAttribute[] vertexAttributes = new SDL_GPUVertexAttribute[VertexProgram.StreamBindings.Length];
+        int numAttributes = graphicsPipelineDescription.VertexLayout?.Attributes.Length ?? VertexProgram.StreamBindings.Length;
 
-        SDL_GPUVertexBufferDescription[] vertexBufferDescription = [];
-
+        Span<SDL_GPUVertexAttribute> vertexAttributes = new SDL_GPUVertexAttribute[numAttributes];
+        Span<SDL_GPUVertexBufferDescription> vertexBufferDescription = [];
 
         uint offset = 0;
 
-        for(var i = 0; i < vertexAttributes.Length; i++)
+        if(graphicsPipelineDescription.VertexLayout != null)
         {
-            ref var attribute = ref vertexAttributes[i];
+            for (var i = 0; i < vertexAttributes.Length; i++)
+            {
+                ref var attribute = ref vertexAttributes[i];
+                ref var incomingAttribute = ref graphicsPipelineDescription.VertexLayout.Attributes[i];
 
-            attribute.buffer_slot = 0; // Assume slot 0 for now.
-            attribute.location = VertexProgram.StreamBindings[i].SemanticIndex;
-            attribute.offset = offset;
-            attribute.format = MapToSdl3GpuVertexElementFormat(VertexProgram.StreamBindings[i].Format);
+                attribute.buffer_slot = 0; // Assume slot 0 for now.
+                attribute.location = VertexProgram.StreamBindings[i].SemanticIndex;
+                attribute.offset = offset;
+                attribute.format = MapToSdl3GpuVertexElementFormat(incomingAttribute.Format);
 
-            offset += MapToSize(VertexProgram.StreamBindings[i].Format);
+                offset += MapToSize(incomingAttribute.Format);
+            }
+        }
+        else
+        {
+            for (var i = 0; i < vertexAttributes.Length; i++)
+            {
+                ref var attribute = ref vertexAttributes[i];
+
+                attribute.buffer_slot = 0; // Assume slot 0 for now.
+                attribute.location = VertexProgram.StreamBindings[i].SemanticIndex;
+                attribute.offset = offset;
+                attribute.format = MapToSdl3GpuVertexElementFormat(VertexProgram.StreamBindings[i].Format);
+
+                offset += MapToSize(VertexProgram.StreamBindings[i].Format);
+            }
         }
 
         if (vertexAttributes.Length > 0)
@@ -89,7 +107,7 @@ internal class Sdl3GpuGraphicsPipeline: Sdl3GpuResource, IGraphicsPipeline
                         fill_mode = SDL_GPUFillMode.SDL_GPU_FILLMODE_FILL,
                         front_face = SDL_GPUFrontFace.SDL_GPU_FRONTFACE_CLOCKWISE
                     },
-                    props = CreateProperty(SDL_PROP_GPU_GRAPHICSPIPELINE_CREATE_NAME_STRING, graphicsPipelineDescription.Name),
+                    //props = CreateProperty(SDL_PROP_GPU_GRAPHICSPIPELINE_CREATE_NAME_STRING, graphicsPipelineDescription.Name),
                 };
 
                 Handle = SDL_CreateGPUGraphicsPipeline(device.Handle, createInfo);
@@ -106,19 +124,21 @@ internal class Sdl3GpuGraphicsPipeline: Sdl3GpuResource, IGraphicsPipeline
 
     private static SDL_GPUVertexElementFormat MapToSdl3GpuVertexElementFormat(RhiVertexAttributeFormat f) => (f) switch
     {
-        RhiVertexAttributeFormat.Float => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT,
-        RhiVertexAttributeFormat.Vector2 => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
-        RhiVertexAttributeFormat.Vector3 => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
-        RhiVertexAttributeFormat.Vector4 => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
-        _ => throw new NotSupportedException()
+        RhiVertexAttributeFormat.Float          => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT,
+        RhiVertexAttributeFormat.Vector2        => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
+        RhiVertexAttributeFormat.Vector3        => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+        RhiVertexAttributeFormat.Vector4        => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
+        RhiVertexAttributeFormat.R8G8B8A8_UNorm => SDL_GPUVertexElementFormat.SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4_NORM,
+                                              _ => throw new NotSupportedException()
     };
 
     private static uint MapToSize(RhiVertexAttributeFormat f) => (f) switch
     {
-        RhiVertexAttributeFormat.Float   => 4,
-        RhiVertexAttributeFormat.Vector2 => 8,
-        RhiVertexAttributeFormat.Vector3 => 12,
-        RhiVertexAttributeFormat.Vector4 => 16,
-                                       _ => throw new NotSupportedException()
+        RhiVertexAttributeFormat.Float          => 4,
+        RhiVertexAttributeFormat.Vector2        => 8,
+        RhiVertexAttributeFormat.Vector3        => 12,
+        RhiVertexAttributeFormat.Vector4        => 16,
+        RhiVertexAttributeFormat.R8G8B8A8_UNorm => 4,
+                                              _ => throw new NotSupportedException()
     };
 }

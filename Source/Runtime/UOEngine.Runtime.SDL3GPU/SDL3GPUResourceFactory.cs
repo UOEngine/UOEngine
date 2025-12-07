@@ -57,7 +57,7 @@ internal class SDL3GPUResourceFactory : IRenderResourceFactory
         return texture;
     }
 
-    public IGraphicsPipeline CreateGraphicsPipeline(in GraphicsPipelineDescription graphicsPipelineDescription)
+    public IGraphicsPipeline CreateGraphicsPipeline(in RhiGraphicsPipelineDescription graphicsPipelineDescription)
     {
         var pipeline = new Sdl3GpuGraphicsPipeline(_device, graphicsPipelineDescription);
 

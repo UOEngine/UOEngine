@@ -349,14 +349,25 @@ internal class SDL3GPURenderContext: IRenderContext
 
     private void FlushIfNeeded()
     {
+        if (IsStateDirty(DirtyState.VertexBuffer))
+        {
+            _vertexBuffer.Bind(_renderPass);
+
+            ClearDirtyState(DirtyState.VertexBuffer);
+
+            if(_currentPipelineDescription.VertexLayout != _vertexBuffer.VertexDefinition)
+            {
+                _currentPipelineDescription.VertexLayout = _vertexBuffer.VertexDefinition;
+
+                SetDirtyState(DirtyState.Pipeline);
+            }
+        }
+
         if (IsStateDirty(DirtyState.Pipeline))
         {
             if (_pipelineCache.TryGetValue(_currentPipelineDescription, out _graphicsPipeline) == false)
             {
-                _graphicsPipeline = new Sdl3GpuGraphicsPipeline(_device, new GraphicsPipelineDescription
-                {
-                    ShaderResource = _currentPipelineDescription.Shader.ShaderResource,
-                });
+                _graphicsPipeline = new Sdl3GpuGraphicsPipeline(_device, _currentPipelineDescription);
 
                 _pipelineCache.Add(_currentPipelineDescription, _graphicsPipeline);
             }
@@ -372,13 +383,6 @@ internal class SDL3GPURenderContext: IRenderContext
             _indexBuffer.Bind(_renderPass);
 
             ClearDirtyState(DirtyState.IndexBuffer);
-        }
-
-        if (IsStateDirty(DirtyState.VertexBuffer))
-        {
-            _vertexBuffer.Bind(_renderPass);
-
-            ClearDirtyState(DirtyState.VertexBuffer);
         }
 
         if (IsStateDirty(DirtyState.ShaderParams))

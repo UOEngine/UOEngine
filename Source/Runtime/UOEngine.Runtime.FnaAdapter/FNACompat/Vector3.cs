@@ -1,5 +1,8 @@
-﻿namespace Microsoft.Xna.Framework;
+﻿using System.Diagnostics;
 
+namespace Microsoft.Xna.Framework;
+
+[DebuggerDisplay("{DebugDisplayString,nq}")]
 public struct Vector3
 {
     public float X;
@@ -11,5 +14,17 @@ public struct Vector3
         X = x;
         Y = y;
         Z = z;
+    }
+
+    internal string DebugDisplayString
+    {
+        get
+        {
+            return string.Concat(
+                X.ToString(), " ",
+                Y.ToString(), " ",
+                Z.ToString()
+            );
+        }
     }
 }

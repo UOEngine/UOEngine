@@ -7,7 +7,7 @@ public record struct RhiGraphicsPipelineDescription
     public required RhiRasteriserState Rasteriser { get; init; }
     public required RhiBlendState BlendState { get; init; }
     public required RhiDepthStencilState DepthStencilState { get; init; }
-    public required RhiVertexDefinition? VertexLayout { get; init; }
+    public required RhiVertexDefinition? VertexLayout { get; set; }
     //public required RhiRenderTargetFormat ColorFormat { get; init; }
     //public required RhiDepthFormat DepthFormat { get; init; }
 }

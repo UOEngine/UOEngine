@@ -70,11 +70,11 @@ internal class UO3DApplication : IPlugin
 
         _projectionBinding = _shaderInstance.GetBindingHandleConstantVertex("PerViewData");
 
-        _pipeline = _renderFactory.CreateGraphicsPipeline(new GraphicsPipelineDescription
-        {
-            Name = "TestPipeline",
-            ShaderResource = _shaderResource
-        });
+        //_pipeline = _renderFactory.CreateGraphicsPipeline(new RhiGraphicsPipelineDescription
+        //{
+        //    Name = "TestPipeline",
+        //    ShaderResource = _shaderResource
+        //});
 
         _assetLoader.LoadAllFiles("D:\\Program Files (x86)\\Electronic Arts\\Ultima Online Classic");
 

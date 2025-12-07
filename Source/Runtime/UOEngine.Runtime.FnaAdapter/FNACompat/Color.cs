@@ -11,14 +11,72 @@
  */
 #endregion
 
+using System.Diagnostics;
+
 namespace Microsoft.Xna.Framework;
 
+[DebuggerDisplay("{DebugDisplayString,nq}")]
 public struct Color
 {
-    public byte B;
-    public byte G;
-    public byte R;
-    public byte A;
+    public byte B
+    {
+        get
+        {
+            unchecked
+            {
+                return (byte)(this.packedValue >> 16);
+            }
+        }
+        set
+        {
+            this.packedValue = (this.packedValue & 0xff00ffff) | ((uint)value << 16);
+        }
+    }
+
+    public byte G
+    {
+        get
+        {
+            unchecked
+            {
+                return (byte)(this.packedValue >> 8);
+            }
+        }
+        set
+        {
+            this.packedValue = (this.packedValue & 0xffff00ff) | ((uint)value << 8);
+        }
+    }
+
+    public byte R
+    {
+        get
+        {
+            unchecked
+            {
+                return (byte)(this.packedValue);
+            }
+        }
+        set
+        {
+            this.packedValue = (this.packedValue & 0xffffff00) | value;
+        }
+    }
+
+    public byte A
+    {
+        get
+        {
+            unchecked
+            {
+                return (byte)(this.packedValue >> 24);
+            }
+        }
+        set
+        {
+            this.packedValue = (this.packedValue & 0x00ffffff) | ((uint)value << 24);
+        }
+    }
 
     public static Color Black;
     public static Color White;
@@ -54,6 +112,19 @@ public struct Color
     private Color(uint packedValue)
     {
         this.packedValue = packedValue;
+    }
+
+    internal string DebugDisplayString
+    {
+        get
+        {
+            return string.Concat(
+                R.ToString(), " ",
+                G.ToString(), " ",
+                B.ToString(), " ",
+                A.ToString()
+            );
+        }
     }
 
     private uint packedValue;

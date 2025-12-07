@@ -1,5 +1,4 @@
-﻿using UOEngine.Runtime.FnaAdapter;
-using UOEngine.Runtime.RHI;
+﻿using UOEngine.Runtime.RHI;
 
 namespace Microsoft.Xna.Framework.Graphics;
 
@@ -9,10 +8,12 @@ public class VertexBuffer
 
     public VertexBuffer(GraphicsDevice graphicsDevice, VertexDeclaration vertexDeclaration, int vertexCount, BufferUsage bufferUsage)
     {
-        RhiVertexBuffer = FnaAdapterPlugin.Instance.RenderResourceFactory.CreateVertexBuffer(new RhiVertexBufferDescription
+
+        RhiVertexBuffer = graphicsDevice.RenderResourceFactory.CreateVertexBuffer(new RhiVertexBufferDescription
         {
             VertexCount = (uint)vertexCount,
-            Stride = vertexDeclaration.RhiVertexDefinition.Stride
+            Stride = vertexDeclaration.RhiVertexDefinition.Stride,
+            AttributesDefinition = vertexDeclaration.RhiVertexDefinition
         });
     }
 

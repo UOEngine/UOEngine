@@ -9,7 +9,7 @@ public interface IRenderResourceFactory
 
     public IRenderTexture CreateTexture(in RhiTextureDescription description);
 
-    public IGraphicsPipeline CreateGraphicsPipeline(in GraphicsPipelineDescription graphicsPipelineDescription);
+    public IGraphicsPipeline CreateGraphicsPipeline(in RhiGraphicsPipelineDescription graphicsPipelineDescription);
 
     public IRhiIndexBuffer CreateIndexBuffer(uint length, string name);
 
