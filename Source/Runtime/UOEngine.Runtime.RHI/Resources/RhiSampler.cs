@@ -10,10 +10,13 @@ public enum RhiSamplerFilter: byte
 
 public readonly record struct RhiSampler
 {
+    public static readonly RhiSampler Point = new(RhiSamplerFilter.Point);
+    public static readonly RhiSampler Bilinear = new(RhiSamplerFilter.Bilinear);
+
     public readonly RhiSamplerFilter Filter { get; init; }
 
-    //public RhiSampler(SamplerFilter filter)
-    //{
-    //    Filter = filter;
-    //}
+    public RhiSampler(RhiSamplerFilter filter)
+    {
+        Filter = filter;
+    }
 }

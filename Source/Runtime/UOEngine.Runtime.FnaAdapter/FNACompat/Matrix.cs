@@ -131,7 +131,7 @@ public struct Matrix
         float zFarPlane
     )
     {
-        var m = Matrix4x4.CreatePerspectiveOffCenter(left, right, bottom, top, zNearPlane, zFarPlane);
+        var m = Matrix4x4.CreateOrthographicOffCenter(left, right, bottom, top, zNearPlane, zFarPlane);
 
         return new Matrix(m);
     }
@@ -141,7 +141,7 @@ public struct Matrix
         return new Matrix(Matrix4x4.CreateTranslation(x, y, z));
     }
 
-    public static Matrix Multiply(Matrix matrix1, Matrix matrix2)
+    public static Matrix Multiply(in Matrix matrix1, in Matrix matrix2)
     {
         return new Matrix(matrix1.M * matrix2.M);
     }
@@ -149,5 +149,10 @@ public struct Matrix
     public static Matrix operator *(Matrix matrix1, Matrix matrix2)
     {
         return Multiply(matrix1, matrix2);
+    }
+
+    public static void Multiply(in Matrix matrix1, in Matrix matrix2, out Matrix result)
+    {
+        result = matrix1 * matrix2;
     }
 }

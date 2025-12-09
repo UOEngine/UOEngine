@@ -12,9 +12,29 @@ public class BlendState
         Blend.InverseSourceAlpha
     );
 
-    public static readonly BlendState NonPremultiplied;
-    public static readonly BlendState Additive;
-    public static readonly BlendState Opaque;
+    public static readonly BlendState Additive = new BlendState(
+        "BlendState.Additive",
+        Blend.SourceAlpha,
+        Blend.SourceAlpha,
+        Blend.One,
+        Blend.One
+    );
+
+    public static readonly BlendState NonPremultiplied = new BlendState(
+        "BlendState.NonPremultiplied",
+        Blend.SourceAlpha,
+        Blend.SourceAlpha,
+        Blend.InverseSourceAlpha,
+        Blend.InverseSourceAlpha
+    );
+
+    public static readonly BlendState Opaque = new BlendState(
+        "BlendState.Opaque",
+        Blend.One,
+        Blend.One,
+        Blend.Zero,
+        Blend.Zero
+    );
 
     public Blend AlphaDestinationBlend;
     public Blend AlphaSourceBlend;

@@ -80,7 +80,7 @@ internal class UOEngineDxcCompiler
             {
                 if (resourceDescription.Space != 1)
                 {
-                    //throw new ArgumentException("Constant buffer variables must be in shader register space 1 for Sdl3Gpu");
+                    throw new ArgumentException("Constant buffer variables must be in shader register space 1 for Sdl3Gpu");
                 }
 
                 ID3D12ShaderReflectionConstantBuffer constantBuffer = reflection.GetConstantBufferByName(resourceDescription.Name);
@@ -166,6 +166,9 @@ internal class UOEngineDxcCompiler
                 }
 
                 inputType = RhiShaderInputType.Texture;
+
+                var t = reflection.GetVariableByName(resourceDescription.Name);
+
             }
             else
             {

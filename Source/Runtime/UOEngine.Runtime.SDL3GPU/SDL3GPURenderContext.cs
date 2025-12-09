@@ -213,11 +213,11 @@ internal class SDL3GPURenderContext: IRenderContext
         _activeRenderPass = null;
     }
 
-    public void DrawIndexedPrimitives(uint numInstances)
+    public void DrawIndexedPrimitives(uint startIndex, uint numIndices)
     {
         FlushIfNeeded();
         
-        SDL_DrawGPUIndexedPrimitives(_renderPass, (uint)_indexBuffer.NumIndices, numInstances, 0, 0, 0);
+        SDL_DrawGPUIndexedPrimitives(_renderPass, numIndices, 1, startIndex, 0, 0);
     }
 
     public void DrawIndexedPrimitives(RhiPrimitiveType primitiveType, int baseVertex, int minVertexIndex, int numVertices, int startIndex, int primitiveCount)

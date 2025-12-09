@@ -74,7 +74,7 @@ internal class SDL3GPUTexture: Sdl3GpuResource, IRenderTexture
         return MemoryMarshal.Cast<byte, T>(Texels);
     }
 
-    public void Upload()
+    public void Upload(uint x = 0, uint y = 0, uint w = 0, uint h = 0)
     {
         uint size = (uint)Texels.Length;
 
@@ -108,8 +108,10 @@ internal class SDL3GPUTexture: Sdl3GpuResource, IRenderTexture
         var textureRegion = new SDL_GPUTextureRegion
         {
             texture = Handle,
-            w = Description.width,
-            h = Description.height,
+            x = x,
+            y = y,
+            w = y > 0? y: Description.width,
+            h = h > 0? h: Description.height,
             d = 1
         };
 

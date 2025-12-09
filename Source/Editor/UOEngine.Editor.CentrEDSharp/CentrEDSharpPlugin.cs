@@ -46,36 +46,31 @@ public class CentrEdSharpPlugin: IPlugin
         var terrainTechnique = new Technique
         {
             Name = "Terrain",
-            VertexMain = "TileVSMain",
-            PixelMain = "TerrainPSMain"
+            Programs = [new TechniqueProgramEntry("TileVSMain", "TerrainPSMain")]
         };
 
         var terrainGrid = new Technique
         {
             Name = "TerrainGrid",
-            VertexMain = "TerrainGridVSMain",
-            PixelMain = "TerrainGridPSMain"
+            Programs = [new TechniqueProgramEntry("TerrainGridVSMain", "TerrainGridPSMain")]
         };
 
         var statics = new Technique
         {
             Name = "Statics",
-            VertexMain = "TileVSMain",
-            PixelMain = "StaticsPSMain"
+            Programs = [new TechniqueProgramEntry("TileVSMain", "StaticsPSMain")]
         };
 
         var selection = new Technique
         {
             Name = "Selection",
-            VertexMain = "TileVSMain",
-            PixelMain = "SelectionPSMain"
+            Programs = [new TechniqueProgramEntry("TileVSMain", "SelectionPSMain")]
         };
 
         var virtualLayer = new Technique
         {
             Name = "VirtualLayer",
-            VertexMain = "VirtualLayerVSMain",
-            PixelMain = "VirtualLayerPSMain"
+            Programs = [new TechniqueProgramEntry("VirtualLayerVSMain", "VirtualLayerPSMain")]
         };
 
         _shaderRemapper.RemapTechniques(mapEffect, mapEffectNew,

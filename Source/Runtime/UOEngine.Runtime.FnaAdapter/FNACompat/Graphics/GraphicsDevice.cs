@@ -1,87 +1,11 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using Microsoft.Extensions.DependencyInjection;
 using UOEngine.Runtime.FnaAdapter;
 using UOEngine.Runtime.Renderer;
 using UOEngine.Runtime.RHI;
 
 namespace Microsoft.Xna.Framework.Graphics;
-
-internal sealed class DeviceState<TFnaState, TRhiState>
-{
-    public TFnaState Value
-    {
-        get => _value;
-        set
-        {
-            if (ReferenceEquals(_value, value) || Equals(_value, value))
-            {
-                return;
-            }
-
-            _value = value;
-
-            // Clear as dirty, pull from cache later.
-            _last = default;
-        }
-    }
-
-    public TRhiState Get(Func<TFnaState, int> hash, Func<TFnaState, TRhiState> build)
-    {
-        if (_last != null) return _last;
-
-        var key = hash(_value);
-
-        if (_cache.TryGetValue(key, out var cached))
-            return _last = cached;
-
-        return _last = _cache[key] = build(_value);
-    }
-
-    private TFnaState _value;
-    private readonly Dictionary<int, TRhiState> _cache = [];
-    private TRhiState? _last;
-
-    public DeviceState(TFnaState initial) => _value = initial;
-}
-
-internal sealed class DeviceState2<TFnaState, TRhiState>
-{
-    public TFnaState Value
-    {
-        get => _value;
-        set
-        {
-            if (ReferenceEquals(_value, value) || Equals(_value, value))
-            {
-                return;
-            }
-
-            _value = value;
-
-            // Clear as dirty, pull from cache later.
-            _last = default;
-        }
-    }
-
-    public TRhiState Get(Func<TFnaState, TRhiState> mapFunc)
-    {
-        //if (_last != null) return _last;
-
-        if (_cache.TryGetValue(_value, out var cached))
-            return _last = cached;
-
-        var mappedValue = mapFunc(_value);
-
-        _cache.Add(_value, mappedValue);
-
-        return _last = mappedValue;
-    }
-
-    private TFnaState _value;
-    private readonly Dictionary<TFnaState, TRhiState> _cache = [];
-    private TRhiState? _last = default(TRhiState);
-
-    public DeviceState2(TFnaState initial) => _value = initial;
-}
 
 public class GraphicsDevice
 {
@@ -106,20 +30,46 @@ public class GraphicsDevice
 
     public BlendState BlendState
     {
-        get => _blendState.Value;
-        set => _blendState.Value = value ?? BlendState.Opaque;
+        get => _fnaBlendState;
+        set
+        {
+            if(value == _fnaBlendState) return;
+
+            _fnaBlendState = value;
+            _graphicsPipelineDirty = true;
+        }
     }
 
     public RasterizerState RasterizerState
     {
-        get => _rasteriserState.Value;
-        set => _rasteriserState.Value = value ?? RasterizerState.CullCounterClockwise;
+        get => _rasterizerState;
+        set
+        {
+            if (value == _rasterizerState)
+            {
+                return;
+            }
+
+            _rasterizerState = value;
+
+            _graphicsPipelineDirty = true;
+        }
     }
 
     public DepthStencilState DepthStencilState
     {
-        get => _depthStencilState.Value;
-        set => _depthStencilState.Value = value ?? DepthStencilState.None;
+        get => _depthStencilState;
+        set
+        {
+            if (value == _depthStencilState)
+            {
+                return;
+            }
+
+            _depthStencilState = value;
+
+            _graphicsPipelineDirty = true;
+        }
     }
     public SamplerStateCollection SamplerStates { get; private set; }
 
@@ -177,39 +127,18 @@ public class GraphicsDevice
     private bool _indicesDirty = true;
 
     private Color _blendFactor = Color.White;
-    private readonly DeviceState<BlendState, RhiBlendState> _blendState = new(BlendState.Opaque);
-    private readonly DeviceState<RasterizerState, RhiRasteriserState> _rasteriserState = new(RasterizerState.CullCounterClockwise);
-    private readonly DeviceState<DepthStencilState, RhiDepthStencilState> _depthStencilState = new(DepthStencilState.None);
-    private readonly DeviceState2<SamplerState, RhiSampler> _samplerState = new(SamplerState.PointClamp);
+
+    private readonly Dictionary<BlendState, RhiBlendState> _blendStates = [];
+    private readonly Dictionary<RasterizerState, RhiRasteriserState> _rasteriserStates = [];
+    private readonly Dictionary<DepthStencilState, RhiDepthStencilState> _depthStencilStates = [];
+    private readonly Dictionary<SamplerState, RhiSampler> _samplerStates = [];
 
     private ShaderInstance _shaderInstance;
     private bool _graphicsPipelineDirty = false;
 
-    private RhiRasteriserState GetRasteriserState() => _rasteriserState.Get((state) =>
-    {
-        return 0;
-    }, (state) =>
-    {
-        return new RhiRasteriserState();
-    });
-
-    private RhiBlendState GetBlendState() => _blendState.Get((state) =>
-    {
-        return 0;
-    }, 
-    (state) =>
-    {
-        return new RhiBlendState();
-    });
-
-    private RhiDepthStencilState GetDepthStencilState() => _depthStencilState.Get((state) =>
-    {
-        return 0;
-    },
-    (state) =>
-    {
-        return new RhiDepthStencilState();
-    });
+    private BlendState _fnaBlendState;
+    private RasterizerState _rasterizerState;
+    private DepthStencilState _depthStencilState;
 
     public GraphicsDevice(IServiceProvider serviceProvider)
     {
@@ -230,6 +159,18 @@ public class GraphicsDevice
         EffectRemapper = serviceProvider.GetRequiredService<Remapper>();
 
         Textures = new TextureCollection(MAX_TEXTURE_SAMPLERS, _modifiedSamplers);
+
+        _blendStates.Add(BlendState.AlphaBlend, RhiBlendState.AlphaBlend);
+        _blendStates.Add(BlendState.Opaque, RhiBlendState.Opaque);
+        _blendStates.Add(BlendState.NonPremultiplied, RhiBlendState.NonPremultiplied);
+
+        _samplerStates.Add(SamplerState.PointClamp, RhiSampler.Point);
+        _samplerStates.Add(SamplerState.LinearClamp, RhiSampler.Bilinear);
+
+        _depthStencilStates.Add(DepthStencilState.None, RhiDepthStencilState.None);
+
+        _rasteriserStates.Add(RasterizerState.CullCounterClockwise, RhiRasteriserState.CullCounterClockwise);
+
     }
 
     public void SetVertexBuffer(VertexBuffer vertexBuffer)
@@ -242,7 +183,9 @@ public class GraphicsDevice
     {
         ApplyState();
 
-        _renderContext.DrawIndexedPrimitives(1);
+        int numIndices = primitiveCount * 3;
+
+        _renderContext.DrawIndexedPrimitives((uint)startIndex, (uint)numIndices);
     }
 
     public void Reset(PresentationParameters presentationParameters)
@@ -257,7 +200,7 @@ public class GraphicsDevice
 
     public void Present(Rectangle? sourceRectangle, Rectangle? destinationRectangle, IntPtr overrideWindowHandle)
     {
-        //throw new NotImplementedException();
+        // Empty on purpose. Present is handled by UOEngine.
     }
 
     public void Clear(Color color)
@@ -288,13 +231,16 @@ public class GraphicsDevice
             return;
         }
 
+        Debug.Assert(_blendStates.ContainsKey(_fnaBlendState));
+        Debug.Assert(_depthStencilStates.ContainsKey(_depthStencilState));
+
         _renderContext.SetGraphicsPipeline(new RhiGraphicsPipelineDescription
         {
             Shader = _shaderInstance,
             PrimitiveType = RhiPrimitiveType.TriangleList,
             Rasteriser = GetRasteriserState(),
-            BlendState = GetBlendState(),
-            DepthStencilState = GetDepthStencilState(),
+            BlendState = _blendStates[_fnaBlendState],
+            DepthStencilState = _depthStencilStates[_depthStencilState],
             VertexLayout = null
         });
 
@@ -331,31 +277,62 @@ public class GraphicsDevice
                 continue;
             }
 
-            var sampler = SamplerStates[i];
+            _renderContext.Sampler = _samplerStates[SamplerStates[i]];
 
-            _samplerState.Value = sampler;
-
-            _renderContext.Sampler = _samplerState.Get((fnaSampler) =>
-            {
-                var filter = fnaSampler.Filter switch
-                {
-                    TextureFilter.Point => RhiSamplerFilter.Point,
-                    TextureFilter.Linear => RhiSamplerFilter.Bilinear,
-                    _ => throw new NotImplementedException()
-                };
-
-                return new RhiSampler
-                {
-                    Filter = filter
-                };
-            });
+            _modifiedSamplers[i] = false;
 
             var texture = Textures[i];
 
-            var bindingHandle = _shaderInstance.GetBindingHandle(ShaderProgramType.Pixel, RhiShaderInputType.Texture, i);
+            if(texture != null)
+            {
+                // Note texture may have been set by effect into shader instance.
+                var bindingHandle = _shaderInstance.GetBindingHandle(ShaderProgramType.Pixel, RhiShaderInputType.Texture, i);
 
-            _shaderInstance.SetTexture(bindingHandle, texture.RhiTexture);
+                _shaderInstance.SetTexture(bindingHandle, texture.RhiTexture);
+
+                Textures[i] = null;
+            }
         }
+    }
+
+    private RhiRasteriserState GetRasteriserState()
+    {
+        RhiRasteriserState state;
+
+        if(_rasteriserStates.TryGetValue(_rasterizerState, out state))
+        {
+            return state;
+        }
+
+        state.FrontFace = RhiFrontFace.CounterClockwise;
+
+        state.FrontFace = (_rasterizerState.CullMode) switch
+        {
+            CullMode.None                     => RhiFrontFace.CounterClockwise,
+            CullMode.CullClockwiseFace        => RhiFrontFace.CounterClockwise,
+            CullMode.CullCounterClockwiseFace => RhiFrontFace.Clockwise,
+                                            _ => throw new SwitchExpressionException("Could not convert cull mode for rasteriser state")
+        };
+
+        state.CullMode = (_rasterizerState.CullMode) switch
+        {
+            CullMode.None                     => RhiCullMode.Disable,
+            CullMode.CullClockwiseFace        => RhiCullMode.Back,
+            CullMode.CullCounterClockwiseFace => RhiCullMode.Back,
+                                              _ => throw new SwitchExpressionException("Could not convert cull mode for rasteriser state")
+        };
+
+        state.FillMode = (_rasterizerState.FillMode) switch
+        {
+            FillMode.WireFrame => RhiFillMode.Wireframe,
+            FillMode.Solid     => RhiFillMode.Solid,
+                             _ => throw new SwitchExpressionException("Could not convert fill mode for rasteriser state")
+        };
+
+        _rasteriserStates.Add(_rasterizerState, state);
+
+        return state;
+
     }
 }
 

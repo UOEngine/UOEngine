@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using UOEngine.Runtime.Core;
@@ -65,8 +66,75 @@ public class FnaAdapterPlugin: IPlugin
         _shaderRemapper.RemapEffect<SpriteEffect>(@"D:\UODev\UOEngineGitHub\Source\Shaders\FNACompat\SpriteEffect.hlsl", [new Technique
         {
             Name = "SpriteBatch",
-            VertexMain = "SpriteVertexShader",
-            PixelMain = "SpritePixelShader"
+            Programs = [new TechniqueProgramEntry("SpriteVertexShader", "SpritePixelShader")]
+        }]);
+
+        string?[] vsArray =
+{
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "VSBasicTxVcNoFog",
+        };
+
+        int[] vsIndices =
+        {
+            0,      // basic
+            1,      // no fog
+            2,      // vertex color
+            3,      // vertex color, no fog
+            4,      // texture
+            5,      // texture, no fog
+            6,      // texture + vertex color
+            7,      // texture + vertex color, no fog
+        };
+
+        string?[] psArray =
+        {
+            null,
+            null,
+            null,
+            "PSBasicTxNoFog",
+        };
+
+        int[] psIndices =
+        {
+            0,      // basic
+            1,      // no fog
+            0,      // vertex color
+            1,      // vertex color, no fog
+            2,      // texture
+            3,      // texture, no fog
+            2,      // texture + vertex color
+            3,      // texture + vertex color, no fog
+        };
+
+        Debug.Assert(vsIndices.Length == psIndices.Length);
+
+        List<TechniqueProgramEntry> basicEffectPrograms = [];
+
+        for (int i = 0; i < vsIndices.Length; i++)
+        {
+            string? vertexMain = vsArray[vsIndices[i]];
+            string? pixelMain = psArray[psIndices[i]];
+
+            if(vertexMain == null || pixelMain == null)
+            {
+                continue;
+            }
+
+            basicEffectPrograms.Add(new TechniqueProgramEntry(vertexMain, pixelMain));
+
+        }
+
+        _shaderRemapper.RemapEffect<BasicEffect>(@"D:\UODev\UOEngineGitHub\Source\Shaders\FNACompat\BasicEffect.hlsl", [new Technique
+        {
+            Name = "BasicEffect",
+            Programs = [.. basicEffectPrograms]
         }]);
     }
 

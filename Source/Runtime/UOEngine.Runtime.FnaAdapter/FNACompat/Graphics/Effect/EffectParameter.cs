@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
+
 using UOEngine.Runtime.RHI;
 
 namespace Microsoft.Xna.Framework.Graphics;
@@ -13,11 +14,14 @@ public class EffectParameter
 
     internal ReadOnlySpan<byte> Data => _data;
 
+    internal Texture texture;
+
     public string Name { get; }
 
     private readonly byte[] _data;
     private readonly GCHandle _pinned;
     private readonly int _offset;   // offset into the parent constant buffer
+
 
     internal EffectParameter(Effect parent, string name, in ShaderVariable info)
     {
@@ -29,6 +33,17 @@ public class EffectParameter
         _pinned = GCHandle.Alloc(_data, GCHandleType.Pinned);
 
         values = _pinned.AddrOfPinnedObject();
+    }
+
+    internal EffectParameter(Effect parent, string name, in ShaderParameter info)
+    {
+        // Should be a texture.
+        Debug.Assert(info.InputType == RhiShaderInputType.Texture);
+
+        Info.Type = RhiShaderVariableType.Invalid;
+
+        Parent = parent;
+        Name = name;
     }
 
     #region SetValue overloads
@@ -68,7 +83,7 @@ public class EffectParameter
     public unsafe void SetValue(Matrix value)
     {
         // XNA uses Matrix as 4x4 floats in row-major
-        fixed (byte* p = &Parent.Data.ConstantBuffer[Info.Offset])
+        fixed (byte* p = _data)
             *((Matrix*)p) = value;
     }
 
@@ -77,5 +92,14 @@ public class EffectParameter
         Buffer.BlockCopy(values, 0, Parent.Data.ConstantBuffer, (int)Info.Offset, (int)Info.Size);
     }
 
+    public void SetValue(Texture value)
+    {
+        texture = value;
+    }
+
     #endregion
+    public Texture2D GetValueTexture2D()
+    {
+        return (Texture2D)texture;
+    }
 }

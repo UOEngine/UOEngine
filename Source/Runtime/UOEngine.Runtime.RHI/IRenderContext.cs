@@ -32,7 +32,7 @@ public interface IRenderContext
     public void BeginRecording();
     public void EndRecording();
 
-    public void DrawIndexedPrimitives(uint numInstances);
+    public void DrawIndexedPrimitives(uint startIndex, uint numIndices);
 
     public void SetGraphicsPipeline(in RhiGraphicsPipelineDescription graphicsPipelineDescription);
 

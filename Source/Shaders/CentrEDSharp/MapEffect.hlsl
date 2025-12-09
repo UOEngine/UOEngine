@@ -13,11 +13,14 @@ sampler HueSampler : register(s1);
 sampler LightSampler : register(s2);
 
 //Effect parameters
-float4x4 WorldViewProj;
-float4 VirtualLayerFillColor;
-float4 VirtualLayerBorderColor;
-float4 TerrainGridFlatColor;
-float4 TerrainGridAngledColor;
+cbuffer Parameters : register(b0, space1)
+{
+    float4x4 WorldViewProj;
+    float4 VirtualLayerFillColor;
+    float4 VirtualLayerBorderColor;
+    float4 TerrainGridFlatColor;
+    float4 TerrainGridAngledColor;
+}
 
 /* For now, all the techniques use the same vertex definition */
 struct VSInput

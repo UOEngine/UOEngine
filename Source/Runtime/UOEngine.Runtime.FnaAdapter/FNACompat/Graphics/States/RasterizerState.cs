@@ -1,6 +1,4 @@
-﻿using System.Xml.Linq;
-
-namespace Microsoft.Xna.Framework.Graphics;
+﻿namespace Microsoft.Xna.Framework.Graphics;
 
 public class RasterizerState
 {

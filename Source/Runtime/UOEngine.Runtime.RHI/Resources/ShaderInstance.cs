@@ -183,9 +183,9 @@ public class ShaderInstance
         return _shaderResource.GetBindingHandle(name);
     }
 
-    public void GetVariable(string name, out ShaderVariable shaderVariable)
+    public void GetVariable(string name, out ShaderVariable? shaderVariable, out ShaderParameter? shaderParameter)
     {
-        _shaderResource.GetParameter(name, out shaderVariable);
+        _shaderResource.GetParameter(name, out shaderVariable, out shaderParameter);
     }
 
     public void SetParameter(ShaderBindingHandle bindingHandle, in Matrix4x4 matrix)

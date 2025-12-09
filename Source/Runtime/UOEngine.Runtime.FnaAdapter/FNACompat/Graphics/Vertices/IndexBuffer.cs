@@ -15,7 +15,8 @@ public class IndexBuffer
 
     public void SetDataPointerEXT(int offsetInBytes, IntPtr data, int dataLength, SetDataOptions options)
     {
-        throw new NotImplementedException();
+        RhiIndexBuffer.SetData(offsetInBytes, data, dataLength);
+        RhiIndexBuffer.Upload();
     }
 
     public void SetData(short[] data)

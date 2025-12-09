@@ -1,4 +1,7 @@
-﻿using StbImageSharp;
+﻿using System.Runtime.CompilerServices;
+using StbImageSharp;
+
+using UOEngine.Runtime.Core;
 using UOEngine.Runtime.RHI;
 
 namespace Microsoft.Xna.Framework.Graphics;
@@ -50,9 +53,42 @@ public class Texture2D: Texture
         RhiTexture.Upload();
     }
 
-    public void SetData<T>(int level, Rectangle? rect, T[] data, int startIndex, int elementCount) where T : struct
+    public void SetData<T>(int level, Rectangle? rect, T[] data, int startIndex, int elementCount) where T : unmanaged
     {
-        throw new NotImplementedException();
+        int x, y, w, h;
+
+        if (rect.HasValue)
+        {
+            x = rect.Value.X;
+            y = rect.Value.Y;
+            w = rect.Value.Width;
+            h = rect.Value.Height;
+        }
+        else
+        {
+            x = 0;
+            y = 0;
+            w = Math.Max(Width >> level, 1);
+            h = Math.Max(Height >> level, 1);
+        }
+
+        int elementSize = Unsafe.SizeOf<T>();
+
+        var src = data.AsSpan();
+        var dst = RhiTexture.GetTexelsAs<T>(); 
+
+        int dstRowPitch = (int)RhiTexture.Width >> level; // pixels per row at this mip
+        int srcRowPitch = w * elementSize;
+
+        for (int texelY = 0; texelY < h; texelY++)
+        {
+            var srcRow = src.Slice(y * srcRowPitch, w);
+            var dstRow = dst.Slice((y + texelY) * dstRowPitch + x, w);
+
+            srcRow.CopyTo(dstRow);
+        }
+
+        RhiTexture.Upload((uint)x, (uint)y, (uint)w, (uint)h);
     }
 
     public static Texture2D FromStream(GraphicsDevice graphicsDevice, Stream stream)
@@ -73,11 +109,11 @@ public class Texture2D: Texture
 
     public void SetDataPointerEXT(int level, Rectangle? rect, IntPtr data, int dataLength)
     {
-        throw new NotImplementedException();
+        UOEDebug.NotImplemented();
     }
 
     public void Dispose()
     {
-        throw new NotImplementedException();
+        UOEDebug.NotImplemented();
     }
 }

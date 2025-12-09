@@ -15,4 +15,9 @@ internal class Sdl3GpuVertexBuffer: Sdl3GpuBuffer, IRhiVertexBuffer
 
     public void SetData(ReadOnlySpan<ushort> data) => data.CopyTo(MemoryMarshal.Cast<byte, ushort>(Data));
 
+    public void CleanUp()
+    {
+        Dispose();
+    }
+
 }

@@ -41,4 +41,10 @@
     <ProjectReference Include="..\UOEngine.Runtime.Plugin\UOEngine.Runtime.Plugin.csproj" />
   </ItemGroup>
 
+	<ItemGroup>
+		<EmbeddedResource Include="FNACompat\Graphics\Effect\StockEffects\FXB\BasicEffect.fxb">
+			<LogicalName>Microsoft.Xna.Framework.Graphics.Effect.Resources.BasicEffect.fxb</LogicalName>
+		</EmbeddedResource>
+	</ItemGroup>
+	
 </Project>

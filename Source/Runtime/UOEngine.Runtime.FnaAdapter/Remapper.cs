@@ -1,25 +1,37 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO.Hashing;
-using System.Reflection.Metadata.Ecma335;
+﻿using System.IO.Hashing;
+
 using Microsoft.Xna.Framework.Graphics;
 using UOEngine.Runtime.RHI;
-using UOEngine.Runtime.RHI.Resources;
 
 namespace UOEngine.Runtime.FnaAdapter;
+
+public struct TechniqueProgramEntry
+{
+    public string VertexMain;
+    public string PixelMain;
+    public TechniqueProgramEntry(string vertexMain, string pixelMain)
+    {
+        VertexMain = vertexMain;
+        PixelMain = pixelMain;
+    }
+}
 
 public struct Technique
 {
     public string Name;
-    public string VertexMain;
-    public string PixelMain;
+    public TechniqueProgramEntry[] Programs;
+}
+
+public struct UOEEffectPass
+{
+    public ShaderInstance[] ShaderInstances;
 }
 
 public struct UOEEffectTechnique
 {
     public string Name;
     public IntPtr Index;
-    public ShaderInstance[] Passes;
+    public UOEEffectPass[] Passes;
 }
 
 public struct UOEEffect
@@ -51,16 +63,24 @@ public class Remapper
 
         foreach (var technique in techniques)
         {
-            var shaderResource = _renderResourceFactory.NewShaderResource();
+            ShaderInstance[] shaderInstances = new ShaderInstance[technique.Programs.Length];
 
-            shaderResource.Load(newShaderFile, technique.VertexMain, technique.PixelMain);
+            for (int i = 0; i < technique.Programs.Length; i++)
+            {
+                var shaderResource = _renderResourceFactory.NewShaderResource();
 
-            var shaderInstance = _renderResourceFactory.NewShaderInstance(shaderResource);
+                ref var programSet = ref technique.Programs[i];
+
+                shaderResource.Load(newShaderFile, programSet.VertexMain, programSet.PixelMain);
+
+                shaderInstances[i] = _renderResourceFactory.NewShaderInstance(shaderResource);
+            }
+
 
             effectTechniques.Add(new UOEEffectTechnique
             {
                 Name = technique.Name,
-                Passes = [shaderInstance],
+                Passes = [new UOEEffectPass { ShaderInstances = shaderInstances}],
                 Index = techniqueIndex,
             });
 
@@ -81,16 +101,23 @@ public class Remapper
 
         foreach (var technique in techniques)
         {
-            var shaderResource = _renderResourceFactory.NewShaderResource();
+            ShaderInstance[] shaderInstances = new ShaderInstance[technique.Programs.Length];
 
-            shaderResource.Load(newShaderFile, technique.VertexMain, technique.PixelMain);
+            for(int i = 0; i < technique.Programs.Length; i++)
+            {
+                var shaderResource = _renderResourceFactory.NewShaderResource();
 
-            var shaderInstance = _renderResourceFactory.NewShaderInstance(shaderResource);
+                ref var programSet = ref technique.Programs[i];
+
+                shaderResource.Load(newShaderFile, programSet.VertexMain, programSet.PixelMain);
+
+                shaderInstances[i] = _renderResourceFactory.NewShaderInstance(shaderResource);
+            }
 
             effectTechniques.Add(new UOEEffectTechnique
             {
                 Name = technique.Name,
-                Passes = [shaderInstance],
+                Passes = [new UOEEffectPass { ShaderInstances = shaderInstances }],
                 Index = techniqueIndex,
             });
 
@@ -112,8 +139,4 @@ public class Remapper
 
     public UOEEffect GetEffect<T>() where T: Effect => _effectsByOriginalType[typeof(T)];
 
-    //public ShaderInstance GetShaderInstance(IntPtr effect, IntPtr technique)
-    //{
-    //    return _effects[(int)effect].Techniques[(int)technique].Passes[0];
-    //}
 }

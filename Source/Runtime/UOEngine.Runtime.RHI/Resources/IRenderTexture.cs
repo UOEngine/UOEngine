@@ -29,6 +29,6 @@ public interface IRenderTexture
 
     public Span<T> GetTexelsAs<T>() where T : unmanaged;
 
-    public void Upload();
+    public void Upload(uint x = 0, uint y = 0, uint w = 0, uint h = 0);
 
 }

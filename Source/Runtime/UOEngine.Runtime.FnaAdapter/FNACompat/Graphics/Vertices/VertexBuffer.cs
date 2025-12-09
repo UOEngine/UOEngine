@@ -2,9 +2,11 @@
 
 namespace Microsoft.Xna.Framework.Graphics;
 
-public class VertexBuffer
+public class VertexBuffer : IDisposable
 {
     public readonly IRhiVertexBuffer RhiVertexBuffer;
+
+    private bool _disposed = false;
 
     public VertexBuffer(GraphicsDevice graphicsDevice, VertexDeclaration vertexDeclaration, int vertexCount, BufferUsage bufferUsage)
     {
@@ -25,6 +27,20 @@ public class VertexBuffer
 
     public void Dispose()
     {
+        Dispose(true);
 
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        RhiVertexBuffer.CleanUp();
+
+        _disposed = true;
     }
 }

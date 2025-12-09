@@ -38,7 +38,7 @@ public class Effect
         CurrentTechnique = Techniques[0];
     }
 
-    public Effect(GraphicsDevice graphicsDevice, in UOEEffect uoeEffect)
+    internal Effect(GraphicsDevice graphicsDevice, in UOEEffect uoeEffect)
     {
         GraphicsDevice = graphicsDevice;
 
@@ -60,16 +60,29 @@ public class Effect
         //var pass = CurrentTechnique.Passes[(int)passIndex];
         //_uoeEffectData.Techniques[0].Passes[0].
 
+        // This is where the parameter data actually gets applied into the shader instance.
         ref var technique = ref _uoeEffectData.Techniques[pass.TechniqueIndex];
 
-        var shaderInstance = technique.Passes[pass.PassIndex];
+        var shaderInstance = technique.Passes[pass.PassIndex].ShaderInstances[0];
 
         foreach(var parameter in Parameters)
         {
             var bindingHandle = shaderInstance.GetBindingHandle(parameter.Name);
 
+            if(parameter.Info.Type == RhiShaderVariableType.Invalid)
+            {
+                // Todo: hacky, but just to get it working. 
+                if(parameter.texture != null)
+                {
+                    shaderInstance.SetTexture(bindingHandle, parameter.texture.RhiTexture);
+                }
+
+                continue;
+            }
+
             switch(parameter.Info.Type)
             {
+                case RhiShaderVariableType.Vector:
                 case RhiShaderVariableType.Matrix:
                 {
                     shaderInstance.SetData(bindingHandle, parameter.Data);
@@ -81,7 +94,7 @@ public class Effect
 
         }
 
-        GraphicsDevice.ShaderInstance = technique.Passes[pass.PassIndex];
+        GraphicsDevice.ShaderInstance = shaderInstance;
         // Todo: Note effect may have some other graphics pipeline state that needs binding.
     }
 
@@ -110,30 +123,42 @@ public class Effect
 
             foreach (var pass in technique.Passes)
             {
-                var parameterNames = pass.GetParameterNames();
-
-                foreach (var parameterName in parameterNames)
+                foreach(var shaderInstance in pass.ShaderInstances)
                 {
-                    if(parameters.Any(p => p.Name == parameterName))
+                    var parameterNames = shaderInstance.GetParameterNames();
+
+                    foreach (var parameterName in parameterNames)
                     {
-                        continue;
+                        if (parameters.Any(p => p.Name == parameterName))
+                        {
+                            continue;
+                        }
+
+                        shaderInstance.GetVariable(parameterName, out var shaderVariable, out var shaderParameter);
+
+                        EffectParameter toAdd = null!;
+
+                        if (shaderVariable != null)
+                        {
+                            bufferSizeRequired += shaderVariable.Value.Size;
+                            
+                            switch (shaderVariable.Value.Type)
+                            {
+                                case RhiShaderVariableType.Matrix: break;
+                                case RhiShaderVariableType.Scalar: break;
+                                case RhiShaderVariableType.Vector: break;
+                                default: throw new SwitchExpressionException("Unhandled shader variable type.");
+                            }
+
+                            toAdd = new EffectParameter(this, parameterName, shaderVariable.Value);
+                        }
+                        else
+                        {
+                            toAdd = new EffectParameter(this, parameterName, shaderParameter!.Value);
+                        }
+
+                        parameters.Add(toAdd);
                     }
-
-                    pass.GetVariable(parameterName, out var shaderVariable);
-
-                    bufferSizeRequired += shaderVariable.Size;
-
-                    switch(shaderVariable.Type)
-                    {
-                        case RhiShaderVariableType.Matrix: break;
-                        case RhiShaderVariableType.Scalar: break;
-                        case RhiShaderVariableType.Vector: break;
-                        default: throw new SwitchExpressionException("Unhandled shader variable type.");
-                    }
-
-                    EffectParameter toAdd = new EffectParameter(this, parameterName, shaderVariable);
-
-                    parameters.Add(toAdd);
                 }
 
                 passes.Add(new EffectPass("", this, techniques.Count, passes.Count));

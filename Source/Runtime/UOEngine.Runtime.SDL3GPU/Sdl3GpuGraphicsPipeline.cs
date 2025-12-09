@@ -32,7 +32,7 @@ internal class Sdl3GpuGraphicsPipeline: Sdl3GpuResource, IGraphicsPipeline
 
         int numAttributes = graphicsPipelineDescription.VertexLayout?.Attributes.Length ?? VertexProgram.StreamBindings.Length;
 
-        Span<SDL_GPUVertexAttribute> vertexAttributes = new SDL_GPUVertexAttribute[numAttributes];
+        Span<SDL_GPUVertexAttribute> vertexAttributes = stackalloc SDL_GPUVertexAttribute[numAttributes];
         Span<SDL_GPUVertexBufferDescription> vertexBufferDescription = [];
 
         uint offset = 0;

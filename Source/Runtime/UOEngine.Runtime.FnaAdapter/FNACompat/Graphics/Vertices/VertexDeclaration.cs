@@ -4,7 +4,7 @@ namespace Microsoft.Xna.Framework.Graphics;
 
 public class VertexDeclaration
 {
-    public RhiVertexDefinition RhiVertexDefinition;
+    internal RhiVertexDefinition RhiVertexDefinition;
 
     public VertexDeclaration(params VertexElement[] elements)
     {
@@ -21,8 +21,8 @@ public class VertexDeclaration
     }
 
     public VertexDeclaration(int vertexStride, params VertexElement[] elements)
+        : this(elements)
     {
-        throw new NotImplementedException();
     }
 
     internal static VertexDeclaration FromType(Type vertexType)
@@ -54,18 +54,18 @@ public class VertexDeclaration
 
     private static RhiVertexAttributeFormat MapFormat(VertexElementFormat f) => f switch
     {
-        VertexElementFormat.Vector2     => RhiVertexAttributeFormat.Vector2,
-        VertexElementFormat.Vector3     => RhiVertexAttributeFormat.Vector3,
-        VertexElementFormat.Vector4     => RhiVertexAttributeFormat.Vector4,
-        VertexElementFormat.Color       => RhiVertexAttributeFormat.R8G8B8A8_UNorm,
-        _ => throw new NotSupportedException($"MapFormat: VertexElementFormat {f} not supported")
+        VertexElementFormat.Vector2 => RhiVertexAttributeFormat.Vector2,
+        VertexElementFormat.Vector3 => RhiVertexAttributeFormat.Vector3,
+        VertexElementFormat.Vector4 => RhiVertexAttributeFormat.Vector4,
+        VertexElementFormat.Color   => RhiVertexAttributeFormat.R8G8B8A8_UNorm,
+                                  _ => throw new NotSupportedException($"MapFormat: VertexElementFormat {f} not supported")
     };
 
     private static RhiVertexAttributeType MapUsage(VertexElementUsage usage) => usage switch
     {
-        VertexElementUsage.Position => RhiVertexAttributeType.Position,
-        VertexElementUsage.Color => RhiVertexAttributeType.Colour,
+        VertexElementUsage.Position          => RhiVertexAttributeType.Position,
+        VertexElementUsage.Color             => RhiVertexAttributeType.Colour,
         VertexElementUsage.TextureCoordinate => RhiVertexAttributeType.TextureCoordinate,
-        _ => throw new NotSupportedException($"MapUsage: VertexElementUsage {usage} not supported")
+                                           _ => throw new NotSupportedException($"MapUsage: VertexElementUsage {usage} not supported")
     };
 }

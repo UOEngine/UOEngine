@@ -132,6 +132,11 @@ public abstract class RhiShaderResource
             {
                 ref var param = ref ProgramBindings[programType].Parameters[i];
 
+                if(param.Name == name)
+                {
+                    return new ShaderBindingHandle((ushort)i, (ShaderProgramType)programType);
+                }
+
                 foreach (var variable in param.Variables)
                 {
                     if (variable.Name == name)
@@ -170,9 +175,16 @@ public abstract class RhiShaderResource
             {
                 ref var param = ref ProgramBindings[programType].Parameters[i];
 
-                foreach(var variable in param.Variables)
+                if (param.InputType == RhiShaderInputType.Texture)
                 {
-                    parameterNames.Add(variable.Name);
+                    parameterNames.Add(param.Name);
+                }
+                else
+                {
+                    foreach (var variable in param.Variables)
+                    {
+                        parameterNames.Add(variable.Name);
+                    }
                 }
             }
         }
@@ -180,8 +192,11 @@ public abstract class RhiShaderResource
         return parameterNames.ToArray();
     }
 
-    public void GetParameter(string name, out ShaderVariable shaderVariable)
+    public void GetParameter(string name, out ShaderVariable? shaderVariable, out ShaderParameter? shaderParameter)
     {
+        shaderVariable = null;
+        shaderParameter = null;
+
         for (int programType = 0; programType < (int)ShaderProgramType.Count; programType++)
         {
             if (ProgramBindings[programType].Parameters == null)
@@ -191,6 +206,16 @@ public abstract class RhiShaderResource
 
             foreach (var parameter in ProgramBindings[programType].Parameters)
             {
+                if(parameter.InputType == RhiShaderInputType.Texture)
+                {
+                    if(parameter.Name == name)
+                    {
+                        shaderParameter = parameter;
+
+                        return;
+                    }
+                }
+
                 foreach(var variable in parameter.Variables)
                 {
                     if (variable.Name == name)

@@ -1,5 +1,3 @@
-using System.Xml.Linq;
-
 namespace Microsoft.Xna.Framework.Graphics;
 
 public class SamplerState
@@ -13,7 +11,8 @@ public class SamplerState
     public int maxAnisotropy;
     public int maxMipLevel;
 
-    public static readonly SamplerState PointClamp;
+    public static readonly SamplerState PointClamp = new SamplerState("SamplerState.PointClamp", TextureFilter.Point, TextureAddressMode.Clamp,
+                                                                        TextureAddressMode.Clamp, TextureAddressMode.Clamp);
     public static readonly SamplerState LinearClamp = new("SamplerState.LinearClamp", TextureFilter.Linear, TextureAddressMode.Clamp,
                                                            TextureAddressMode.Clamp, TextureAddressMode.Clamp);
 
