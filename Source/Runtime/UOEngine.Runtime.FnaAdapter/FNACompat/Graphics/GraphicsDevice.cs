@@ -185,7 +185,7 @@ public class GraphicsDevice
 
         int numIndices = primitiveCount * 3;
 
-        _renderContext.DrawIndexedPrimitives((uint)startIndex, (uint)numIndices);
+        _renderContext.DrawIndexedPrimitives((uint)numIndices, 1, (uint)startIndex, (uint)baseVertex, 0);
     }
 
     public void Reset(PresentationParameters presentationParameters)
