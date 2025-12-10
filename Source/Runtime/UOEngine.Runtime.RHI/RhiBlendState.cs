@@ -18,10 +18,10 @@ public enum RhiBlendFactor: byte
 public enum RhiColourMask: byte
 {
     None = 0,
-    R,
-    G,
-    B,
-    A,
+    R = 1 << 0,
+    G = 1 << 1,
+    B = 1 << 2,
+    A = 1 << 3,
     RG = R | G,
     RB = R | B,
     GB = G | B,
