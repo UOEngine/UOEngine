@@ -156,56 +156,16 @@ public class BasicEffect : Effect
         // Recompute the world+view+projection matrix or fog vector?
         dirtyFlags = EffectHelpers.SetWorldViewProjAndFog(dirtyFlags, ref world, ref view, ref projection, ref worldView, fogEnabled, fogStart, fogEnd, worldViewProjParam, fogVectorParam);
 
-        // Recompute the diffuse/emissive/alpha material color parameters?
-        //if ((dirtyFlags & EffectDirtyFlags.MaterialColor) != 0)
-        //{
-        //    EffectHelpers.SetMaterialColor(lightingEnabled, alpha, ref diffuseColor, ref emissiveColor, ref ambientLightColor, diffuseColorParam, emissiveColorParam);
+        // Todo - hard coded to white for now.
+        Vector4 diffuse = new Vector4();
 
-        //    dirtyFlags &= ~EffectDirtyFlags.MaterialColor;
-        //}
+        diffuse.X = diffuseColor.X;
+        diffuse.Y = diffuseColor.Y;
+        diffuse.Z = diffuseColor.Z;
+        diffuse.W = 1.0f;
 
-        //if (lightingEnabled)
-        //{
-        //    // Recompute the world inverse transpose and eye position?
-        //    dirtyFlags = EffectHelpers.SetLightingMatrices(dirtyFlags, ref world, ref view, worldParam, worldInverseTransposeParam, eyePositionParam);
+        diffuseColorParam.SetValue(diffuse);
 
-        //    // Check if we can use the only-bother-with-the-first-light shader optimization.
-        //    bool newOneLight = !light1.Enabled && !light2.Enabled;
-
-        //    if (oneLight != newOneLight)
-        //    {
-        //        oneLight = newOneLight;
-        //        dirtyFlags |= EffectDirtyFlags.ShaderIndex;
-        //    }
-        //}
-
-        //// Recompute the shader index?
-        //if ((dirtyFlags & EffectDirtyFlags.ShaderIndex) != 0)
-        //{
-        //    int shaderIndex = 0;
-
-        //    if (!fogEnabled)
-        //        shaderIndex += 1;
-
-        //    if (vertexColorEnabled)
-        //        shaderIndex += 2;
-
-        //    if (textureEnabled)
-        //        shaderIndex += 4;
-
-        //    if (lightingEnabled)
-        //    {
-        //        if (preferPerPixelLighting)
-        //            shaderIndex += 24;
-        //        else if (oneLight)
-        //            shaderIndex += 16;
-        //        else
-        //            shaderIndex += 8;
-        //    }
-
-        //    shaderIndexParam.SetValue(shaderIndex);
-
-        //    dirtyFlags &= ~EffectDirtyFlags.ShaderIndex;
-        //}
+        // Missed out several things here that were in the original.
     }
 }

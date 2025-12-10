@@ -4,6 +4,7 @@ namespace UOEngine.Runtime.Core;
 
 public class UOEDebug
 {
+    [DebuggerHidden]
     public static void NotImplemented()
     {
         if(Debugger.IsAttached)
@@ -16,11 +17,17 @@ public class UOEDebug
         }
     }
 
-    public static void Assert(bool condition)
+    [DebuggerHidden]
+    public static void Assert(bool condition, string? message = default)
     {
         if (condition)
         {
             return;
+        }
+
+        if(message != null)
+        {
+            Console.WriteLine($"Assert: {message}");
         }
 
         if (Debugger.IsAttached)

@@ -61,10 +61,8 @@ public class EffectParameter
     {
         unsafe
         {
-            float* dstPtr = (float*)values;
-            dstPtr[0] = value.X;
-            dstPtr[1] = value.Y;
-            dstPtr[2] = value.Z;
+            fixed (byte* p = _data)
+                *((Vector3*)p) = value;
         }
     }
 
@@ -72,11 +70,14 @@ public class EffectParameter
     {
         unsafe
         {
-            float* dstPtr = (float*)values;
-            dstPtr[0] = value.X;
-            dstPtr[1] = value.Y;
-            dstPtr[2] = value.Z;
-            dstPtr[3] = value.W;
+            fixed (byte* p = _data)
+                *((Vector4*)p) = value;
+
+            //float* dstPtr = (float*)_data;
+            //dstPtr[0] = value.X;
+            //dstPtr[1] = value.Y;
+            //dstPtr[2] = value.Z;
+            //dstPtr[3] = value.W;
         }
     }
 

@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using UOEngine.Runtime.Core;
 
 namespace Microsoft.Xna.Framework.Graphics;
 
@@ -31,7 +32,7 @@ public sealed class EffectParameterCollection : IEnumerable<EffectParameter>
         {
             if (!_lookup.TryGetValue(name, out var value))
             {
-                throw new KeyNotFoundException($"EffectParameter '{name}' not found.");
+                UOEDebug.Assert(false, $"{name} does not exist in the shader");
             }
 
             return value;
