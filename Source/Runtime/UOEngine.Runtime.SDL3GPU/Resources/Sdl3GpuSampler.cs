@@ -32,7 +32,10 @@ internal class Sdl3GpuSampler: Sdl3GpuResource
         _samplerCreateInfo = new SDL_GPUSamplerCreateInfo
         {
             min_filter = description.Filter.ToSdl3GpuFilter(),
-            mag_filter = description.Filter.ToSdl3GpuFilter()
+            mag_filter = description.Filter.ToSdl3GpuFilter(),
+            address_mode_u = MapAddressMode(description.AddressMode),
+            address_mode_v = MapAddressMode(description.AddressMode),
+            address_mode_w = MapAddressMode(description.AddressMode),
         };
 
         Handle = SDL_CreateGPUSampler(device.Handle, _samplerCreateInfo);
@@ -43,4 +46,10 @@ internal class Sdl3GpuSampler: Sdl3GpuResource
     {
         SDL_ReleaseGPUSampler(Device.Handle, Handle);
     }
+
+    private static SDL_GPUSamplerAddressMode MapAddressMode(RhiTextureAddressMode m) => m switch
+    {
+        RhiTextureAddressMode.Clamp => SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
+        _ => throw new NotImplementedException(),
+    };
 }

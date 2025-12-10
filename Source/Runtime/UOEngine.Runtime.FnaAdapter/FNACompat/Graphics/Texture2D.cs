@@ -100,6 +100,16 @@ public class Texture2D: Texture
 
         var data = ImageResult.FromStream(stream, ColorComponents.RedGreenBlueAlpha);
 
+        for(int i = 0; i < data.Data.Length; i += 4)
+        {
+            if (data.Data[i + 3] == 0)
+            {
+                data.Data[i] = 0;
+                data.Data[i+1] = 0;
+                data.Data[i+2] = 0;
+            }
+        }
+
         var texture = new Texture2D(graphicsDevice, data.Width, data.Height);
 
         texture.SetData(data.Data);

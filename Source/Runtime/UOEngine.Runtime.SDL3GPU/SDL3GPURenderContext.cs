@@ -185,7 +185,7 @@ internal class SDL3GPURenderContext: IRenderContext
             // Okay for now as usually do not need a clear colour other than "empty".
             clear_color = new()
             {
-                r = 0.0f,
+                r = 1.0f,
                 g = 0.0f, 
                 b = 0.0f,
                 a = 0.0f

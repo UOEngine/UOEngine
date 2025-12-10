@@ -164,7 +164,7 @@ public class GraphicsDevice
         _blendStates.Add(BlendState.Opaque, RhiBlendState.Opaque);
         _blendStates.Add(BlendState.NonPremultiplied, RhiBlendState.NonPremultiplied);
 
-        _samplerStates.Add(SamplerState.PointClamp, RhiSampler.Point);
+        _samplerStates.Add(SamplerState.PointClamp, RhiSampler.PointClamp);
         _samplerStates.Add(SamplerState.LinearClamp, RhiSampler.Bilinear);
 
         _depthStencilStates.Add(DepthStencilState.None, RhiDepthStencilState.None);

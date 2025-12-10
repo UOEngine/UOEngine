@@ -2,6 +2,7 @@
   "profiles": {
     "UOEngine.Editor": {
       "commandName": "Project",
+      "commandLineArgs": "-renderdoc",
       "nativeDebugging": true
     }
   }

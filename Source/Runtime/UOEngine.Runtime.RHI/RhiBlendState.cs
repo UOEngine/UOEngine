@@ -1,12 +1,12 @@
 ﻿namespace UOEngine.Runtime.RHI;
 
-public enum RhiBlendOperation
+public enum RhiBlendOperation: byte
 {
     Add,
     Subtract,
 }
 
-public enum RhiBlendFactor
+public enum RhiBlendFactor: byte
 {
     Zero,
     One,
@@ -15,7 +15,7 @@ public enum RhiBlendFactor
 }
 
 [Flags]
-public enum RhiColourMask
+public enum RhiColourMask: byte
 {
     None = 0,
     R,
@@ -33,6 +33,8 @@ public enum RhiColourMask
 // Result colour = source_colour * source_factor <blend_operation> destination_colour * destination_factor
 public record struct RhiBlendState
 {
+    public bool Enabled;
+
     public RhiBlendFactor SourceColourFactor;
     public RhiBlendFactor SourceAlphaFactor;
 
@@ -71,6 +73,8 @@ public record struct RhiBlendState
         WriteMask = RhiColourMask.RGBA;
 
         Name = "";
+
+        Enabled = false;
     }
 
     private RhiBlendState(string name, 
@@ -84,5 +88,7 @@ public record struct RhiBlendState
 
         DestinationColourFactor = destinationColourFactor;
         DestinationAlphaFactor = destinationAlphaFactor;
+
+        Enabled = true;
     }
 }

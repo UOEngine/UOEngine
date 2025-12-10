@@ -17,8 +17,8 @@ internal class Sdl3GpuGlobalSamplers
     {
         _device = device;
 
-        PointClamp = RegisterGlobalSampler(new RhiSampler { Filter = RhiSamplerFilter.Point });
-        LinearClamp = RegisterGlobalSampler(new RhiSampler { Filter = RhiSamplerFilter.Bilinear });
+        PointClamp = RegisterGlobalSampler(RhiSampler.PointClamp);
+        LinearClamp = RegisterGlobalSampler(RhiSampler.Bilinear);
     }
 
     public Sdl3GpuSampler GetSampler(RhiSampler rhiSampler)

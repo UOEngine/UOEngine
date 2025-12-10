@@ -8,15 +8,33 @@ public enum RhiSamplerFilter: byte
     Bilinear,
 }
 
+public enum RhiTextureAddressMode: byte
+{
+    Clamp
+}
+
 public readonly record struct RhiSampler
 {
-    public static readonly RhiSampler Point = new(RhiSamplerFilter.Point);
-    public static readonly RhiSampler Bilinear = new(RhiSamplerFilter.Bilinear);
+    public static readonly RhiSampler PointClamp = new("PointClamp", RhiSamplerFilter.Point, RhiTextureAddressMode.Clamp);
+    public static readonly RhiSampler Bilinear = new("Bilinear", RhiSamplerFilter.Bilinear, RhiTextureAddressMode.Clamp);
 
     public readonly RhiSamplerFilter Filter { get; init; }
 
-    public RhiSampler(RhiSamplerFilter filter)
+    public readonly string Name;
+    public readonly RhiTextureAddressMode AddressMode;
+
+    public RhiSampler()
     {
+        Filter = RhiSamplerFilter.Point;
+        AddressMode = RhiTextureAddressMode.Clamp;
+        Name = "";
+    }
+
+    private RhiSampler(string name, RhiSamplerFilter filter, RhiTextureAddressMode addressMode)
+        : this()
+    {
+        Name = name;
         Filter = filter;
+        AddressMode = addressMode;
     }
 }
