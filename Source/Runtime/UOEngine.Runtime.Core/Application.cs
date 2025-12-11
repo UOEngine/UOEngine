@@ -38,6 +38,14 @@ public class Application: IDisposable
 
     public Application()
     {
+        AppDomain.CurrentDomain.FirstChanceException += (_, e) =>
+        {
+            if (e.Exception is DllNotFoundException dllEx)
+            {
+                Debug.WriteLine($"DllNotFound: {dllEx.Message} (DllName: {dllEx.GetType().GetProperty("DllName")?.GetValue(dllEx) ?? "n/a"})");
+            }
+        };
+
         _loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
 
         AssemblyLoadContext.Default.Resolving += (context, name) =>

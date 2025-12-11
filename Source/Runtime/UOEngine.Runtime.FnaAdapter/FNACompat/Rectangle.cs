@@ -9,6 +9,13 @@ public struct Rectangle
     public int X => _rectangle.X;
     public int Y => _rectangle.Y;
 
+    public static Rectangle Empty
+    {
+        get
+        {
+            return emptyRectangle;
+        }
+    }
 
     private UoeRectangle _rectangle;
 
@@ -20,6 +27,9 @@ public struct Rectangle
 
     public bool Contains(int x, int y)
     {
-        throw new NotImplementedException();
+        return _rectangle.Contains(x, y);
     }
+
+    private static Rectangle emptyRectangle = new();
+
 }

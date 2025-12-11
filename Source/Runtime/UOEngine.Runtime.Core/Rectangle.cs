@@ -7,6 +7,14 @@ public struct Rectangle
     public int Width;
     public int Height;
 
+    public static Rectangle Empty
+    {
+        get
+        {
+            return emptyRectangle;
+        }
+    }
+
     public Rectangle(int x, int y, int width, int height)
     {
         X = x;
@@ -14,4 +22,12 @@ public struct Rectangle
         Width = width;
         Height = height;
     }
+
+    public bool Contains(int x, int y)
+    {
+        return ((X <= x) && (x < (X + Width)) && (Y <= y) && (y < (Y + Height)));
+    }
+
+    private static Rectangle emptyRectangle = new Rectangle();
+
 }

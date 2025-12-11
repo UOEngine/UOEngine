@@ -70,7 +70,11 @@
     <Project Path="ThirdParty/centredsharp/Server/Server.csproj" />
     <Project Path="ThirdParty/centredsharp/Shared/Shared.csproj" />
   </Folder>
-  <Folder Name="/ThirdParty/ClassicUO/" />
+  <Folder Name="/ThirdParty/ClassicUO/">
+    <Project Path="ThirdParty/ClassicUO/src/ClassicUO.Renderer/ClassicUO.Renderer.csproj">
+      <Platform Project="x64" />
+    </Project>
+  </Folder>
   <Folder Name="/Ultima/">
     <Project Path="Source/Ultima/UOEngine.PackageFile/UOEngine.Ultima.PackageFile.csproj">
       <Platform Project="x64" />

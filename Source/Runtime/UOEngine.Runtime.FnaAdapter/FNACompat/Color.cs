@@ -12,6 +12,7 @@
 #endregion
 
 using System.Diagnostics;
+using UOEngine.Runtime.Core;
 
 namespace Microsoft.Xna.Framework;
 
@@ -83,12 +84,22 @@ public struct Color
 
     public Color(float r, float g, float b)
     {
-        throw new NotImplementedException();
+        packedValue = 0;
+
+        R = (byte)MathHelper.Clamp(r * 255, Byte.MinValue, Byte.MaxValue);
+        G = (byte)MathHelper.Clamp(g * 255, Byte.MinValue, Byte.MaxValue);
+        B = (byte)MathHelper.Clamp(b * 255, Byte.MinValue, Byte.MaxValue);
+        A = 255;
     }
 
     public Color(float r, float g, float b, float alpha)
     {
-        throw new NotImplementedException();
+        packedValue = 0;
+
+        R = (byte)MathHelper.Clamp(r * 255, Byte.MinValue, Byte.MaxValue);
+        G = (byte)MathHelper.Clamp(g * 255, Byte.MinValue, Byte.MaxValue);
+        B = (byte)MathHelper.Clamp(b * 255, Byte.MinValue, Byte.MaxValue);
+        A = (byte)MathHelper.Clamp(alpha * 255, Byte.MinValue, Byte.MaxValue);
     }
 
     static Color()

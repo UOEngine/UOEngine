@@ -27,6 +27,7 @@ public class Texture2D: Texture
         SurfaceFormat format
     ): this(graphicsDevice, width, height, mipMap, format, RhiRenderTextureUsage.Sampler)
     {
+        Format = format;
     }
 
     public Texture2D(GraphicsDevice graphicsDevice, int width, int height)
@@ -100,6 +101,7 @@ public class Texture2D: Texture
 
         var data = ImageResult.FromStream(stream, ColorComponents.RedGreenBlueAlpha);
 
+        // Mimic what FNA3D does in its .c file to read an image.
         for(int i = 0; i < data.Data.Length; i += 4)
         {
             if (data.Data[i + 3] == 0)
@@ -119,7 +121,35 @@ public class Texture2D: Texture
 
     public void SetDataPointerEXT(int level, Rectangle? rect, IntPtr data, int dataLength)
     {
-        UOEDebug.NotImplemented();
+        int x, y, w, h;
+
+        if (rect.HasValue)
+        {
+            x = rect.Value.X;
+            y = rect.Value.Y;
+            w = rect.Value.Width;
+            h = rect.Value.Height;
+
+            UOEDebug.NotImplemented();
+        }
+        else
+        {
+            x = 0;
+            y = 0;
+            w = Math.Max(Width >> level, 1);
+            h = Math.Max(Height >> level, 1);
+
+            var dst = RhiTexture.GetTexelsAs<byte>();
+
+            unsafe
+            {
+                var src = new Span<byte>((void*)data, dataLength);
+
+                src.CopyTo(dst);
+            }
+        }
+
+        RhiTexture.Upload((uint)x, (uint)y, (uint)w, (uint)h);
     }
 
     public void Dispose()

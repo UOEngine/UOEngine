@@ -6,4 +6,10 @@ public class Texture
 {
     public IRenderTexture RhiTexture { get;  init; }
 
+    public SurfaceFormat Format
+    {
+        get;
+        protected set;
+    }
+
 }
