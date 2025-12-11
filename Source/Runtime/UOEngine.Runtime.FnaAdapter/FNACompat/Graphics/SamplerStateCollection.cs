@@ -24,9 +24,6 @@ public class SamplerStateCollection
 
         modifiedSamplers = modSamplers;
 
-        for (int i = 0; i < samplers.Length; i += 1)
-        {
-            //samplers[i] = SamplerState.LinearWrap;
-        }
+        samplers = new SamplerState[slots];
     }
 }

@@ -36,7 +36,13 @@ public class UOEDebug
         }
         else
         {
-            throw new InvalidOperationException("Assert failed.");
+            throw new AssertionFailedException($"Assert failed: {message}");
         }
     }
+}
+
+public class AssertionFailedException: Exception
+{
+    public AssertionFailedException(string message)
+    : base(message) { }
 }

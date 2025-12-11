@@ -74,6 +74,12 @@ public struct ShaderProgramBindings
     public ShaderParameter[] Parameters;
 }
 
+public struct RhiShaderResourceCreateParameters
+{
+    public string Name;
+}
+
+[DebuggerDisplay("ShaderResource, {Name}")]
 public abstract class RhiShaderResource
 {
     public ShaderProgramBindings[] ProgramBindings { get; protected set; } = new ShaderProgramBindings[ShaderProgramType.Count.ToInt()];
@@ -84,6 +90,7 @@ public abstract class RhiShaderResource
     public abstract void Load(string vertexShader, string fragmentShader);
     public abstract void Load(string shaderFile, string vertexMainName, string pixelNameMain);
 
+    public string Name { get; protected set; }
 
     public ShaderBindingHandle GetBindingHandle(ShaderProgramType programType, RhiShaderInputType inputType, string name)
     {

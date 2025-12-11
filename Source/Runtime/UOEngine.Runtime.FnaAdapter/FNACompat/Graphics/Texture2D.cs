@@ -1,4 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using StbImageSharp;
 
 using UOEngine.Runtime.Core;
@@ -73,20 +74,27 @@ public class Texture2D: Texture
             h = Math.Max(Height >> level, 1);
         }
 
+        const int bytesPerPixel = 4;
+
+        UOEDebug.Assert(Format == SurfaceFormat.Color);
+
         int elementSize = Unsafe.SizeOf<T>();
+        int dstRowPitch = Math.Max(Width >> level, 1) * bytesPerPixel;
+        int rowBytes = w * bytesPerPixel;
+        int requiredBytes = rowBytes * h;
 
-        var src = data.AsSpan();
-        var dst = RhiTexture.GetTexelsAs<T>(); 
 
-        int dstRowPitch = (int)RhiTexture.Width >> level; // pixels per row at this mip
+        var src = data.AsSpan(startIndex, elementCount);
+        var dst = RhiTexture.GetTexelsAs<byte>(); 
+
         int srcRowPitch = w * elementSize;
 
-        for (int texelY = 0; texelY < h; texelY++)
+        for (int row = 0; row < h; row++)
         {
-            var srcRow = src.Slice(y * srcRowPitch, w);
-            var dstRow = dst.Slice((y + texelY) * dstRowPitch + x, w);
+            var srcRowBytes = MemoryMarshal.AsBytes(src).Slice(row * rowBytes, rowBytes);
+            var dstRow = dst.Slice((y + row) * dstRowPitch + x * bytesPerPixel, rowBytes);
 
-            srcRow.CopyTo(dstRow);
+            srcRowBytes.CopyTo(dstRow);
         }
 
         RhiTexture.Upload((uint)x, (uint)y, (uint)w, (uint)h);
@@ -121,16 +129,15 @@ public class Texture2D: Texture
 
     public void SetDataPointerEXT(int level, Rectangle? rect, IntPtr data, int dataLength)
     {
-        int x, y, w, h;
+        if (data == IntPtr.Zero) throw new ArgumentNullException(nameof(data));
 
+        int x, y, w, h;
         if (rect.HasValue)
         {
             x = rect.Value.X;
             y = rect.Value.Y;
             w = rect.Value.Width;
             h = rect.Value.Height;
-
-            UOEDebug.NotImplemented();
         }
         else
         {
@@ -138,14 +145,28 @@ public class Texture2D: Texture
             y = 0;
             w = Math.Max(Width >> level, 1);
             h = Math.Max(Height >> level, 1);
+        }
 
-            var dst = RhiTexture.GetTexelsAs<byte>();
+        const int bytesPerPixel = 4;
 
-            unsafe
+        UOEDebug.Assert(Format == SurfaceFormat.Color);
+
+        int dstRowPitch = Math.Max(Width >> level, 1) * bytesPerPixel;
+        int rowBytes = w * bytesPerPixel;
+        int requiredBytes = rowBytes * h;
+        if (dataLength < requiredBytes)
+            throw new ArgumentOutOfRangeException(nameof(dataLength), "Not enough data for region");
+
+        var dst = RhiTexture.GetTexelsAs<byte>();
+
+        unsafe
+        {
+            var src = new Span<byte>((void*)data, dataLength);
+            for (int row = 0; row < h; row++)
             {
-                var src = new Span<byte>((void*)data, dataLength);
-
-                src.CopyTo(dst);
+                var srcRow = src.Slice(row * rowBytes, rowBytes);
+                var dstRow = dst.Slice((y + row) * dstRowPitch + x * bytesPerPixel, rowBytes);
+                srcRow.CopyTo(dstRow);
             }
         }
 

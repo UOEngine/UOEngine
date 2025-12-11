@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
+using UOEngine.Runtime.Core;
 using UOEngine.Runtime.FnaAdapter;
 using UOEngine.Runtime.Renderer;
 using UOEngine.Runtime.RHI;
@@ -152,7 +153,7 @@ public class GraphicsDevice
         //    _renderContext = renderContext;
         //};
 
-        SamplerStates = new SamplerStateCollection(1, _modifiedSamplers); 
+        SamplerStates = new SamplerStateCollection(MAX_TEXTURE_SAMPLERS, _modifiedSamplers); 
 
         Adapter = new GraphicsAdapter();
 
@@ -232,7 +233,6 @@ public class GraphicsDevice
         }
 
         Debug.Assert(_blendStates.ContainsKey(_fnaBlendState));
-        Debug.Assert(_depthStencilStates.ContainsKey(_depthStencilState));
 
         _renderContext.SetGraphicsPipeline(new RhiGraphicsPipelineDescription
         {
@@ -240,7 +240,7 @@ public class GraphicsDevice
             PrimitiveType = RhiPrimitiveType.TriangleList,
             Rasteriser = GetRasteriserState(),
             BlendState = _blendStates[_fnaBlendState],
-            DepthStencilState = _depthStencilStates[_depthStencilState],
+            DepthStencilState = GetDepthStencilState(),
             VertexLayout = null
         });
 
@@ -277,6 +277,8 @@ public class GraphicsDevice
                 continue;
             }
 
+            UOEDebug.Assert(_samplerStates.ContainsKey(SamplerStates[i]));
+
             _renderContext.Sampler = _samplerStates[SamplerStates[i]];
 
             _modifiedSamplers[i] = false;
@@ -287,6 +289,8 @@ public class GraphicsDevice
             {
                 // Note texture may have been set by effect into shader instance.
                 var bindingHandle = _shaderInstance.GetBindingHandle(ShaderProgramType.Pixel, RhiShaderInputType.Texture, i);
+
+                UOEDebug.Assert(_shaderInstance.BindingHandleIsValid(bindingHandle));
 
                 _shaderInstance.SetTexture(bindingHandle, texture.RhiTexture);
 
@@ -332,6 +336,25 @@ public class GraphicsDevice
         _rasteriserStates.Add(_rasterizerState, state);
 
         return state;
+
+    }
+
+    private RhiDepthStencilState GetDepthStencilState()
+    {
+        RhiDepthStencilState newState;
+
+        if (_depthStencilStates.TryGetValue(_depthStencilState, out newState))
+        {
+            return newState;
+        }
+
+        newState.DepthBufferEnable = _depthStencilState.DepthBufferEnable;
+        newState.DepthBufferWriteEnable = _depthStencilState.DepthBufferWriteEnable;
+        newState.StencilEnable = _depthStencilState.StencilEnable;
+
+        _depthStencilStates.Add(_depthStencilState, newState);
+
+        return newState;
 
     }
 }

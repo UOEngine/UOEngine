@@ -80,7 +80,7 @@ public class CentrEdSharpPlugin: IPlugin
             statics,
             selection,
             virtualLayer
-        ]);
+        ], "MapEffect");
 
         Config.Initialize();
 

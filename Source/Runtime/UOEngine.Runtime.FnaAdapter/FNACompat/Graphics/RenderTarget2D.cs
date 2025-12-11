@@ -1,4 +1,5 @@
-﻿using UOEngine.Runtime.RHI;
+﻿using UOEngine.Runtime.Core;
+using UOEngine.Runtime.RHI;
 
 namespace Microsoft.Xna.Framework.Graphics;
 
@@ -21,21 +22,25 @@ public class RenderTarget2D: Texture2D
 
     public void GetData<T>(int level, Rectangle? rect, T[] data, int startIndex, int elementCount) where T : struct
     {
-        throw new NotImplementedException();
+        // Clear to empty for now.
+        for(int i = 0; i < data.Length; i++)
+        {
+            data[i] = default;
+        }
     }
 
     public void SaveAsPng(FileStream fileStream, int width, int height)
     {
-        throw new NotImplementedException();
+        UOEDebug.NotImplemented();
     }
 
     public void SaveAsJpeg(FileStream fileStream, int width, int height)
     {
-        throw new NotImplementedException();
+        UOEDebug.NotImplemented();
     }
 
     public void Dispose()
     {
-        throw new NotImplementedException();
+        UOEDebug.NotImplemented();
     }
 }

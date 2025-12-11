@@ -183,6 +183,18 @@ public class ShaderInstance
         return _shaderResource.GetBindingHandle(name);
     }
 
+    public bool BindingHandleIsValid(in ShaderBindingHandle bindingHandle)
+    {
+        if(BindingData[(int)bindingHandle.ProgramType].Bindings == null)
+        {
+            return false;
+        }
+
+        bool valid = bindingHandle.Handle < BindingData[(int)bindingHandle.ProgramType].Bindings.Length;
+
+        return valid;
+    }
+
     public void GetVariable(string name, out ShaderVariable? shaderVariable, out ShaderParameter? shaderParameter)
     {
         _shaderResource.GetParameter(name, out shaderVariable, out shaderParameter);

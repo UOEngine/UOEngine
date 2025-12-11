@@ -4,7 +4,7 @@ namespace UOEngine.Runtime.RHI;
 
 public interface IRenderResourceFactory
 {
-    public RhiShaderResource NewShaderResource();
+    public RhiShaderResource NewShaderResource(in RhiShaderResourceCreateParameters createParameters = default);
     public ShaderInstance NewShaderInstance(RhiShaderResource shaderResource);
 
     public IRenderTexture CreateTexture(in RhiTextureDescription description);

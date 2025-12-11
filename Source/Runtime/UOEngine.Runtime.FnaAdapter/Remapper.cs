@@ -52,7 +52,7 @@ public class Remapper
         _renderResourceFactory = renderResourceFactory;
     }
 
-    public void RemapTechniques(string originalFxFile, string newShaderFile, Technique[] techniques)
+    public void RemapTechniques(string originalFxFile, string newShaderFile, Technique[] techniques, string name)
     {
         byte[] byteCode = File.ReadAllBytes(originalFxFile);
         uint hash = XxHash32.HashToUInt32(byteCode);
@@ -67,7 +67,10 @@ public class Remapper
 
             for (int i = 0; i < technique.Programs.Length; i++)
             {
-                var shaderResource = _renderResourceFactory.NewShaderResource();
+                var shaderResource = _renderResourceFactory.NewShaderResource(new RhiShaderResourceCreateParameters
+                {
+                    Name = name
+                });
 
                 ref var programSet = ref technique.Programs[i];
 
@@ -93,7 +96,7 @@ public class Remapper
         });
     }
 
-    public void RemapEffect<T>(string newShaderFile, Technique[] techniques) where T : Effect
+    public void RemapEffect<T>(string newShaderFile, Technique[] techniques, string name) where T : Effect
     {
         var effectTechniques = new List<UOEEffectTechnique>(techniques.Length);
 
@@ -105,7 +108,10 @@ public class Remapper
 
             for(int i = 0; i < technique.Programs.Length; i++)
             {
-                var shaderResource = _renderResourceFactory.NewShaderResource();
+                var shaderResource = _renderResourceFactory.NewShaderResource(new RhiShaderResourceCreateParameters
+                {
+                    Name = name
+                });
 
                 ref var programSet = ref technique.Programs[i];
 

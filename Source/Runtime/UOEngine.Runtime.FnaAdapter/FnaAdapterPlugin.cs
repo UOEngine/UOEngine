@@ -67,7 +67,7 @@ public class FnaAdapterPlugin: IPlugin
         {
             Name = "SpriteBatch",
             Programs = [new TechniqueProgramEntry("SpriteVertexShader", "SpritePixelShader")]
-        }]);
+        }], "SpriteEffect");
 
         string?[] vsArray =
 {
@@ -135,7 +135,7 @@ public class FnaAdapterPlugin: IPlugin
         {
             Name = "BasicEffect",
             Programs = [.. basicEffectPrograms]
-        }]);
+        }], "BasicEffect");
     }
 
     public void RegisterGame(Game game)

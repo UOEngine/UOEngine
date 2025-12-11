@@ -18,9 +18,9 @@ internal class SDL3GPUResourceFactory : IRenderResourceFactory
         _device = (Sdl3GpuDevice)device;
     }
 
-    public RhiShaderResource NewShaderResource()
+    public RhiShaderResource NewShaderResource(in RhiShaderResourceCreateParameters createParameters = default)
     {
-        return new Sdl3GpuShaderResource(_device);
+        return new Sdl3GpuShaderResource(_device, createParameters);
     }
 
     public ShaderInstance NewShaderInstance(RhiShaderResource shaderResource)

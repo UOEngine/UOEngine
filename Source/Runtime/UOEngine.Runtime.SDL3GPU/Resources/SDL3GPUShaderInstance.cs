@@ -9,9 +9,10 @@ internal class Sdl3GpuShaderResource: RhiShaderResource
 
     private readonly Sdl3GpuDevice _device;
 
-    public Sdl3GpuShaderResource(Sdl3GpuDevice device)
+    public Sdl3GpuShaderResource(Sdl3GpuDevice device, in RhiShaderResourceCreateParameters createParameters = default)
     {
         _device = device;
+        Name = createParameters.Name;
     }
 
     public override void Load(string vertexShader, string fragmentShader)
