@@ -8,14 +8,19 @@ static const float TileSize = 44 * rsqrt(2);
 static const float3 LIGHT_DIRECTION = float3(0.0f, 1.0f, 1.0f);
 static const float Brightlight = 1.5f; //This can be parametrized, but 1.5f is default :)
 
-sampler TextureSampler : register(s0);
-sampler HueSampler : register(s1);
-sampler LightSampler : register(s2);
+SamplerState TextureSampler : register(s0, space2);
+Texture2D Texture : register(t0, space2);
+
+SamplerState HueSampler : register(s1, space2);
+Texture2D HueTexture : register(t1, space2);
+
+SamplerState LightSampler : register(s2, space2);
+Texture2D LightTexture : register(t2, space2);
 
 //Effect parameters
 cbuffer Parameters : register(b0, space1)
 {
-    float4x4 WorldViewProj;
+    row_major float4x4 WorldViewProj;
     float4 VirtualLayerFillColor;
     float4 VirtualLayerBorderColor;
     float4 TerrainGridFlatColor;
@@ -25,10 +30,10 @@ cbuffer Parameters : register(b0, space1)
 /* For now, all the techniques use the same vertex definition */
 struct VSInput
 {
-    float3 Position : POSITION;
-    float3 Texture : TEXCOORD0; //uv, screenPos z offset
-    float4 Hue : TEXCOORD1; //rgb,mode or hueId, unused, alpha, mode
-    float3 Normal : TEXCOORD2;
+    float3 Position : TEXCOORD0;
+    float3 Texture : TEXCOORD1; //uv, screenPos z offset
+    float4 Hue : TEXCOORD2; //rgb,mode or hueId, unused, alpha, mode
+    float3 Normal : TEXCOORD3;
 };
 
 struct PSInput
@@ -58,7 +63,7 @@ float3 get_rgb(float gray, float hue)
     float xPos = hueStart + gray / HUE_COLUMNS;
     xPos = clamp(xPos, hueStart + halfPixelX, hueStart + hueColumnWidth - halfPixelX);
     float yPos = (hue % HUES_PER_TEXTURE) / (HUES_PER_TEXTURE - 1);
-    return float3(1.0f, 1.0f, 1.0f);  // Fix! tex2D(HueSampler, float2(xPos, yPos)).rgb;
+    return HueTexture.Sample(HueSampler, float2(xPos, yPos)).rgb;
 }
 
 //Thanks ClassicUO
@@ -77,7 +82,7 @@ float3 get_colored_light(float shader, float gray)
 {
     float2 texcoord = float2(gray, (shader - 0.5) / 63);
 
-    return float3(1.0f, 1.0f, 1.0f); //Fix! tex2D(LightSampler, texcoord).rgb;
+    return LightTexture.Sample(LightSampler, texcoord).rgb;
 
 }
 
@@ -107,7 +112,7 @@ PSInput TerrainGridVSMain(VSInput vin)
 
 float4 TerrainPSMain(PSInput pin) : SV_Target0
 {
-    float4 color = float4(1.0f, 1.0f, 1.0f, 1.0f); // Fix! tex2D(TextureSampler, pin.Texture.xy);
+    float4 color = Texture.Sample(TextureSampler, pin.Texture.xy);
     if (color.a == 0)
         discard;
         
@@ -132,7 +137,7 @@ float4 TerrainGridPSMain(PSInput pin) : SV_Target0
 
 float4 StaticsPSMain(PSInput pin) : SV_Target0
 {
-    float4 color = float4(1.0f, 1.0f, 10.0f, 1.0f); // Fix! tex2D(TextureSampler, pin.Texture.xy);
+    float4 color = Texture.Sample(TextureSampler, pin.Texture.xy);
     if (color.a == 0)
         discard;
         
@@ -161,7 +166,7 @@ float4 StaticsPSMain(PSInput pin) : SV_Target0
 
 float4 SelectionPSMain(PSInput pin) : SV_Target0
 {
-    float4 color = float4(1.0f, 1.0f, 10.0f, 1.0f); // Fix! tex2D(TextureSampler, pin.Texture.xy);
+    float4 color = Texture.Sample(TextureSampler, pin.Texture.xy);
     if (color.a == 0)
         discard;
     return pin.Hue;

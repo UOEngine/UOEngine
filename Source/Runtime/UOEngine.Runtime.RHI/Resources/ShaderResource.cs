@@ -30,7 +30,7 @@ public struct ShaderVariable
 {
     public string Name;
     public uint Size;
-    public uint Offset;
+    public int Offset;
     public RhiShaderVariableType Type;
 }
 
@@ -38,7 +38,7 @@ public struct ShaderVariable
 public readonly struct ShaderParameter
 {
     public readonly string Name { get; init; }
-    public readonly uint StartOffset { get; init; }
+    public readonly int StartOffset { get; init; }
     public readonly uint Size { get; init; }
     public readonly RhiShaderInputType InputType { get; init; }
     public readonly uint SlotIndex { get; init; }
@@ -56,16 +56,18 @@ public struct ShaderStreamBinding
 public readonly struct ShaderBindingHandle
 {
     public readonly ushort Handle;
+    public readonly int Offset;
     public readonly ShaderProgramType ProgramType;
     public const ushort InvalidHandle = 0xFF;
-    public static readonly ShaderBindingHandle Invalid = new(InvalidHandle, ShaderProgramType.Invalid);
+    public static readonly ShaderBindingHandle Invalid = new(InvalidHandle, ShaderProgramType.Invalid, int.MaxValue);
 
     public bool IsValid => Handle != InvalidHandle;
 
-    public ShaderBindingHandle(ushort handle, ShaderProgramType shaderProgramType)
+    public ShaderBindingHandle(ushort handle, ShaderProgramType shaderProgramType, int offset)
     {
-        ProgramType = shaderProgramType;
         Handle = handle;
+        ProgramType = shaderProgramType;
+        Offset = offset;
     }
 }
 
@@ -92,6 +94,8 @@ public abstract class RhiShaderResource
 
     public string Name { get; protected set; }
 
+    public ShaderProgramBindings GetShaderProgramBindings(ShaderProgramType type) => ProgramBindings[(int)type];
+
     public ShaderBindingHandle GetBindingHandle(ShaderProgramType programType, RhiShaderInputType inputType, string name)
     {
         for (int i = 0; i < ProgramBindings[(int)programType].Parameters.Length; i++)
@@ -100,7 +104,7 @@ public abstract class RhiShaderResource
 
             if (param.Name == name && param.InputType == inputType)
             {
-                return new ShaderBindingHandle((ushort)i, programType);
+                return new ShaderBindingHandle((ushort)i, programType, param.StartOffset);
             }
         }
 
@@ -119,7 +123,7 @@ public abstract class RhiShaderResource
             {
                 if(resourceIndex == index)
                 {
-                    return new ShaderBindingHandle((ushort)i, programType);
+                    return new ShaderBindingHandle((ushort)i, programType, param.StartOffset);
                 }
                 else
                 {
@@ -128,7 +132,7 @@ public abstract class RhiShaderResource
             }
         }
 
-        return new ShaderBindingHandle((ushort)index, programType);
+        return ShaderBindingHandle.Invalid;
     }
 
     public ShaderBindingHandle GetBindingHandle(string name)
@@ -141,14 +145,14 @@ public abstract class RhiShaderResource
 
                 if(param.Name == name)
                 {
-                    return new ShaderBindingHandle((ushort)i, (ShaderProgramType)programType);
+                    return new ShaderBindingHandle((ushort)i, (ShaderProgramType)programType, param.StartOffset);
                 }
 
                 foreach (var variable in param.Variables)
                 {
                     if (variable.Name == name)
                     {
-                        return new ShaderBindingHandle((ushort)i, (ShaderProgramType)programType);
+                        return new ShaderBindingHandle((ushort)i, (ShaderProgramType)programType, variable.Offset);
                     }
                 }
             }
@@ -173,30 +177,40 @@ public abstract class RhiShaderResource
 
         for(int programType = 0; programType < (int)ShaderProgramType.Count; programType++)
         {
-            if(ProgramBindings[programType].Parameters == null)
+            parameterNames.AddRange(GetParameterNames((ShaderProgramType)programType));
+        }
+
+        return [.. parameterNames];
+    }
+
+    public string[] GetParameterNames(ShaderProgramType programType)
+    {
+        var programBindings = GetShaderProgramBindings(programType);
+
+        if (programBindings.Parameters == null)
+        {
+            return [];
+        }
+        List<string> parameterNames = [];
+
+        for (int i = 0; i < programBindings.Parameters.Length; i++)
+        {
+            ref var param = ref programBindings.Parameters[i];
+
+            if (param.InputType == RhiShaderInputType.Texture)
             {
-                continue;
+                parameterNames.Add(param.Name);
             }
-
-            for (int i = 0; i < ProgramBindings[programType].Parameters.Length; i++)
+            else
             {
-                ref var param = ref ProgramBindings[programType].Parameters[i];
-
-                if (param.InputType == RhiShaderInputType.Texture)
+                foreach (var variable in param.Variables)
                 {
-                    parameterNames.Add(param.Name);
-                }
-                else
-                {
-                    foreach (var variable in param.Variables)
-                    {
-                        parameterNames.Add(variable.Name);
-                    }
+                    parameterNames.Add(variable.Name);
                 }
             }
         }
 
-        return parameterNames.ToArray();
+        return [.. parameterNames];
     }
 
     public void GetParameter(string name, out ShaderVariable? shaderVariable, out ShaderParameter? shaderParameter)

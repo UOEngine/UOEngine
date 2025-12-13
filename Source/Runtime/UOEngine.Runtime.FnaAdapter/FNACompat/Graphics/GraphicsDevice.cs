@@ -290,11 +290,15 @@ public class GraphicsDevice
                 // Note texture may have been set by effect into shader instance.
                 var bindingHandle = _shaderInstance.GetBindingHandle(ShaderProgramType.Pixel, RhiShaderInputType.Texture, i);
 
-                UOEDebug.Assert(_shaderInstance.BindingHandleIsValid(bindingHandle));
+                // Sometimes texture slots are set on the device but are not a valid index for the shader, so we check.
+                if(bindingHandle.IsValid)
+                {
+                    UOEDebug.Assert(_shaderInstance.BindingHandleIsValid(bindingHandle));
 
-                _shaderInstance.SetTexture(bindingHandle, texture.RhiTexture);
+                    _shaderInstance.SetTexture(bindingHandle, texture.RhiTexture);
 
-                Textures[i] = null;
+                    Textures[i] = null;
+                }
             }
         }
     }

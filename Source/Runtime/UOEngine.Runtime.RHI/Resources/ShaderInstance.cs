@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Buffers.Binary;
+using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
 
@@ -60,18 +61,18 @@ public struct ShaderBindingDataEntry
         Data.Texture = texture;
     }
 
-    public void SetData<T>(T value) where T: struct
+    public void SetData<T>(T value, int offset) where T: struct
     {
         Debug.Assert(InputType is RhiShaderInputType.Buffer or RhiShaderInputType.Constant);
 
-        MemoryMarshal.Write(Data.Buffer.AsSpan(), value);
+        MemoryMarshal.Write(Data.Buffer.AsSpan(offset), value);
     }
 
-    public void SetData<T>(in ReadOnlySpan<T> value) where T : struct
+    public void SetData<T>(in ReadOnlySpan<T> value, int offset) where T : struct
     {
         Debug.Assert(InputType is RhiShaderInputType.Buffer or RhiShaderInputType.Constant);
 
-        var dst = Data.Buffer.AsSpan();  
+        var dst = Data.Buffer.AsSpan().Slice(offset);  
         var src = MemoryMarshal.AsBytes(value);       
 
         if (src.Length > dst.Length)
@@ -143,6 +144,11 @@ public class ShaderInstance
         return _shaderResource.GetParameterNames();
     }
 
+    public string[] GetParameterNames(ShaderProgramType programType)
+    {
+        return _shaderResource.GetParameterNames(programType);
+    }
+
     public uint GetNumTextures(ShaderProgramType programType)
     {
         return _shaderResource.GetNumTextures(programType);
@@ -204,7 +210,7 @@ public class ShaderInstance
     {
         ref var entry = ref GetBindingData(bindingHandle);
 
-        entry.SetData(matrix);
+        entry.SetData(matrix, bindingHandle.Offset);
     }
 
     public void SetTexture(ShaderBindingHandle bindingHandle, IRenderTexture texture)
@@ -225,7 +231,7 @@ public class ShaderInstance
     {
         ref var entry = ref GetBindingData(bindingHandle);
 
-        entry.SetData(data);
+        entry.SetData(data, bindingHandle.Offset);
 
     }
 
@@ -233,7 +239,7 @@ public class ShaderInstance
     {
         ref var entry = ref GetBindingData(bindingHandle);
 
-        entry.SetData(data);
+        entry.SetData(data, bindingHandle.Offset);
     }
 
     private ref ShaderBindingDataEntry GetBindingData(ShaderBindingHandle bindingHandle)

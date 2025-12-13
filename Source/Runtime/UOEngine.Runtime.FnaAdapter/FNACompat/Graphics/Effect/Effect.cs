@@ -65,8 +65,13 @@ public class Effect
 
         var shaderInstance = technique.Passes[pass.PassIndex].ShaderInstances[0];
 
-        foreach(var parameter in Parameters)
+        // Get the actual parameters in use for this particular shader and set them.
+        string[] shaderParameters = shaderInstance.GetParameterNames();
+
+        foreach (var shaderParameter in shaderParameters)
         {
+            var parameter = Parameters[shaderParameter];
+
             var bindingHandle = shaderInstance.GetBindingHandle(parameter.Name);
 
             if(parameter.Info.Type == RhiShaderVariableType.Invalid)

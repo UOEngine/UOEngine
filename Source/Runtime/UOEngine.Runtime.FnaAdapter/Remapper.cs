@@ -25,6 +25,8 @@ public struct Technique
 public struct UOEEffectPass
 {
     public ShaderInstance[] ShaderInstances;
+    public string[] VertexParameterNames;
+    public string[] PixelParameterNames;
 }
 
 public struct UOEEffectTechnique
@@ -52,7 +54,7 @@ public class Remapper
         _renderResourceFactory = renderResourceFactory;
     }
 
-    public void RemapTechniques(string originalFxFile, string newShaderFile, Technique[] techniques, string name)
+    public void RemapTechniques(string originalFxFile, string newShaderFile, Technique[] techniques, string effectName)
     {
         byte[] byteCode = File.ReadAllBytes(originalFxFile);
         uint hash = XxHash32.HashToUInt32(byteCode);
@@ -69,7 +71,7 @@ public class Remapper
             {
                 var shaderResource = _renderResourceFactory.NewShaderResource(new RhiShaderResourceCreateParameters
                 {
-                    Name = name
+                    Name = $"{effectName}.{technique.Name}"
                 });
 
                 ref var programSet = ref technique.Programs[i];
@@ -104,9 +106,9 @@ public class Remapper
 
         foreach (var technique in techniques)
         {
-            ShaderInstance[] shaderInstances = new ShaderInstance[technique.Programs.Length];
+            UOEEffectPass[] passes = new UOEEffectPass[technique.Programs.Length];
 
-            for(int i = 0; i < technique.Programs.Length; i++)
+            for (int i = 0; i < technique.Programs.Length; i++)
             {
                 var shaderResource = _renderResourceFactory.NewShaderResource(new RhiShaderResourceCreateParameters
                 {
@@ -117,13 +119,17 @@ public class Remapper
 
                 shaderResource.Load(newShaderFile, programSet.VertexMain, programSet.PixelMain);
 
-                shaderInstances[i] = _renderResourceFactory.NewShaderInstance(shaderResource);
+                var shaderInstance = _renderResourceFactory.NewShaderInstance(shaderResource);
+
+                passes[i].ShaderInstances = [shaderInstance];
+                passes[i].VertexParameterNames = shaderInstance.GetParameterNames(ShaderProgramType.Vertex);
+                passes[i].PixelParameterNames = shaderInstance.GetParameterNames(ShaderProgramType.Pixel);
             }
 
             effectTechniques.Add(new UOEEffectTechnique
             {
                 Name = technique.Name,
-                Passes = [new UOEEffectPass { ShaderInstances = shaderInstances }],
+                Passes = passes,
                 Index = techniqueIndex,
             });
 

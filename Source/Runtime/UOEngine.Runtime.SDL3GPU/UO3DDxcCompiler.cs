@@ -143,7 +143,7 @@ internal class UOEngineDxcCompiler
                     shaderVariables[j] = new ShaderVariable
                     {
                         Name = varDesc.Name,
-                        Offset = varDesc.StartOffset,
+                        Offset = (int)varDesc.StartOffset,
                         Size = varDesc.Size,
                         Type = variableType
                     };

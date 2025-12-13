@@ -103,4 +103,30 @@ public class EffectParameter
     {
         return (Texture2D)texture;
     }
+
+    public Matrix GetValueMatrix()
+    {
+        unsafe
+        {
+            float* resPtr = (float*)values;
+            return new Matrix(
+                resPtr[0],
+                resPtr[4],
+                resPtr[8],
+                resPtr[12],
+                resPtr[1],
+                resPtr[5],
+                resPtr[9],
+                resPtr[13],
+                resPtr[2],
+                resPtr[6],
+                resPtr[10],
+                resPtr[14],
+                resPtr[3],
+                resPtr[7],
+                resPtr[11],
+                resPtr[15]
+            );
+        }
+    }
 }

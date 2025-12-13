@@ -107,6 +107,11 @@ public struct Matrix
 
     public static Matrix Identity = new(Matrix4x4.Identity);
 
+    public static Matrix DebugMatrix = new(11, 12, 13, 14,
+                                           21, 22, 23, 24,
+                                           31, 32, 33, 34,
+                                           41, 42, 43, 44);
+
     public Matrix4x4 M;
 
     public Matrix(
