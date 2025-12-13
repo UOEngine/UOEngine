@@ -1,13 +1,10 @@
-﻿using System.Reflection;
-using CentrED;
+﻿using CentrED;
 using CentrED.Client;
 using CentrED.Server;
 using CentrED.Utils;
-using UOEngine.Runtime.Core;
+
 using UOEngine.Runtime.FnaAdapter;
-using UOEngine.Runtime.Platform;
 using UOEngine.Runtime.Plugin;
-using UOEngine.Runtime.RHI;
 
 using CentredApplication = CentrED.Application;
 
@@ -23,16 +20,12 @@ public class CentrEdSharpPlugin: IPlugin
     public static readonly CentrEDClient CEDClient = new();
     public static readonly Metrics Metrics = new();
 
-    private readonly IRenderResourceFactory _renderResourceFactory;
-    private readonly IWindow _window;
     private readonly IServiceProvider _serviceProvider;
     private readonly Remapper _shaderRemapper;
     private readonly FnaAdapterPlugin _fnaCompatPlugin;
-    public CentrEdSharpPlugin(IRenderResourceFactory renderResourceFactory, IWindow window,
-        IServiceProvider serviceProvider, Remapper shaderRemapper, FnaAdapterPlugin fnaCompatPlugin)
+
+    public CentrEdSharpPlugin(IServiceProvider serviceProvider, Remapper shaderRemapper, FnaAdapterPlugin fnaCompatPlugin)
     {
-        _renderResourceFactory = renderResourceFactory;
-        _window = window;
         _serviceProvider = serviceProvider;
         _shaderRemapper = shaderRemapper;
         _fnaCompatPlugin = fnaCompatPlugin;

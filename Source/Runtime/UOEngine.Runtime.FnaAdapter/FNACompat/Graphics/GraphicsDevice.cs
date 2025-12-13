@@ -234,6 +234,11 @@ public class GraphicsDevice
 
         Debug.Assert(_blendStates.ContainsKey(_fnaBlendState));
 
+        if(_shaderInstance.ShaderResource.Name == "MapEffect.Terrain")
+        {
+            //Debugger.Break();
+        }
+
         _renderContext.SetGraphicsPipeline(new RhiGraphicsPipelineDescription
         {
             Shader = _shaderInstance,

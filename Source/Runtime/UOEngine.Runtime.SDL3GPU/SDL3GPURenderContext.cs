@@ -227,6 +227,7 @@ internal class SDL3GPURenderContext: IRenderContext
             return;
         }
 
+        SetDirtyState(DirtyState.Pipeline);
         SetDirtyState(DirtyState.ShaderParams);
 
         ShaderInstance = graphicsPipelineDescription.Shader;

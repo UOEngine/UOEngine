@@ -2,6 +2,9 @@
   <Configurations>
     <Platform Name="x64" />
   </Configurations>
+  <Folder Name="/Developer/">
+    <Project Path="Source/Developer/UOEngine.Developer.RenderDoc/UOEngine.Developer.RenderDoc.csproj" Id="d6a4b4a7-9a45-49b0-8437-8b47ad124848" />
+  </Folder>
   <Folder Name="/Editor/">
     <File Path="Source/Directory.Build.Props" />
     <Project Path="Source/Editor/UOEngine.Client/UOEngine.Client.csproj" Id="1ee3024a-6900-451f-9fb6-22773e28aa00">
