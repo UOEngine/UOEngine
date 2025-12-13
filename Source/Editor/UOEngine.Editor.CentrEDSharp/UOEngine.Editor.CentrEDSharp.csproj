@@ -12,6 +12,8 @@
     <ProjectReference Include="..\..\..\ThirdParty\centredsharp\CentrED\CentrED.csproj" />
     <ProjectReference Include="..\..\..\ThirdParty\centredsharp\Server\Server.csproj" />
     <ProjectReference Include="..\..\..\ThirdParty\centredsharp\Shared\Shared.csproj" />
+    <ProjectReference Include="..\..\Runtime\UOEngine.Runtime.Core\UOEngine.Runtime.Core.csproj" />
+    <ProjectReference Include="..\..\Runtime\UOEngine.Runtime.FnaAdapter\UOEngine.Runtime.FnaAdapter.csproj" />
     <ProjectReference Include="..\..\Runtime\UOEngine.Runtime.Plugin\UOEngine.Runtime.Plugin.csproj" />
   </ItemGroup>
 

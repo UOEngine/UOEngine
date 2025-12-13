@@ -1,7 +1,4 @@
-﻿using System.Buffers;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 
 using UOEngine.Runtime.RHI;
 
@@ -74,10 +71,16 @@ internal class SDL3GPUTexture: Sdl3GpuResource, IRenderTexture
         return MemoryMarshal.Cast<byte, T>(Texels);
     }
 
-    public void Upload(uint x = 0, uint y = 0, uint w = 0, uint h = 0)
-    {
-        uint size = (uint)Texels.Length;
+    public void Upload() => Upload(0, 0, Width, Height);
 
+    public void Upload(uint x, uint y, uint w, uint h)
+    {
+        // Assuming RGBA for now.
+        const uint bytesPerTexel = 4;
+
+        uint size = w * h * bytesPerTexel;
+
+        // Copy from cpu side texels into transfer buffer.
         IntPtr transferBuffer = SDL_CreateGPUTransferBuffer(Device.Handle, new SDL_GPUTransferBufferCreateInfo
         {
             size = size,
@@ -86,11 +89,21 @@ internal class SDL3GPUTexture: Sdl3GpuResource, IRenderTexture
 
         IntPtr mappedMemory = SDL_MapGPUTransferBuffer(Device.Handle, transferBuffer, false);
 
+        var src = new ReadOnlySpan<byte>(Texels);
+        
+        int srcRowBytes = (int)(w * bytesPerTexel);
+        uint srcRowPitch = Width * bytesPerTexel;
+
         unsafe
         {
-            fixed (void* src = Texels)
+            var dst = new Span<byte>((void*)mappedMemory, (int)size);
+
+            for (uint row = 0; row < h; row++)
             {
-                Buffer.MemoryCopy(src, (void*)mappedMemory, size, size);
+                var srcRow = src.Slice((int)((y + row) * srcRowPitch + x * bytesPerTexel), srcRowBytes);
+                var dstRow = dst.Slice((int)(row * srcRowBytes), srcRowBytes);
+
+                srcRow.CopyTo(dstRow);
             }
         }
 
@@ -110,8 +123,8 @@ internal class SDL3GPUTexture: Sdl3GpuResource, IRenderTexture
             texture = Handle,
             x = x,
             y = y,
-            w = y > 0? y: Description.width,
-            h = h > 0? h: Description.height,
+            w = w,
+            h = h,
             d = 1
         };
 
