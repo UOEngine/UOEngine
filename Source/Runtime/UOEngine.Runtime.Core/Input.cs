@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-
-namespace UOEngine.Runtime.Core;
+﻿namespace UOEngine.Runtime.Core;
 
 public class InputManager
 {
@@ -42,8 +40,6 @@ public class InputManager
     {
         _mouseState[_currentIndex].X = x;
         _mouseState[_currentIndex].Y = y;
-
-        Debug.WriteLine($"{x} {y}");
     }
 
     private void OnMouseWheel(int delta) => _mouseState[_currentIndex].ScrollWheelDelta += delta;

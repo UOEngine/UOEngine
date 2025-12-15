@@ -48,6 +48,16 @@ public class PlatformEventLoop
                         break;
                     }
 
+                case SDL_EventType.SDL_EVENT_WINDOW_FOCUS_LOST:
+                {
+                    break;
+                }
+
+                case SDL_EventType.SDL_EVENT_WINDOW_FOCUS_GAINED:
+                {
+                    break;
+                }
+
                 case SDL_EventType.SDL_EVENT_MOUSE_WHEEL:
                     {
                         int y = (int)evt.wheel.y;

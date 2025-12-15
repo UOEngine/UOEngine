@@ -59,6 +59,15 @@ public class UOEDebug
         Debugger.Break();
     }
 
+    public static void Trace(string message)
+    {
+        string output = $"{Application.FrameNumber}: {message}";
+
+        Console.WriteLine(output);
+        Debug.WriteLine(output);
+
+    }
+
 }
 
 public class AssertionFailedException: Exception

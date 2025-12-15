@@ -13,6 +13,8 @@ namespace UOEngine.Runtime.Core;
 
 public class Application: IDisposable
 {
+    public static int FrameNumber { get; private set; }
+
     public static string? ExePath => Assembly.GetEntryAssembly().Location;
 
     public static string? BaseDirectory => Path.GetDirectoryName(ExePath);
@@ -159,6 +161,8 @@ public class Application: IDisposable
         }
 
         _applicationLoop.Update(gameTime);
+
+        FrameNumber++;
     }
 
     public void Dispose()

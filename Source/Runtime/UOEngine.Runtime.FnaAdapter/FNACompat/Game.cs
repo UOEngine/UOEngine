@@ -16,7 +16,7 @@ public class Game: IDisposable
         private set;
     }
 
-    public bool IsActive;
+    public bool IsActive = true;
 
     public GraphicsDevice GraphicsDevice
     {

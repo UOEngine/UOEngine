@@ -3,7 +3,10 @@
     <Platform Name="x64" />
   </Configurations>
   <Folder Name="/Developer/">
-    <Project Path="Source/Developer/UOEngine.Developer.RenderDoc/UOEngine.Developer.RenderDoc.csproj" Id="d6a4b4a7-9a45-49b0-8437-8b47ad124848" />
+    <Project Path="Source/Developer/UOEngine.Developer.RenderDoc/UOEngine.Developer.RenderDoc.csproj" Id="d6a4b4a7-9a45-49b0-8437-8b47ad124848">
+      <Platform Project="x64" />
+      <Build Solution="Release|*" Project="false" />
+    </Project>
   </Folder>
   <Folder Name="/Editor/">
     <File Path="Source/Directory.Build.Props" />
@@ -61,7 +64,9 @@
     <Project Path="ThirdParty/FAudio/csharp/FAudio-CS.Core.csproj">
       <Platform Project="x64" />
     </Project>
-    <Project Path="ThirdParty/SDL3-CS/SDL3/SDL3.Core.csproj" />
+    <Project Path="ThirdParty/SDL3-CS/SDL3/SDL3.Core.csproj">
+      <Platform Solution="Debug|*" Project="x64" />
+    </Project>
     <Project Path="ThirdParty/Theorafile/csharp/Theorafile-CS.Core.csproj">
       <Platform Project="x64" />
     </Project>

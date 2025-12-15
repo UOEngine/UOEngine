@@ -1,9 +1,9 @@
 ﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
+
 using UOEngine.Runtime.Core;
 using UOEngine.Runtime.FnaAdapter;
-using UOEngine.Runtime.Renderer;
 using UOEngine.Runtime.RHI;
 
 namespace Microsoft.Xna.Framework.Graphics;
@@ -211,7 +211,7 @@ public class GraphicsDevice
 
     public void Clear(ClearOptions options, Color color, float depth, int stencil)
     {
-        throw new NotImplementedException();
+        UOEDebug.NotImplemented();
     }
 
     public void SetRenderTarget(RenderTarget2D? renderTarget)
