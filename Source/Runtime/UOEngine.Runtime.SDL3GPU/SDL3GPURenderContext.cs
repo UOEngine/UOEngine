@@ -23,12 +23,8 @@ internal class SDL3GPURenderContext: IRenderContext
                 return;
             }
 
-            //if(_shaderInstance.ShaderResource != _currentPipelineDescription.Shader.ShaderResource)
-            //{
-            //    SetDirtyState(DirtyState.Pipeline);
-            //}
-
             _shaderInstance = value;
+
             SetDirtyState(DirtyState.ShaderParams);
         }
     }

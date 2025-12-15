@@ -11,4 +11,6 @@ public interface IWindow
     public uint RenderTargetWidth { get; }
     public uint RenderTargetHeight { get;}
 
+    public string WindowTitle { get; set; }
+
 }

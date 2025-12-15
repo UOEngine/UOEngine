@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace UOEngine.Runtime.Core.Input;
+﻿namespace UOEngine.Runtime.Core;
 
 public enum Keys
 {
+    None,
 
+    LeftMouseButton,
+    RightMouseButton,
+    MiddleMouseButton,
 }

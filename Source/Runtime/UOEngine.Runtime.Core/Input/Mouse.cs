@@ -1,31 +1,33 @@
-﻿namespace UOEngine.Runtime.Core.Input;
+﻿namespace UOEngine.Runtime.Core;
+
+public enum MouseButton
+{
+    Invalid,
+    Left,
+    Middle,
+    Right,
+    Back,
+    Forward
+}
+
+public enum ButtonState
+{
+    Released,
+    Pressed
+}
 
 public struct MouseState
 {
-    public bool LeftButtonPressed;
-    public bool RightButtonPressed;
-}
+    public readonly bool LeftButtonPressed => LeftButton == ButtonState.Pressed;
+    public readonly bool MiddleButtonPressed => MiddleButton == ButtonState.Pressed;
+    public readonly bool RightButtonPressed => RightButton == ButtonState.Pressed;
 
-public class Mouse
-{
-    public MouseState State => _state;
+    public ButtonState LeftButton;
+    public ButtonState MiddleButton;
+    public ButtonState RightButton;
 
-    private MouseState _state;
+    public int X;
+    public int Y;
 
-    public Mouse(PlatformEventLoop platformEventLoop, ApplicationLoop applicationLoop)
-    {
-        applicationLoop.OnFrameBegin += OnFrameBegin;
-        platformEventLoop.OnMouseButtonDown += OnMouseButtonDown;
-    }
-
-    private void OnFrameBegin()
-    {
-        _state.LeftButtonPressed = false;
-        _state.RightButtonPressed = false;
-    }
-
-    private void OnMouseButtonDown()
-    {
-
-    }
+    public int ScrollWheelDelta;
 }

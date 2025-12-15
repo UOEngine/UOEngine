@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+﻿using UOEngine.Runtime.Core;
 using UOEngine.Runtime.RHI;
 
 namespace Microsoft.Xna.Framework.Graphics;
@@ -17,16 +17,19 @@ public struct Viewport
 
     public Viewport(Rectangle bounds)
     {
-        throw new NotImplementedException();
+        UOEDebug.NotImplemented();
     }
 
     public Vector3 Unproject(Vector3 source, Matrix projection, Matrix view, Matrix world)
     {
-        throw new NotImplementedException();
+        // Todo: fix me!
+        return Vector3.One;
     }
 
     public Vector3 Project(Vector3 source, Matrix projection, Matrix view, Matrix world)
     {
-        throw new NotImplementedException();
+        UOEDebug.NotImplemented();
+
+        return Vector3.Zero;
     }
 }

@@ -39,6 +39,26 @@ public class UOEDebug
             throw new AssertionFailedException($"Assert failed: {message}");
         }
     }
+
+    [DebuggerHidden]
+    public static void WaitForDebugger()
+    {
+        if(Debugger.IsAttached)
+        {
+            return;
+        }
+
+        Console.WriteLine("Waiting for debugger to attach.");
+
+        while(Debugger.IsAttached == false)
+        {
+            Thread.Sleep(200);
+        }
+
+        // Break here so we break at the wait point.
+        Debugger.Break();
+    }
+
 }
 
 public class AssertionFailedException: Exception

@@ -4,8 +4,14 @@ using UOEngine.Runtime.Platform;
 
 namespace UOEngine.Runtime.Core;
 
-public class Window: IWindow
+public class Window: IWindow, IDisposable
 {
+    public string WindowTitle
+    {
+        set => SDL_SetWindowTitle(Handle, value);
+        get => SDL_GetWindowTitle(Handle);
+    }
+
     public event Action<IWindow>? OnResized;
 
     public IntPtr Handle { get; private set; }
@@ -15,6 +21,8 @@ public class Window: IWindow
 
     public uint RenderTargetWidth { get; private set; }
     public uint RenderTargetHeight { get; private set; }
+
+    private bool _disposed;
 
     public void Startup(PlatformEventLoop eventLoop)
     {
@@ -41,6 +49,8 @@ public class Window: IWindow
 
         UpdateRenderTargetSize();
 
+        eventLoop.RegisterWindow(this);
+
         // Win32 handle if needed
         //Handle = SDL.SDL_GetPointerProperty(SDL.SDL_GetWindowProperties(_sdlHandle), SDL.SDL_PROP_WINDOW_WIN32_HWND_POINTER, IntPtr.Zero);
 
@@ -48,24 +58,34 @@ public class Window: IWindow
 
     public void UpdateRenderTargetSize()
     {
-        SDL_GetWindowSizeInPixels(Handle, out var width, out var height);
-
-        RenderTargetWidth = (uint)width;
-        RenderTargetHeight = (uint)height;
+        RenderTargetWidth = Width;
+        RenderTargetHeight = Height;
     }
 
     public void Dispose()
     {
-        SDL_DestroyWindow(Handle);
-        SDL_QuitSubSystem(SDL_InitFlags.SDL_INIT_VIDEO);
+        Dispose(true);
+
+        GC.SuppressFinalize(this);
     }
 
-    private void OnWindowResize(IWindow window)
+    private void Dispose(bool disposing)
     {
-        SDL_GetWindowSize(Handle, out int width, out int height);
+        if(_disposed)
+        {
+            return;
+        }
 
-        Width = (uint)width;
-        Height = (uint)height;
+        SDL_DestroyWindow(Handle);
+        SDL_QuitSubSystem(SDL_InitFlags.SDL_INIT_VIDEO);
+
+        _disposed = true;
+    }
+
+    private void OnWindowResize(IWindow window, uint width, uint height)
+    {
+        Width = width;
+        Height = height;
 
         UpdateRenderTargetSize();
 

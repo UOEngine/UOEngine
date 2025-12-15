@@ -75,6 +75,6 @@ public class RenderSystem
 
     public void ResizeSwapchain(uint width,  uint height)
     {
-
+        //_context.WaitForGpuIdle();
     }
 }

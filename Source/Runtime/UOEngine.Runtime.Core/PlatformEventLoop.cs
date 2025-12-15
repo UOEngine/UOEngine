@@ -6,8 +6,22 @@ namespace UOEngine.Runtime.Core;
 
 public class PlatformEventLoop
 {
-    public event Action<IWindow>? OnWindowResized;
-    public event Action? OnMouseButtonDown;
+    public event Action? OnQuit;
+    public event Action<IWindow, uint, uint>? OnWindowResized;
+    public event Action<int, int>? OnMouseMove;
+    public event Action<MouseButton>? OnMouseButtonDown;
+    public event Action<MouseButton>? OnMouseButtonUp;
+    public event Action<int>? OnMouseWheel; 
+    public event Action<Keys, bool>? OnKeyDown;
+    public event Action<Keys>? OnKeyUp;
+    public event Action<char>? OnTextInput;
+    public event Action? OnFocusLost;
+
+    private IWindow _window;
+    public void RegisterWindow(IWindow window)
+    {
+        _window = window;
+    }
 
     public bool PollEvents()
     {
@@ -19,6 +33,8 @@ public class PlatformEventLoop
             {
                 case SDL_EventType.SDL_EVENT_QUIT:
                     {
+                        OnQuit?.Invoke();
+
                         return true;
                     }
 
@@ -27,14 +43,56 @@ public class PlatformEventLoop
                         uint width = (uint)evt.window.data1;
                         uint height = (uint)evt.window.data2;
 
-                        //OnWindowResized?.Invoke(this);
+                        OnWindowResized?.Invoke(_window, width, height);
 
                         break;
                     }
 
+                case SDL_EventType.SDL_EVENT_MOUSE_WHEEL:
+                    {
+                        int y = (int)evt.wheel.y;
+
+                        OnMouseWheel?.Invoke(y);
+                        break;
+                    }
+
+                case SDL_EventType.SDL_EVENT_MOUSE_MOTION:
+                    {
+                        int x = (int)evt.motion.x;
+                        int y = (int)evt.motion.y;
+
+                        OnMouseMove?.Invoke(x, y);
+
+                        break;
+                    }
+
+
                 case SDL_EventType.SDL_EVENT_MOUSE_BUTTON_DOWN:
                     {
-                        OnMouseButtonDown?.Invoke();
+                        for(int i = 0; i < (int)SDL_MouseButtonFlags.SDL_BUTTON_X2MASK; i++)
+                        {
+                            int button = (evt.button.button & (1 << i));
+
+                            if (button != 0)
+                            {
+                                OnMouseButtonDown?.Invoke(MapMouseButton((SDL_MouseButtonFlags)button));
+                            }
+                        }
+
+                        break;
+                    }
+
+                case SDL_EventType.SDL_EVENT_MOUSE_BUTTON_UP:
+                    {
+                        for (int i = 0; i < (int)SDL_MouseButtonFlags.SDL_BUTTON_X2MASK; i++)
+                        {
+                            int button = (evt.button.button & (1 << i));
+
+                            if (button != 0)
+                            {
+                                OnMouseButtonUp?.Invoke(MapMouseButton((SDL_MouseButtonFlags)button));
+                            }
+                        }
 
                         break;
                     }
@@ -46,4 +104,14 @@ public class PlatformEventLoop
 
         return false;
     }
+
+    private static MouseButton MapMouseButton(SDL_MouseButtonFlags button) => button switch
+    {
+        SDL_MouseButtonFlags.SDL_BUTTON_LMASK => MouseButton.Left,
+        SDL_MouseButtonFlags.SDL_BUTTON_MMASK => MouseButton.Middle,
+        SDL_MouseButtonFlags.SDL_BUTTON_RMASK => MouseButton.Right,
+        SDL_MouseButtonFlags.SDL_BUTTON_X1MASK => MouseButton.Back,
+        SDL_MouseButtonFlags.SDL_BUTTON_X2MASK => MouseButton.Forward,
+        _ => throw new NotImplementedException()
+    };
 }

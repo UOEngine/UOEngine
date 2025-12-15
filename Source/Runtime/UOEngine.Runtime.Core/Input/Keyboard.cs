@@ -1,8 +1,5 @@
-﻿namespace UOEngine.Runtime.Core.Input;
+﻿namespace UOEngine.Runtime.Core;
 
-public class Keyboard
+public struct KeyboardState
 {
-    public Keyboard(PlatformEventLoop platformEventLoop, ApplicationLoop applicationLoop)
-    {
-    }
 }
