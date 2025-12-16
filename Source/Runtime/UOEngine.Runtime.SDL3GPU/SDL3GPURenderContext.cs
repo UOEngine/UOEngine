@@ -296,12 +296,12 @@ internal class SDL3GPURenderContext: IRenderContext
 
     private void BindParametersForPixelProgram(ShaderBindingDataEntry[] bindingEntries)
     {
-        Span<SDL_GPUTextureSamplerBinding> samplerBindings = stackalloc SDL_GPUTextureSamplerBinding[1];
+        Span<SDL_GPUTextureSamplerBinding> samplerBindings = stackalloc SDL_GPUTextureSamplerBinding[bindingEntries.Length / 2];
 
-        var samplerBinding = new SDL_GPUTextureSamplerBinding();
+        //var samplerBinding = new SDL_GPUTextureSamplerBinding();
 
-        int i = 0;
-        int numTextures = 0;
+        //int i = 0;
+        //int numTextures = 0;
 
         foreach (var entry in bindingEntries)
         {
@@ -309,26 +309,26 @@ internal class SDL3GPURenderContext: IRenderContext
             {
                 case RhiShaderInputType.Texture:
                     {
-                        samplerBinding.texture = entry.Texture.Handle;
+                        samplerBindings[(int)entry.BindingIndex].texture = entry.Texture.Handle;
                         
                         break;
                     }
 
                 case RhiShaderInputType.Sampler:
                     {
-                        samplerBinding.sampler = _globalSamplers.GetSampler(_sampler).Handle;
+                        samplerBindings[(int)entry.BindingIndex].sampler = _globalSamplers.GetSampler(_sampler).Handle;
                         break;
                     }
                 default:
                     throw new UnreachableException("BindParametersForPixelProgram: Unhandled input type");
             }
 
-            i++;
+            //i++;
 
-            if(i % 2 == 0)
-            {
-                samplerBindings[numTextures++] = samplerBinding;
-            }
+            //if(i % 2 == 0)
+            //{
+            //    samplerBindings[numTextures++] = samplerBinding;
+            //}
         }
 
         SDL_BindGPUFragmentSamplers(_renderPass,  0, samplerBindings, (uint)samplerBindings.Length);
