@@ -298,11 +298,6 @@ internal class SDL3GPURenderContext: IRenderContext
     {
         Span<SDL_GPUTextureSamplerBinding> samplerBindings = stackalloc SDL_GPUTextureSamplerBinding[bindingEntries.Length / 2];
 
-        //var samplerBinding = new SDL_GPUTextureSamplerBinding();
-
-        //int i = 0;
-        //int numTextures = 0;
-
         foreach (var entry in bindingEntries)
         {
             switch(entry.InputType)
@@ -322,13 +317,6 @@ internal class SDL3GPURenderContext: IRenderContext
                 default:
                     throw new UnreachableException("BindParametersForPixelProgram: Unhandled input type");
             }
-
-            //i++;
-
-            //if(i % 2 == 0)
-            //{
-            //    samplerBindings[numTextures++] = samplerBinding;
-            //}
         }
 
         SDL_BindGPUFragmentSamplers(_renderPass,  0, samplerBindings, (uint)samplerBindings.Length);
