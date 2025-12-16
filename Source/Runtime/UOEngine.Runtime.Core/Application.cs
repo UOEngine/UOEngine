@@ -112,6 +112,11 @@ public class Application: IDisposable
         _services.AddSingleton<IWindow>(_window);
         _services.AddSingleton<PlatformEventLoop>();
 
+        if (CommandLine.HasOption("-renderdoc"))
+        {
+            _pluginRegistry.LoadPlugin("UOEngine.Developer.RenderDoc.dll");
+        }
+
         _pluginRegistry.LoadPlugins(BaseDirectory);
         _pluginRegistry.LoadPlugins(PluginDirectory, true);
 

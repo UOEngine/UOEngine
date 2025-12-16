@@ -4,7 +4,10 @@ public static class Program
 {
     public static void Main(string[] args)
     {
-        UOEDebug.WaitForDebugger();
+        if(CommandLine.HasOption("-wait_for_debugger"))
+        {
+            UOEDebug.WaitForDebugger();
+        }
 
         using (var app = new Application())
         {
