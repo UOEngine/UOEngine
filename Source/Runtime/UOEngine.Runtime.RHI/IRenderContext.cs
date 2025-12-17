@@ -1,6 +1,5 @@
 ﻿using System.Numerics;
 using System.Runtime.InteropServices;
-using UOEngine.Runtime.RHI.Resources;
 
 namespace UOEngine.Runtime.RHI;
 
@@ -36,5 +35,7 @@ public interface IRenderContext
 
 
     public void SetGraphicsPipeline(in RhiGraphicsPipelineDescription graphicsPipelineDescription);
+
+    public void WaitForGpuIdle();
 
 }

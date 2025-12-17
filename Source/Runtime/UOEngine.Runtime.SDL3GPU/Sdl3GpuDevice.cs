@@ -18,4 +18,9 @@ internal class Sdl3GpuDevice: IRenderDevice
             throw new Exception("Failed to initialise GPU device.");
         }
     }
+
+    public void WaitForGpuIdle()
+    {
+        SDL_WaitForGPUIdle(Handle);
+    }
 }

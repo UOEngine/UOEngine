@@ -49,7 +49,7 @@ internal class UO3DApplication : IPlugin
 
     public void PostStartup()
     {
-        _rendererSystem.OnFrameBegin += OnFrameBegin;
+        //_rendererSystem.OnFrameBegin += OnFrameBegin;
 
         string vertexShader = @"D:\UODev\UOEngineGithub\Source\Shaders\TexturedQuadVS.hlsl";
         string pixelShader = @"D:\UODev\UOEngineGithub\Source\Shaders\TexturedQuadPS.hlsl";
@@ -67,43 +67,6 @@ internal class UO3DApplication : IPlugin
         _greenTexture = CreateTestTexture(0x00FF00FF, "GreenTexture");
 
         _checkerboardTexture = CreateCheckerboardTexture(512, 512, Colour.Red, "RedCheckerboard");
-
-        _projectionBinding = _shaderInstance.GetBindingHandleConstantVertex("PerViewData");
-
-        //_pipeline = _renderFactory.CreateGraphicsPipeline(new RhiGraphicsPipelineDescription
-        //{
-        //    Name = "TestPipeline",
-        //    ShaderResource = _shaderResource
-        //});
-
-        _assetLoader.LoadAllFiles("D:\\Program Files (x86)\\Electronic Arts\\Ultima Online Classic");
-
-        _camera = _entityManager.NewEntity<CameraEntity>();
-        _map = _entityManager.NewEntity<MapEntity>();
-
-        _map.Load(_assetLoader.Maps[0]);
-
-        _waterTexture = _renderFactory.CreateTexture(new RhiTextureDescription
-        {
-            Height = 44,
-            Width = 44,
-            Name = "Water",
-            Usage = RhiRenderTextureUsage.Sampler
-        });
-
-        var water = _map.GetChunk(0, 0).Entities[0, 0];
-
-        var bitmap = _assetLoader.GetLand(water.GraphicId);
-
-        bitmap.Texels.CopyTo(_waterTexture.GetTexelsAs<uint>());
-
-        _waterTexture.Upload();
-
-        _indexBuffer = _renderFactory.CreateIndexBuffer(6, "MainIndexBuffer");
-
-        _indexBuffer.SetData([0, 1, 2, 0, 2, 3]);
-
-        _indexBuffer.Upload();
     }
 
     public static void ConfigureServices(IServiceCollection services)
@@ -114,27 +77,6 @@ internal class UO3DApplication : IPlugin
 
     public void OnFrameBegin(IRenderContext context)
     {
-        //var width = _window.RenderTargetWidth;
-        //var height = _window.RenderTargetHeight;
-
-        //Matrix4x4 projection = Matrix4x4.CreateOrthographic(width, height, -1.0f, 1.0f);
-
-        //var mvp = new ModelViewProjection
-        //{
-        //    Projection = projection,
-        //    View = Matrix4x4.Identity
-        //};
-
-        //_shaderInstance.SetData(_projectionBinding, mvp);
-        //_shaderInstance.SetTexture(_textureBindingHandle, _waterTexture);
-        //_shaderInstance.SetSampler(_samplerBindingHandle, new RhiSampler { Filter = RhiSamplerFilter.Point });
-
-        //context.GraphicsPipline = _pipeline;
-        //context.ShaderInstance = _shaderInstance;
-
-        //context.IndexBuffer = _indexBuffer;
-
-        //context.DrawIndexedPrimitives(1);
     }
 
     private IRenderTexture CreateTestTexture(uint colour, string name)

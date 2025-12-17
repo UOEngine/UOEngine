@@ -41,6 +41,7 @@ public class RenderTarget2D: Texture2D
 
     public void Dispose()
     {
-        UOEDebug.NotImplemented();
+        // Todo: Do we need to dispose this?
+        //UOEDebug.NotImplemented();
     }
 }

@@ -42,7 +42,6 @@ public class Game: IDisposable
 
     public readonly GameServiceContainer Services = new(); 
 
-
     private static IRenderResourceFactory _renderResourceFactory = null!;
     private static IServiceProvider _serviceProvider = null!;
 
@@ -54,6 +53,9 @@ public class Game: IDisposable
     private long _previousTicks = 0;
 
     private bool _hasInitialized = false;
+
+    private bool _suppressDraw;
+
 
     public static void PreSetup(IServiceProvider serviceProvider)
     {
@@ -75,7 +77,7 @@ public class Game: IDisposable
 
     public void Exit()
     {
-        throw new NotImplementedException();
+        _suppressDraw = true;
     }
 
     public void Run()

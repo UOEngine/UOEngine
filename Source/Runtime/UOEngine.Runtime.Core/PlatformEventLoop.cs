@@ -18,6 +18,7 @@ public class PlatformEventLoop
     public event Action? OnFocusLost;
 
     private IWindow _window;
+
     public void RegisterWindow(IWindow window)
     {
         _window = window;

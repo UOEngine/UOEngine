@@ -52,6 +52,8 @@ public class RenderSystem
 
     public void FrameBegin()
     {
+        _context.WaitForGpuIdle();
+
         _context.BeginRecording();
 
         GBufferDiffuse = _rhiRenderer.SwapChain.Acquire(_context);
@@ -76,5 +78,6 @@ public class RenderSystem
     public void ResizeSwapchain(uint width,  uint height)
     {
         //_context.WaitForGpuIdle();
+
     }
 }

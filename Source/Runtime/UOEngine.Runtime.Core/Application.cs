@@ -32,7 +32,6 @@ public class Application: IDisposable
     private Window _window = new();
     private PlatformEventLoop _platformEventLoop = null!;
 
-    private bool _runApplication = true;
 
     private readonly Assembly[] _loadedAssemblies = [];
 
@@ -62,15 +61,18 @@ public class Application: IDisposable
     public void Start()
     {
         InitialiseInternal();
-        //Initialise();
 
         float deltaSeconds = 0.0f;
 
-        while (_runApplication)
+        var platformEventLoop = GetService<ApplicationLoop>();
+
+        while (platformEventLoop.ExitRequested == false)
         {
             Update(deltaSeconds);
+
             _renderSystem.FrameBegin();
             _renderSystem.FrameEnd();
+            //TODO, should sleep based on frame time.
         }
 
         _window.Dispose();
@@ -87,20 +89,6 @@ public class Application: IDisposable
     {
         return _serviceProvider.GetRequiredService<T>();
     }
-
-    //virtual protected void Initialise()
-    //{
-
-    //}
-
-    //virtual protected void BeginDraw(IRenderContext context) 
-    //{
-    //}
-
-    //virtual protected void EndDraw(IRenderContext context)
-    //{
-
-    //}
 
     private void InitialiseInternal()
     {
@@ -122,7 +110,6 @@ public class Application: IDisposable
 
         _pluginRegistry.Build(_services);
 
-
         _serviceProvider = _services.BuildServiceProvider();
 
         _window.Startup(GetService<PlatformEventLoop>());
@@ -143,12 +130,14 @@ public class Application: IDisposable
         _renderSystem = GetService<RenderSystem>();
         _platformEventLoop = GetService<PlatformEventLoop>();
 
+        _platformEventLoop.OnQuit += () =>
+        {
+            _applicationLoop.RequestExit("Platform event quit");
+        };
+
         var entityManager = GetService<EntityManager>();
 
         _camera = entityManager.NewEntity<CameraEntity>();
-
-        //_renderSystem.OnFrameBegin += BeginDraw;
-        //_renderSystem.OnFrameEnd += EndDraw;
 
         _window.OnResized += (window) =>
         {
@@ -160,8 +149,6 @@ public class Application: IDisposable
     {
         if(_platformEventLoop.PollEvents())
         {
-            _runApplication = false;
-
             return;
         }
 

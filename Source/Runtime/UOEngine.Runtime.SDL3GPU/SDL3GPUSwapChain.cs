@@ -16,6 +16,8 @@ internal class SDL3GPUSwapChain: IRenderSwapChain
 
     private readonly SDL_GPUTextureFormat _format;
 
+    private SDL3GPUTexture _backbufferTexture;
+
     RhiRenderTarget _backbufferRenderTarget = new();
 
     public TextureFormat BackbufferFormat => _format.ToRhiFormat();
@@ -32,26 +34,37 @@ internal class SDL3GPUSwapChain: IRenderSwapChain
     {
         SDL3GPURenderContext sdl3GpuContext = (context as SDL3GPURenderContext)!;
 
-        if(SDL_WaitAndAcquireGPUSwapchainTexture(sdl3GpuContext.RecordedCommands, _windowHandle, out _backbufferToRenderInto, out _backbufferWidth, out _backbufferHeight) == false)
+        if(SDL_WaitAndAcquireGPUSwapchainTexture(sdl3GpuContext.RecordedCommands, _windowHandle, out _backbufferToRenderInto, out uint backbufferWidth, out uint backbufferHeight) == false)
         {
             return null;
         }
 
-       var backbufferTexture = new SDL3GPUTexture(_device, new SDL3GPUTextureDescription
-       {
-           CreateInfo = new SDL_GPUTextureCreateInfo
-           {
-               width = _backbufferWidth,
-               height = _backbufferHeight,
-               usage = SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_COLOR_TARGET,
-               format = _format
-           },
-           Name = "Backbuffer",
-        });
+        if((backbufferWidth != _backbufferWidth) || (backbufferHeight != _backbufferHeight))
+        {
+            //_device.WaitForGpuIdle();
 
-        backbufferTexture.InitFromExistingResource(_backbufferToRenderInto);
+            //_backbufferTexture?.Dispose();
 
-        _backbufferRenderTarget.Setup(backbufferTexture);
+            _backbufferWidth = backbufferWidth;
+            _backbufferHeight = backbufferHeight;
+
+            _backbufferTexture = new SDL3GPUTexture(_device, new SDL3GPUTextureDescription
+            {
+                CreateInfo = new SDL_GPUTextureCreateInfo
+                {
+                    width = _backbufferWidth,
+                    height = _backbufferHeight,
+                    usage = SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_COLOR_TARGET,
+                    format = _format
+                },
+                Name = "Backbuffer",
+            });
+
+
+            _backbufferRenderTarget.Setup(_backbufferTexture);
+        }
+
+        _backbufferTexture.InitFromExistingResource(_backbufferToRenderInto);
 
         return _backbufferRenderTarget;
     }

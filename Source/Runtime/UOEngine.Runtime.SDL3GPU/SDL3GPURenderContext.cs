@@ -210,6 +210,11 @@ internal class SDL3GPURenderContext: IRenderContext
 
     public void DrawIndexedPrimitives(uint numIndices, uint numInstances, uint firstIndex, uint vertexOffset, uint firstInstance)
     {
+        if(numIndices == 24570)
+        {
+            ;
+        }
+
        FlushIfNeeded();
 
        SDL_DrawGPUIndexedPrimitives(_renderPass, numIndices, numInstances, firstIndex, (int)vertexOffset, firstInstance);
@@ -233,6 +238,11 @@ internal class SDL3GPURenderContext: IRenderContext
     public void SetSampler(in RhiSampler sampler)
     {
         _sampler = sampler;
+    }
+
+    public void WaitForGpuIdle()
+    {
+        _device.WaitForGpuIdle();
     }
 
     private void BindShaderParameters()

@@ -22,6 +22,7 @@ public class GameWindow
 
     private void OnWindowResized(IWindow window)
     {
+        ClientSizeChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public Rectangle GetWindowBounds()
