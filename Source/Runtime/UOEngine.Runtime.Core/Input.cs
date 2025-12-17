@@ -1,4 +1,5 @@
-﻿namespace UOEngine.Runtime.Core;
+﻿
+namespace UOEngine.Runtime.Core;
 
 public class InputManager
 {
@@ -18,6 +19,9 @@ public class InputManager
         platformEventLoop.OnMouseButtonUp += OnMouseButtonUp;
         platformEventLoop.OnMouseMove += OnMouseMove;
         platformEventLoop.OnMouseWheel += OnMouseWheel;
+
+        platformEventLoop.OnKeyDown += OnKeyDown;
+        platformEventLoop.OnKeyUp += OnKeyUp;
     }
 
     public bool IsInputKeyDown(Keys key)
@@ -33,6 +37,7 @@ public class InputManager
 
         _mouseState[_currentIndex] = _mouseState[previousIndex];
         _keyboardState[_currentIndex] = _keyboardState[previousIndex];
+
 
     }
 
@@ -66,5 +71,14 @@ public class InputManager
             case MouseButton.Middle: mouseState.MiddleButton = ButtonState.Released; break;
             case MouseButton.Right: mouseState.RightButton = ButtonState.Released; break;
         }
+    }
+    private void OnKeyUp(KeyboardKeys key)
+    {
+        _keyboardState[_currentIndex].KeyState.Set((int)key, false);
+    }
+
+    private void OnKeyDown(KeyboardKeys key)
+    {
+        _keyboardState[_currentIndex].KeyState.Set((int)key, true);
     }
 }

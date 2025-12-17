@@ -11,9 +11,9 @@ public class PlatformEventLoop
     public event Action<int, int>? OnMouseMove;
     public event Action<MouseButton>? OnMouseButtonDown;
     public event Action<MouseButton>? OnMouseButtonUp;
-    public event Action<int>? OnMouseWheel; 
-    public event Action<Keys, bool>? OnKeyDown;
-    public event Action<Keys>? OnKeyUp;
+    public event Action<int>? OnMouseWheel;
+    public event Action<KeyboardKeys>? OnKeyDown;
+    public event Action<KeyboardKeys>? OnKeyUp;
     public event Action<char>? OnTextInput;
     public event Action? OnFocusLost;
 
@@ -49,14 +49,14 @@ public class PlatformEventLoop
                     }
 
                 case SDL_EventType.SDL_EVENT_WINDOW_FOCUS_LOST:
-                {
-                    break;
-                }
+                    {
+                        break;
+                    }
 
                 case SDL_EventType.SDL_EVENT_WINDOW_FOCUS_GAINED:
-                {
-                    break;
-                }
+                    {
+                        break;
+                    }
 
                 case SDL_EventType.SDL_EVENT_MOUSE_WHEEL:
                     {
@@ -76,10 +76,9 @@ public class PlatformEventLoop
                         break;
                     }
 
-
                 case SDL_EventType.SDL_EVENT_MOUSE_BUTTON_DOWN:
                     {
-                        for(int i = 0; i < (int)SDL_MouseButtonFlags.SDL_BUTTON_X2MASK; i++)
+                        for (int i = 0; i < (int)SDL_MouseButtonFlags.SDL_BUTTON_X2MASK; i++)
                         {
                             int button = (evt.button.button & (1 << i));
 
@@ -107,12 +106,41 @@ public class PlatformEventLoop
                         break;
                     }
 
+                case SDL_EventType.SDL_EVENT_KEY_DOWN:
+                    {
+                        // TODO: key code vs scan code.
+                        var key = MapKeyboardKey((SDL_Keycode)evt.key.key);
+
+                        OnKeyDown?.Invoke(key);
+
+                        break;
+                    }
+
+                case SDL_EventType.SDL_EVENT_KEY_UP:
+                    {
+                        var key = MapKeyboardKey((SDL_Keycode)evt.key.key);
+
+                        OnKeyUp?.Invoke(key);
+
+                        break;
+                    }
+
                 default:
                     break;
             }
         }
 
         return false;
+    }
+
+    private KeyboardKeys MapKeyboardKey(SDL_Keycode keycode)
+    {
+        if(_keyMap.TryGetValue(keycode, out var key))
+        {
+            return key;
+        }
+
+        return KeyboardKeys.None;
     }
 
     private static MouseButton MapMouseButton(SDL_MouseButtonFlags button) => button switch
@@ -124,4 +152,14 @@ public class PlatformEventLoop
         SDL_MouseButtonFlags.SDL_BUTTON_X2MASK => MouseButton.Forward,
         _ => throw new NotImplementedException()
     };
+
+    private static readonly Dictionary<SDL_Keycode, KeyboardKeys> _keyMap = new()
+    {
+        [SDL_Keycode.SDLK_A] = KeyboardKeys.A,
+        [SDL_Keycode.SDLK_D] = KeyboardKeys.D,
+        [SDL_Keycode.SDLK_S] = KeyboardKeys.S,
+        [SDL_Keycode.SDLK_W] = KeyboardKeys.W,
+
+    };
+
 }

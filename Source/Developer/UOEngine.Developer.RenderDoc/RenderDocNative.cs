@@ -32,7 +32,6 @@ internal unsafe struct RENDERDOC_API_1_6_0
 
     IntPtr UnloadCrashHandler;
 
-    //public SetCaptureFilePathTemplateDelegate SetCaptureFilePathTemplate;
     public delegate* unmanaged[Cdecl]<byte*, void> SetCaptureFilePathTemplateDelegate;
 
     IntPtr GetCaptureFilePathTemplate;
