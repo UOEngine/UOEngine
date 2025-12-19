@@ -16,6 +16,13 @@ internal class SDL3GPURenderer : IRenderer
 
     private Sdl3GpuGlobalSamplers _globalSamplers;
 
+    struct PerFrameData
+    {
+        Sdl3GpuDynamicVertexStream DynamicVertexStream;
+    }
+
+    private PerFrameData[] _perFrameData = [new(), new()];
+
     public SDL3GPURenderer(IWindow window, IRenderDevice device)
     {
         _window = window;
@@ -35,6 +42,11 @@ internal class SDL3GPURenderer : IRenderer
         _globalSamplers = new Sdl3GpuGlobalSamplers(_device);
     }
 
+    public void BeginFrame()
+    {
+
+    }
+
     public void Shutdown()
     {
         SDL_DestroyGPUDevice(_device.Handle);
@@ -43,5 +55,10 @@ internal class SDL3GPURenderer : IRenderer
     public IRenderContext CreateRenderContext()
     {
         return new SDL3GPURenderContext(_device, _globalSamplers);
+    }
+
+    internal void RegisterDynamicVertexBuffer(Sdl3GpuVertexBuffer vertexBuffer)
+    {
+
     }
 }

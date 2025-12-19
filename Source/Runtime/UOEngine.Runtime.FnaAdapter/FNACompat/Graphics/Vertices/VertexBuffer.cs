@@ -9,6 +9,7 @@ public class VertexBuffer : IDisposable
     private bool _disposed = false;
 
     public VertexBuffer(GraphicsDevice graphicsDevice, VertexDeclaration vertexDeclaration, int vertexCount, BufferUsage bufferUsage)
+        : this(graphicsDevice, vertexDeclaration, vertexCount, bufferUsage, false)
     {
 
         RhiVertexBuffer = graphicsDevice.RenderResourceFactory.CreateVertexBuffer(new RhiVertexBufferDescription
@@ -30,6 +31,17 @@ public class VertexBuffer : IDisposable
         Dispose(true);
 
         GC.SuppressFinalize(this);
+    }
+
+    protected VertexBuffer(GraphicsDevice graphicsDevice, VertexDeclaration vertexDeclaration, int vertexCount, BufferUsage bufferUsage, bool dynamic)
+    {
+        RhiVertexBuffer = graphicsDevice.RenderResourceFactory.CreateVertexBuffer(new RhiVertexBufferDescription
+        {
+            VertexCount = (uint)vertexCount,
+            Stride = vertexDeclaration.RhiVertexDefinition.Stride,
+            AttributesDefinition = vertexDeclaration.RhiVertexDefinition,
+            IsDynamic = dynamic
+        });
     }
 
     protected virtual void Dispose(bool disposing)
