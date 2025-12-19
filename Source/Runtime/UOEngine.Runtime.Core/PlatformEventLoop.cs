@@ -61,7 +61,9 @@ public class PlatformEventLoop
 
                 case SDL_EventType.SDL_EVENT_MOUSE_WHEEL:
                     {
-                        int y = (int)evt.wheel.y;
+                        // FNA multiplies this by 120 for some reason.
+                        // Keep feel?
+                        int y = (int)evt.wheel.y * 120;
 
                         OnMouseWheel?.Invoke(y);
                         break;
