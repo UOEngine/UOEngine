@@ -34,17 +34,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\ThirdParty\FAudio\csharp\FAudio-CS.Core.csproj" />
-    <ProjectReference Include="..\..\..\ThirdParty\Theorafile\csharp\Theorafile-CS.Core.csproj" />
     <ProjectReference Include="..\UOEngine.Runtime.Core\UOEngine.Runtime.Core.csproj" />
     <ProjectReference Include="..\UOEngine.Runtime.Platform\UOEngine.Runtime.Platform.csproj" />
     <ProjectReference Include="..\UOEngine.Runtime.Plugin\UOEngine.Runtime.Plugin.csproj" />
   </ItemGroup>
 
-	<ItemGroup>
+	<!--<ItemGroup>
 		<EmbeddedResource Include="FNACompat\Graphics\Effect\StockEffects\FXB\BasicEffect.fxb">
 			<LogicalName>Microsoft.Xna.Framework.Graphics.Effect.Resources.BasicEffect.fxb</LogicalName>
 		</EmbeddedResource>
-	</ItemGroup>
+	</ItemGroup>-->
 	
 </Project>

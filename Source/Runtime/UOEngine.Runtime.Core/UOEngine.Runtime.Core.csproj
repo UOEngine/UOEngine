@@ -16,7 +16,7 @@
   </ItemGroup>
 
 	<ItemGroup>
-		<None Include="$(UoEngineThirdParty)\SDL3\Debug\SDL3.dll" CopyToOutputDirectory="PreserveNewest" />
+		<None Include="$(UoEngineThirdParty)\Runtimes\win-x64\Release\SDL3.dll" CopyToOutputDirectory="PreserveNewest" />
 	</ItemGroup>
 
 	<ItemGroup>

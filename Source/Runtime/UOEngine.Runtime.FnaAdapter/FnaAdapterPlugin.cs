@@ -63,7 +63,7 @@ public class FnaAdapterPlugin: IPlugin
 
     public void PostStartup() 
     {
-        _shaderRemapper.RemapEffect<SpriteEffect>(@"D:\UODev\UOEngineGitHub\Source\Shaders\FNACompat\SpriteEffect.hlsl", [new Technique
+        _shaderRemapper.RemapEffect<SpriteEffect>(Path.Combine(UOEPaths.ShadersDir, @"FNACompat\SpriteEffect.hlsl"), [new Technique
         {
             Name = "SpriteBatch",
             Programs = [new TechniqueProgramEntry("SpriteVertexShader", "SpritePixelShader")]
@@ -131,7 +131,7 @@ public class FnaAdapterPlugin: IPlugin
 
         }
 
-        _shaderRemapper.RemapEffect<BasicEffect>(@"D:\UODev\UOEngineGitHub\Source\Shaders\FNACompat\BasicEffect.hlsl", [new Technique
+        _shaderRemapper.RemapEffect<BasicEffect>(Path.Combine(UOEPaths.ShadersDir, @"FNACompat\BasicEffect.hlsl"), [new Technique
         {
             Name = "BasicEffect",
             Programs = [.. basicEffectPrograms]

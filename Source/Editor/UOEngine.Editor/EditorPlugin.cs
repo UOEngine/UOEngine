@@ -1,12 +1,10 @@
-﻿using System.Numerics;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 
 using UOEngine.Runtime.Core;
 using UOEngine.Runtime.Platform;
 using UOEngine.Runtime.Plugin;
 using UOEngine.Runtime.Renderer;
 using UOEngine.Runtime.RHI;
-using UOEngine.Runtime.RHI.Resources;
 using UOEngine.Runtime.FnaAdapter;
 using UOEngine.Ultima.UOAssets;
 
@@ -51,8 +49,8 @@ internal class UO3DApplication : IPlugin
     {
         //_rendererSystem.OnFrameBegin += OnFrameBegin;
 
-        string vertexShader = @"D:\UODev\UOEngineGithub\Source\Shaders\TexturedQuadVS.hlsl";
-        string pixelShader = @"D:\UODev\UOEngineGithub\Source\Shaders\TexturedQuadPS.hlsl";
+        string vertexShader = Path.Combine(UOEPaths.ShadersDir, "TexturedQuadVS.hlsl");
+        string pixelShader = Path.Combine(UOEPaths.ShadersDir, "TexturedQuadPS.hlsl");
 
         _shaderResource = _renderFactory.NewShaderResource();
         _shaderResource.Load(vertexShader, pixelShader);

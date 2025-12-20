@@ -13,7 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Editor\UOEngine.Client\UOEngine.Client.csproj" />
-    <ProjectReference Include="..\..\Runtime\UOEngine.Plugin\UOEngine.Runtime.Plugin.csproj" />
+    <ProjectReference Include="..\..\Runtime\UOEngine.Runtime.Plugin\UOEngine.Runtime.Plugin.csproj" />
   </ItemGroup>
 
 	<PropertyGroup>
