@@ -2,22 +2,22 @@
 
 public static class CommandLine
 {
-    private static string[] _passedArgs;
+    private static string[] _parsedArgs;
 
     public static bool HasOption(string name)
     {
-        return _passedArgs.Any(a => a == name);
+        return _parsedArgs.Any(a => a == name);
     }
 
     static CommandLine()
     {
         var args = Environment.GetCommandLineArgs();
 
-        _passedArgs = new string[args.Length];
+        _parsedArgs = new string[args.Length];
 
         for(int i = 0; i < args.Length; i++)
         {
-            _passedArgs[i] = args[i];
+            _parsedArgs[i] = args[i];
         }
     }
 }
