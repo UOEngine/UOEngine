@@ -2,7 +2,7 @@
 using CentrED.Client;
 using CentrED.Server;
 using CentrED.Utils;
-
+using UOEngine.Runtime.Core;
 using UOEngine.Runtime.FnaAdapter;
 using UOEngine.Runtime.Plugin;
 
@@ -33,8 +33,8 @@ public class CentrEdSharpPlugin: IPlugin
 
     public void PostStartup() 
     {
-        string mapEffectNew = @"D:\UODev\UOEngineGithub\Source\Shaders\CentrEdSharp\MapEffect.hlsl";
-        string mapEffect = @"D:\UODev\UOEngineGitHub\ThirdParty\centredsharp\CentrED\Renderer\Shaders\MapEffect.fxc";
+        string mapEffectNew = Path.Combine(UOEPaths.ShadersDir, @"CentrEdSharp\MapEffect.hlsl");
+        string mapEffect = Path.Combine(UOEPaths.ProjectDir, @"ThirdParty\centredsharp\CentrED\Renderer\Shaders\MapEffect.fxc");
 
         var terrainTechnique = new Technique
         {
@@ -81,7 +81,7 @@ public class CentrEdSharpPlugin: IPlugin
 
         CEDGame = new CentrEDGame();
 
-        CentredApplication.SetFromUOEngine(CEDGame);
+        CentredApplication.SetFromHosted(CEDGame); 
 
         _fnaCompatPlugin.RegisterGame(CEDGame);
         
