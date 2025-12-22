@@ -1,26 +1,26 @@
 ﻿using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
+using static SDL3.SDL;
 using Vortice.Direct3D;
 using Vortice.Direct3D12.Shader;
 using Vortice.Dxc;
 
 using UOEngine.Runtime.RHI;
-using System.Runtime.CompilerServices;
 
 namespace UOEngine.Runtime.SDL3GPU;
 
 struct ShaderProgramCompileResult
 {
     public byte[] ByteCode;
+    public string EntryPointName;
     public ShaderStreamBinding[] StreamBindings;
     public ShaderParameter[] ShaderBindings;
-    //public uint NumSamplers;
-    //public uint NumTextures;
 }
 
 internal class UOEngineDxcCompiler
 {
-    public static void Compile(string shaderFile, ShaderProgramType type, out ShaderProgramCompileResult outCompileResult, string programMainName = "main")
+    public static void Compile(string shaderFile, ShaderProgramType type, out ShaderProgramCompileResult outCompileResult, SDL_GPUShaderFormat shaderFormat, string programMainName = "main")
     {
         if(File.Exists(shaderFile) == false)
         {
@@ -41,14 +41,20 @@ internal class UOEngineDxcCompiler
 
         string targetProfile = $"{targetProfileType}_{shaderModelVersion}";
 
-        string[] arguments = new[]
-{
+        string[] strings = [
             "-E",               programMainName,
             "-T",               targetProfile,
             "-Zi",                                  // Debug info
             "-Qembed_debug",                        // Embed debug info in the shader
             "-O0"                                   // Optimization level
-        };
+        ];
+
+        string[] arguments = strings;
+
+        if(shaderFormat == SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV)
+        {
+            arguments = [.. arguments, "-spirv"];
+        }
 
         using IDxcResult result = DxcCompiler.Compile(source, arguments);
 
@@ -60,6 +66,18 @@ internal class UOEngineDxcCompiler
         var blob = result.GetResult();
 
         outCompileResult = new ShaderProgramCompileResult();
+        outCompileResult.EntryPointName = programMainName;
+
+        if(shaderFormat != SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_DXIL)
+        {
+            // Can only get reflection from DXIL. Compile it again as DXIL and attach the SPIRV blob.
+            Compile(shaderFile, type, out var resultForReflection, SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_DXIL, programMainName);
+
+            outCompileResult = resultForReflection;
+            outCompileResult.ByteCode = blob.AsBytes();
+
+            return;
+        }
 
         outCompileResult.ByteCode = blob.AsBytes();
 

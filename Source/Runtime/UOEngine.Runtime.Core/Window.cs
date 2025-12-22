@@ -26,7 +26,7 @@ public class Window: IWindow, IDisposable
 
     public void Startup(PlatformEventLoop eventLoop)
     {
-        if (!SDL_Init(SDL_InitFlags.SDL_INIT_VIDEO))
+        if (!SDL_Init(SDL_InitFlags.SDL_INIT_EVENTS))
         {
             throw new Exception("SDL_Init failed: " + SDL_GetError());
         }

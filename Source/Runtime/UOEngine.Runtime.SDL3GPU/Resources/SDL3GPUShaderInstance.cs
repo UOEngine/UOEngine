@@ -17,16 +17,16 @@ internal class Sdl3GpuShaderResource: RhiShaderResource
 
     public override void Load(string vertexShader, string fragmentShader)
     {
-        UOEngineDxcCompiler.Compile(vertexShader, ShaderProgramType.Vertex, out var vertexCompileResult, "main");
-        UOEngineDxcCompiler.Compile(fragmentShader, ShaderProgramType.Pixel, out var pixelCompileResult, "main");
+        UOEngineDxcCompiler.Compile(vertexShader, ShaderProgramType.Vertex, out var vertexCompileResult, _device.ShaderFormat, "main");
+        UOEngineDxcCompiler.Compile(fragmentShader, ShaderProgramType.Pixel, out var pixelCompileResult, _device.ShaderFormat, "main");
 
         LoadCommon(vertexCompileResult, pixelCompileResult);
     }
 
     public override void Load(string shaderFile, string vertexMainName, string pixelNameMain)
     {
-        UOEngineDxcCompiler.Compile(shaderFile, ShaderProgramType.Vertex, out var vertexCompileResult, vertexMainName);
-        UOEngineDxcCompiler.Compile(shaderFile, ShaderProgramType.Pixel, out var pixelCompileResult, pixelNameMain);
+        UOEngineDxcCompiler.Compile(shaderFile, ShaderProgramType.Vertex, out var vertexCompileResult, _device.ShaderFormat,vertexMainName);
+        UOEngineDxcCompiler.Compile(shaderFile, ShaderProgramType.Pixel, out var pixelCompileResult, _device.ShaderFormat, pixelNameMain);
 
         LoadCommon(vertexCompileResult, pixelCompileResult);
     }
