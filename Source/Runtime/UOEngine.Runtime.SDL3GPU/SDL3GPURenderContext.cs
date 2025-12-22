@@ -1,11 +1,10 @@
-﻿using System.Buffers;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using UOEngine.Runtime.RHI;
-using UOEngine.Runtime.RHI.Resources;
-using UOEngine.Runtime.SDL3GPU.Resources;
+
 using static SDL3.SDL;
+
+using UOEngine.Runtime.RHI;
+using UOEngine.Runtime.SDL3GPU.Resources;
 
 namespace UOEngine.Runtime.SDL3GPU;
 
@@ -245,7 +244,7 @@ internal class SDL3GPURenderContext: IRenderContext
         _device.WaitForGpuIdle();
     }
 
-    private void BindShaderParameters()
+    private void BindShaderParameters(bool forceRebind)
     {
         for(int i = 0; i < (int)ShaderProgramType.Count; i++)
         {
@@ -260,13 +259,13 @@ internal class SDL3GPURenderContext: IRenderContext
             {
                 case ShaderProgramType.Vertex:
                     {
-                        BindParametersForVertexProgram(bindings);
+                        BindParametersForVertexProgram(bindings, forceRebind);
 
                         break;
                     }
                 case ShaderProgramType.Pixel:
                     {
-                        BindParametersForPixelProgram(bindings);
+                        BindParametersForPixelProgram(bindings, forceRebind);
 
                         break;
                     }
@@ -276,11 +275,16 @@ internal class SDL3GPURenderContext: IRenderContext
         }
     }
 
-    private void BindParametersForVertexProgram(ShaderBindingDataEntry[] bindingEntries)
+    private void BindParametersForVertexProgram(ShaderBindingDataEntry[] bindingEntries, bool forceRebind)
     {
         for(int i = 0; i < bindingEntries.Length; i++)
         {
             ref var entry = ref bindingEntries[i];
+
+            if((entry.Dirty == false) && (forceRebind == false))
+            {
+                continue;
+            }
 
             switch(entry.InputType)
             {
@@ -301,21 +305,39 @@ internal class SDL3GPURenderContext: IRenderContext
                 default:
                     throw new UnreachableException("BindParametersForVertexProgram: Unhandled input type");
             }
+
+            entry.Dirty = false;
         }
     }
 
-    private void BindParametersForPixelProgram(ShaderBindingDataEntry[] bindingEntries)
+    private void BindParametersForPixelProgram(ShaderBindingDataEntry[] bindingEntries, bool forceRebind)
     {
         Span<SDL_GPUTextureSamplerBinding> samplerBindings = stackalloc SDL_GPUTextureSamplerBinding[bindingEntries.Length / 2];
 
-        foreach (var entry in bindingEntries)
+        uint numBindings = 0;
+
+        for(int i = 0;  i < bindingEntries.Length; i++)
         {
-            switch(entry.InputType)
+            ref var entry = ref bindingEntries[i];
+
+            if ((entry.Dirty == false) && (forceRebind == false))
+            {
+                continue;
+            }
+
+            switch (entry.InputType)
             {
                 case RhiShaderInputType.Texture:
                     {
                         samplerBindings[(int)entry.BindingIndex].texture = entry.Texture.Handle;
-                        
+
+                        if(samplerBindings[(int)entry.BindingIndex].sampler == IntPtr.Zero)
+                        {
+                            samplerBindings[(int)entry.BindingIndex].sampler = _globalSamplers.GetSampler(_sampler).Handle;
+                        }
+
+                        numBindings++;
+
                         break;
                     }
 
@@ -327,9 +349,11 @@ internal class SDL3GPURenderContext: IRenderContext
                 default:
                     throw new UnreachableException("BindParametersForPixelProgram: Unhandled input type");
             }
+
+            entry.Dirty = false;
         }
 
-        SDL_BindGPUFragmentSamplers(_renderPass,  0, samplerBindings, (uint)samplerBindings.Length);
+        SDL_BindGPUFragmentSamplers(_renderPass,  0, samplerBindings, numBindings);
     }
 
     private void FlushIfNeeded()
@@ -370,12 +394,11 @@ internal class SDL3GPURenderContext: IRenderContext
             ClearDirtyState(DirtyState.IndexBuffer);
         }
 
-        if (IsStateDirty(DirtyState.ShaderParams))
-        {
-            BindShaderParameters();
+        bool fullRebind = IsStateDirty(DirtyState.ShaderParams);
 
-            ClearDirtyState(DirtyState.ShaderParams);
-        }
+        BindShaderParameters(fullRebind);
+
+        ClearDirtyState(DirtyState.ShaderParams);
     }
 
     private void SetDirtyState(DirtyState flags) => _dirtyState |= flags;

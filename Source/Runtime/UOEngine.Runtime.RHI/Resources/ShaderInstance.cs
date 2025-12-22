@@ -1,5 +1,4 @@
-﻿using System.Buffers.Binary;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
 
@@ -29,6 +28,7 @@ public struct ShaderBindingDataEntry
     public readonly uint BindingIndex;
     public readonly RhiShaderInputType InputType;
     public ShaderBindingData Data;
+    public bool Dirty;
 
     public IRenderTexture Texture => GetTexture();
 
@@ -52,6 +52,7 @@ public struct ShaderBindingDataEntry
         Debug.Assert(InputType == RhiShaderInputType.Sampler);
 
         Data.Sampler = sampler;
+        Dirty = true;
     }
 
     public void SetTexture(IRenderTexture texture)
@@ -59,6 +60,7 @@ public struct ShaderBindingDataEntry
         Debug.Assert(InputType == RhiShaderInputType.Texture);
 
         Data.Texture = texture;
+        Dirty = true;
     }
 
     public void SetData<T>(T value, int offset) where T: struct
@@ -66,6 +68,8 @@ public struct ShaderBindingDataEntry
         Debug.Assert(InputType is RhiShaderInputType.Buffer or RhiShaderInputType.Constant);
 
         MemoryMarshal.Write(Data.Buffer.AsSpan(offset), value);
+
+        Dirty = true;
     }
 
     public void SetData<T>(in ReadOnlySpan<T> value, int offset) where T : struct
@@ -81,6 +85,8 @@ public struct ShaderBindingDataEntry
         }
 
         src.CopyTo(dst);
+
+        Dirty = true;
     }
 
     public IRenderTexture GetTexture()

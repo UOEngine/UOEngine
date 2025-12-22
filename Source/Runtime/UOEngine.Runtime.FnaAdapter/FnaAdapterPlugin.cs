@@ -50,7 +50,7 @@ public class FnaAdapterPlugin: IPlugin
         {
             foreach (var game in _hostedFNAGames)
             {
-                game.GraphicsDevice._renderContext = renderContext;
+                game.GraphicsDevice.OnFrameBegin(renderContext);
                 game.Tick2();
             }
         };

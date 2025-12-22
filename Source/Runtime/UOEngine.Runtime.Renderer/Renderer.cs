@@ -52,6 +52,7 @@ public class RenderSystem
 
     public void FrameBegin()
     {
+        // Todo: Bad! We want frames in flight so at some point will need to fix this.
         _context.WaitForGpuIdle();
 
         _context.BeginRecording();

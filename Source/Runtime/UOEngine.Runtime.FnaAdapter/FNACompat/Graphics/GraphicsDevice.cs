@@ -113,7 +113,7 @@ public class GraphicsDevice
 
     public readonly Remapper EffectRemapper;
 
-    public IRenderContext _renderContext;
+    public IRenderContext RenderContext { get; private set; }
 
     private RenderTarget2D? _renderTarget;
     private Color _clearColour;
@@ -141,17 +141,13 @@ public class GraphicsDevice
     private RasterizerState _rasterizerState;
     private DepthStencilState _depthStencilState;
 
+    private List<VertexBuffer> _dynamicVertexBuffers = [];
+
     public GraphicsDevice(IServiceProvider serviceProvider)
     {
         PresentationParameters = new PresentationParameters();
 
         RenderResourceFactory = serviceProvider.GetRequiredService<IRenderResourceFactory>();
-
-        // We need to set this each frame and then record into it what is done.
-        //serviceProvider.GetRequiredService<RenderSystem>().OnFrameBegin += (renderContext) =>
-        //{
-        //    _renderContext = renderContext;
-        //};
 
         SamplerStates = new SamplerStateCollection(MAX_TEXTURE_SAMPLERS, _modifiedSamplers); 
 
@@ -186,7 +182,7 @@ public class GraphicsDevice
 
         int numIndices = primitiveCount * 3;
 
-        _renderContext.DrawIndexedPrimitives((uint)numIndices, 1, (uint)startIndex, (uint)baseVertex, 0);
+        RenderContext.DrawIndexedPrimitives((uint)numIndices, 1, (uint)startIndex, (uint)baseVertex, 0);
     }
 
     public void Reset(PresentationParameters presentationParameters)
@@ -222,7 +218,31 @@ public class GraphicsDevice
 
     private void BindIndexBufferIfNeeded()
     {
-        _renderContext.IndexBuffer = _indices.RhiIndexBuffer;
+        RenderContext.IndexBuffer = _indices.RhiIndexBuffer;
+    }
+
+    internal void RegisterDynamicVertexBuffer(VertexBuffer vertexBuffer)
+    {
+        UOEDebug.Assert((DynamicVertexBuffer)vertexBuffer != null);
+
+        _dynamicVertexBuffers.Add(vertexBuffer);
+    }
+
+    internal void UnregisterDynamicVertexBuffer(VertexBuffer vertexBuffer)
+    {
+        UOEDebug.Assert((DynamicVertexBuffer)vertexBuffer != null);
+
+        _dynamicVertexBuffers.Remove(vertexBuffer);
+    }
+
+    internal void OnFrameBegin(IRenderContext renderContext)
+    {
+        foreach (var vertexBuffer in _dynamicVertexBuffers)
+        {
+            vertexBuffer.Reset();
+        }
+
+        RenderContext = renderContext;
     }
 
     private void BindGraphicsPipelineIfNeeded()
@@ -234,12 +254,7 @@ public class GraphicsDevice
 
         Debug.Assert(_blendStates.ContainsKey(_fnaBlendState));
 
-        if(_shaderInstance.ShaderResource.Name == "MapEffect.Terrain")
-        {
-            //Debugger.Break();
-        }
-
-        _renderContext.SetGraphicsPipeline(new RhiGraphicsPipelineDescription
+        RenderContext.SetGraphicsPipeline(new RhiGraphicsPipelineDescription
         {
             Shader = _shaderInstance,
             PrimitiveType = RhiPrimitiveType.TriangleList,
@@ -259,7 +274,7 @@ public class GraphicsDevice
             return;
         }
 
-        _renderContext.VertexBuffer = _vertexBuffer.RhiVertexBuffer;
+        RenderContext.VertexBuffer = _vertexBuffer.RhiVertexBuffer;
         _vertexBufferDirty = false;
     }
 
@@ -284,7 +299,7 @@ public class GraphicsDevice
 
             UOEDebug.Assert(_samplerStates.ContainsKey(SamplerStates[i]));
 
-            _renderContext.Sampler = _samplerStates[SamplerStates[i]];
+            RenderContext.Sampler = _samplerStates[SamplerStates[i]];
 
             _modifiedSamplers[i] = false;
 

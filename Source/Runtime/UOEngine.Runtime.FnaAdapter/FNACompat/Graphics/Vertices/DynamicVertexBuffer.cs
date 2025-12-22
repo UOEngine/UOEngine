@@ -1,5 +1,4 @@
-﻿using UOEngine.Runtime.FnaAdapter;
-using UOEngine.Runtime.RHI;
+﻿using UOEngine.Runtime.Core;
 
 namespace Microsoft.Xna.Framework.Graphics;
 
