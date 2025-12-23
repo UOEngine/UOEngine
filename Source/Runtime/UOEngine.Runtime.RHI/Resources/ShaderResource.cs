@@ -92,7 +92,7 @@ public abstract class RhiShaderResource
     public abstract void Load(string vertexShader, string fragmentShader);
     public abstract void Load(string shaderFile, string vertexMainName, string pixelNameMain);
 
-    public string Name { get; protected set; }
+    public string? Name { get; protected set; }
 
     public ShaderProgramBindings GetShaderProgramBindings(ShaderProgramType type) => ProgramBindings[(int)type];
 

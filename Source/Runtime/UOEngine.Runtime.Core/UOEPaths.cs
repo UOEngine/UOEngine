@@ -10,6 +10,8 @@ public static class UOEPaths
 
     public static readonly string ShadersDir;
 
+    public static readonly string PluginDir;
+
     static UOEPaths()
     {
         ExeDir = AppContext.BaseDirectory;
@@ -33,6 +35,7 @@ public static class UOEPaths
 
         SourceDir = Path.Combine(ProjectDir, "Source");
         ShadersDir = Path.Combine(SourceDir, "Shaders");
-        
+
+        PluginDir = Path.Combine(ExeDir, "Plugins");
     }
 }

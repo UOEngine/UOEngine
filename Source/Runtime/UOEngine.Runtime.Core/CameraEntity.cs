@@ -3,7 +3,7 @@ namespace UOEngine.Runtime.Core;
 
 public class CameraEntity: IEntity
 {
-    private bool _dirty = true;
+    //private bool _dirty = true;
     //private Matrix _transform;
     //private Vector2 _viewport;
 

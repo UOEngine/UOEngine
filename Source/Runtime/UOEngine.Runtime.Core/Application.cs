@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.Loader;
-using System.Text;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -15,13 +14,9 @@ public class Application: IDisposable
 {
     public static int FrameNumber { get; private set; }
 
-    public static string? ExePath => Assembly.GetEntryAssembly().Location;
-
-    public static string? BaseDirectory => Path.GetDirectoryName(ExePath);
-    public static string? PluginDirectory => Path.Combine(BaseDirectory, "Plugins");
-
     private readonly ServiceCollection _services = new ServiceCollection();
     private ServiceProvider? _serviceProvider;
+    private ServiceProvider Services => _serviceProvider ?? throw new InvalidOperationException("Not initialized.");
 
     private ApplicationLoop _applicationLoop = null!;
 
@@ -77,7 +72,7 @@ public class Application: IDisposable
 
         _window.Dispose();
 
-        var plugins = _serviceProvider.GetServices<IPlugin>();
+        var plugins = Services.GetServices<IPlugin>();
 
         foreach (var plugin in plugins)
         {
@@ -85,14 +80,14 @@ public class Application: IDisposable
         }
     }
 
-    public T GetService<T>()
+    public T GetService<T>() where T : notnull
     {
-        return _serviceProvider.GetRequiredService<T>();
+        return Services.GetRequiredService<T>();
     }
 
     private void InitialiseInternal()
     {
-        PluginRegistrationExtensions.CurrentRegistry = _pluginRegistry;
+        PluginRegistrationExtensions.Initialise(_pluginRegistry);
 
         _services.AddSingleton<EntityManager>();
         _services.AddSingleton<ApplicationLoop>();
@@ -105,8 +100,8 @@ public class Application: IDisposable
             _pluginRegistry.LoadPlugin("UOEngine.Developer.RenderDoc.dll");
         }
 
-        _pluginRegistry.LoadPlugins(BaseDirectory);
-        _pluginRegistry.LoadPlugins(PluginDirectory, true);
+        _pluginRegistry.LoadPlugins(UOEPaths.ExeDir);
+        _pluginRegistry.LoadPlugins(UOEPaths.PluginDir, true);
 
         _pluginRegistry.Build(_services);
 

@@ -1,4 +1,6 @@
-﻿using static SDL3.SDL;
+﻿using System.Text;
+
+using static SDL3.SDL;
 
 using UOEngine.Runtime.Platform;
 
@@ -17,7 +19,7 @@ public class PlatformEventLoop
     public event Action<char>? OnTextInput;
     public event Action? OnFocusLost;
 
-    private IWindow _window;
+    private IWindow _window = null!;
 
     public void RegisterWindow(IWindow window)
     {
@@ -51,6 +53,8 @@ public class PlatformEventLoop
 
                 case SDL_EventType.SDL_EVENT_WINDOW_FOCUS_LOST:
                     {
+                        OnFocusLost?.Invoke();
+
                         break;
                     }
 
@@ -128,6 +132,25 @@ public class PlatformEventLoop
                         break;
                     }
 
+                case SDL_EventType.SDL_EVENT_TEXT_INPUT:
+                    {
+                        char[] characters;
+
+                        unsafe
+                        {
+                            int count = UTF8Encoding.UTF8.GetCharCount(evt.text.text, 0);
+                            var buffer = new ReadOnlySpan<byte>(evt.text.text, count);
+
+                            characters = UTF8Encoding.UTF8.GetChars(buffer.ToArray());
+                        }
+
+                        for(int i = 0; i < characters.Length; i++)
+                        {
+                            OnTextInput?.Invoke(characters[i]);
+                        }
+
+                        break;
+                    }
                 default:
                     break;
             }

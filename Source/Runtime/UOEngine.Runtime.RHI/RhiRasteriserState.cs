@@ -26,7 +26,7 @@ public record struct RhiRasteriserState
 
     public RhiFrontFace FrontFace;
 
-    public string Name;
+    public string? Name;
 
     public static readonly RhiRasteriserState CullCounterClockwise = new("CullCounterClockwise", RhiCullMode.Back);
 

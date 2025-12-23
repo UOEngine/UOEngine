@@ -7,17 +7,18 @@ public class RenderSystem
     public event Action<IRenderContext>? OnFrameBegin;
     public event Action<IRenderContext>? OnFrameEnd;
 
-    public RhiRenderTarget GBufferDiffuse;
-    public RhiRenderTarget UIOverlay;
+    public RhiRenderTarget GBufferDiffuse => _gBufferDiffuse ?? throw new InvalidOperationException("GBufferDiffuse not set");
+    public RhiRenderTarget UIOverlay = new();
 
-    public IRenderContext CurrentRenderContext { get; private set; }
+    public IRenderContext CurrentRenderContext => _context ?? throw new InvalidOperationException("Not initialized");
 
-    private IRenderContext _context = null!;
+    private IRenderContext? _context;
     private readonly IRenderer _rhiRenderer;
     private readonly IRenderResourceFactory _resourceFactory;
 
     private RenderPassInfo _mainPass;
 
+    private RhiRenderTarget? _gBufferDiffuse;
 
     private uint _frameNumber = 0;
 
@@ -36,7 +37,6 @@ public class RenderSystem
     public void Startup()
     {
         _context = _rhiRenderer.CreateRenderContext();
-        CurrentRenderContext = _context;
 
         UIOverlay = new RhiRenderTarget();
 
@@ -53,25 +53,25 @@ public class RenderSystem
     public void FrameBegin()
     {
         // Todo: Bad! We want frames in flight so at some point will need to fix this.
-        _context.WaitForGpuIdle();
+        CurrentRenderContext.WaitForGpuIdle();
 
-        _context.BeginRecording();
+        CurrentRenderContext.BeginRecording();
 
-        GBufferDiffuse = _rhiRenderer.SwapChain.Acquire(_context);
+        _gBufferDiffuse = _rhiRenderer.SwapChain.Acquire(CurrentRenderContext);
 
         _mainPass.RenderTarget = GBufferDiffuse;
 
-        _context.BeginRenderPass(_mainPass);
+        CurrentRenderContext.BeginRenderPass(_mainPass);
 
-        OnFrameBegin?.Invoke(_context);
+        OnFrameBegin?.Invoke(CurrentRenderContext);
     }
 
     public void FrameEnd()
     {
-        OnFrameEnd?.Invoke(_context);
+        OnFrameEnd?.Invoke(CurrentRenderContext);
 
-        _context.EndRenderPass();
-        _context.EndRecording();
+        CurrentRenderContext.EndRenderPass();
+        CurrentRenderContext.EndRecording();
 
         _frameNumber++;
     }

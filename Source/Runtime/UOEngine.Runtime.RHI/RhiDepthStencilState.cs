@@ -15,7 +15,7 @@ public struct RhiDepthStencilState
 
     public bool StencilEnable;
 
-    public string Name;
+    public string? Name;
 
     public static readonly RhiDepthStencilState None = new(
         "DepthStencilState.None",

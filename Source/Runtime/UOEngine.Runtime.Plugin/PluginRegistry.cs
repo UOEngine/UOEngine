@@ -93,11 +93,19 @@ public class PluginRegistry
         catch (ReflectionTypeLoadException ex)
         {
             var sb = new StringBuilder();
+
             sb.AppendLine($"Error loading types from {assembly.FullName}:");
+
             foreach (var t in ex.Types)
+            {
                 sb.AppendLine($"Type: {t?.FullName ?? "(null)"}");
+            }
+
             foreach (var le in ex.LoaderExceptions)
-                sb.AppendLine($"LoaderException: {le.Message}");
+            {
+                sb.AppendLine($"LoaderException: {le?.Message ?? "None"}");
+            }
+
             Console.WriteLine(sb.ToString());
 
             return;
@@ -191,7 +199,15 @@ public class PluginRegistry
 
 public static class PluginRegistrationExtensions
 {
-    public static PluginRegistry CurrentRegistry { get; set; }
+    public static PluginRegistry CurrentRegistry => 
+        _currentRegistry ?? throw new InvalidOperationException("PluginRegistry has not been initialised.");
+
+    private static PluginRegistry? _currentRegistry;
+
+    public static void Initialise(PluginRegistry registry)
+    {
+        _currentRegistry = registry;
+    }
 
     public static void AddPlugin<T>(this IServiceCollection services) where T : class, IPlugin
     {

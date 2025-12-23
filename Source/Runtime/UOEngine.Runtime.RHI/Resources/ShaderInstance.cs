@@ -14,7 +14,7 @@ public struct ShaderBindingData
     public readonly byte[] Buffer;
 
     //[FieldOffset(0)]
-    public IRenderTexture Texture;
+    public IRenderTexture? Texture;
 
     public ShaderBindingData(uint bufferLength)
     {
@@ -93,7 +93,7 @@ public struct ShaderBindingDataEntry
     {
         Debug.Assert(InputType == RhiShaderInputType.Texture);
 
-        return Data.Texture;
+        return Data.Texture!;
 
     }
 
