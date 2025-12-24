@@ -5,7 +5,6 @@
   <Folder Name="/Developer/">
     <Project Path="Source/Developer/UOEngine.Developer.RenderDoc/UOEngine.Developer.RenderDoc.csproj" Id="d6a4b4a7-9a45-49b0-8437-8b47ad124848">
       <Platform Project="x64" />
-      <Build Solution="Release|*" Project="false" />
     </Project>
   </Folder>
   <Folder Name="/Editor/">
@@ -15,7 +14,6 @@
     </Project>
     <Project Path="Source/Editor/UOEngine.Editor.CentredSharp/UOEngine.Editor.CentredSharp.csproj" Id="d5831f99-a0c3-40ce-baf0-7d80ed6ee7f8">
       <Platform Project="x64" />
-      <Build Solution="Release|*" Project="false" />
     </Project>
     <Project Path="Source/Editor/UOEngine.Editor/UOEngine.Editor.csproj">
       <Platform Project="x64" />
@@ -35,7 +33,6 @@
     </Project>
     <Project Path="Source/Runtime/UOEngine.Runtime.FnaAdapter/UOEngine.Runtime.FnaAdapter.csproj" Id="eced9802-c0cd-4678-bb5b-c557837702e5">
       <Platform Project="x64" />
-      <Build Solution="Release|*" Project="false" />
     </Project>
     <Project Path="Source/Runtime/UOEngine.Runtime.Image/UOEngine.Runtime.Image.csproj" Id="aae4904f-f838-460f-8f4a-dfc097ce4be2">
       <Platform Project="x64" />
@@ -61,30 +58,24 @@
   </Folder>
   <Folder Name="/Shaders/" />
   <Folder Name="/ThirdParty/">
+    <File Path="ThirdParty/Directory.Build.Props" />
     <Project Path="ThirdParty/FAudio/csharp/FAudio-CS.Core.csproj">
       <Platform Project="x64" />
     </Project>
-    <Project Path="ThirdParty/SDL3-CS/SDL3/SDL3.Core.csproj">
-      <Platform Solution="Debug|*" Project="x64" />
-    </Project>
+    <Project Path="ThirdParty/SDL3-CS/SDL3/SDL3.Core.csproj" />
     <Project Path="ThirdParty/Theorafile/csharp/Theorafile-CS.Core.csproj">
       <Platform Project="x64" />
     </Project>
   </Folder>
   <Folder Name="/ThirdParty/CentrEDSharp/">
-    <Project Path="ThirdParty/centredsharp/CentrED/CentrED.csproj">
-      <Platform Project="x64" />
-      <Build Solution="Release|*" Project="false" />
-    </Project>
+    <Project Path="ThirdParty/centredsharp/CentrED/CentrED.csproj" />
     <Project Path="ThirdParty/centredsharp/Client/Client.csproj" />
     <Project Path="ThirdParty/centredsharp/external/FontStashSharp/src/FontStashSharp/FontStashSharp.csproj" />
     <Project Path="ThirdParty/centredsharp/Server/Server.csproj" />
     <Project Path="ThirdParty/centredsharp/Shared/Shared.csproj" />
   </Folder>
   <Folder Name="/ThirdParty/ClassicUO/">
-    <Project Path="ThirdParty/ClassicUO/src/ClassicUO.Renderer/ClassicUO.Renderer.csproj">
-      <Platform Project="x64" />
-    </Project>
+    <Project Path="ThirdParty/ClassicUO/src/ClassicUO.Renderer/ClassicUO.Renderer.csproj" />
   </Folder>
   <Folder Name="/Ultima/">
     <Project Path="Source/Ultima/UOEngine.PackageFile/UOEngine.Ultima.PackageFile.csproj">

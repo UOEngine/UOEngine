@@ -1,5 +1,6 @@
 ﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
+using SharpGen.Runtime;
 using System.Runtime.InteropServices;
 
 using UOEngine.Runtime.RHI;
@@ -70,7 +71,7 @@ internal class SDL3GPUTexture: Sdl3GpuResource, IRenderTexture
 
     public Span<T> GetTexelsAs<T>() where T: unmanaged
     {
-        return MemoryMarshal.Cast<byte, T>(Texels);
+        return MemoryMarshal.Cast<byte, T>(Texels.AsSpan());
     }
 
     public void Upload() => Upload(0, 0, Width, Height);

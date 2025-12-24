@@ -1,7 +1,7 @@
 <Project>
 	<PropertyGroup>
+		<NoWarn>$(NoWarn);CS0108</NoWarn>
+		<NoWarn>$(NoWarn);CS0168</NoWarn>
 		<NoWarn>$(NoWarn);CS0169;CS0414;CS0618;CS0642;NU151;CS8618;NU1510;CS8509;CS8600;CS8625;CS8601;CS8602;CS8603;CS8604</NoWarn>
-		<Platforms>x64</Platforms>
-		<PlatformTarget>x64</PlatformTarget>
 	</PropertyGroup>
 </Project>

@@ -16,5 +16,5 @@ internal class Sdl3GpuIndexBuffer: Sdl3GpuBuffer, IRhiIndexBuffer
         NumIndices = length;
     }
 
-    public void SetData(ReadOnlySpan<ushort> data) => data.CopyTo(MemoryMarshal.Cast<byte, ushort>(Data));
+    public void SetData(ReadOnlySpan<ushort> data) => data.CopyTo(MemoryMarshal.Cast<byte, ushort>(Data.AsSpan()));
 }
