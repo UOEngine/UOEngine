@@ -21,6 +21,12 @@
 		<DebugType>pdbonly</DebugType>
 	</PropertyGroup>
 
+	<!--To debug release if issues-->
+	<!--<PropertyGroup Condition="'$(Configuration)' == 'Release'">
+		<Optimize>false</Optimize>
+		<DebugType>pdbonly</DebugType>
+	</PropertyGroup>-->
+
 	<PropertyGroup>
 		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 		<GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>

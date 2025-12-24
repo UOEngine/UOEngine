@@ -5,7 +5,7 @@ using SixLabors.ImageSharp.PixelFormats;
 
 namespace UOEngine.Runtime.Image;
 
-public class Image2
+public class ImageFile
 {
     public static void SaveAsPng(string filename, ReadOnlySpan<byte> texels, uint width, uint height)
     {
