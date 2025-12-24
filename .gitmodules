@@ -19,3 +19,6 @@
 [submodule "ThirdParty/Theorafile"]
 	path = ThirdParty/Theorafile
 	url = https://github.com/FNA-XNA/Theorafile.git
+[submodule "ThirdParty/Avalonia"]
+	path = ThirdParty/Avalonia
+	url = https://github.com/AvaloniaUI/Avalonia.git

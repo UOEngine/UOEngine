@@ -28,6 +28,9 @@
     </Project>
   </Folder>
   <Folder Name="/Runtime/">
+    <Project Path="Source/Runtime/UOEngine.Runtime.AvaloniaUI/UOEngine.Runtime.AvaloniaUI.csproj" Id="1801bf53-9ebc-43a9-b749-a6259e9a4ad6">
+      <Platform Project="x64" />
+    </Project>
     <Project Path="Source/Runtime/UOEngine.Runtime.Core/UOEngine.Runtime.Core.csproj" Id="cf99cafa-d9ec-4dcf-a635-947b2299e8df">
       <Platform Project="x64" />
     </Project>
@@ -67,6 +70,7 @@
       <Platform Project="x64" />
     </Project>
   </Folder>
+  <Folder Name="/ThirdParty/Avalonia/" />
   <Folder Name="/ThirdParty/CentrEDSharp/">
     <Project Path="ThirdParty/centredsharp/CentrED/CentrED.csproj" />
     <Project Path="ThirdParty/centredsharp/Client/Client.csproj" />
