@@ -13,7 +13,8 @@ public class PluginRegistry
     private readonly Queue<Type> _configureQueue = [];
 
     private sealed record PluginDescriptor(Type Type, IReadOnlyList<Type> Dependencies);
-    private readonly List<PluginDescriptor> _pluginDescriptors = new();
+    private readonly List<PluginDescriptor> _pluginDescriptors = [];
+    private readonly List<ServiceDescriptor> _serviceDescriptors = [];
 
     public bool LoadPlugin(Type pluginType)
     {
@@ -113,25 +114,36 @@ public class PluginRegistry
             return;
         }
 
-        foreach (var type in types)
+        var entryTypes = types.Where(type => type.GetCustomAttribute<PluginEntryAttribute>() != null).ToArray();
+
+        if(entryTypes.Length == 0)
         {
-            if (typeof(IPlugin).IsAssignableFrom(type) == false)
-            {
-                continue; // skip non-plugins
-            }
-
-            if (type.IsAbstract || !type.IsClass)
-            {
-                continue;
-            }
-
-            if (LoadPlugin(type))
-            {
-                Console.WriteLine($"Added plugin {pluginAssemblyPath} for registration.");
-            }
+            Console.WriteLine($"No [PluginEntry] type found in {assembly.FullName}");
 
             return;
         }
+
+        if(entryTypes.Length > 1)
+        {
+            Console.WriteLine($"Multiple [PluginEntry] types found in {assembly.FullName}: {string.Join(",", entryTypes.Select(t => t.FullName))}");
+
+            return;
+        }
+
+        var entryType = entryTypes[0];
+
+        if(typeof(IPlugin).IsAssignableFrom(entryType) == false || entryType.IsAbstract)
+        {
+            Console.WriteLine($"$[PluginEntry] type {entryType.FullName} is not a non-abstract IPlugin.");
+
+            return;
+        }
+
+        if (LoadPlugin(entryType))
+        {
+            Console.WriteLine($"Added plugin {pluginAssemblyPath} for registration.");
+        }
+
     }
 
     public void Build(ServiceCollection services)
@@ -139,6 +151,9 @@ public class PluginRegistry
         while(_configureQueue.Count > 0)
         {
             var type = _configureQueue.Dequeue();
+
+            AutoRegisterServices(type.Assembly, services);
+
             var configure = type.GetMethod("ConfigureServices", BindingFlags.Public | BindingFlags.Static);
 
             if (configure == null)
@@ -194,6 +209,34 @@ public class PluginRegistry
         if (incoming.Any(kv => kv.Value.Count > 0))
         {
             throw new InvalidOperationException("Plugin dependency cycle detected.");
+        }
+    }
+
+    private static void AutoRegisterServices(Assembly assembly, IServiceCollection services)
+    {
+        Type[] types;
+
+        try
+        {
+            types = assembly.GetTypes();
+        }
+        catch (ReflectionTypeLoadException ex)
+        {
+            types = ex.Types.Where(t => t != null).Cast<Type>().ToArray();
+        }
+
+        foreach (var type in types)
+        {
+            if (!type.IsClass || type.IsAbstract)
+            {
+                continue;
+            }
+
+            foreach (var attr in type.GetCustomAttributes<ServiceAttribute>())
+            {
+                var serviceType = attr.ServiceType ?? type;
+                services.Add(new ServiceDescriptor(serviceType, type, attr.Lifetime));
+            }
         }
     }
 

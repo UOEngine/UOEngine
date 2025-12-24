@@ -6,9 +6,11 @@ using static SDL3.SDL;
 
 using UOEngine.Runtime.RHI;
 using UOEngine.Runtime.SDL3GPU.Resources;
+using UOEngine.Runtime.Plugin;
 
 namespace UOEngine.Runtime.SDL3GPU;
 
+[Service(UOEServiceLifetime.Singleton, typeof(IRenderResourceFactory))]
 internal class SDL3GPUResourceFactory : IRenderResourceFactory
 {
     private readonly Sdl3GpuDevice _device;

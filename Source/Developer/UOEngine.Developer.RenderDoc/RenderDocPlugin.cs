@@ -5,6 +5,7 @@ using UOEngine.Runtime.Plugin;
 
 namespace UOEngine.Developer.RenderDoc;
 
+[PluginEntry]
 public class RenderDocPlugin: IPlugin
 {
     private RenderDoc _renderDoc = new();

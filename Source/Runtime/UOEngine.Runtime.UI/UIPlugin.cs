@@ -10,6 +10,7 @@ using UOEngine.Runtime.RHI.Resources;
 
 namespace UOEngine.Runtime.UI;
 
+[PluginEntry]
 public class UIPlugin : IPlugin
 {
     private readonly RenderSystem _rendererSystem;

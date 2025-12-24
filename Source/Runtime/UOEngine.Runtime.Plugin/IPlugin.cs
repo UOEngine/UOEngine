@@ -10,13 +10,6 @@ public enum PluginLoadingPhase
     Default
 }
 
-[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-public sealed class PluginDependencyAttribute : Attribute
-{
-    public Type Dependency { get; }
-    public PluginDependencyAttribute(Type dependency) => Dependency = dependency;
-}
-
 public interface IPlugin
 {
     public PluginLoadingPhase Priority => PluginLoadingPhase.Default;

@@ -12,6 +12,7 @@ using CentredApplication = CentrED.Application;
 
 namespace UOEngine.Editor.CentredSharp;
 
+[PluginEntry]
 [PluginDependency(typeof(FnaAdapterPlugin))]
 public class CentrEdSharpPlugin: IPlugin
 {

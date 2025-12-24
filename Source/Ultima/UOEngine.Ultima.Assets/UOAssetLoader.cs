@@ -1,8 +1,13 @@
-﻿using System.Diagnostics;
+﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+using System.Diagnostics;
+
+using UOEngine.Runtime.Plugin;
 using UOEngine.Ultima.PackageFile;
 
 namespace UOEngine.Ultima.UOAssets;
 
+[Service(UOEServiceLifetime.Singleton)]
 public class UOAssetLoader
 {
     public UOPackageFile Gumps { get; private set; } = null!;

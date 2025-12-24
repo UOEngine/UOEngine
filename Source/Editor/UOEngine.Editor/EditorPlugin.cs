@@ -12,6 +12,7 @@ using UOEngine.Ultima.UOAssets;
 
 namespace UOEngine.Editor;
 
+[PluginEntry]
 internal class UO3DApplication : IPlugin
 {
     private RhiShaderResource _shaderResource = null!;

@@ -1,7 +1,6 @@
 ﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using System.Diagnostics;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using UOEngine.Runtime.Core;
@@ -12,6 +11,7 @@ using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Runtime.FnaAdapter;
 
+[PluginEntry]
 public class FnaAdapterPlugin: IPlugin
 {
     public PluginLoadingPhase Priority => PluginLoadingPhase.Runtime;
@@ -56,11 +56,6 @@ public class FnaAdapterPlugin: IPlugin
                 game.Tick2();
             }
         };
-    }
-
-    public static void ConfigureServices(IServiceCollection services) 
-    {
-        services.AddSingleton<Remapper>();
     }
 
     public void PostStartup() 

@@ -3,6 +3,7 @@
 using System.IO.Hashing;
 
 using Microsoft.Xna.Framework.Graphics;
+using UOEngine.Runtime.Plugin;
 using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Runtime.FnaAdapter;
@@ -43,6 +44,7 @@ public struct UOEEffect
     public UOEEffectTechnique[] Techniques;
 }
 
+[Service(UOEServiceLifetime.Singleton)]
 public class Remapper
 {
     private Dictionary<uint, UOEEffect> _effectsByOriginalByteCodeHash = [];
