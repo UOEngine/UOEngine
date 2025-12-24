@@ -32,9 +32,9 @@ public class UOPackageFile : IDisposable
 
     public ReadOnlySpan<UOFileIndex> FileIndices => _fileIndices;
 
-    public MemoryMappedViewStream? Stream { get; private set; }
+    public MemoryMappedViewStream Stream => _stream ?? throw new InvalidOperationException("Stream has not been initialised.");
 
-    public BinaryReader? Reader { get; private set; }
+    public BinaryReader Reader => _reader ?? throw new InvalidOperationException("Reader has not been initialised.");
 
     public bool Exists => _fileInfo.Exists;
 
@@ -48,6 +48,9 @@ public class UOPackageFile : IDisposable
     private MemoryMappedFile? _file;
     private FileInfo _fileInfo;
     private UOPackageFile? _idxFile;
+
+    private BinaryReader? _reader;
+    private MemoryMappedViewStream? _stream;
 
     public UOPackageFile(string path)
     {
@@ -95,9 +98,9 @@ public class UOPackageFile : IDisposable
             return;
         }
 
-        Stream = _file.CreateViewStream(0, size, MemoryMappedFileAccess.Read);
+        _stream = _file.CreateViewStream(0, size, MemoryMappedFileAccess.Read);
 
-        Reader = new BinaryReader(Stream);
+        _reader = new BinaryReader(Stream);
     }
 
     public T Deserialise<T>(IUOAssetDeserialiser<T> deserialiser)
@@ -141,7 +144,7 @@ public class UOPackageFile : IDisposable
         {
             string uopPattern = Path.GetFileNameWithoutExtension(_fileInfo.Name).ToLowerInvariant();
 
-            Reader = new BinaryReader(Stream);
+            _reader = new BinaryReader(Stream);
 
             if (_fileInfo.Extension == ".mul")
             {

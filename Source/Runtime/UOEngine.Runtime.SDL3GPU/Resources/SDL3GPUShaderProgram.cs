@@ -1,9 +1,11 @@
-﻿using System.Diagnostics;
+﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+using System.Diagnostics;
 using System.Text;
 
 using static SDL3.SDL;
 
-using UOEngine.Runtime.RHI.Resources;
+using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Runtime.SDL3GPU.Resources;
 
@@ -17,6 +19,8 @@ internal class SDL3GPUShaderProgram: Sdl3GpuResource
     public SDL3GPUShaderProgram(Sdl3GpuDevice device, ShaderProgramType type, in ShaderProgramCompileResult compileResult)
         : base(device)
     {
+        Debug.Assert(device.Handle != IntPtr.Zero);
+
         Type = type;
 
         SDL_GPUShaderStage stage = SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_VERTEX;
@@ -31,13 +35,12 @@ internal class SDL3GPUShaderProgram: Sdl3GpuResource
         StreamBindings = compileResult.StreamBindings;
         InputBindings = compileResult.ShaderBindings;
 
-        string entryName = "main";
-        Span<byte> span = Encoding.ASCII.GetBytes(entryName);
+        Span<byte> entryPointNameAsBytes = Encoding.ASCII.GetBytes(compileResult.EntryPointName);
 
         unsafe
         {
             fixed(byte* code = &compileResult.ByteCode[0])
-            fixed (byte* p = span)
+            fixed (byte* p = entryPointNameAsBytes)
             {
                 var createInfo = new SDL_GPUShaderCreateInfo()
                 {
@@ -45,7 +48,7 @@ internal class SDL3GPUShaderProgram: Sdl3GpuResource
                     code_size = (UIntPtr)compileResult.ByteCode.Length,
                     entrypoint = p,
                     stage = stage,
-                    format = SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_DXIL,
+                    format = device.ShaderFormat,
                     num_uniform_buffers = (uint)compileResult.ShaderBindings.Count(p => p.InputType == RhiShaderInputType.Constant),
                     num_samplers = (uint)compileResult.ShaderBindings.Count(p => p.InputType == RhiShaderInputType.Sampler),
                 };

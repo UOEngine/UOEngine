@@ -1,0 +1,60 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+	  <PlatformTarget>x64</PlatformTarget>
+	  <Platforms>x64</Platforms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\ThirdParty\centredsharp\CentrED\CentrED.csproj" />
+    <ProjectReference Include="..\..\..\ThirdParty\centredsharp\Server\Server.csproj" />
+    <ProjectReference Include="..\..\..\ThirdParty\centredsharp\Shared\Shared.csproj" />
+    <ProjectReference Include="..\..\Runtime\UOEngine.Runtime.Core\UOEngine.Runtime.Core.csproj" />
+    <ProjectReference Include="..\..\Runtime\UOEngine.Runtime.FnaAdapter\UOEngine.Runtime.FnaAdapter.csproj" />
+    <ProjectReference Include="..\..\Runtime\UOEngine.Runtime.Plugin\UOEngine.Runtime.Plugin.csproj" />
+  </ItemGroup>
+
+	<!-- We need the below to copy what was in Centred. Taken from the original CentrED csproj -->
+
+	<PropertyGroup>
+		<CentredSharpDir>$(UoEngineThirdParty)\centredsharp</CentredSharpDir>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<DataFiles Include="$(CentredSharpDir)\lib\dotnet\*.*" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(IsWindows)' == 'true'">
+		<DataFiles Include="$(CentredSharpDir)\lib\x64\*.*" />
+	</ItemGroup>
+
+	<!--<Target Name="Display" BeforeTargets="CopyCentredSharpDependencies">
+		<Message Importance="High"
+				  Text="Source=%(DataFiles.Identity)
+                 RecursiveDir=%(DataFiles.RecursiveDir)
+                 Filename=%(DataFiles.Filename)
+                 Extension=%(DataFiles.Extension)
+				 $(CentredSharpDir)" />
+	</Target>-->
+
+	<ItemGroup Condition="'$(IsLinux)' == 'true'">
+		<DataFiles Include="$(CentredSharpDir)\lib\lib64\*.*" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(IsMacOS)' == 'true'">
+		<DataFiles Include="$(CentredSharpDir)\lib\osx\*.*" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Languages Include="$(CentredSharpDir)\CentrED\Data\Languages\*.txt" />
+	</ItemGroup>
+
+
+	<Target Name="CopyCentredSharpDependencies" AfterTargets="Build">
+		<Copy SourceFiles="@(Languages)" DestinationFiles="@(Languages->'$(OutDir)/Languages/%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+		<Copy SourceFiles="@(DataFiles)" DestinationFiles="@(DataFiles->'$(OutDir)/%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+	</Target>
+
+</Project>

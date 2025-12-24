@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
@@ -17,11 +16,8 @@
   </ItemGroup>
 
     <ItemGroup>
-    	<None Include="$(UoEngineThirdParty)ImGui.NET\deps\cimgui\win-x64\cimgui.dll" CopyToOutputDirectory="PreserveNewest" />
-    </ItemGroup>
-
-    <ItemGroup>
       <PackageReference Include="Hexa.NET.ImGui" Version="2.2.9" />
+      <PackageReference Include="Hexa.NET.ImGui.Backends.SDL3" Version="1.0.18" />
     </ItemGroup>
 
 </Project>

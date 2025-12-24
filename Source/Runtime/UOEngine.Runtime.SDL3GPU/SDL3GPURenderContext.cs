@@ -1,12 +1,12 @@
-﻿using System.Diagnostics;
+﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 using static SDL3.SDL;
 
 using UOEngine.Runtime.RHI;
-using UOEngine.Runtime.RHI.Resources;
 using UOEngine.Runtime.SDL3GPU.Resources;
-using System.Buffers;
-using System.Runtime.CompilerServices;
 
 namespace UOEngine.Runtime.SDL3GPU;
 
@@ -16,46 +16,79 @@ internal class SDL3GPURenderContext: IRenderContext
 
     public ShaderInstance ShaderInstance
     {
-        get => _shaderInstance;
+        get => _shaderInstance ?? throw new InvalidOperationException("ShaderInstance is null");
         set 
         { 
-            if(_shaderInstance == value)
+            if(ReferenceEquals(_shaderInstance, value))
             {
                 return;
             }
 
             _shaderInstance = value;
-            _shaderInstanceDirty = true;
+
+            SetDirtyState(DirtyState.ShaderParams);
         }
     }
 
-    public IGraphicsPipeline GraphicsPipline 
+    public IRhiGraphicsPipeline GraphicsPipline 
     {
-        get => _graphicsPipeline;
         set
         {
-            if (_graphicsPipeline == value)
+            if (ReferenceEquals(_graphicsPipeline, value))
             {
                 return;
             }
 
             _graphicsPipeline = (Sdl3GpuGraphicsPipeline)value;
-            _pipelineDirty = true;
+
+            SetDirtyState(DirtyState.Pipeline);
         }
     }
 
-    public IRenderIndexBuffer IndexBuffer
+    public IRhiIndexBuffer? IndexBuffer
     {
-        get => _indexBuffer;
         set
         {
-            if (_indexBuffer == value)
+            if (ReferenceEquals(_indexBuffer, value))
             {
                 return;
             }
 
-            _indexBuffer = (Sdl3GpuIndexBuffer)value;
-            _indexBufferDirty = true;
+            if(value == null)
+            {
+                _indexBuffer = null;
+            }
+            else
+            {
+
+                _indexBuffer = (Sdl3GpuIndexBuffer)value;
+            }
+
+            SetDirtyState(DirtyState.IndexBuffer);
+        }
+    }
+
+    public IRhiVertexBuffer VertexBuffer
+    {
+        get => _vertexBuffer ?? throw new InvalidOperationException("VertexBuffer is not set");
+        set
+        {
+            if (ReferenceEquals(_vertexBuffer, value))
+            {
+                return;
+            }
+
+            if(value == null)
+            {
+                _vertexBuffer = null;
+            }
+            else
+            {
+                _vertexBuffer = (Sdl3GpuVertexBuffer)value;
+            }
+
+
+            SetDirtyState(DirtyState.VertexBuffer);
         }
     }
 
@@ -76,21 +109,52 @@ internal class SDL3GPURenderContext: IRenderContext
         }
     }
 
+    public RhiSampler Sampler
+    {
+        get => _sampler;
+        set
+        {
+            if (_sampler == value)
+            {
+                return;
+            }
+
+            _sampler = value;
+        }
+    }
+
     private IntPtr _renderPass;
-    private ShaderInstance _shaderInstance;
+    private ShaderInstance? _shaderInstance;
     private Sdl3GpuGraphicsPipeline? _graphicsPipeline;
     private readonly Sdl3GpuDevice _device;
 
-    private bool _pipelineDirty = true;
-    private bool _indexBufferDirty = true;
-    private bool _shaderInstanceDirty = true;
+    private DirtyState _dirtyState = DirtyState.All;
 
     private RenderPassInfo? _activeRenderPass;
 
-    private Sdl3GpuIndexBuffer _indexBuffer;
+    private Sdl3GpuIndexBuffer? _indexBuffer;
+    private Sdl3GpuVertexBuffer? _vertexBuffer;
     private ModelViewProjection _sceneView;
 
     private readonly Sdl3GpuGlobalSamplers _globalSamplers;
+
+    private readonly Dictionary<RhiGraphicsPipelineDescription, Sdl3GpuGraphicsPipeline> _pipelineCache = [];
+
+    private RhiGraphicsPipelineDescription _currentPipelineDescription;
+    private Sdl3GpuGraphicsPipeline? _currentPipeline;
+
+    private RhiSampler _sampler;
+
+    [Flags]
+    private enum DirtyState
+    {
+        None =              0,
+        Pipeline =     1 << 0,
+        VertexBuffer = 1 << 1,
+        IndexBuffer =  1 << 2,
+        ShaderParams = 1 << 3,
+        All = Pipeline|VertexBuffer|IndexBuffer|ShaderParams
+    }
 
     public SDL3GPURenderContext(Sdl3GpuDevice device, Sdl3GpuGlobalSamplers globalSamplers)
     {
@@ -104,8 +168,9 @@ internal class SDL3GPURenderContext: IRenderContext
 
         _graphicsPipeline = null;
         _activeRenderPass = null;
-        _pipelineDirty = true;
         _indexBuffer = null;
+
+        SetDirtyState(DirtyState.All);
 
         Debug.Assert(RecordedCommands != IntPtr.Zero);
     }
@@ -158,38 +223,48 @@ internal class SDL3GPURenderContext: IRenderContext
         _activeRenderPass = null;
     }
 
-    public void DrawIndexedPrimitives(uint numInstances)
+    public void DrawIndexedPrimitives(uint numIndices, uint numInstances, uint firstIndex, uint vertexOffset, uint firstInstance)
     {
-        if(_pipelineDirty)
+        if(numIndices == 24570)
         {
-            SDL_BindGPUGraphicsPipeline(_renderPass, _graphicsPipeline.Handle);
-
-            _pipelineDirty = false;
-            _shaderInstanceDirty = true;
+            ;
         }
 
-        if(_indexBufferDirty)
-        {
-            _indexBuffer.Bind(_renderPass);
+       FlushIfNeeded();
 
-            _indexBufferDirty = false;
-        }
+       SDL_DrawGPUIndexedPrimitives(_renderPass, numIndices, numInstances, firstIndex, (int)vertexOffset, firstInstance);
 
-        if(_shaderInstanceDirty)
-        {
-            BindShaderParameters();
-
-            _shaderInstanceDirty = false;
-        }
-        
-        SDL_DrawGPUIndexedPrimitives(_renderPass, (uint)_indexBuffer.Data.Length, numInstances, 0, 0, 0);
     }
 
-    private void BindShaderParameters()
+    public void SetGraphicsPipeline(in RhiGraphicsPipelineDescription graphicsPipelineDescription)
+    {
+        if (graphicsPipelineDescription == _currentPipelineDescription)
+        {
+            return;
+        }
+
+        SetDirtyState(DirtyState.Pipeline);
+        SetDirtyState(DirtyState.ShaderParams);
+
+        ShaderInstance = graphicsPipelineDescription.Shader;
+        _currentPipelineDescription = graphicsPipelineDescription;
+    }
+
+    public void SetSampler(in RhiSampler sampler)
+    {
+        _sampler = sampler;
+    }
+
+    public void WaitForGpuIdle()
+    {
+        _device.WaitForGpuIdle();
+    }
+
+    private void BindShaderParameters(bool forceRebind)
     {
         for(int i = 0; i < (int)ShaderProgramType.Count; i++)
         {
-            ref var bindings = ref _shaderInstance.BindingData[i].Bindings;
+            ref var bindings = ref ShaderInstance.BindingData[i].Bindings;
 
             if(bindings is null)
             {
@@ -200,13 +275,13 @@ internal class SDL3GPURenderContext: IRenderContext
             {
                 case ShaderProgramType.Vertex:
                     {
-                        BindParametersForVertexProgram(bindings);
+                        BindParametersForVertexProgram(bindings, forceRebind);
 
                         break;
                     }
                 case ShaderProgramType.Pixel:
                     {
-                        BindParametersForPixelProgram(bindings);
+                        BindParametersForPixelProgram(bindings, forceRebind);
 
                         break;
                     }
@@ -216,11 +291,16 @@ internal class SDL3GPURenderContext: IRenderContext
         }
     }
 
-    private void BindParametersForVertexProgram(ShaderBindingDataEntry[] bindingEntries)
+    private void BindParametersForVertexProgram(ShaderBindingDataEntry[] bindingEntries, bool forceRebind)
     {
         for(int i = 0; i < bindingEntries.Length; i++)
         {
             ref var entry = ref bindingEntries[i];
+
+            if((entry.Dirty == false) && (forceRebind == false))
+            {
+                continue;
+            }
 
             switch(entry.InputType)
             {
@@ -241,47 +321,106 @@ internal class SDL3GPURenderContext: IRenderContext
                 default:
                     throw new UnreachableException("BindParametersForVertexProgram: Unhandled input type");
             }
+
+            entry.Dirty = false;
         }
     }
 
-    private void BindParametersForPixelProgram(ShaderBindingDataEntry[] bindingEntries)
+    private void BindParametersForPixelProgram(ShaderBindingDataEntry[] bindingEntries, bool forceRebind)
     {
-        Span<SDL_GPUTextureSamplerBinding> samplerBindings = stackalloc SDL_GPUTextureSamplerBinding[1];
+        Span<SDL_GPUTextureSamplerBinding> samplerBindings = stackalloc SDL_GPUTextureSamplerBinding[bindingEntries.Length / 2];
 
-        var samplerBinding = new SDL_GPUTextureSamplerBinding();
+        uint numBindings = 0;
 
-        int i = 0;
-        int numTextures = 0;
-
-        foreach (var entry in bindingEntries)
+        for(int i = 0;  i < bindingEntries.Length; i++)
         {
-            switch(entry.InputType)
+            ref var entry = ref bindingEntries[i];
+
+            if ((entry.Dirty == false) && (forceRebind == false))
+            {
+                continue;
+            }
+
+            switch (entry.InputType)
             {
                 case RhiShaderInputType.Texture:
                     {
-                        samplerBinding.texture = entry.Texture.Handle;
-                        
+                        samplerBindings[(int)entry.BindingIndex].texture = entry.Texture.Handle;
+
+                        if(samplerBindings[(int)entry.BindingIndex].sampler == IntPtr.Zero)
+                        {
+                            samplerBindings[(int)entry.BindingIndex].sampler = _globalSamplers.GetSampler(_sampler).Handle;
+                        }
+
+                        numBindings++;
+
                         break;
                     }
 
                 case RhiShaderInputType.Sampler:
                     {
-                        samplerBinding.sampler = _globalSamplers.GetSampler(entry.Sampler).Handle;
+                        samplerBindings[(int)entry.BindingIndex].sampler = _globalSamplers.GetSampler(_sampler).Handle;
                         break;
                     }
                 default:
                     throw new UnreachableException("BindParametersForPixelProgram: Unhandled input type");
             }
 
-            i++;
+            entry.Dirty = false;
+        }
 
-            if(i % 2 == 0)
+        SDL_BindGPUFragmentSamplers(_renderPass,  0, samplerBindings, numBindings);
+    }
+
+    private void FlushIfNeeded()
+    {
+        if (IsStateDirty(DirtyState.VertexBuffer))
+        {
+            _vertexBuffer!.Bind(_renderPass);
+
+            ClearDirtyState(DirtyState.VertexBuffer);
+
+            if(_currentPipelineDescription.VertexLayout != _vertexBuffer.VertexDefinition)
             {
-                samplerBindings[numTextures++] = samplerBinding;
+                _currentPipelineDescription.VertexLayout = _vertexBuffer.VertexDefinition;
+
+                SetDirtyState(DirtyState.Pipeline);
             }
         }
 
-        SDL_BindGPUFragmentSamplers(_renderPass,  0, samplerBindings, (uint)samplerBindings.Length);
+        if (IsStateDirty(DirtyState.Pipeline))
+        {
+            if (_pipelineCache.TryGetValue(_currentPipelineDescription, out _graphicsPipeline) == false)
+            {
+                _graphicsPipeline = new Sdl3GpuGraphicsPipeline(_device, _currentPipelineDescription);
+
+                _pipelineCache.Add(_currentPipelineDescription, _graphicsPipeline);
+            }
+
+            SDL_BindGPUGraphicsPipeline(_renderPass, _graphicsPipeline.Handle);
+
+            SetDirtyState(DirtyState.ShaderParams);
+            ClearDirtyState(DirtyState.Pipeline);
+        }
+
+        if (IsStateDirty(DirtyState.IndexBuffer))
+        {
+            _indexBuffer!.Bind(_renderPass);
+
+            ClearDirtyState(DirtyState.IndexBuffer);
+        }
+
+        bool fullRebind = IsStateDirty(DirtyState.ShaderParams);
+
+        BindShaderParameters(fullRebind);
+
+        ClearDirtyState(DirtyState.ShaderParams);
     }
+
+    private void SetDirtyState(DirtyState flags) => _dirtyState |= flags;
+
+    private bool IsStateDirty(DirtyState flags) => (_dirtyState & flags) != 0;
+
+    private void ClearDirtyState(DirtyState flags) => _dirtyState &= ~flags;
 
 }

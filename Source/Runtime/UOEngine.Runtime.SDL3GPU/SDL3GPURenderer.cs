@@ -1,4 +1,6 @@
-﻿using static SDL3.SDL;
+﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+using static SDL3.SDL;
 
 using UOEngine.Runtime.Platform;
 using UOEngine.Runtime.RHI;
@@ -8,13 +10,17 @@ namespace UOEngine.Runtime.SDL3GPU;
 
 internal class SDL3GPURenderer : IRenderer
 {
-    public IRenderSwapChain SwapChain { get; private set; }
+    public IRenderSwapChain SwapChain => _swapchain ?? throw new InvalidOperationException("Swapchain is not initialised.");
 
     private readonly IWindow _window;
 
     private readonly Sdl3GpuDevice _device;
 
-    private Sdl3GpuGlobalSamplers _globalSamplers;
+    private Sdl3GpuGlobalSamplers GlobalSamplers => _globalSamplers ?? throw new InvalidOperationException("Global samplers not initialized.");
+
+    private Sdl3GpuGlobalSamplers? _globalSamplers;
+
+    private IRenderSwapChain? _swapchain;
 
     public SDL3GPURenderer(IWindow window, Sdl3GpuDevice device)
     {
@@ -26,13 +32,14 @@ internal class SDL3GPURenderer : IRenderer
     {
         _device.Setup();
 
-       if(SDL_ClaimWindowForGPUDevice(_device.Handle, _window.Handle) == false)
-       {
-            throw new Exception("Failed to claim window for GPU device.");
-       }
-
-        SwapChain = new SDL3GPUSwapChain(_device, _window.Handle);
         _globalSamplers = new Sdl3GpuGlobalSamplers(_device);
+
+        if (SDL_ClaimWindowForGPUDevice(_device.Handle, _window.Handle) == false)
+        {
+            throw new Exception("Failed to claim window for GPU device.");
+        }
+
+        _swapchain = new SDL3GPUSwapChain(_device, _window.Handle);
     }
 
     public void Shutdown()
@@ -42,6 +49,6 @@ internal class SDL3GPURenderer : IRenderer
 
     public IRenderContext CreateRenderContext()
     {
-        return new SDL3GPURenderContext(_device, _globalSamplers);
+        return new SDL3GPURenderContext(_device, GlobalSamplers);
     }
 }

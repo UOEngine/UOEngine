@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+// Licensed under the MIT License. See LICENSE file in the project root for details.
 namespace UOEngine.Runtime.RHI.Resources;
 
 public interface IRenderSwapChain
 {
     public TextureFormat BackbufferFormat { get; }
-    public RenderTarget? Acquire(IRenderContext context);
+    public RhiRenderTarget? Acquire(IRenderContext context);
 
 }

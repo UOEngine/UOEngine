@@ -1,15 +1,20 @@
-﻿using UOEngine.Runtime.RHI.Resources;
+﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+// Licensed under the MIT License. See LICENSE file in the project root for details.
 using static SDL3.SDL;
+
+using UOEngine.Runtime.RHI;
+using UOEngine.Runtime.Core;
 
 namespace UOEngine.Runtime.SDL3GPU.Resources;
 
 internal static class SamplerExtensionMethods
 {
-    public static SDL_GPUFilter ToSdl3GpuFilter(this SamplerFilter filter)
+    public static SDL_GPUFilter ToSdl3GpuFilter(this RhiSamplerFilter filter)
     {
         switch(filter)
         {
-            case SamplerFilter.Point: return SDL_GPUFilter.SDL_GPU_FILTER_NEAREST;
+            case RhiSamplerFilter.Point: return SDL_GPUFilter.SDL_GPU_FILTER_NEAREST;
+            case RhiSamplerFilter.Bilinear: return SDL_GPUFilter.SDL_GPU_FILTER_LINEAR;
             default:
                 throw new NotImplementedException("Unimplemented Sampler filter.");
         }
@@ -30,10 +35,15 @@ internal class Sdl3GpuSampler: Sdl3GpuResource
         _samplerCreateInfo = new SDL_GPUSamplerCreateInfo
         {
             min_filter = description.Filter.ToSdl3GpuFilter(),
-            mag_filter = description.Filter.ToSdl3GpuFilter()
+            mag_filter = description.Filter.ToSdl3GpuFilter(),
+            address_mode_u = MapAddressMode(description.AddressMode),
+            address_mode_v = MapAddressMode(description.AddressMode),
+            address_mode_w = MapAddressMode(description.AddressMode),
         };
 
         Handle = SDL_CreateGPUSampler(device.Handle, _samplerCreateInfo);
+
+        UOEDebug.Assert(Handle != IntPtr.Zero);
 
     }
 
@@ -41,4 +51,10 @@ internal class Sdl3GpuSampler: Sdl3GpuResource
     {
         SDL_ReleaseGPUSampler(Device.Handle, Handle);
     }
+
+    private static SDL_GPUSamplerAddressMode MapAddressMode(RhiTextureAddressMode m) => m switch
+    {
+        RhiTextureAddressMode.Clamp => SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
+        _ => throw new NotImplementedException(),
+    };
 }

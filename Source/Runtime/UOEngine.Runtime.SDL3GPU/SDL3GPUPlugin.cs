@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+using Microsoft.Extensions.DependencyInjection;
 using UOEngine.Runtime.Plugin;
 using UOEngine.Runtime.RHI;
 
@@ -10,7 +12,7 @@ public class SDL3GPUPlugin: IPlugin
 
     public SDL3GPUPlugin(IRenderer renderer)
     {
-        _renderer = renderer as SDL3GPURenderer;
+        _renderer = (SDL3GPURenderer)renderer;
     }
 
     public static void ConfigureServices(IServiceCollection services)

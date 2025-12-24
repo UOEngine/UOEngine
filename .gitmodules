@@ -7,9 +7,15 @@
 [submodule "ThirdParty/FNA"]
 	path = ThirdParty/FNA
 	url = https://github.com/FNA-XNA/FNA.git
-[submodule "ThirdParty/ImGui.NET"]
-	path = ThirdParty/ImGui.NET
-	url = https://github.com/ImGuiNET/ImGui.NET.git
 [submodule "ThirdParty/SDL3-CS"]
 	path = ThirdParty/SDL3-CS
 	url = https://github.com/flibitijibibo/SDL3-CS.git
+[submodule "ThirdParty/centredsharp"]
+	path = ThirdParty/centredsharp
+	url = https://github.com/UOEngine/centredsharp.git
+[submodule "ThirdParty/FAudio"]
+	path = ThirdParty/FAudio
+	url = https://github.com/FNA-XNA/FAudio.git
+[submodule "ThirdParty/Theorafile"]
+	path = ThirdParty/Theorafile
+	url = https://github.com/FNA-XNA/Theorafile.git

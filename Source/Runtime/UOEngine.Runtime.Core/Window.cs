@@ -1,11 +1,19 @@
-﻿using static SDL3.SDL;
+﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+using static SDL3.SDL;
 
 using UOEngine.Runtime.Platform;
 
 namespace UOEngine.Runtime.Core;
 
-public class Window: IWindow
+public class Window: IWindow, IDisposable
 {
+    public string WindowTitle
+    {
+        set => SDL_SetWindowTitle(Handle, value);
+        get => SDL_GetWindowTitle(Handle);
+    }
+
     public event Action<IWindow>? OnResized;
 
     public IntPtr Handle { get; private set; }
@@ -16,12 +24,16 @@ public class Window: IWindow
     public uint RenderTargetWidth { get; private set; }
     public uint RenderTargetHeight { get; private set; }
 
-    public void Startup()
+    private bool _disposed;
+
+    public void Startup(PlatformEventLoop eventLoop)
     {
-        if (!SDL_Init(SDL_InitFlags.SDL_INIT_VIDEO))
+        if (!SDL_Init(SDL_InitFlags.SDL_INIT_EVENTS))
         {
             throw new Exception("SDL_Init failed: " + SDL_GetError());
         }
+
+        eventLoop.OnWindowResized += OnWindowResize;
 
         string title = "UOEngine";
 
@@ -39,55 +51,46 @@ public class Window: IWindow
 
         UpdateRenderTargetSize();
 
+        eventLoop.RegisterWindow(this);
+
         // Win32 handle if needed
         //Handle = SDL.SDL_GetPointerProperty(SDL.SDL_GetWindowProperties(_sdlHandle), SDL.SDL_PROP_WINDOW_WIN32_HWND_POINTER, IntPtr.Zero);
 
     }
 
-    public bool PollEvents()
-    {
-        SDL_Event evt;
-
-        while (SDL_PollEvent(out evt))
-        {
-            switch ((SDL_EventType)evt.type)
-            {
-                case SDL_EventType.SDL_EVENT_QUIT:
-                    {
-                        return true;
-                    }
-
-                case SDL_EventType.SDL_EVENT_WINDOW_RESIZED:
-                    {
-                        Width = (uint)evt.window.data1;
-                        Height = (uint)evt.window.data2;
-
-                        UpdateRenderTargetSize();
-
-                        OnResized?.Invoke(this);
-
-                    }
-                    break;
-
-                default:
-                    break;
-            }
-        }
-
-        return false;
-    }
-
     public void UpdateRenderTargetSize()
     {
-        SDL_GetWindowSizeInPixels(Handle, out var width, out var height);
-
-        RenderTargetWidth = (uint)width;
-        RenderTargetHeight = (uint)height;
+        RenderTargetWidth = Width;
+        RenderTargetHeight = Height;
     }
 
     public void Dispose()
     {
+        Dispose(true);
+
+        GC.SuppressFinalize(this);
+    }
+
+    private void Dispose(bool disposing)
+    {
+        if(_disposed)
+        {
+            return;
+        }
+
         SDL_DestroyWindow(Handle);
         SDL_QuitSubSystem(SDL_InitFlags.SDL_INIT_VIDEO);
+
+        _disposed = true;
+    }
+
+    private void OnWindowResize(IWindow window, uint width, uint height)
+    {
+        Width = width;
+        Height = height;
+
+        UpdateRenderTargetSize();
+
+        OnResized?.Invoke(window);
     }
 }

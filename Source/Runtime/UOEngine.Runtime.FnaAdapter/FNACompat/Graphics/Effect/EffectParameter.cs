@@ -1,0 +1,139 @@
+﻿using System.Diagnostics;
+using System.Runtime.InteropServices;
+
+using UOEngine.Runtime.RHI;
+
+namespace Microsoft.Xna.Framework.Graphics;
+
+[DebuggerDisplay("{Name}")]
+public class EffectParameter
+{
+    internal readonly Effect Parent;
+    internal readonly ShaderVariable Info;
+    internal IntPtr values { get; private set; }
+
+    internal ReadOnlySpan<byte> Data => _data;
+
+    internal Texture? texture;
+
+    public string Name { get; }
+
+    private readonly byte[]? _data;
+    private readonly GCHandle _pinned;
+    private readonly int _offset;   // offset into the parent constant buffer
+
+
+    internal EffectParameter(Effect parent, string name, in ShaderVariable info)
+    {
+        Parent = parent;
+        Info = info;
+        Name = name;
+
+        _data = new byte[info.Size];
+        _pinned = GCHandle.Alloc(_data, GCHandleType.Pinned);
+
+        values = _pinned.AddrOfPinnedObject();
+    }
+
+    internal EffectParameter(Effect parent, string name, in ShaderParameter info)
+    {
+        // Should be a texture.
+        Debug.Assert(info.InputType == RhiShaderInputType.Texture);
+
+        Info.Type = RhiShaderVariableType.Invalid;
+
+        Parent = parent;
+        Name = name;
+    }
+
+    #region SetValue overloads
+
+    public unsafe void SetValue(float value)
+    {
+        unsafe
+        {
+            float* dstPtr = (float*)values;
+            *dstPtr = value;
+        }
+    }
+
+    public unsafe void SetValue(Vector3 value)
+    {
+        unsafe
+        {
+            fixed (byte* p = _data)
+            {
+                *((Vector3*)p) = value;
+            }
+        }
+    }
+
+    public unsafe void SetValue(Vector4 value)
+    {
+        unsafe
+        {
+            fixed (byte* p = _data)
+            {
+                *((Vector4*)p) = value;
+            }
+        }
+    }
+
+    public unsafe void SetValue(Matrix value)
+    {
+        // XNA uses Matrix as 4x4 floats in row-major
+        fixed (byte* p = _data)
+        {
+            *((Matrix*)p) = value;
+        }
+    }
+
+    public void SetValue(float[] values)
+    {
+        Buffer.BlockCopy(values, 0, Parent.Data.ConstantBuffer, (int)Info.Offset, (int)Info.Size);
+    }
+
+    public void SetValue(Texture value)
+    {
+        texture = value;
+    }
+
+    #endregion
+    public Texture2D GetValueTexture2D()
+    {
+        if (texture is not Texture2D tex2D)
+        {
+            throw new InvalidOperationException(
+                $"Expected Texture2D, got {texture?.GetType().Name ?? "null"}");
+
+        }
+
+        return tex2D;
+    }
+
+    public Matrix GetValueMatrix()
+    {
+        unsafe
+        {
+            float* resPtr = (float*)values;
+            return new Matrix(
+                resPtr[0],
+                resPtr[4],
+                resPtr[8],
+                resPtr[12],
+                resPtr[1],
+                resPtr[5],
+                resPtr[9],
+                resPtr[13],
+                resPtr[2],
+                resPtr[6],
+                resPtr[10],
+                resPtr[14],
+                resPtr[3],
+                resPtr[7],
+                resPtr[11],
+                resPtr[15]
+            );
+        }
+    }
+}

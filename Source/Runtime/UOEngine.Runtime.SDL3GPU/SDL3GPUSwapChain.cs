@@ -1,4 +1,6 @@
-﻿using static SDL3.SDL;
+﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+using static SDL3.SDL;
 using UOEngine.Runtime.RHI;
 using UOEngine.Runtime.RHI.Resources;
 using UOEngine.Runtime.SDL3GPU.Resources;
@@ -16,7 +18,9 @@ internal class SDL3GPUSwapChain: IRenderSwapChain
 
     private readonly SDL_GPUTextureFormat _format;
 
-    RenderTarget _backbufferRenderTarget = new();
+    private SDL3GPUTexture _backbufferTexture;
+
+    RhiRenderTarget _backbufferRenderTarget = new();
 
     public TextureFormat BackbufferFormat => _format.ToRhiFormat();
 
@@ -26,32 +30,51 @@ internal class SDL3GPUSwapChain: IRenderSwapChain
         _windowHandle = windowHandle;
 
         _format = SDL_GetGPUSwapchainTextureFormat(_device.Handle, windowHandle);
+
+        _backbufferTexture = new SDL3GPUTexture(_device, new SDL3GPUTextureDescription
+        {
+            CreateInfo = new SDL_GPUTextureCreateInfo
+            {
+                width = 1,
+                height = 1,
+                usage = SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_COLOR_TARGET,
+                format = _format
+            },
+            Name = "DummyBackbuffer",
+        });
     }
 
-    public RenderTarget? Acquire(IRenderContext context)
+    public RhiRenderTarget? Acquire(IRenderContext context)
     {
         SDL3GPURenderContext sdl3GpuContext = (context as SDL3GPURenderContext)!;
 
-        if(SDL_WaitAndAcquireGPUSwapchainTexture(sdl3GpuContext.RecordedCommands, _windowHandle, out _backbufferToRenderInto, out _backbufferWidth, out _backbufferHeight) == false)
+        if(SDL_WaitAndAcquireGPUSwapchainTexture(sdl3GpuContext.RecordedCommands, _windowHandle, out _backbufferToRenderInto, out uint backbufferWidth, out uint backbufferHeight) == false)
         {
             return null;
         }
 
-       var backbufferTexture = new SDL3GPUTexture(_device, new SDL3GPUTextureDescription
-       {
-           CreateInfo = new SDL_GPUTextureCreateInfo
-           {
-               width = _backbufferWidth,
-               height = _backbufferHeight,
-               usage = SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_COLOR_TARGET,
-               format = _format
-           },
-           Name = "Backbuffer",
-        });
+        if((backbufferWidth != _backbufferWidth) || (backbufferHeight != _backbufferHeight))
+        {
+            _backbufferWidth = backbufferWidth;
+            _backbufferHeight = backbufferHeight;
 
-        backbufferTexture.InitFromExistingResource(_backbufferToRenderInto);
+            _backbufferTexture = new SDL3GPUTexture(_device, new SDL3GPUTextureDescription
+            {
+                CreateInfo = new SDL_GPUTextureCreateInfo
+                {
+                    width = _backbufferWidth,
+                    height = _backbufferHeight,
+                    usage = SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_COLOR_TARGET,
+                    format = _format
+                },
+                Name = "Backbuffer",
+            });
 
-        _backbufferRenderTarget.Setup(backbufferTexture);
+
+            _backbufferRenderTarget.Setup(_backbufferTexture);
+        }
+
+        _backbufferTexture.InitFromExistingResource(_backbufferToRenderInto);
 
         return _backbufferRenderTarget;
     }

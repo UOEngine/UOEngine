@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "UOEngine.Editor": {
-      "commandName": "Project",
-      "nativeDebugging": true
-    }
-  }
-}

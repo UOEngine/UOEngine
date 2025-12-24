@@ -1,6 +1,7 @@
-﻿using System.Numerics;
+﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+using System.Numerics;
 using System.Runtime.InteropServices;
-using UOEngine.Runtime.RHI.Resources;
 
 namespace UOEngine.Runtime.RHI;
 
@@ -15,11 +16,14 @@ public interface IRenderContext
 {
     public ShaderInstance ShaderInstance { get; set; }
 
-    public IGraphicsPipeline GraphicsPipline { get; set; }
+    public IRhiIndexBuffer IndexBuffer { set; }
 
-    public IRenderIndexBuffer IndexBuffer { get; set; }
+    public IRhiVertexBuffer VertexBuffer { get; set; }
 
     public ModelViewProjection MVP { get; set; }
+
+    public RhiSampler Sampler { get; set; }
+
 
     public void BeginRenderPass(in RenderPassInfo renderPassInfo);
     public void EndRenderPass();
@@ -27,6 +31,11 @@ public interface IRenderContext
     public void BeginRecording();
     public void EndRecording();
 
-    public void DrawIndexedPrimitives(uint numInstances);
+    public void DrawIndexedPrimitives(uint numIndices, uint numInstances, uint firstIndex, uint vertexOffset, uint firstInstance);
+
+
+    public void SetGraphicsPipeline(in RhiGraphicsPipelineDescription graphicsPipelineDescription);
+
+    public void WaitForGpuIdle();
 
 }

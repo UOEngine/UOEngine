@@ -1,15 +1,17 @@
-﻿using UOEngine.Runtime.RHI.Resources;
-
+﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+// Licensed under the MIT License. See LICENSE file in the project root for details.
 namespace UOEngine.Runtime.RHI;
 
 public interface IRenderResourceFactory
 {
-    public RhiShaderResource NewShaderResource();
+    public RhiShaderResource NewShaderResource(in RhiShaderResourceCreateParameters createParameters = default);
     public ShaderInstance NewShaderInstance(RhiShaderResource shaderResource);
 
-    public IRenderTexture CreateTexture(in RenderTextureDescription description);
+    public IRenderTexture CreateTexture(in RhiTextureDescription description);
 
-    public IGraphicsPipeline CreateGraphicsPipeline(in GraphicsPipelineDescription graphicsPipelineDescription);
+    public IRhiGraphicsPipeline CreateGraphicsPipeline(in RhiGraphicsPipelineDescription graphicsPipelineDescription);
 
-    public IRenderIndexBuffer CreateIndexBuffer(uint length, string name);
+    public IRhiIndexBuffer CreateIndexBuffer(uint length, string name);
+
+    public IRhiVertexBuffer CreateVertexBuffer(in RhiVertexBufferDescription description);
 }

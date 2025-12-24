@@ -1,5 +1,6 @@
-﻿using UOEngine.Runtime.RHI;
-using UOEngine.Runtime.RHI.Resources;
+﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Runtime.Renderer;
 
@@ -8,16 +9,18 @@ public class RenderSystem
     public event Action<IRenderContext>? OnFrameBegin;
     public event Action<IRenderContext>? OnFrameEnd;
 
-    public RenderTarget GBufferDiffuse;
-    public RenderTarget UIOverlay;
+    public RhiRenderTarget GBufferDiffuse => _gBufferDiffuse ?? throw new InvalidOperationException("GBufferDiffuse not set");
+    public RhiRenderTarget UIOverlay = new();
 
-    private IRenderContext _context = null!;
+    public IRenderContext CurrentRenderContext => _context ?? throw new InvalidOperationException("Not initialized");
+
+    private IRenderContext? _context;
     private readonly IRenderer _rhiRenderer;
     private readonly IRenderResourceFactory _resourceFactory;
 
     private RenderPassInfo _mainPass;
 
-    private IRenderIndexBuffer _indexBuffer;
+    private RhiRenderTarget? _gBufferDiffuse;
 
     private uint _frameNumber = 0;
 
@@ -25,50 +28,57 @@ public class RenderSystem
     {
         _rhiRenderer = rhiRenderer;
         _resourceFactory = resourceFactory;
+    }
+
+    public void Startup()
+    {
+        _context = _rhiRenderer.CreateRenderContext();
+
+        UIOverlay = new RhiRenderTarget();
+
+        var uiTexture = _resourceFactory.CreateTexture(new RhiTextureDescription
+        {
+            Width = 1920,
+            Height = 1080,
+            Usage = RhiRenderTextureUsage.ColourTarget
+        });
+
+        UIOverlay.Setup(uiTexture);
+    }
+
+    public void FrameBegin()
+    {
+        // Todo: Bad! We want frames in flight so at some point will need to fix this.
+        CurrentRenderContext.WaitForGpuIdle();
+
+        CurrentRenderContext.BeginRecording();
+
+        _gBufferDiffuse = _rhiRenderer.SwapChain.Acquire(CurrentRenderContext);
 
         _mainPass = new RenderPassInfo
         {
             RenderTarget = GBufferDiffuse,
             Name = "MainPass"
         };
-    }
 
-    public void Startup()
-    {
-        _context = _rhiRenderer.CreateRenderContext();
-        _indexBuffer = _resourceFactory.CreateIndexBuffer(6, "MainIndexBuffer");
+        CurrentRenderContext.BeginRenderPass(_mainPass);
 
-        _indexBuffer.SetData([0, 1, 2, 0, 2, 3]);
-
-        _indexBuffer.Upload();
-    }
-
-    public void FrameBegin()
-    {
-        _context.BeginRecording();
-
-        GBufferDiffuse = _rhiRenderer.SwapChain.Acquire(_context);
-
-        _mainPass.RenderTarget = GBufferDiffuse;
-
-        _context.IndexBuffer = _indexBuffer;
-        _context.BeginRenderPass(_mainPass);
-
-        OnFrameBegin?.Invoke(_context);
+        OnFrameBegin?.Invoke(CurrentRenderContext);
     }
 
     public void FrameEnd()
     {
-        OnFrameEnd?.Invoke(_context);
+        OnFrameEnd?.Invoke(CurrentRenderContext);
 
-        _context.EndRenderPass();
-        _context.EndRecording();
+        CurrentRenderContext.EndRenderPass();
+        CurrentRenderContext.EndRecording();
 
         _frameNumber++;
     }
 
     public void ResizeSwapchain(uint width,  uint height)
     {
+        //_context.WaitForGpuIdle();
 
     }
 }

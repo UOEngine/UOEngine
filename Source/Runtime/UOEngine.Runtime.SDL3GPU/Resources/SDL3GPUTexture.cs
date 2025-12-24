@@ -1,9 +1,9 @@
-﻿using System.Buffers;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
+﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+using SharpGen.Runtime;
 using System.Runtime.InteropServices;
 
-using UOEngine.Runtime.RHI.Resources;
+using UOEngine.Runtime.RHI;
 
 using static SDL3.SDL;
 
@@ -17,6 +17,9 @@ internal struct SDL3GPUTextureDescription
 
 internal class SDL3GPUTexture: Sdl3GpuResource, IRenderTexture
 {
+    public uint Width => Description.width;
+    public uint Height => Description.height;
+
     public readonly SDL_GPUTextureCreateInfo Description;
 
     public readonly byte[] Texels;
@@ -68,13 +71,19 @@ internal class SDL3GPUTexture: Sdl3GpuResource, IRenderTexture
 
     public Span<T> GetTexelsAs<T>() where T: unmanaged
     {
-        return MemoryMarshal.Cast<byte, T>(Texels);
+        return MemoryMarshal.Cast<byte, T>(Texels.AsSpan());
     }
 
-    public void Upload()
-    {
-        uint size = (uint)Texels.Length;
+    public void Upload() => Upload(0, 0, Width, Height);
 
+    public void Upload(uint x, uint y, uint w, uint h)
+    {
+        // Assuming RGBA for now.
+        const uint bytesPerTexel = 4;
+
+        uint size = w * h * bytesPerTexel;
+
+        // Copy from cpu side texels into transfer buffer.
         IntPtr transferBuffer = SDL_CreateGPUTransferBuffer(Device.Handle, new SDL_GPUTransferBufferCreateInfo
         {
             size = size,
@@ -83,11 +92,21 @@ internal class SDL3GPUTexture: Sdl3GpuResource, IRenderTexture
 
         IntPtr mappedMemory = SDL_MapGPUTransferBuffer(Device.Handle, transferBuffer, false);
 
+        var src = new ReadOnlySpan<byte>(Texels);
+        
+        int srcRowBytes = (int)(w * bytesPerTexel);
+        uint srcRowPitch = Width * bytesPerTexel;
+
         unsafe
         {
-            fixed (void* src = Texels)
+            var dst = new Span<byte>((void*)mappedMemory, (int)size);
+
+            for (uint row = 0; row < h; row++)
             {
-                Buffer.MemoryCopy(src, (void*)mappedMemory, size, size);
+                var srcRow = src.Slice((int)((y + row) * srcRowPitch + x * bytesPerTexel), srcRowBytes);
+                var dstRow = dst.Slice((int)(row * srcRowBytes), srcRowBytes);
+
+                srcRow.CopyTo(dstRow);
             }
         }
 
@@ -105,8 +124,10 @@ internal class SDL3GPUTexture: Sdl3GpuResource, IRenderTexture
         var textureRegion = new SDL_GPUTextureRegion
         {
             texture = Handle,
-            w = Description.height,
-            h = Description.width,
+            x = x,
+            y = y,
+            w = w,
+            h = h,
             d = 1
         };
 

@@ -1,22 +1,24 @@
-﻿using System.Diagnostics;
-using System.Runtime.InteropServices;
+﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+using System.Runtime.CompilerServices;
+
 using static SDL3.SDL;
 
-using UOEngine.Runtime.RHI.Resources;
+using UOEngine.Runtime.RHI;
 
-namespace UOEngine.Runtime.SDL3GPU.Resources;
+namespace UOEngine.Runtime.SDL3GPU;
 
-internal class Sdl3GpuBuffer<T>: Sdl3GpuResource
+internal class Sdl3GpuBuffer: Sdl3GpuResource
 {
-    public readonly RenderBufferType Type;
-    public readonly T[] Data;
+    public readonly RhiBufferType Type;
+    public readonly byte[] Data;
 
     private readonly SDL_GPUBufferCreateInfo _description;
     private SDL_GPUBufferBinding _bufferBinding = new();
 
     private readonly Sdl3GpuDevice _device;
 
-    public Sdl3GpuBuffer(Sdl3GpuDevice device, RenderBufferType type, uint length, string name = "")
+    public Sdl3GpuBuffer(Sdl3GpuDevice device, RhiBufferType type, uint sizeInBytes, string name = "")
         : base(device, SDL_SetGPUBufferName, name)
     {
         // SDL_SetGPUBufferName seems to not be set in the .c.
@@ -25,26 +27,45 @@ internal class Sdl3GpuBuffer<T>: Sdl3GpuResource
 
         switch (type)
         {
-            case RenderBufferType.Index:
+            case RhiBufferType.Index:
                 {
                     _description.usage = SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_INDEX;
                     break;
                 }
 
+            case RhiBufferType.Vertex:
+                {
+                    _description.usage = SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_VERTEX;
+
+                    break;
+                }
+
             default:
                 {
-                    Debug.Assert(false);
-                    break;
+                    throw new SwitchExpressionException("Unhandled GPU buffer type.");
                 }
         }
 
-        _description.size = (uint)(length * Marshal.SizeOf<T>());
+        _description.size = sizeInBytes;
 
         Handle = SDL_CreateGPUBuffer(device.Handle, _description);
 
         _bufferBinding.buffer = Handle;
 
-        Data = new T[length];
+        Data = new byte[sizeInBytes];
+    }
+
+    public void SetData(int offsetInBytes, nint data, int dataLength)
+    {
+        var destination = Data.AsSpan(offsetInBytes, dataLength);
+
+        unsafe
+        {
+            fixed (byte* destinationPtr = destination)
+            {
+                Buffer.MemoryCopy((void*)data, destinationPtr, dataLength, dataLength);
+            }
+        }
     }
 
     public void Upload()
@@ -99,14 +120,14 @@ internal class Sdl3GpuBuffer<T>: Sdl3GpuResource
     {
         switch (Type)
         {
-            case RenderBufferType.Index:
+            case RhiBufferType.Index:
                 {
                     SDL_BindGPUIndexBuffer(renderPassHandle, _bufferBinding, SDL_GPUIndexElementSize.SDL_GPU_INDEXELEMENTSIZE_16BIT);
                     break;
                 }
             default:
                 {
-                    Debug.Assert(false);
+                    SDL_BindGPUVertexBuffers(renderPassHandle, 0, [_bufferBinding], 1);
                     break;
                 }
         }

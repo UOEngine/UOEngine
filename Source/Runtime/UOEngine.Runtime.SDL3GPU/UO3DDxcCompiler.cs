@@ -1,25 +1,28 @@
-﻿using System.Diagnostics;
+﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
+using static SDL3.SDL;
 using Vortice.Direct3D;
 using Vortice.Direct3D12.Shader;
 using Vortice.Dxc;
 
-using UOEngine.Runtime.RHI.Resources;
+using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Runtime.SDL3GPU;
 
 struct ShaderProgramCompileResult
 {
     public byte[] ByteCode;
+    public string EntryPointName;
     public ShaderStreamBinding[] StreamBindings;
     public ShaderParameter[] ShaderBindings;
-    //public uint NumSamplers;
-    //public uint NumTextures;
 }
 
 internal class UOEngineDxcCompiler
 {
-    public static void Compile(string shaderFile, ShaderProgramType type, out ShaderProgramCompileResult outCompileResult)
+    public static void Compile(string shaderFile, ShaderProgramType type, out ShaderProgramCompileResult outCompileResult, SDL_GPUShaderFormat shaderFormat, string programMainName = "main")
     {
         if(File.Exists(shaderFile) == false)
         {
@@ -40,14 +43,20 @@ internal class UOEngineDxcCompiler
 
         string targetProfile = $"{targetProfileType}_{shaderModelVersion}";
 
-        string[] arguments = new[]
-{
-            "-E",               "main",
+        string[] strings = [
+            "-E",               programMainName,
             "-T",               targetProfile,
             "-Zi",                                  // Debug info
             "-Qembed_debug",                        // Embed debug info in the shader
             "-O0"                                   // Optimization level
-        };
+        ];
+
+        string[] arguments = strings;
+
+        if(shaderFormat == SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV)
+        {
+            arguments = [.. arguments, "-spirv"];
+        }
 
         using IDxcResult result = DxcCompiler.Compile(source, arguments);
 
@@ -59,6 +68,18 @@ internal class UOEngineDxcCompiler
         var blob = result.GetResult();
 
         outCompileResult = new ShaderProgramCompileResult();
+        outCompileResult.EntryPointName = programMainName;
+
+        if(shaderFormat != SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_DXIL)
+        {
+            // Can only get reflection from DXIL. Compile it again as DXIL and attach the SPIRV blob.
+            Compile(shaderFile, type, out var resultForReflection, SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_DXIL, programMainName);
+
+            outCompileResult = resultForReflection;
+            outCompileResult.ByteCode = blob.AsBytes();
+
+            return;
+        }
 
         outCompileResult.ByteCode = blob.AsBytes();
 
@@ -77,6 +98,11 @@ internal class UOEngineDxcCompiler
 
             if (resourceDescription.Type == ShaderInputType.ConstantBuffer)
             {
+                if (resourceDescription.Space != 1)
+                {
+                    throw new ArgumentException("Constant buffer variables must be in shader register space 1 for Sdl3Gpu");
+                }
+
                 ID3D12ShaderReflectionConstantBuffer constantBuffer = reflection.GetConstantBufferByName(resourceDescription.Name);
 
                 inputType = RhiShaderInputType.Constant;
@@ -85,15 +111,61 @@ internal class UOEngineDxcCompiler
 
                 for (uint j = 0; j < constantBuffer.Variables.Length; j++)
                 {
-                    ShaderVariableDescription varDesc = constantBuffer.GetVariableByIndex(j).Description;
+                    var variable = constantBuffer.GetVariableByIndex(j);
+
+                    ShaderVariableDescription varDesc = variable.Description;
 
                     size += varDesc.Size;
+
+                    RhiShaderVariableType variableType = RhiShaderVariableType.Invalid;
+
+                    switch (variable.VariableType.Description.Class)
+                    {
+                        case ShaderVariableClass.MatrixRows:
+                        case ShaderVariableClass.MatrixColumns:
+                            {
+                                variableType = RhiShaderVariableType.Matrix;
+                                break;
+                            }
+
+                        case ShaderVariableClass.Scalar:
+                            {
+                                variableType = RhiShaderVariableType.Scalar;
+
+                                break;
+                            }
+
+                        case ShaderVariableClass.Vector:
+                            {
+                                variableType = RhiShaderVariableType.Vector;
+
+                                break;
+                            }
+
+                        case ShaderVariableClass.Object:
+                            {
+                                variableType = RhiShaderVariableType.Object;
+
+                                break;
+                            }
+
+                        case ShaderVariableClass.Struct:
+                            {
+                                variableType = RhiShaderVariableType.Struct;
+
+                                break;
+                            }
+
+                        default:
+                            throw new SwitchExpressionException("Unhandled ShaderVariableClass type");
+                    }
 
                     shaderVariables[j] = new ShaderVariable
                     {
                         Name = varDesc.Name,
-                        Offset = varDesc.StartOffset,
-                        Size = varDesc.Size
+                        Offset = (int)varDesc.StartOffset,
+                        Size = varDesc.Size,
+                        Type = variableType
                     };
                 }
             }
@@ -103,17 +175,20 @@ internal class UOEngineDxcCompiler
 
                 if(resourceDescription.Space != 2)
                 {
-                    throw new Exception("Samplers must be in shader register space 2 for Sdl3Gpu");
+                    throw new ArgumentException("Samplers must be in shader register space 2 for Sdl3Gpu");
                 }
             }
             else if (resourceDescription.Type == ShaderInputType.Texture)
             {
                 if (resourceDescription.Space != 2)
                 {
-                    throw new Exception("Textures must be in shader register space 2 for Sdl3Gpu");
+                    throw new ArgumentException("Textures must be in shader register space 2 for Sdl3Gpu");
                 }
 
                 inputType = RhiShaderInputType.Texture;
+
+                var t = reflection.GetVariableByName(resourceDescription.Name);
+
             }
             else
             {
@@ -132,17 +207,38 @@ internal class UOEngineDxcCompiler
 
         outCompileResult.ShaderBindings = [.. shaderParameters];
 
-        outCompileResult.StreamBindings = new ShaderStreamBinding[reflection.InputParameters.Length];
+        List<ShaderStreamBinding> streamBindings = new List<ShaderStreamBinding>(reflection.InputParameters.Length);
 
-        for (uint i = 0; i < reflection.InputParameters.Length; i++)
+        for (int i = 0; i < reflection.InputParameters.Length; i++)
         {
             var param = reflection.InputParameters[i];
 
-            outCompileResult.StreamBindings[i] = new ShaderStreamBinding
+            if(param.SystemValueType != SystemValueType.Undefined)
+            {
+                // SV_InstanceID, SV_VertexID, etc.
+                continue;
+            }
+
+            // Is vertex attribute.
+
+            streamBindings.Add(new ShaderStreamBinding
             {
                 SemanticName = param.SemanticName,
-                SemanticIndex = param.Register
-            };
+                SemanticIndex = param.Register,
+                Format = ToRhiVertexFormat(param.ComponentType, (byte)param.UsageMask)
+            });
         }
+
+        outCompileResult.StreamBindings = [.. streamBindings];
     }
+
+    private static RhiVertexAttributeFormat ToRhiVertexFormat(RegisterComponentType type, byte mask) => (type, mask) switch
+    {
+        (RegisterComponentType.Float32, 0x1) => RhiVertexAttributeFormat.Float,
+        (RegisterComponentType.Float32, 0x3) => RhiVertexAttributeFormat.Vector2,
+        (RegisterComponentType.Float32, 0x7) => RhiVertexAttributeFormat.Vector3,
+        (RegisterComponentType.Float32, 0xF) => RhiVertexAttributeFormat.Vector4,
+        (RegisterComponentType.UInt32,  0x1) => RhiVertexAttributeFormat.UInt32,
+                                           _ => throw new NotSupportedException()
+    };
 }

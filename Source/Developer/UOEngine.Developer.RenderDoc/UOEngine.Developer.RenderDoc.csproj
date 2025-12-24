@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Platforms>x64</Platforms>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Runtime\UOEngine.Runtime.Core\UOEngine.Runtime.Core.csproj" />
+    <ProjectReference Include="..\..\Runtime\UOEngine.Runtime.Plugin\UOEngine.Runtime.Plugin.csproj" />
+  </ItemGroup>
+
+</Project>

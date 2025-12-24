@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+// Licensed under the MIT License. See LICENSE file in the project root for details.
 using Microsoft.Extensions.DependencyInjection;
 
 using UOEngine.Runtime.Core;
@@ -6,7 +7,7 @@ using UOEngine.Runtime.Platform;
 using UOEngine.Runtime.Plugin;
 using UOEngine.Runtime.Renderer;
 using UOEngine.Runtime.RHI;
-using UOEngine.Runtime.RHI.Resources;
+using UOEngine.Runtime.FnaAdapter;
 using UOEngine.Ultima.UOAssets;
 
 namespace UOEngine.Editor;
@@ -16,7 +17,7 @@ internal class UO3DApplication : IPlugin
     private RhiShaderResource _shaderResource = null!;
     private ShaderInstance _shaderInstance = null!;
     private ShaderBindingHandle _projectionBinding;
-    private IGraphicsPipeline _pipeline = null!;
+    private IRhiGraphicsPipeline _pipeline = null!;
     private IRenderTexture _whiteTexture = null!;
     private IRenderTexture _redTexture = null!;
     private IRenderTexture _greenTexture = null!;
@@ -46,10 +47,10 @@ internal class UO3DApplication : IPlugin
 
     public void PostStartup()
     {
-        _rendererSystem.OnFrameBegin += OnFrameBegin;
+        //_rendererSystem.OnFrameBegin += OnFrameBegin;
 
-        string vertexShader = @"D:\UODev\UOEngineGithub\Source\Shaders\TexturedQuadVS.hlsl";
-        string pixelShader = @"D:\UODev\UOEngineGithub\Source\Shaders\TexturedQuadPS.hlsl";
+        string vertexShader = Path.Combine(UOEPaths.ShadersDir, "TexturedQuadVS.hlsl");
+        string pixelShader = Path.Combine(UOEPaths.ShadersDir, "TexturedQuadPS.hlsl");
 
         _shaderResource = _renderFactory.NewShaderResource();
         _shaderResource.Load(vertexShader, pixelShader);
@@ -64,75 +65,26 @@ internal class UO3DApplication : IPlugin
         _greenTexture = CreateTestTexture(0x00FF00FF, "GreenTexture");
 
         _checkerboardTexture = CreateCheckerboardTexture(512, 512, Colour.Red, "RedCheckerboard");
-
-        _projectionBinding = _shaderInstance.GetBindingHandleConstantVertex("PerViewData");
-
-        _pipeline = _renderFactory.CreateGraphicsPipeline(new GraphicsPipelineDescription
-        {
-            Name = "TestPipeline",
-            ShaderResource = _shaderResource
-        });
-
-        _assetLoader.LoadAllFiles("D:\\Program Files (x86)\\Electronic Arts\\Ultima Online Classic");
-
-        _camera = _entityManager.NewEntity<CameraEntity>();
-        _map = _entityManager.NewEntity<MapEntity>();
-
-        _map.Load(_assetLoader.Maps[0]);
-
-        _waterTexture = _renderFactory.CreateTexture(new RenderTextureDescription
-        {
-            Height = 44,
-            Width = 44,
-            Name = "Water",
-            Usage = RenderTextureUsage.Sampler
-        });
-
-        var water = _map.GetChunk(0, 0).Entities[0, 0];
-
-        var bitmap = _assetLoader.GetLand(water.GraphicId);
-
-        bitmap.Texels.CopyTo(_waterTexture.GetTexelsAs<uint>());
-
-        _waterTexture.Upload();
     }
 
     public static void ConfigureServices(IServiceCollection services)
     {
         services.AddSingleton<UOAssetLoader>();
+        services.AddPlugin<FnaAdapterPlugin>();
     }
 
     public void OnFrameBegin(IRenderContext context)
     {
-        var width = _window.RenderTargetWidth;
-        var height = _window.RenderTargetHeight;
-
-        Matrix4x4 projection = Matrix4x4.CreateOrthographic(width, height, -1.0f, 1.0f);
-
-        var mvp = new ModelViewProjection
-        {
-            Projection = projection,
-            View = Matrix4x4.Identity
-        };
-
-        _shaderInstance.SetData(_projectionBinding, mvp);
-        _shaderInstance.SetTexture(_textureBindingHandle, _waterTexture);
-        _shaderInstance.SetSampler(_samplerBindingHandle, new RhiSampler { Filter = SamplerFilter.Point });
-
-        context.GraphicsPipline = _pipeline;
-        context.ShaderInstance = _shaderInstance;
-
-        context.DrawIndexedPrimitives(1);
     }
 
     private IRenderTexture CreateTestTexture(uint colour, string name)
     {
-        var texture = _renderFactory.CreateTexture(new RenderTextureDescription
+        var texture = _renderFactory.CreateTexture(new RhiTextureDescription
         {
             Width = 22,
             Height = 22,
             Name = name,
-            Usage = RenderTextureUsage.Sampler
+            Usage = RhiRenderTextureUsage.Sampler
         });
 
         Span<uint> white = texture.GetTexelsAs<uint>();
@@ -146,12 +98,12 @@ internal class UO3DApplication : IPlugin
 
     private IRenderTexture CreateCheckerboardTexture(uint width, uint height, in Colour colour, string name)
     {
-        var texture = _renderFactory.CreateTexture(new RenderTextureDescription
+        var texture = _renderFactory.CreateTexture(new RhiTextureDescription
         {
             Width = width,
             Height = height,
             Name = name,
-            Usage = RenderTextureUsage.Sampler
+            Usage = RhiRenderTextureUsage.Sampler
         });
 
         Span<Colour> texels = texture.GetTexelsAs<Colour>();

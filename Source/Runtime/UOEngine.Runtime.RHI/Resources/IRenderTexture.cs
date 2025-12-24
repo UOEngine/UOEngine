@@ -1,17 +1,19 @@
-﻿namespace UOEngine.Runtime.RHI.Resources;
+﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+namespace UOEngine.Runtime.RHI;
 
-public enum RenderTextureUsage
+public enum RhiRenderTextureUsage
 {
     Sampler,
     ColourTarget
 }
 
-public struct RenderTextureDescription
+public struct RhiTextureDescription
 {
     public required uint Width;
     public required uint Height;
-    public required RenderTextureUsage Usage;
-    public required string Name;
+    public required RhiRenderTextureUsage Usage;
+    public string Name;
 }
 
 public interface IRenderTexture
@@ -20,6 +22,9 @@ public interface IRenderTexture
 
     public IntPtr Handle { get; }
 
+    public uint Width { get; }
+    public uint Height { get; }
+
     //public void SetData(Span<uint> texels);
 
     //public void SetData(Span<byte> texels);
@@ -27,5 +32,7 @@ public interface IRenderTexture
     public Span<T> GetTexelsAs<T>() where T : unmanaged;
 
     public void Upload();
+
+    public void Upload(uint x = 0, uint y = 0, uint w = 0, uint h = 0);
 
 }
