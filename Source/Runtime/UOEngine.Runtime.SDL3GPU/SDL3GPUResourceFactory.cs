@@ -1,21 +1,21 @@
-﻿using static SDL3.SDL;
+﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+using System.Runtime.CompilerServices;
+
+using static SDL3.SDL;
 
 using UOEngine.Runtime.RHI;
-using UOEngine.Runtime.RHI.Resources;
-
 using UOEngine.Runtime.SDL3GPU.Resources;
-using System.Runtime.CompilerServices;
 
 namespace UOEngine.Runtime.SDL3GPU;
 
 internal class SDL3GPUResourceFactory : IRenderResourceFactory
 {
-    //private readonly IntPtr _device;
     private readonly Sdl3GpuDevice _device;
 
-    public SDL3GPUResourceFactory(IRenderDevice device)
+    public SDL3GPUResourceFactory(Sdl3GpuDevice device)
     {
-        _device = (Sdl3GpuDevice)device;
+        _device = device;
     }
 
     public RhiShaderResource NewShaderResource(in RhiShaderResourceCreateParameters createParameters = default)
@@ -47,7 +47,7 @@ internal class SDL3GPUResourceFactory : IRenderResourceFactory
                 width = description.Width,
                 height = description.Height,
                 format = SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
-                usage = SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_SAMPLER
+                usage = gpuUsage
             },
             Name = description.Name,
         });
@@ -57,7 +57,7 @@ internal class SDL3GPUResourceFactory : IRenderResourceFactory
         return texture;
     }
 
-    public IGraphicsPipeline CreateGraphicsPipeline(in RhiGraphicsPipelineDescription graphicsPipelineDescription)
+    public IRhiGraphicsPipeline CreateGraphicsPipeline(in RhiGraphicsPipelineDescription graphicsPipelineDescription)
     {
         var pipeline = new Sdl3GpuGraphicsPipeline(_device, graphicsPipelineDescription);
 

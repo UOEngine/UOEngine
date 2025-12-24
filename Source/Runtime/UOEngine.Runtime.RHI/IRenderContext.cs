@@ -1,4 +1,6 @@
-﻿using System.Numerics;
+﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+using System.Numerics;
 using System.Runtime.InteropServices;
 
 namespace UOEngine.Runtime.RHI;
@@ -14,9 +16,7 @@ public interface IRenderContext
 {
     public ShaderInstance ShaderInstance { get; set; }
 
-    public IGraphicsPipeline GraphicsPipline { get; set; }
-
-    public IRhiIndexBuffer IndexBuffer { get; set; }
+    public IRhiIndexBuffer IndexBuffer { set; }
 
     public IRhiVertexBuffer VertexBuffer { get; set; }
 

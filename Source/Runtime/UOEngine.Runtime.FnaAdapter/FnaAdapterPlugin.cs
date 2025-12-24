@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -27,7 +29,7 @@ public class FnaAdapterPlugin: IPlugin
     private readonly List<Game> _hostedFNAGames = [];
 
     public FnaAdapterPlugin(IWindow window, InputManager inputmanager, IRenderResourceFactory renderResourceFactory,
-        IRenderDevice renderDevice, Remapper remapper, RenderSystem renderSystem, ApplicationLoop _applicationLoop)
+                            Remapper remapper, RenderSystem renderSystem, ApplicationLoop _applicationLoop)
     {
         Instance = this;
 

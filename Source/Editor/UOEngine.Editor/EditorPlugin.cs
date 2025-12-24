@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+using Microsoft.Extensions.DependencyInjection;
 
 using UOEngine.Runtime.Core;
 using UOEngine.Runtime.Platform;
@@ -15,7 +17,7 @@ internal class UO3DApplication : IPlugin
     private RhiShaderResource _shaderResource = null!;
     private ShaderInstance _shaderInstance = null!;
     private ShaderBindingHandle _projectionBinding;
-    private IGraphicsPipeline _pipeline = null!;
+    private IRhiGraphicsPipeline _pipeline = null!;
     private IRenderTexture _whiteTexture = null!;
     private IRenderTexture _redTexture = null!;
     private IRenderTexture _greenTexture = null!;

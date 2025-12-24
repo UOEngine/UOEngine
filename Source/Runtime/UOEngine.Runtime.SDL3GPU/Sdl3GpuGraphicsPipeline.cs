@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+using System.Diagnostics;
 
 using static SDL3.SDL;
 
@@ -7,13 +9,12 @@ using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Runtime.SDL3GPU;
 
-internal class Sdl3GpuGraphicsPipeline : Sdl3GpuResource, IGraphicsPipeline
+internal class Sdl3GpuGraphicsPipeline : Sdl3GpuResource, IRhiGraphicsPipeline
 {
     public readonly SDL3GPUShaderProgram VertexProgram;
     public readonly SDL3GPUShaderProgram PixelProgram;
 
     public readonly RhiGraphicsPipelineDescription PipelineDescription;
-    public readonly SDL_GPUGraphicsPipelineCreateInfo PipelineCreateInfo;
 
     public Sdl3GpuGraphicsPipeline(Sdl3GpuDevice device, in RhiGraphicsPipelineDescription graphicsPipelineDescription)
         : base(device)

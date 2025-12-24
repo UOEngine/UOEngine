@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+using System.Diagnostics;
 
 using UOEngine.Runtime.RHI;
 using UOEngine.Runtime.SDL3GPU.Resources;
@@ -19,6 +21,12 @@ internal class Sdl3GpuGlobalSamplers
 
         PointClamp = RegisterGlobalSampler(RhiSampler.PointClamp);
         LinearClamp = RegisterGlobalSampler(RhiSampler.Bilinear);
+
+        //_device.RegisterOnDeviceCreatedCallback(() =>
+        //{
+        //    PointClamp = RegisterGlobalSampler(RhiSampler.PointClamp);
+        //    LinearClamp = RegisterGlobalSampler(RhiSampler.Bilinear);
+        //});
     }
 
     public Sdl3GpuSampler GetSampler(RhiSampler rhiSampler)
@@ -28,7 +36,7 @@ internal class Sdl3GpuGlobalSamplers
         return _globalSamplers[rhiSampler];
     }
 
-    private Sdl3GpuSampler RegisterGlobalSampler(RhiSampler rhiSampler)
+    public Sdl3GpuSampler RegisterGlobalSampler(RhiSampler rhiSampler)
     {
         var globalSampler = new Sdl3GpuSampler(_device, rhiSampler);
 

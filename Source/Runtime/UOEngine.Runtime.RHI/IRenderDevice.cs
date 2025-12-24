@@ -1,6 +1,22 @@
-﻿namespace UOEngine.Runtime.RHI;
+﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+// Licensed under the MIT License. See LICENSE file in the project root for details.
 
-public class IRenderDevice
-{
-    public IntPtr Handle { get; protected set; }
-}
+using System.Diagnostics;
+
+namespace UOEngine.Runtime.RHI;
+
+//public class IRenderDevice
+//{
+//    public IntPtr Handle 
+//    {
+//        get
+//        {
+//            Debug.Assert(Handle != IntPtr.Zero);
+
+//            return _handle;
+//        }
+//        protected set;
+//    }
+
+//    protected IntPtr _handle;
+//}

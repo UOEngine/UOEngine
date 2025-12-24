@@ -1,6 +1,9 @@
-﻿using static SDL3.SDL;
+﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+using static SDL3.SDL;
 
 using UOEngine.Runtime.RHI;
+using UOEngine.Runtime.Core;
 
 namespace UOEngine.Runtime.SDL3GPU.Resources;
 
@@ -39,6 +42,8 @@ internal class Sdl3GpuSampler: Sdl3GpuResource
         };
 
         Handle = SDL_CreateGPUSampler(device.Handle, _samplerCreateInfo);
+
+        UOEDebug.Assert(Handle != IntPtr.Zero);
 
     }
 

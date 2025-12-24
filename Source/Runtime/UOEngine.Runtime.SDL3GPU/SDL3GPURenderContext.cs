@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 using static SDL3.SDL;
@@ -14,10 +16,10 @@ internal class SDL3GPURenderContext: IRenderContext
 
     public ShaderInstance ShaderInstance
     {
-        get => _shaderInstance;
+        get => _shaderInstance ?? throw new InvalidOperationException("ShaderInstance is null");
         set 
         { 
-            if(_shaderInstance == value)
+            if(ReferenceEquals(_shaderInstance, value))
             {
                 return;
             }
@@ -28,12 +30,11 @@ internal class SDL3GPURenderContext: IRenderContext
         }
     }
 
-    public IGraphicsPipeline GraphicsPipline 
+    public IRhiGraphicsPipeline GraphicsPipline 
     {
-        get => _graphicsPipeline;
         set
         {
-            if (_graphicsPipeline == value)
+            if (ReferenceEquals(_graphicsPipeline, value))
             {
                 return;
             }
@@ -44,17 +45,24 @@ internal class SDL3GPURenderContext: IRenderContext
         }
     }
 
-    public IRhiIndexBuffer IndexBuffer
+    public IRhiIndexBuffer? IndexBuffer
     {
-        get => _indexBuffer;
         set
         {
-            if (_indexBuffer == value)
+            if (ReferenceEquals(_indexBuffer, value))
             {
                 return;
             }
 
-            _indexBuffer = (Sdl3GpuIndexBuffer)value;
+            if(value == null)
+            {
+                _indexBuffer = null;
+            }
+            else
+            {
+
+                _indexBuffer = (Sdl3GpuIndexBuffer)value;
+            }
 
             SetDirtyState(DirtyState.IndexBuffer);
         }
@@ -62,15 +70,23 @@ internal class SDL3GPURenderContext: IRenderContext
 
     public IRhiVertexBuffer VertexBuffer
     {
-        get => _vertexBuffer;
+        get => _vertexBuffer ?? throw new InvalidOperationException("VertexBuffer is not set");
         set
         {
-            if (_vertexBuffer == value)
+            if (ReferenceEquals(_vertexBuffer, value))
             {
                 return;
             }
 
-            _vertexBuffer = (Sdl3GpuVertexBuffer)value;
+            if(value == null)
+            {
+                _vertexBuffer = null;
+            }
+            else
+            {
+                _vertexBuffer = (Sdl3GpuVertexBuffer)value;
+            }
+
 
             SetDirtyState(DirtyState.VertexBuffer);
         }
@@ -108,7 +124,7 @@ internal class SDL3GPURenderContext: IRenderContext
     }
 
     private IntPtr _renderPass;
-    private ShaderInstance _shaderInstance;
+    private ShaderInstance? _shaderInstance;
     private Sdl3GpuGraphicsPipeline? _graphicsPipeline;
     private readonly Sdl3GpuDevice _device;
 
@@ -116,8 +132,8 @@ internal class SDL3GPURenderContext: IRenderContext
 
     private RenderPassInfo? _activeRenderPass;
 
-    private Sdl3GpuIndexBuffer _indexBuffer;
-    private Sdl3GpuVertexBuffer _vertexBuffer;
+    private Sdl3GpuIndexBuffer? _indexBuffer;
+    private Sdl3GpuVertexBuffer? _vertexBuffer;
     private ModelViewProjection _sceneView;
 
     private readonly Sdl3GpuGlobalSamplers _globalSamplers;
@@ -125,7 +141,7 @@ internal class SDL3GPURenderContext: IRenderContext
     private readonly Dictionary<RhiGraphicsPipelineDescription, Sdl3GpuGraphicsPipeline> _pipelineCache = [];
 
     private RhiGraphicsPipelineDescription _currentPipelineDescription;
-    private Sdl3GpuGraphicsPipeline _currentPipeline;
+    private Sdl3GpuGraphicsPipeline? _currentPipeline;
 
     private RhiSampler _sampler;
 
@@ -248,7 +264,7 @@ internal class SDL3GPURenderContext: IRenderContext
     {
         for(int i = 0; i < (int)ShaderProgramType.Count; i++)
         {
-            ref var bindings = ref _shaderInstance.BindingData[i].Bindings;
+            ref var bindings = ref ShaderInstance.BindingData[i].Bindings;
 
             if(bindings is null)
             {
@@ -360,7 +376,7 @@ internal class SDL3GPURenderContext: IRenderContext
     {
         if (IsStateDirty(DirtyState.VertexBuffer))
         {
-            _vertexBuffer.Bind(_renderPass);
+            _vertexBuffer!.Bind(_renderPass);
 
             ClearDirtyState(DirtyState.VertexBuffer);
 
@@ -389,7 +405,7 @@ internal class SDL3GPURenderContext: IRenderContext
 
         if (IsStateDirty(DirtyState.IndexBuffer))
         {
-            _indexBuffer.Bind(_renderPass);
+            _indexBuffer!.Bind(_renderPass);
 
             ClearDirtyState(DirtyState.IndexBuffer);
         }

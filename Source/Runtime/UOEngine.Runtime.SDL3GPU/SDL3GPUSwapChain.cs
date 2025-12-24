@@ -1,4 +1,6 @@
-﻿using static SDL3.SDL;
+﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+using static SDL3.SDL;
 using UOEngine.Runtime.RHI;
 using UOEngine.Runtime.RHI.Resources;
 using UOEngine.Runtime.SDL3GPU.Resources;
@@ -28,6 +30,18 @@ internal class SDL3GPUSwapChain: IRenderSwapChain
         _windowHandle = windowHandle;
 
         _format = SDL_GetGPUSwapchainTextureFormat(_device.Handle, windowHandle);
+
+        _backbufferTexture = new SDL3GPUTexture(_device, new SDL3GPUTextureDescription
+        {
+            CreateInfo = new SDL_GPUTextureCreateInfo
+            {
+                width = 1,
+                height = 1,
+                usage = SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_COLOR_TARGET,
+                format = _format
+            },
+            Name = "DummyBackbuffer",
+        });
     }
 
     public RhiRenderTarget? Acquire(IRenderContext context)
@@ -41,10 +55,6 @@ internal class SDL3GPUSwapChain: IRenderSwapChain
 
         if((backbufferWidth != _backbufferWidth) || (backbufferHeight != _backbufferHeight))
         {
-            //_device.WaitForGpuIdle();
-
-            //_backbufferTexture?.Dispose();
-
             _backbufferWidth = backbufferWidth;
             _backbufferHeight = backbufferHeight;
 

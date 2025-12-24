@@ -1,4 +1,6 @@
-﻿using static SDL3.SDL;
+﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+using static SDL3.SDL;
 
 using UOEngine.Runtime.RHI;
 using UOEngine.Runtime.Core;
@@ -16,13 +18,27 @@ internal enum Sdl3GpuBackend
     Count
 }
 
-internal class Sdl3GpuDevice: IRenderDevice
+internal class Sdl3GpuDevice//: IRenderDevice
 {
     public Sdl3GpuBackend Backend { get; private set; }
 
     public bool DebugDevice { get; private set; }
 
     public SDL_GPUShaderFormat ShaderFormat { get; private set; }
+
+    public IntPtr Handle
+    {
+        get
+        {
+            UOEDebug.Assert(_handle != IntPtr.Zero);
+
+            return _handle;
+        }
+    }
+
+    private Action? OnDeviceCreated;
+
+    private IntPtr _handle;
 
     public void Setup()
     {
@@ -74,12 +90,26 @@ internal class Sdl3GpuDevice: IRenderDevice
             throw new Exception("SDL_Init failed: " + SDL_GetError());
         }
 
-        Handle = SDL_CreateGPUDevice(ShaderFormat, DebugDevice, driver);
+        _handle = SDL_CreateGPUDevice(ShaderFormat, DebugDevice, driver);
 
-        if (Handle == IntPtr.Zero)
+        if (_handle == IntPtr.Zero)
         {
             throw new Exception("Failed to initialise GPU device.");
         }
+
+        OnDeviceCreated?.Invoke();
+    }
+
+    public void RegisterOnDeviceCreatedCallback(Action action)
+    {
+        if (_handle != IntPtr.Zero)
+        {
+            action();
+
+            return;
+        }
+
+        OnDeviceCreated += action;
     }
 
     public void WaitForGpuIdle()
