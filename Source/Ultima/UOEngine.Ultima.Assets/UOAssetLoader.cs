@@ -5,7 +5,7 @@ namespace UOEngine.Ultima.UOAssets;
 
 public class UOAssetLoader
 {
-    public UOPackageFile Gumps { get; private set; }
+    public UOPackageFile Gumps { get; private set; } = null!;
 
     public const int NumMaps = 6;
     public UOMapFileData[] MapFileDatas = new UOMapFileData[NumMaps];
@@ -14,7 +14,7 @@ public class UOAssetLoader
 
     public LandTile[] LandTiles { get; private set; } = [];
 
-    public UOPackageFile Art { get; private set; }
+    public UOPackageFile Art { get; private set; } = null!;
     //public static UOAssetLoader Instance => _instance.Value;
 
     //private static readonly Lazy<UOAssetLoader> _instance = new(() => new UOAssetLoader());

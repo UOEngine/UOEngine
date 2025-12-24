@@ -172,9 +172,4 @@ public class Texture2D: Texture
 
         RhiTexture.Upload((uint)x, (uint)y, (uint)w, (uint)h);
     }
-
-    public void Dispose()
-    {
-        UOEDebug.NotImplemented();
-    }
 }

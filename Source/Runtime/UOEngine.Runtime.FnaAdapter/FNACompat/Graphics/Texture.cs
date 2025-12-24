@@ -2,9 +2,9 @@
 
 namespace Microsoft.Xna.Framework.Graphics;
 
-public class Texture
+public class Texture: GraphicsResource
 {
-    public IRenderTexture RhiTexture { get;  init; }
+    public IRenderTexture RhiTexture { get; protected set; } = null!;
 
     public SurfaceFormat Format
     {

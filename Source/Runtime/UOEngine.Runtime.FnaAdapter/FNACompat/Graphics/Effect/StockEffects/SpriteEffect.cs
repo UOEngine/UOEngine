@@ -16,7 +16,7 @@ namespace Microsoft.Xna.Framework.Graphics
     {
         #region Effect Parameters
 
-        EffectParameter matrixParam;
+        EffectParameter matrixParam = null!;
 
         #endregion
 

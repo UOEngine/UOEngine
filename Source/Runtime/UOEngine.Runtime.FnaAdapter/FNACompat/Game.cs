@@ -1,9 +1,10 @@
 ﻿using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
+
 using Microsoft.Xna.Framework.Graphics;
+
 using UOEngine.Runtime.Core;
 using UOEngine.Runtime.Platform;
-using UOEngine.Runtime.Renderer;
 using UOEngine.Runtime.RHI;
 
 namespace Microsoft.Xna.Framework;
@@ -48,14 +49,13 @@ public class Game: IDisposable
     private GraphicsDeviceManager? _graphicsDeviceManager;
 
     private readonly GameTime _gameTime = new();
-    private Stopwatch _gameTimer;
+    private Stopwatch _gameTimer = null!;
     private TimeSpan _accumulatedElapsedTime;
     private long _previousTicks = 0;
 
     private bool _hasInitialized = false;
 
     private bool _suppressDraw;
-
 
     public static void PreSetup(IServiceProvider serviceProvider)
     {
@@ -206,7 +206,7 @@ public class Game: IDisposable
         }
     }
 
-    private T GetService<T>() => _serviceProvider.GetRequiredService<T>();
+    private T GetService<T>() where T: notnull  => _serviceProvider.GetRequiredService<T>();
 
     private TimeSpan AdvanceElapsedTime()
     {

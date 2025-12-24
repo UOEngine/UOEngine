@@ -8,7 +8,6 @@ public class RenderTarget2D: Texture2D
     public int LevelCount { get;}
 
     public DepthFormat DepthStencilFormat;
-    public SurfaceFormat Format;
 
     private RhiRenderTarget _rhiRenderTarget;
 
@@ -17,7 +16,7 @@ public class RenderTarget2D: Texture2D
     {
         _rhiRenderTarget = new RhiRenderTarget();
 
-        _rhiRenderTarget.Setup(RhiTexture);
+        _rhiRenderTarget.Setup(RhiTexture!);
     }
 
     public void GetData<T>(int level, Rectangle? rect, T[] data, int startIndex, int elementCount) where T : struct
@@ -39,7 +38,7 @@ public class RenderTarget2D: Texture2D
         UOEDebug.NotImplemented();
     }
 
-    public void Dispose()
+    protected override void Dispose(bool disposing)
     {
         // Todo: Do we need to dispose this?
         //UOEDebug.NotImplemented();

@@ -33,8 +33,6 @@ internal class UO3DApplication : IPlugin
     private IRenderTexture _waterTexture = null!;
     private readonly IWindow _window;
 
-    private IRhiIndexBuffer _indexBuffer;
-
     public UO3DApplication(IServiceProvider serviceProvider)
     {
         _entityManager = serviceProvider.GetRequiredService<EntityManager>();

@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿#pragma warning disable CS0660, CS0661
+using System.Runtime.InteropServices;
 
 namespace UOEngine.Ultima.UOAssets;
 
@@ -17,9 +18,9 @@ public ref struct UOBitmap
         Texels = texels;
     }
 
-    public static bool operator == (UOBitmap left, UOBitmap right)
+    public static bool operator ==(UOBitmap left, UOBitmap right)
     {
-        if(left.Width != right.Height)
+        if (left.Width != right.Height)
         {
             return false;
         }
@@ -29,7 +30,7 @@ public ref struct UOBitmap
             return false;
         }
 
-        if(left.Texels == right.Texels)
+        if (left.Texels == right.Texels)
         {
             return true;
         }
@@ -37,7 +38,7 @@ public ref struct UOBitmap
         return true;
     }
 
-    public static bool operator != (UOBitmap left, UOBitmap right)
+    public static bool operator !=(UOBitmap left, UOBitmap right)
     {
         return !(left == right);
     }

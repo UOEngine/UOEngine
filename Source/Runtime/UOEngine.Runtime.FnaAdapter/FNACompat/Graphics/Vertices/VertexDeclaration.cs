@@ -37,13 +37,15 @@ public class VertexDeclaration
             throw new ArgumentException("vertexType", "Must be value type");
         }
 
-        IVertexType type = Activator.CreateInstance(vertexType) as IVertexType;
+        IVertexType? type = Activator.CreateInstance(vertexType) as IVertexType;
+
         if (type == null)
         {
             throw new ArgumentException("vertexData does not inherit IVertexType");
         }
 
         VertexDeclaration vertexDeclaration = type.VertexDeclaration;
+
         if (vertexDeclaration == null)
         {
             throw new ArgumentException("vertexType's VertexDeclaration cannot be null");

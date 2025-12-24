@@ -117,10 +117,10 @@ namespace Microsoft.Xna.Framework.Graphics
         private SpriteSortMode sortMode;
 
         // Keep render state for non-Immediate modes.
-        private BlendState blendState;
-        private SamplerState samplerState;
-        private DepthStencilState depthStencilState;
-        private RasterizerState rasterizerState;
+        private BlendState blendState = null!;
+        private SamplerState samplerState = null!;
+        private DepthStencilState depthStencilState = null!;
+        private RasterizerState rasterizerState = null!;
 
         // How many sprites are in the current batch?
         private int numSprites;
@@ -133,7 +133,7 @@ namespace Microsoft.Xna.Framework.Graphics
         private Matrix transformMatrix;
 
         // User-provided Effect, if applicable
-        private Effect customEffect;
+        private Effect? customEffect;
 
         #endregion
 
@@ -288,7 +288,7 @@ namespace Microsoft.Xna.Framework.Graphics
             SamplerState samplerState,
             DepthStencilState depthStencilState,
             RasterizerState rasterizerState,
-            Effect effect,
+            Effect? effect,
             Matrix transformMatrix
         )
         {

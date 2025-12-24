@@ -1,8 +1,6 @@
-﻿using System.Xml.Linq;
+﻿namespace Microsoft.Xna.Framework.Graphics;
 
-namespace Microsoft.Xna.Framework.Graphics;
-
-public class BlendState
+public class BlendState: GraphicsResource
 {
     public static readonly BlendState AlphaBlend = new BlendState(
         "BlendState.AlphaBlend",
@@ -51,8 +49,6 @@ public class BlendState
     public ColorWriteChannels ColorWriteChannels3;
 
     public int MultiSampleMask;
-
-    public string Name { get; private set; }
 
     public BlendState()
     {

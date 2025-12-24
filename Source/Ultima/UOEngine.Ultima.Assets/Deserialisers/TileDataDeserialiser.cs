@@ -176,9 +176,6 @@ public class TileDataDeserialiser : IUOAssetDeserialiser<LandTile[]>
 {
     public LandTile[] Deserialise(BinaryReader reader)
     {
-        const int landSize = 512;
-        int num_land_tile_data = 580;
-
         const int max_land_data = 16384;
 
         bool isold = false;

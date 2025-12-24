@@ -1,10 +1,8 @@
-﻿using System.Xml.Linq;
-
-namespace Microsoft.Xna.Framework.Graphics;
+﻿namespace Microsoft.Xna.Framework.Graphics;
 
 public class DepthStencilState
 {
-    public string Name;
+    public string? Name;
 
     public bool DepthBufferEnable;
     public bool DepthBufferWriteEnable;

@@ -85,26 +85,26 @@ public class BasicEffect : Effect
     private Matrix worldView;
 
     private Vector3 diffuseColor = Vector3.One;
-    private Vector3 emissiveColor = Vector3.Zero;
-    private Vector3 ambientLightColor = Vector3.Zero;
+    //private Vector3 emissiveColor = Vector3.Zero;
+    //private Vector3 ambientLightColor = Vector3.Zero;
 
-    private EffectParameter textureParam;
-    private EffectParameter diffuseColorParam;
-    private EffectParameter emissiveColorParam;
-    private EffectParameter specularColorParam;
-    private EffectParameter specularPowerParam;
-    private EffectParameter eyePositionParam;
-    private EffectParameter fogColorParam;
-    private EffectParameter fogVectorParam;
-    private EffectParameter worldParam;
-    private EffectParameter worldInverseTransposeParam;
-    private EffectParameter worldViewProjParam;
-    private EffectParameter shaderIndexParam;
+    private EffectParameter textureParam = null!;
+    private EffectParameter diffuseColorParam = null!;
+    //private EffectParameter emissiveColorParam;
+    //private EffectParameter specularColorParam;
+    //private EffectParameter specularPowerParam;
+    //private EffectParameter eyePositionParam;
+    //private EffectParameter fogColorParam;
+    private EffectParameter fogVectorParam = null!;
+    //private EffectParameter worldParam;
+    //private EffectParameter worldInverseTransposeParam;
+    private EffectParameter worldViewProjParam = null!;
+    //private EffectParameter shaderIndexParam;
 
-    bool lightingEnabled;
-    bool preferPerPixelLighting;
-    bool oneLight;
-    bool fogEnabled;
+    //bool lightingEnabled;
+    //bool preferPerPixelLighting;
+    //bool oneLight;
+    bool fogEnabled = false;
     bool textureEnabled;
     bool vertexColorEnabled;
 
@@ -120,7 +120,7 @@ public class BasicEffect : Effect
 
     }
 
-    private void CacheEffectParameters(BasicEffect cloneSource)
+    private void CacheEffectParameters(BasicEffect? cloneSource)
     {
         textureParam = Parameters["Texture"];
         diffuseColorParam = Parameters["DiffuseColor"];

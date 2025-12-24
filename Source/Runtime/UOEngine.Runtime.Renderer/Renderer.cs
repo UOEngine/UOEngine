@@ -26,12 +26,6 @@ public class RenderSystem
     {
         _rhiRenderer = rhiRenderer;
         _resourceFactory = resourceFactory;
-
-        _mainPass = new RenderPassInfo
-        {
-            RenderTarget = GBufferDiffuse,
-            Name = "MainPass"
-        };
     }
 
     public void Startup()
@@ -59,7 +53,11 @@ public class RenderSystem
 
         _gBufferDiffuse = _rhiRenderer.SwapChain.Acquire(CurrentRenderContext);
 
-        _mainPass.RenderTarget = GBufferDiffuse;
+        _mainPass = new RenderPassInfo
+        {
+            RenderTarget = GBufferDiffuse,
+            Name = "MainPass"
+        };
 
         CurrentRenderContext.BeginRenderPass(_mainPass);
 

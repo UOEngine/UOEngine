@@ -17,7 +17,7 @@ using UOEngine.Runtime.Core;
 namespace Microsoft.Xna.Framework;
 
 [DebuggerDisplay("{DebugDisplayString,nq}")]
-public struct Color
+public struct Color : IEquatable<Color>
 {
     public byte B
     {
@@ -79,6 +79,18 @@ public struct Color
         }
     }
 
+    public UInt32 PackedValue
+    {
+        get
+        {
+            return packedValue;
+        }
+        set
+        {
+            packedValue = value;
+        }
+    }
+
     public static Color Black;
     public static Color White;
 
@@ -119,6 +131,20 @@ public struct Color
     {
         return !(a == b);
     }
+    public bool Equals(Color other)
+    {
+        return this.PackedValue == other.PackedValue;
+    }
+
+    public override bool Equals(object? obj)
+    {
+        return ((obj is Color) && this.Equals((Color)obj));
+    }
+
+    public override int GetHashCode()
+    {
+        return this.packedValue.GetHashCode();
+    }
 
     private Color(uint packedValue)
     {
@@ -139,5 +165,4 @@ public struct Color
     }
 
     private uint packedValue;
-
 }

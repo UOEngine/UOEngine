@@ -8,7 +8,7 @@ public class GameWindow
     public IntPtr Handle => _window.Handle;
     public Rectangle ClientBounds => GetWindowBounds();
 
-    public event EventHandler<EventArgs> ClientSizeChanged;
+    public event EventHandler<EventArgs>? ClientSizeChanged;
 
     private readonly IWindow _window;
 

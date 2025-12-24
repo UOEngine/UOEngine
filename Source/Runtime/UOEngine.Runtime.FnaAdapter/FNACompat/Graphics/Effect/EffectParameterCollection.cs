@@ -35,7 +35,7 @@ public sealed class EffectParameterCollection : IEnumerable<EffectParameter>
                 UOEDebug.Assert(false, $"{name} does not exist in the shader");
             }
 
-            return value;
+            return value!;
         }
     }
 

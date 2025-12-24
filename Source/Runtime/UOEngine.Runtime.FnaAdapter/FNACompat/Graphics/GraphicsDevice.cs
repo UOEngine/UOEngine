@@ -113,18 +113,18 @@ public class GraphicsDevice
 
     public readonly Remapper EffectRemapper;
 
-    public IRenderContext RenderContext { get; private set; }
+    public IRenderContext RenderContext { get; private set; } = null!;
 
     private RenderTarget2D? _renderTarget;
     private Color _clearColour;
 
-    private VertexBuffer _vertexBuffer;
+    private VertexBuffer? _vertexBuffer;
     private bool _vertexBufferDirty = false;
 
     private readonly bool[] _modifiedSamplers = new bool[MAX_TEXTURE_SAMPLERS];
     private readonly bool[] _modifiedVertexSamplers = new bool[MAX_VERTEXTEXTURE_SAMPLERS];
 
-    private IndexBuffer _indices;
+    private IndexBuffer _indices = null!;
     private bool _indicesDirty = true;
 
     private Color _blendFactor = Color.White;
@@ -134,12 +134,12 @@ public class GraphicsDevice
     private readonly Dictionary<DepthStencilState, RhiDepthStencilState> _depthStencilStates = [];
     private readonly Dictionary<SamplerState, RhiSampler> _samplerStates = [];
 
-    private ShaderInstance _shaderInstance;
+    private ShaderInstance _shaderInstance = null!;
     private bool _graphicsPipelineDirty = false;
 
-    private BlendState _fnaBlendState;
-    private RasterizerState _rasterizerState;
-    private DepthStencilState _depthStencilState;
+    private BlendState _fnaBlendState = null!;
+    private RasterizerState _rasterizerState = null!;
+    private DepthStencilState _depthStencilState = null!;
 
     private List<VertexBuffer> _dynamicVertexBuffers = [];
 
@@ -274,7 +274,7 @@ public class GraphicsDevice
             return;
         }
 
-        RenderContext.VertexBuffer = _vertexBuffer.RhiVertexBuffer;
+        RenderContext.VertexBuffer = _vertexBuffer?.RhiVertexBuffer!;
         _vertexBufferDirty = false;
     }
 

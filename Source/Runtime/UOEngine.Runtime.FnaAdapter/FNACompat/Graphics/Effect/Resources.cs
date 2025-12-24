@@ -106,13 +106,13 @@ namespace Microsoft.Xna.Framework.Graphics
 
         #region Private Static Variables
 
-        private static byte[] alphaTestEffect;
-        private static byte[] basicEffect;
-        private static byte[] dualTextureEffect;
-        private static byte[] environmentMapEffect;
-        private static byte[] skinnedEffect;
-        private static byte[] spriteEffect;
-        private static byte[] yuvToRGBAEffect;
+        private static byte[] alphaTestEffect = null!;
+        private static byte[] basicEffect = null!;
+        private static byte[] dualTextureEffect = null!;
+        private static byte[] environmentMapEffect = null!;
+        private static byte[] skinnedEffect = null!;
+        private static byte[] spriteEffect = null!;
+        private static byte[] yuvToRGBAEffect = null!;
 
         #endregion
 
@@ -120,12 +120,13 @@ namespace Microsoft.Xna.Framework.Graphics
 
         private static byte[] GetResource(string name)
         {
-            Stream stream = typeof(Resources).Assembly.GetManifestResourceStream(
+            var stream = typeof(Resources).Assembly.GetManifestResourceStream(
                 "Microsoft.Xna.Framework.Graphics.Effect.Resources." + name + ".fxb"
             );
+
             using (MemoryStream ms = new MemoryStream())
             {
-                stream.CopyTo(ms);
+                stream?.CopyTo(ms);
                 return ms.ToArray();
             }
         }

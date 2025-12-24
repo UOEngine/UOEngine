@@ -14,7 +14,7 @@
 		<!--<Platforms>x64;x86</Platforms>-->
 		<!--<Configurations>Debug;Development</Configurations>-->
 		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-		<NoWarn>$(NoWarn);CS0169;CS0414</NoWarn>
+		<NoWarn>$(NoWarn);CS0067;CS0169;CS0414</NoWarn>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)' == 'Development'">

@@ -9,7 +9,7 @@ public class GraphicsDeviceManager
     public readonly GraphicsDevice GraphicsDevice;
     public GraphicsProfile GraphicsProfile;
 
-    public event EventHandler<PreparingDeviceSettingsEventArgs> PreparingDeviceSettings;
+    public event EventHandler<PreparingDeviceSettingsEventArgs>? PreparingDeviceSettings;
 
     public static readonly int DefaultBackBufferWidth = 800;
     public static readonly int DefaultBackBufferHeight = 480;

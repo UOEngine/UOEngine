@@ -14,11 +14,11 @@ public class EffectParameter
 
     internal ReadOnlySpan<byte> Data => _data;
 
-    internal Texture texture;
+    internal Texture? texture;
 
     public string Name { get; }
 
-    private readonly byte[] _data;
+    private readonly byte[]? _data;
     private readonly GCHandle _pinned;
     private readonly int _offset;   // offset into the parent constant buffer
 
@@ -62,7 +62,9 @@ public class EffectParameter
         unsafe
         {
             fixed (byte* p = _data)
+            {
                 *((Vector3*)p) = value;
+            }
         }
     }
 
@@ -71,13 +73,9 @@ public class EffectParameter
         unsafe
         {
             fixed (byte* p = _data)
+            {
                 *((Vector4*)p) = value;
-
-            //float* dstPtr = (float*)_data;
-            //dstPtr[0] = value.X;
-            //dstPtr[1] = value.Y;
-            //dstPtr[2] = value.Z;
-            //dstPtr[3] = value.W;
+            }
         }
     }
 
@@ -85,7 +83,9 @@ public class EffectParameter
     {
         // XNA uses Matrix as 4x4 floats in row-major
         fixed (byte* p = _data)
+        {
             *((Matrix*)p) = value;
+        }
     }
 
     public void SetValue(float[] values)
@@ -101,7 +101,14 @@ public class EffectParameter
     #endregion
     public Texture2D GetValueTexture2D()
     {
-        return (Texture2D)texture;
+        if (texture is not Texture2D tex2D)
+        {
+            throw new InvalidOperationException(
+                $"Expected Texture2D, got {texture?.GetType().Name ?? "null"}");
+
+        }
+
+        return tex2D;
     }
 
     public Matrix GetValueMatrix()

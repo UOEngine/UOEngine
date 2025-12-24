@@ -3,7 +3,7 @@
 public class RasterizerState
 {
     public CullMode CullMode;
-    public string Name;
+    public string? Name;
 
     public static RasterizerState CullNone = new("RasterizerState.CullNone", CullMode.None);
 

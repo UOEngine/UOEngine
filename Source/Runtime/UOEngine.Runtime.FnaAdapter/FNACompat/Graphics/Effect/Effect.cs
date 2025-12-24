@@ -20,8 +20,8 @@ public class Effect
 
     internal readonly EffectData Data;
 
-    public EffectParameterCollection Parameters { get; private set; }
-    public EffectTechniqueCollection Techniques { get; private set; }
+    public EffectParameterCollection Parameters { get; private set; } = null!;
+    public EffectTechniqueCollection Techniques { get; private set; } = null!;
 
     public EffectTechnique CurrentTechnique { get; set; }
 

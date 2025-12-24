@@ -4,5 +4,5 @@ namespace Microsoft.Xna.Framework;
 
 public class GraphicsDeviceInformation
 {
-    public PresentationParameters PresentationParameters;
+    public PresentationParameters PresentationParameters = null!;
 }

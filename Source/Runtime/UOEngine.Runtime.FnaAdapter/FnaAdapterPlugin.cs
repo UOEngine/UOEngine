@@ -14,7 +14,7 @@ public class FnaAdapterPlugin: IPlugin
 {
     public PluginLoadingPhase Priority => PluginLoadingPhase.Runtime;
 
-    public static FnaAdapterPlugin Instance { get; private set; }
+    public static FnaAdapterPlugin Instance { get; private set; } = null!;
 
     // These are all public for the fake FNA classes to use what is required under the hood.
     public readonly IWindow Window;

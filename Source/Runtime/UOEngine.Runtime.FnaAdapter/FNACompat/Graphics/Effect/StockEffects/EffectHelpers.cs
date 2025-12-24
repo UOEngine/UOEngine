@@ -78,8 +78,8 @@ namespace Microsoft.Xna.Framework.Graphics
             {
                 Matrix worldViewProj;
                 
-                Matrix.Multiply(ref world, ref view, out worldView);
-                Matrix.Multiply(ref worldView, ref projection, out worldViewProj);
+                Matrix.Multiply(world, view, out worldView);
+                Matrix.Multiply(worldView, projection, out worldViewProj);
                 
                 worldViewProjParam.SetValue(worldViewProj);
                 

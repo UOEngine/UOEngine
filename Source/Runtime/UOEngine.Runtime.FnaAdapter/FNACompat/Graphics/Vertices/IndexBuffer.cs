@@ -10,7 +10,7 @@ public class IndexBuffer
 
     public IndexBuffer(GraphicsDevice graphicsDevice, IndexElementSize indexElementSize, int indexCount, BufferUsage bufferUsage) 
     {
-        RhiIndexBuffer = FnaAdapterPlugin.Instance.RenderResourceFactory.CreateIndexBuffer((uint)indexCount, "FnaIndexBuffer");
+        RhiIndexBuffer = graphicsDevice.RenderResourceFactory.CreateIndexBuffer((uint)indexCount, "FnaIndexBuffer");
     }
 
     public void SetDataPointerEXT(int offsetInBytes, IntPtr data, int dataLength, SetDataOptions options)
