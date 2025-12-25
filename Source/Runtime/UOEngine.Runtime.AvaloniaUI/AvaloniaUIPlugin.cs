@@ -10,11 +10,16 @@ namespace UOEngine.Runtime.AvaloniaUI;
 [PluginLoadingPhase(PluginLoadingPhase.Runtime)]
 public class AvaloniaUIPlugin: IPlugin
 {
+    private AvaloniaControl? _rootControl;
+
     public void PostStartup()
     {
         AppBuilder.Configure<AvaloniaApp>()
             .UseUOEngine()
             .SetupWithoutStarting();
+
+        _rootControl = new AvaloniaControl();
+        _rootControl.Initialise();
     }
 
 }
