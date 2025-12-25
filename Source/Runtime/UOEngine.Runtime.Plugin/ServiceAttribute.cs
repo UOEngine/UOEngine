@@ -10,6 +10,7 @@ public enum UOEServiceLifetime
     Singleton
 }
 
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
 public sealed class ServiceAttribute: Attribute
 {
     public ServiceLifetime Lifetime { get; }

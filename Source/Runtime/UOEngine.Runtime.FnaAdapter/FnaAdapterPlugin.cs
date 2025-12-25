@@ -12,6 +12,7 @@ using UOEngine.Runtime.RHI;
 namespace UOEngine.Runtime.FnaAdapter;
 
 [PluginEntry]
+[PluginLoadingPhase(PluginLoadingPhase.Runtime)]
 public class FnaAdapterPlugin: IPlugin
 {
     public PluginLoadingPhase Priority => PluginLoadingPhase.Runtime;

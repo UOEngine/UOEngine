@@ -6,6 +6,7 @@ using UOEngine.Runtime.RHI;
 namespace UOEngine.Runtime.SDL3GPU;
 
 [PluginEntry]
+[PluginLoadingPhase(PluginLoadingPhase.Runtime)]
 public class SDL3GPUPlugin: IPlugin
 {
     private readonly SDL3GPURenderer _renderer;

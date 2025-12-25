@@ -1,5 +1,6 @@
 ﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
+using System.Diagnostics;
 using System.Reflection;
 using System.Text;
 
@@ -12,9 +13,10 @@ public class PluginRegistry
     private readonly HashSet<Type> _types = [];
     private readonly Queue<Type> _configureQueue = [];
 
-    private sealed record PluginDescriptor(Type Type, IReadOnlyList<Type> Dependencies);
+    [DebuggerDisplay("{Type.Name} ({Phase.ToString()})")]
+    private sealed record PluginDescriptor(Type Type, IReadOnlyList<Type> Dependencies, PluginLoadingPhase Phase);
+
     private readonly List<PluginDescriptor> _pluginDescriptors = [];
-    private readonly List<ServiceDescriptor> _serviceDescriptors = [];
 
     public bool LoadPlugin(Type pluginType)
     {
@@ -29,10 +31,11 @@ public class PluginRegistry
         }
 
         var dependencies = pluginType.GetCustomAttributes<PluginDependencyAttribute>().Select(a => a.Dependency).ToList();
+        var loadingPhase = pluginType.GetCustomAttribute<PluginLoadingPhaseAttribute>()?.Phase ?? PluginLoadingPhase.Default;
 
         _configureQueue.Enqueue(pluginType);
 
-        _pluginDescriptors.Add(new PluginDescriptor(pluginType, dependencies));
+        _pluginDescriptors.Add(new PluginDescriptor(pluginType, dependencies, loadingPhase));
 
         return true;
     }
@@ -134,7 +137,7 @@ public class PluginRegistry
 
         if(typeof(IPlugin).IsAssignableFrom(entryType) == false || entryType.IsAbstract)
         {
-            Console.WriteLine($"$[PluginEntry] type {entryType.FullName} is not a non-abstract IPlugin.");
+            Console.WriteLine($"[PluginEntry] type {entryType.FullName} is not a non-abstract IPlugin.");
 
             return;
         }
@@ -188,20 +191,29 @@ public class PluginRegistry
             d => d,
             d => new HashSet<Type>(d.Dependencies));
 
-        var lookup = descriptors.ToDictionary(d => d.Type);
-        var ready = new Queue<PluginDescriptor>(incoming.Where(kv => kv.Value.Count == 0)
-                                                        .Select(kv => kv.Key));
+        // Get plugins with no dependencies as they are ready.
+        var ready = incoming.Where(kv => kv.Value.Count == 0).Select(kv => kv.Key).ToList();
 
         while (ready.Count > 0)
         {
-            var next = ready.Dequeue();
+            ready.Sort((left, right) => 
+            {
+                return (int)left.Phase - (int)right.Phase;
+            });
+
+            var next = ready[0];
+
+            ready.RemoveAt(0);
+
             yield return next;
 
+            // Dependencies loaded?
             foreach (var kv in incoming.Where(kv => kv.Value.Remove(next.Type)).ToList())
             {
+                // If so, it is ready.
                 if (kv.Value.Count == 0)
                 {
-                    ready.Enqueue(kv.Key);
+                    ready.Add(kv.Key);
                 }
             }
         }

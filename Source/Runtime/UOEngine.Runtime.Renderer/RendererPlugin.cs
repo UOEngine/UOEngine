@@ -5,6 +5,7 @@ using UOEngine.Runtime.Plugin;
 namespace UOEngine.Runtime.Renderer;
 
 [PluginEntry]
+[PluginLoadingPhase(PluginLoadingPhase.Runtime)]
 public class RendererPlugin : IPlugin
 {
     private readonly RenderSystem _renderSystem;
