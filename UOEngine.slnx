@@ -70,7 +70,12 @@
       <Platform Project="x64" />
     </Project>
   </Folder>
-  <Folder Name="/ThirdParty/Avalonia/" />
+  <Folder Name="/ThirdParty/Avalonia/">
+    <Project Path="../GitRepos/Avalonia/src/Avalonia.Controls/Avalonia.Controls.csproj" />
+    <Project Path="../GitRepos/Avalonia/src/Skia/Avalonia.Skia/Avalonia.Skia.csproj" />
+    <Project Path="../GitRepos/Avalonia/src/tools/Avalonia.Analyzers/Avalonia.Analyzers.csproj" />
+    <Project Path="../GitRepos/Avalonia/src/tools/DevAnalyzers/DevAnalyzers.csproj" />
+  </Folder>
   <Folder Name="/ThirdParty/CentrEDSharp/">
     <Project Path="ThirdParty/centredsharp/CentrED/CentrED.csproj" />
     <Project Path="ThirdParty/centredsharp/Client/Client.csproj" />

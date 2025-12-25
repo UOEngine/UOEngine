@@ -6,4 +6,15 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\GitRepos\Avalonia\src\Avalonia.Controls\Avalonia.Controls.csproj" />
+    <ProjectReference Include="..\..\..\..\GitRepos\Avalonia\src\Skia\Avalonia.Skia\Avalonia.Skia.csproj" />
+    <ProjectReference Include="..\UOEngine.Runtime.Plugin\UOEngine.Runtime.Plugin.csproj" />
+  </ItemGroup>
+
+	<PropertyGroup>
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+	</PropertyGroup>
+
+
 </Project>
