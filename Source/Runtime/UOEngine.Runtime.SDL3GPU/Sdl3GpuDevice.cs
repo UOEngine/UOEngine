@@ -2,9 +2,8 @@
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using static SDL3.SDL;
 
-using UOEngine.Runtime.RHI;
 using UOEngine.Runtime.Core;
-using System.Runtime.InteropServices;
+using UOEngine.Runtime.Plugin;
 
 namespace UOEngine.Runtime.SDL3GPU;
 
@@ -18,6 +17,7 @@ internal enum Sdl3GpuBackend
     Count
 }
 
+[Service(UOEServiceLifetime.Singleton)]
 internal class Sdl3GpuDevice//: IRenderDevice
 {
     public Sdl3GpuBackend Backend { get; private set; }

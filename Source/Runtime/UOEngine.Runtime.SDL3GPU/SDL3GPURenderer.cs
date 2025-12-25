@@ -5,9 +5,11 @@ using static SDL3.SDL;
 using UOEngine.Runtime.Platform;
 using UOEngine.Runtime.RHI;
 using UOEngine.Runtime.RHI.Resources;
+using UOEngine.Runtime.Plugin;
 
 namespace UOEngine.Runtime.SDL3GPU;
 
+[Service(UOEServiceLifetime.Singleton, typeof(IRenderer))]
 internal class SDL3GPURenderer : IRenderer
 {
     public IRenderSwapChain SwapChain => _swapchain ?? throw new InvalidOperationException("Swapchain is not initialised.");

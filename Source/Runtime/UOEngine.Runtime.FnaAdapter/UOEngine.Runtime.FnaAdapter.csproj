@@ -11,23 +11,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="FNA\**" />
-    <Compile Remove="Overrides\**" />
-    <EmbeddedResource Remove="FNA\**" />
-    <EmbeddedResource Remove="Overrides\**" />
-    <None Remove="FNA\**" />
-    <None Remove="Overrides\**" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Remove="FNA3D.cs" />
-    <Compile Remove="FNA3D.UOEngine.cs" />
-    <Compile Remove="FNAPlatform.cs" />
-    <Compile Remove="FNAPlatform.UOEngine.cs" />
-    <Compile Remove="UOEGameWindow.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="StbImageSharp" Version="2.30.15" />
     <PackageReference Include="System.IO.Hashing" Version="10.0.0" />
   </ItemGroup>
@@ -37,11 +20,5 @@
     <ProjectReference Include="..\UOEngine.Runtime.Platform\UOEngine.Runtime.Platform.csproj" />
     <ProjectReference Include="..\UOEngine.Runtime.Plugin\UOEngine.Runtime.Plugin.csproj" />
   </ItemGroup>
-
-	<!--<ItemGroup>
-		<EmbeddedResource Include="FNACompat\Graphics\Effect\StockEffects\FXB\BasicEffect.fxb">
-			<LogicalName>Microsoft.Xna.Framework.Graphics.Effect.Resources.BasicEffect.fxb</LogicalName>
-		</EmbeddedResource>
-	</ItemGroup>-->
 	
 </Project>
