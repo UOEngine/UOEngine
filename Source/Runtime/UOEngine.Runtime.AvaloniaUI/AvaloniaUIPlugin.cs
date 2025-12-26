@@ -3,6 +3,7 @@
 using Avalonia;
 
 using UOEngine.Runtime.Plugin;
+using UOEngine.Runtime.Renderer;
 
 namespace UOEngine.Runtime.AvaloniaUI;
 
@@ -11,6 +12,14 @@ namespace UOEngine.Runtime.AvaloniaUI;
 public class AvaloniaUIPlugin: IPlugin
 {
     private AvaloniaControl? _rootControl;
+
+    public AvaloniaUIPlugin(RenderSystem renderSystem)
+    {
+        renderSystem.OnFrameEnd += (renderContext) =>
+        {
+            _rootControl!.Draw();
+        };
+    }
 
     public void PostStartup()
     {

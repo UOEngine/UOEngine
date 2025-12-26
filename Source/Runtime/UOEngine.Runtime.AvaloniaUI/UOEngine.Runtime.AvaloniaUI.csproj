@@ -10,6 +10,11 @@
     <ProjectReference Include="..\..\..\..\GitRepos\Avalonia\src\Avalonia.Controls\Avalonia.Controls.csproj" />
     <ProjectReference Include="..\..\..\..\GitRepos\Avalonia\src\Skia\Avalonia.Skia\Avalonia.Skia.csproj" />
     <ProjectReference Include="..\UOEngine.Runtime.Plugin\UOEngine.Runtime.Plugin.csproj" />
+    <ProjectReference Include="..\UOEngine.Runtime.Renderer\UOEngine.Runtime.Renderer.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Gpu\" />
   </ItemGroup>
 
 	<PropertyGroup>
