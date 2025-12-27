@@ -13,8 +13,10 @@ internal unsafe class VulkanInstance
 {
     public VkInstance Instance => _instance;
 
+    public VkInstanceApi Api => _instanceApi ?? throw new InvalidOperationException("");
+
     private VkInstance _instance;
-    private VkInstanceApi _instanceApi = null!;
+    private VkInstanceApi? _instanceApi;
     private VkDebugUtilsMessengerEXT _debugMessenger = VkDebugUtilsMessengerEXT.Null;
 
     public void Create(string applicationName, bool enableDebug)
@@ -102,9 +104,110 @@ internal unsafe class VulkanInstance
         }
 
         Console.WriteLine($"Created VkInstance with version: {appInfo.apiVersion.Major}.{appInfo.apiVersion.Minor}.{appInfo.apiVersion.Patch}");
+
+        if (instanceLayers.Count > 0)
+        {
+            foreach (var layer in instanceLayers)
+            {
+                Console.WriteLine($"Instance layer '{layer}'");
+            }
+        }
+
+        foreach (VkUtf8String extension in instanceExtensions)
+        {
+            Console.WriteLine($"Instance extension '{extension}'");
+        }
     }
 
-    public void Destroy() => _instanceApi.vkDestroyInstance(_instance);
+    public void Destroy() => Api.vkDestroyInstance(_instance);
+
+    public VkSurfaceKHR CreateSurface(IntPtr windowHandle) 
+    {
+        VkSurfaceKHR* surface = default;
+        
+        if(UOEngineSdl3.SDL_Vulkan_CreateSurface(windowHandle, _instance, null, &surface) == false)
+        {
+            throw new Exception("SDL: failed to create vulkan surface");
+        }
+
+        return new VkSurfaceKHR((ulong)new IntPtr(surface).ToInt64());
+
+    }
+
+    public VulkanDeviceInfo GetSuitableDevice()
+    {
+        uint physicalDevicesCount = 0;
+        
+        Api.vkEnumeratePhysicalDevices(_instance, &physicalDevicesCount, null).CheckResult();
+
+        if (physicalDevicesCount == 0)
+        {
+            throw new Exception("Vulkan: Failed to find GPUs with Vulkan support");
+        }
+
+        Span<VkPhysicalDevice> physicalDevices = stackalloc VkPhysicalDevice[(int)physicalDevicesCount];
+
+        Api.vkEnumeratePhysicalDevices(_instance, physicalDevices).CheckResult();
+
+        VkPhysicalDevice physicalDevice = default;
+        VkPhysicalDeviceProperties deviceProperties = default;
+
+        for (int i = 0; i < physicalDevicesCount; i++)
+        {
+            physicalDevice = physicalDevices[i];
+
+            Api.vkGetPhysicalDeviceProperties(physicalDevice, out deviceProperties);
+
+            bool discrete = deviceProperties.deviceType == VkPhysicalDeviceType.DiscreteGpu;
+
+            if(discrete)
+            {
+                // Prefer discrete of course.
+                break;
+            }
+        }
+
+        // FIll in info with chosen device.
+        Api.vkEnumerateDeviceExtensionProperties(physicalDevice, out uint propertyCount).CheckResult();
+
+        Span<VkExtensionProperties> availableDeviceExtensions = stackalloc VkExtensionProperties[(int)propertyCount];
+
+        Api.vkEnumerateDeviceExtensionProperties(physicalDevice, availableDeviceExtensions).CheckResult();
+
+        var deviceInfo = new VulkanDeviceInfo
+        {
+            PhysicalDevice = physicalDevice,
+            DeviceProperties = deviceProperties
+        };
+
+        Api.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, out uint queueFamilyCount);
+        Span<VkQueueFamilyProperties> queueFamilies = stackalloc VkQueueFamilyProperties[(int)queueFamilyCount];
+        Api.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, queueFamilies);
+
+        if (FindQueue(queueFamilies, VkQueueFlags.Graphics, VkQueueFlags.None, out var graphicsQueue) == false)
+        {
+            throw new InvalidOperationException("No graphics queue for device?");
+        }
+
+        // Have we a dedicated copy queue for async copies?
+        if(FindQueue(queueFamilies, VkQueueFlags.Transfer, VkQueueFlags.Graphics | VkQueueFlags.Compute, out var copyQueue) == false)
+        {
+            throw new InvalidOperationException("No async copy queue for device?");
+        }
+
+        if (FindQueue(queueFamilies, VkQueueFlags.Compute, VkQueueFlags.Graphics, out var computeQueue) == false)
+        {
+            throw new InvalidOperationException("No async compute queue for device?");
+        }
+
+        deviceInfo.Queues = new VulkanQueueInfo[(int)VulkanQueueType.Count];
+
+        deviceInfo.Queues[(int)VulkanQueueType.Graphics] = graphicsQueue;
+        deviceInfo.Queues[(int)VulkanQueueType.Copy] = copyQueue;
+        deviceInfo.Queues[(int)VulkanQueueType.Compute] = computeQueue;
+
+        return deviceInfo;
+    }
 
     private unsafe static VkUtf8String[] EnumerateInstanceLayers()
     {
@@ -160,6 +263,38 @@ internal unsafe class VulkanInstance
         }
 
         return extensions;
+    }
+
+    private static bool FindQueue(ReadOnlySpan<VkQueueFamilyProperties> queueProperties, VkQueueFlags includeFlags, VkQueueFlags excludeFlags, out VulkanQueueInfo queueInfo)
+    {
+        uint index = 0;
+
+        queueInfo = new VulkanQueueInfo
+        {
+            Index = VK_QUEUE_FAMILY_IGNORED,
+            Flags = VkQueueFlags.None
+        };
+
+        foreach (var queue in queueProperties)
+        {
+            if((queue.queueFlags & includeFlags) != VkQueueFlags.None)
+            {
+                if((queue.queueFlags & excludeFlags) == VkQueueFlags.None)
+                {
+                    queueInfo = new VulkanQueueInfo
+                    {
+                        Index = index,
+                        Flags = queue.queueFlags
+                    };
+
+                    return true;
+                }
+            }
+
+            index++;
+        }
+
+        return false;
     }
 
     [UnmanagedCallersOnly]

@@ -17,16 +17,15 @@ public class VulkanRenderer : IRenderer
 
     private readonly IWindow _window;
 
-    private readonly VulkanDevice _device;
+    private VulkanDevice _device = null!;
 
     private readonly VulkanInstance _instance = new();
 
     private bool _enableDebug = false;
 
-    public VulkanRenderer(IWindow window, VulkanDevice device)
+    public VulkanRenderer(IWindow window)
     {
         _window = window;
-        _device = device;
 
         if(CommandLine.HasOption("-debugdevice"))
         {
@@ -41,6 +40,13 @@ public class VulkanRenderer : IRenderer
         result.CheckResult();
 
         _instance.Create("UOEngineApp", _enableDebug);
+
+        VkSurfaceKHR surface = _instance.CreateSurface(_window.Handle);
+
+        _device = new VulkanDevice(_instance.GetSuitableDevice());
+
+        _device.InitGpu(_instance.Api);
+
     }
 
     public void Shutdown()
