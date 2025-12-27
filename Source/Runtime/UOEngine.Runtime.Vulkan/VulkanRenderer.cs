@@ -22,6 +22,7 @@ public class VulkanRenderer : IRenderer
     private readonly VulkanInstance _instance = new();
 
     private bool _enableDebug = false;
+    private VulkanSwapchain _swapchain = null!;
 
     public VulkanRenderer(IWindow window)
     {
@@ -41,11 +42,13 @@ public class VulkanRenderer : IRenderer
 
         _instance.Create("UOEngineApp", _enableDebug);
 
-        VkSurfaceKHR surface = _instance.CreateSurface(_window.Handle);
-
         _device = new VulkanDevice(_instance.GetSuitableDevice());
 
         _device.InitGpu(_instance.Api);
+
+        _swapchain = new VulkanSwapchain(_instance, _device);
+
+        _swapchain.Create(_window.Handle);
 
     }
 

@@ -18,7 +18,7 @@ public struct VulkanDeviceInfo
     public VulkanQueueInfo[] Queues;
 }
 
-enum VulkanQueueType
+public enum VulkanQueueType
 {
     Graphics,
     Copy,
@@ -30,7 +30,11 @@ enum VulkanQueueType
 //[Service(UOEServiceLifetime.Singleton)]
 public class VulkanDevice : IDisposable
 {
-    public readonly VulkanDeviceInfo _deviceInfo;
+    public readonly VulkanDeviceInfo DeviceInfo;
+    public VkPhysicalDevice PhysicalDeviceHandle => DeviceInfo.PhysicalDevice;
+    public VkDevice Handle => _device ?? throw new InvalidOperationException("VkDevice is not initialised.");
+
+    public VulkanQueue PresentQueue => GetQueue(VulkanQueueType.Graphics);
 
     public VkDeviceApi Api => _api ?? throw new InvalidOperationException("");
 
@@ -41,8 +45,10 @@ public class VulkanDevice : IDisposable
 
     public VulkanDevice(in VulkanDeviceInfo deviceInfo)
     {
-        _deviceInfo = deviceInfo;
+        DeviceInfo = deviceInfo;
     }
+
+    public VulkanQueue GetQueue(VulkanQueueType type) => _queues[(int)type];
 
     public void Dispose()
     {
@@ -56,12 +62,12 @@ public class VulkanDevice : IDisposable
 
         using var deviceExtensionNames = new VkStringArray(enabledExtensions);
 
-        VkDeviceQueueCreateInfo* queueCreateInfos = stackalloc VkDeviceQueueCreateInfo[_deviceInfo.Queues.Length];
+        VkDeviceQueueCreateInfo* queueCreateInfos = stackalloc VkDeviceQueueCreateInfo[DeviceInfo.Queues.Length];
 
         uint queueCount = 0;
         float priority = 1.0f;
 
-        foreach (var queueInfo in _deviceInfo.Queues)
+        foreach (var queueInfo in DeviceInfo.Queues)
         {
             queueCreateInfos[queueCount++] = new VkDeviceQueueCreateInfo
             {
@@ -74,7 +80,7 @@ public class VulkanDevice : IDisposable
         VkDeviceCreateInfo deviceCreateInfo = new()
         {
             pNext = null,
-            queueCreateInfoCount = (uint)_deviceInfo.Queues.Length,
+            queueCreateInfoCount = (uint)DeviceInfo.Queues.Length,
             pQueueCreateInfos = queueCreateInfos,
             enabledExtensionCount = deviceExtensionNames.Length,
             ppEnabledExtensionNames = deviceExtensionNames,
@@ -83,7 +89,7 @@ public class VulkanDevice : IDisposable
 
         VkDevice device;
 
-        instanceApi.vkCreateDevice(_deviceInfo.PhysicalDevice, &deviceCreateInfo, &device).CheckResult();
+        instanceApi.vkCreateDevice(DeviceInfo.PhysicalDevice, &deviceCreateInfo, &device).CheckResult();
 
         _device = device;
 

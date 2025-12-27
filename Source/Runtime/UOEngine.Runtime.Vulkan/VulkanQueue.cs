@@ -5,15 +5,17 @@ using Vortice.Vulkan;
 
 namespace UOEngine.Runtime.Vulkan;
 
-[DebuggerDisplay("{_type.ToString()}")]
-internal class VulkanQueue
+[DebuggerDisplay("{_type.ToString()} Queue")]
+public class VulkanQueue
 {
-    private readonly VkQueue _queue;
+    public readonly VkQueue Handle;
+    public readonly uint FamilyIndex;
+
     private readonly VulkanQueueType _type;
 
     public VulkanQueue(VulkanQueueType type, VkQueue queue)
     {
-        _queue = queue;
+        Handle = queue;
         _type = type;
     }
 }
