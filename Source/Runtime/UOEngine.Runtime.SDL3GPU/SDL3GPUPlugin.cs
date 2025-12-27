@@ -7,6 +7,7 @@ namespace UOEngine.Runtime.SDL3GPU;
 
 [PluginEntry]
 [PluginLoadingPhase(PluginLoadingPhase.Runtime)]
+[DisablePlugin]
 public class SDL3GPUPlugin: IPlugin
 {
     private readonly SDL3GPURenderer _renderer;

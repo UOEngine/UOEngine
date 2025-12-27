@@ -32,6 +32,14 @@ public class PluginRegistry
 
         var dependencies = pluginType.GetCustomAttributes<PluginDependencyAttribute>().Select(a => a.Dependency).ToList();
         var loadingPhase = pluginType.GetCustomAttribute<PluginLoadingPhaseAttribute>()?.Phase ?? PluginLoadingPhase.Default;
+        var shouldLoad = pluginType.GetCustomAttribute<DisablePluginAttribute>() == null;
+
+        if(shouldLoad == false)
+        {
+            Console.WriteLine($"Not loading {nameof(pluginType)} as has DisablePlugin attribute.");
+
+            return false;
+        }
 
         _configureQueue.Enqueue(pluginType);
 

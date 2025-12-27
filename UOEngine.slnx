@@ -55,6 +55,9 @@
     <Project Path="Source/Runtime/UOEngine.Runtime.UI/UOEngine.Runtime.UI.csproj" Id="a4500abb-2b74-4bd6-bdc2-423bb8a11d48">
       <Platform Project="x64" />
     </Project>
+    <Project Path="Source/Runtime/UOEngine.Runtime.Vulkan/UOEngine.Runtime.Vulkan.csproj" Id="6a64be71-a27e-4a7d-acdf-9cf84a2a80c0">
+      <Platform Project="x64" />
+    </Project>
   </Folder>
   <Folder Name="/Shaders/" />
   <Folder Name="/ThirdParty/">
