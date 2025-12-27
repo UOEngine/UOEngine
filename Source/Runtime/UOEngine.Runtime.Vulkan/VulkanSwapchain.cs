@@ -1,7 +1,5 @@
 ﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
-using System.Xml.Linq;
-using UOEngine.Runtime.Core;
 using Vortice.Vulkan;
 
 namespace UOEngine.Runtime.Vulkan;
@@ -88,7 +86,16 @@ internal class VulkanSwapchain
 
         for(int i = 0;  i < swapChainImageCount; i++)
         {
-            _backbuffer[i] = new VulkanTexture();
+            var texture = new VulkanTexture(_device, new VulkanTextureDescription
+            {
+                Width = Extent.width,
+                Height = Extent.height,
+                Format = surfaceFormat.format
+            });
+
+            texture.InitFromExistingResource(swapChainImages[i]);
+
+            _backbuffer[i] = texture;
         }
     }
 
