@@ -20,15 +20,13 @@ public interface IRenderContext
 
     public IRhiVertexBuffer VertexBuffer { get; set; }
 
-    public ModelViewProjection MVP { get; set; }
-
     public RhiSampler Sampler { get; set; }
 
 
     public void BeginRenderPass(in RenderPassInfo renderPassInfo);
     public void EndRenderPass();
 
-    public void BeginRecording();
+    //public void BeginRecording();
     public void EndRecording();
 
     public void DrawIndexedPrimitives(uint numIndices, uint numInstances, uint firstIndex, uint vertexOffset, uint firstInstance);

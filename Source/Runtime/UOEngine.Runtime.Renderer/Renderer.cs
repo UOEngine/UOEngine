@@ -50,12 +50,11 @@ public class RenderSystem
 
     public void FrameBegin()
     {
-        // Todo: Bad! We want frames in flight so at some point will need to fix this.
-        CurrentRenderContext.WaitForGpuIdle();
+        _rhiRenderer.FrameBegin();
 
-        CurrentRenderContext.BeginRecording();
+        //CurrentRenderContext.BeginRecording();
 
-        _gBufferDiffuse = _rhiRenderer.SwapChain.Acquire(CurrentRenderContext);
+        _gBufferDiffuse = _rhiRenderer.GetViewportRenderTarget();
 
         _mainPass = new RenderPassInfo
         {
@@ -73,7 +72,9 @@ public class RenderSystem
         OnFrameEnd?.Invoke(CurrentRenderContext);
 
         CurrentRenderContext.EndRenderPass();
-        CurrentRenderContext.EndRecording();
+        //CurrentRenderContext.EndRecording();
+
+        _rhiRenderer.FrameEnd();
 
         _frameNumber++;
     }

@@ -77,9 +77,14 @@ public class VulkanDevice : IDisposable
             };
         }
 
+        VkPhysicalDeviceSynchronization2Features sync2 = new()
+        {
+            synchronization2 = true
+        };
+
         VkDeviceCreateInfo deviceCreateInfo = new()
         {
-            pNext = null,
+            pNext = &sync2,
             queueCreateInfoCount = (uint)DeviceInfo.Queues.Length,
             pQueueCreateInfos = queueCreateInfos,
             enabledExtensionCount = deviceExtensionNames.Length,
@@ -99,9 +104,17 @@ public class VulkanDevice : IDisposable
         {
             _api.vkGetDeviceQueue(device, i, 0, out var queue);
 
-            _queues[i] = new VulkanQueue((VulkanQueueType)i, queue);
+            _queues[i] = new VulkanQueue(this, (VulkanQueueType)i, queue);
         }
     }
 
+    public void WaitForGpuIdle() => Api.vkDeviceWaitIdle(Handle);
 
+    public VkSemaphore CreateSemaphore()
+    {
+        Api.vkCreateSemaphore(Handle, out var semaphore).CheckResult();
+
+        return semaphore;
+
+    }
 }

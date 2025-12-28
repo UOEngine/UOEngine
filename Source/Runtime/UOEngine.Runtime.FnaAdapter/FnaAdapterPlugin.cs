@@ -13,6 +13,7 @@ namespace UOEngine.Runtime.FnaAdapter;
 
 [PluginEntry]
 [PluginLoadingPhase(PluginLoadingPhase.Runtime)]
+[DisablePlugin]
 public class FnaAdapterPlugin: IPlugin
 {
     public PluginLoadingPhase Priority => PluginLoadingPhase.Runtime;

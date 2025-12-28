@@ -12,10 +12,18 @@ public class VulkanQueue
     public readonly uint FamilyIndex;
 
     private readonly VulkanQueueType _type;
+    private readonly VulkanDevice _device;
 
-    public VulkanQueue(VulkanQueueType type, VkQueue queue)
+    public VulkanQueue(VulkanDevice device, VulkanQueueType type, VkQueue queue)
     {
+        _device = device;
         Handle = queue;
         _type = type;
+        FamilyIndex = (uint)type;
+    }
+
+    public void Submit(in VkSubmitInfo submitInfo, VkFence submissionFence)
+    {
+        _device.Api.vkQueueSubmit(Handle, submitInfo, submissionFence);
     }
 }

@@ -4,9 +4,11 @@ using Vortice.Vulkan;
 
 namespace UOEngine.Runtime.Vulkan;
 
-internal class VulkanSwapchain
+internal class VulkanSwapchain: IDisposable
 {
     public VkSwapchainKHR Handle => _handle;
+
+    public VulkanTexture BackbufferToRenderInto => _backbuffer[_nextImageToPresent];
 
     private VkSurfaceKHR _surface;
     private nint _windowHandle;
@@ -16,6 +18,11 @@ internal class VulkanSwapchain
     private VkSwapchainKHR _handle;
 
     private VulkanTexture[] _backbuffer = [];
+
+    private readonly List<VkSemaphore> _recycledSemaphores = [];
+
+    private VkSemaphore _previousSemaphore = VkSemaphore.Null;
+    private uint _nextImageToPresent;
 
     public VulkanSwapchain(VulkanInstance instance, VulkanDevice device)
     {
@@ -43,6 +50,18 @@ internal class VulkanSwapchain
         }
 
         CreateSwapchain();
+    }
+
+    public void Dispose()
+    {
+        throw new NotImplementedException();
+    }
+
+    private void Cleanup()
+    {
+        _device.Api.vkDestroySwapchainKHR(_device.Handle, _handle);
+
+        _handle = 0;
     }
 
     private unsafe void CreateSwapchain()
@@ -97,6 +116,23 @@ internal class VulkanSwapchain
 
             _backbuffer[i] = texture;
         }
+    }
+
+    public VkResult AcquireNextImage(VkSemaphore semaphore)
+    {
+        var result = _device.Api.vkAcquireNextImageKHR(_device.Handle, _handle, ulong.MaxValue, semaphore, VkFence.Null, out _nextImageToPresent);
+
+        return result;
+    }
+
+    public void Present(VkSemaphore semaphore)
+    {
+        _device.Api.vkQueuePresentKHR(_device.PresentQueue.Handle, semaphore, Handle, _nextImageToPresent);
+    }
+
+    public void Resize()
+    {
+        throw new NotImplementedException();
     }
 
     private static VkPresentModeKHR ChooseSwapPresentMode(ReadOnlySpan<VkPresentModeKHR> availablePresentModes)

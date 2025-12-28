@@ -64,7 +64,7 @@ internal unsafe class VulkanInstance
             applicationVersion = new VkVersion(1, 0, 0),
             pEngineName = pEngineName,
             engineVersion = new VkVersion(1, 0, 0),
-            apiVersion = VkVersion.Version_1_0
+            apiVersion = VkVersion.Version_1_3
         };
 
         using VkStringArray vkLayerNames = new(instanceLayers);
@@ -121,19 +121,6 @@ internal unsafe class VulkanInstance
 
     public void Destroy() => Api.vkDestroyInstance(_instance);
 
-    public VkSurfaceKHR CreateSurface(IntPtr windowHandle) 
-    {
-        VkSurfaceKHR* surface = default;
-        
-        if(UOEngineSdl3.SDL_Vulkan_CreateSurface(windowHandle, _instance, null, &surface) == false)
-        {
-            throw new Exception("SDL: failed to create vulkan surface");
-        }
-
-        return new VkSurfaceKHR((ulong)new IntPtr(surface).ToInt64());
-
-    }
-
     public VulkanDeviceInfo GetSuitableDevice()
     {
         uint physicalDevicesCount = 0;
@@ -167,7 +154,24 @@ internal unsafe class VulkanInstance
             }
         }
 
-        // FIll in info with chosen device.
+        // Query for Vulkan 1.3 features
+        VkPhysicalDeviceVulkan13Features queryVulkan13Features = new();
+        VkPhysicalDeviceFeatures2 queryDeviceFeatures2 = new();
+        queryDeviceFeatures2.pNext = &queryVulkan13Features;
+        Api.vkGetPhysicalDeviceFeatures2(physicalDevice, &queryDeviceFeatures2);
+
+        // Check if Physical device supports Vulkan 1.3 features
+        if (queryVulkan13Features.dynamicRendering == false)
+        {
+            throw new NotSupportedException("Dynamic Rendering feature is missing");
+        }
+
+        if (queryVulkan13Features.synchronization2 == false)
+        {
+            throw new NotSupportedException("Synchronization2 feature is missing");
+        }
+
+        // Fill in info with chosen device.
         Api.vkEnumerateDeviceExtensionProperties(physicalDevice, out uint propertyCount).CheckResult();
 
         Span<VkExtensionProperties> availableDeviceExtensions = stackalloc VkExtensionProperties[(int)propertyCount];
