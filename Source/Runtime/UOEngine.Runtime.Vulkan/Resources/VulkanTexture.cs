@@ -15,10 +15,13 @@ public struct VulkanTextureDescription
 internal class VulkanTexture: IRenderTexture, IDisposable
 {
     public VkImage Image { get; private set; }
+    public VkImageView ImageView { get; private set; }
+
+    public readonly VulkanTextureDescription Description;
+
     private VkImageView _imageView;
 
     private readonly VulkanDevice _device;
-    public readonly VulkanTextureDescription Description;
 
     public string Name { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
@@ -71,6 +74,8 @@ internal class VulkanTexture: IRenderTexture, IDisposable
         var viewCreateInfo = new VkImageViewCreateInfo(Image, VkImageViewType.Image2D, Description.Format,
             VkComponentMapping.Rgba, new VkImageSubresourceRange(VkImageAspectFlags.Color, 0, 1, 0, 1));
 
-        _device.Api.vkCreateImageView(_device.Handle, &viewCreateInfo, null, out _imageView).CheckResult();
+        _device.Api.vkCreateImageView(_device.Handle, &viewCreateInfo, null, out var imageView).CheckResult();
+
+        ImageView = imageView;
     }
 }

@@ -77,9 +77,15 @@ public class VulkanDevice : IDisposable
             };
         }
 
+        VkPhysicalDeviceDynamicRenderingFeatures dynamicRenderingFeatures = new()
+        {
+            dynamicRendering = true
+        };
+
         VkPhysicalDeviceSynchronization2Features sync2 = new()
         {
-            synchronization2 = true
+            synchronization2 = true,
+            pNext = &dynamicRenderingFeatures
         };
 
         VkDeviceCreateInfo deviceCreateInfo = new()

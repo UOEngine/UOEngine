@@ -3,116 +3,136 @@
 using Vortice.Vulkan;
 using static Vortice.Vulkan.Vulkan;
 
+using UOEngine.Runtime.Core;
 using UOEngine.Runtime.RHI;
 
-namespace UOEngine.Runtime.Vulkan
+namespace UOEngine.Runtime.Vulkan;
+
+internal class VulkanGraphicsContext : IRenderContext
 {
-    internal class VulkanGraphicsContext : IRenderContext
+    public ShaderInstance ShaderInstance { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+    public IRhiIndexBuffer IndexBuffer { set => throw new NotImplementedException(); }
+    public IRhiVertexBuffer VertexBuffer { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+    public RhiSampler Sampler { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+    public bool IsInRenderPass { get; private set; }
+
+    private readonly VulkanDevice _device;
+
+    private VkCommandBuffer _commandBuffer;
+
+    public VulkanGraphicsContext(VulkanDevice device)
     {
-        public ShaderInstance ShaderInstance { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public IRhiIndexBuffer IndexBuffer { set => throw new NotImplementedException(); }
-        public IRhiVertexBuffer VertexBuffer { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public RhiSampler Sampler { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        _device = device;
+    }
 
-        private readonly VulkanDevice _device;
+    public void BeginRecording(VkCommandBuffer commandBuffer)
+    {
+        _commandBuffer = commandBuffer;
 
-        private VkCommandBuffer _commandBuffer;
-
-        public VulkanGraphicsContext(VulkanDevice device)
+        VkCommandBufferBeginInfo beginInfo = new()
         {
-            _device = device;
-        }
+            flags = VkCommandBufferUsageFlags.OneTimeSubmit
+        };
 
-        public void BeginRecording(VkCommandBuffer commandBuffer)
+        unsafe
         {
-            _commandBuffer = commandBuffer;
-
-            VkCommandBufferBeginInfo beginInfo = new()
-            {
-                flags = VkCommandBufferUsageFlags.OneTimeSubmit
-            };
-
-            unsafe
-            {
-                _device.Api.vkBeginCommandBuffer(commandBuffer, &beginInfo).CheckResult();
-            }
+            _device.Api.vkBeginCommandBuffer(commandBuffer, &beginInfo).CheckResult();
         }
+    }
 
-        public void BeginRenderPass(in RenderPassInfo renderPassInfo)
+    public unsafe void BeginRenderPass(in RenderPassInfo renderPassInfo)
+    {
+        VulkanTexture texture = (VulkanTexture)renderPassInfo.RenderTarget.Texture;
+
+        VkRenderingAttachmentInfo colorAttachment = new()
         {
-            VkRenderPassBeginInfo renderPassBeginInfo = new()
-            {
+            imageView = texture.ImageView,
+            imageLayout = VkImageLayout.ColorAttachmentOptimal,
+            resolveMode = VkResolveModeFlags.None,
+            loadOp = VkAttachmentLoadOp.Clear,
+            storeOp = VkAttachmentStoreOp.Store,
+            clearValue = new(1.0f, 0.0f, 0.0f)  // Red to debug
+        };
 
-            };
-
-            unsafe
-            {
-                //_device.Api.vkCmdBeginRenderPass(_commandBuffer, &renderPassBeginInfo, VkSubpassContents.Inline);
-            }
-        }
-
-        public void DrawIndexedPrimitives(uint numIndices, uint numInstances, uint firstIndex, uint vertexOffset, uint firstInstance)
+        VkRenderingInfo renderingInfo = new()
         {
+            renderArea = new VkRect2D(VkOffset2D.Zero, new(texture.Width, texture.Height)),
+            layerCount = 1u,
+            colorAttachmentCount = 1,
+            pColorAttachments = &colorAttachment,
+        };
 
-        }
+        _device.Api.vkCmdBeginRendering(_commandBuffer, &renderingInfo);
 
-        public void EndRecording()
+        IsInRenderPass = true;
+    }
+
+    public void DrawIndexedPrimitives(uint numIndices, uint numInstances, uint firstIndex, uint vertexOffset, uint firstInstance)
+    {
+
+    }
+
+    public void EndRecording()
+    {
+        UOEDebug.Assert(IsInRenderPass == false);
+
+        _device.Api.vkEndCommandBuffer(_commandBuffer).CheckResult();
+    }
+
+    public void EndRenderPass()
+    {
+        _device.Api.vkCmdEndRendering(_commandBuffer);
+
+        IsInRenderPass = false;
+    }
+
+    public void SetGraphicsPipeline(in RhiGraphicsPipelineDescription graphicsPipelineDescription)
+    {
+
+    }
+
+    public void WaitForGpuIdle()
+    {
+        _device.WaitForGpuIdle();
+    }
+
+    internal unsafe void TransitionImageLayout(VkImage image, VkImageLayout oldLayout,VkImageLayout newLayout, VkAccessFlags2 srcAccessMask,
+                                     VkAccessFlags2 dstAccessMask, VkPipelineStageFlags2 srcStage, VkPipelineStageFlags2 dstStage)
+    {
+        // Initialize the VkImageMemoryBarrier2 structure
+        VkImageMemoryBarrier2 imageBarrier = new VkImageMemoryBarrier2
         {
-            _device.Api.vkEndCommandBuffer(_commandBuffer).CheckResult();
-        }
+            // Specify the pipeline stages and access masks for the barrier
+            srcStageMask = srcStage,             // Source pipeline stage mask
+            srcAccessMask = srcAccessMask,        // Source access mask
+            dstStageMask = dstStage,             // Destination pipeline stage mask
+            dstAccessMask = dstAccessMask,        // Destination access mask
 
-        public void EndRenderPass()
+            // Specify the old and new layouts of the image
+            oldLayout = oldLayout,        // Current layout of the image
+            newLayout = newLayout,        // Target layout of the image
+
+            // We are not changing the ownership between queues
+            srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+
+            // Specify the image to be affected by this barrier
+            image = image,
+
+            // Define the subresource range (which parts of the image are affected)
+            subresourceRange = new VkImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1)
+        };
+
+        // Initialize the VkDependencyInfo structure
+        VkDependencyInfo dependencyInfo = new()
         {
+            dependencyFlags = 0,                    // No special dependency flags
+            imageMemoryBarrierCount = 1,                    // Number of image memory barriers
+            pImageMemoryBarriers = &imageBarrier        // Pointer to the image memory barrier(s)
+        };
 
-        }
-
-        public void SetGraphicsPipeline(in RhiGraphicsPipelineDescription graphicsPipelineDescription)
-        {
-
-        }
-
-        public void WaitForGpuIdle()
-        {
-            _device.WaitForGpuIdle();
-        }
-
-        public unsafe void TransitionImageLayout(VkImage image, VkImageLayout oldLayout,VkImageLayout newLayout, VkAccessFlags2 srcAccessMask,
-                                         VkAccessFlags2 dstAccessMask, VkPipelineStageFlags2 srcStage, VkPipelineStageFlags2 dstStage)
-        {
-            // Initialize the VkImageMemoryBarrier2 structure
-            VkImageMemoryBarrier2 imageBarrier = new VkImageMemoryBarrier2
-            {
-                // Specify the pipeline stages and access masks for the barrier
-                srcStageMask = srcStage,             // Source pipeline stage mask
-                srcAccessMask = srcAccessMask,        // Source access mask
-                dstStageMask = dstStage,             // Destination pipeline stage mask
-                dstAccessMask = dstAccessMask,        // Destination access mask
-
-                // Specify the old and new layouts of the image
-                oldLayout = oldLayout,        // Current layout of the image
-                newLayout = newLayout,        // Target layout of the image
-
-                // We are not changing the ownership between queues
-                srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-                dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-
-                // Specify the image to be affected by this barrier
-                image = image,
-
-                // Define the subresource range (which parts of the image are affected)
-                subresourceRange = new VkImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1)
-            };
-
-            // Initialize the VkDependencyInfo structure
-            VkDependencyInfo dependencyInfo = new()
-            {
-                dependencyFlags = 0,                    // No special dependency flags
-                imageMemoryBarrierCount = 1,                    // Number of image memory barriers
-                pImageMemoryBarriers = &imageBarrier        // Pointer to the image memory barrier(s)
-            };
-
-            // Record the pipeline barrier into the command buffer
-            _device.Api.vkCmdPipelineBarrier2(_commandBuffer, &dependencyInfo);
-        }
+        // Record the pipeline barrier into the command buffer
+        _device.Api.vkCmdPipelineBarrier2(_commandBuffer, &dependencyInfo);
     }
 }
