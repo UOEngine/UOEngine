@@ -104,10 +104,14 @@ public class VulkanRenderer : IRenderer
 
         ref var frameData = ref GetCurrentFrameData();
 
-        // Is the previous frame finished?
-        frameData.SubmitFence?.WaitForThenReset();
+        if (frameData.SubmitFence != null)
+        {
+            Debug.WriteLine($"[{_frameIndex}]: Wait for {frameData.SubmitFence.Name}");
+        }
 
         //_device.WaitForGpuIdle();
+        // Is the previous frame finished?
+        frameData.SubmitFence?.WaitForThenReset();
 ;
         AcquireNextImage();
 
@@ -144,6 +148,7 @@ public class VulkanRenderer : IRenderer
         });
 
         frameData.SubmitFence = GraphicsContext.CommandBuffer.Fence;
+        frameData.SubmitFence.FrameSubmitted = _frameIndex;
 
         _swapchain.Present(frameData.SwapchainReleaseSemaphore);
     }

@@ -1,6 +1,7 @@
 ﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using System.Diagnostics;
+using UOEngine.Runtime.Core;
 using Vortice.Vulkan;
 
 namespace UOEngine.Runtime.Vulkan;
@@ -13,6 +14,8 @@ public class VulkanQueue: IDisposable
 
     private readonly VulkanQueueType _type;
     private readonly VulkanDevice _device;
+
+    private VulkanCommandBuffer? _lastCommandBufferSubmitted;
 
     //private VulkanFence _submissionFence;
 
@@ -62,9 +65,13 @@ public class VulkanQueue: IDisposable
             CommandBufferPool = commandBuffer.CommandBufferPool
         };
 
-        commandBuffer.Fence.Reset();
+        UOEDebug.Assert(commandBuffer.Fence.IsSignaled() == false);
 
-        _device.Api.vkQueueSubmit(Handle, submitInfo, commandBuffer.Fence.Handle);
+        Debug.WriteLine($"Submitting {commandBuffer.Name} - {commandBuffer.Fence.Name}");
+
+        _device.Api.vkQueueSubmit(Handle, submitInfo, commandBuffer.Fence.Handle).CheckResult();
+
+        _lastCommandBufferSubmitted = commandBuffer;
 
         _freeCommandBufferAllocators.Add(info);
     }
@@ -91,7 +98,6 @@ public class VulkanQueue: IDisposable
             commandBufferPool = _freeCommandBufferAllocators[freeCommandBufferIndex].CommandBufferPool;
 
             commandBufferPool.Reset();
-            commandBuffer.Fence.Reset();
 
             _freeCommandBufferAllocators.RemoveAt(freeCommandBufferIndex);
         }
@@ -100,6 +106,8 @@ public class VulkanQueue: IDisposable
             commandBufferPool = new VulkanCommandBufferPool(_device, FamilyIndex);
             commandBuffer = new VulkanCommandBuffer(_device, commandBufferPool);
         }
+
+        commandBuffer.Fence.Reset();
 
         commandBuffer.BeginRecording();
 

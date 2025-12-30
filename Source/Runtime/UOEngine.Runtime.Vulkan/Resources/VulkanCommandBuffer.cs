@@ -13,9 +13,14 @@ internal class VulkanCommandBuffer
 
     public readonly VulkanFence Fence;
 
+    public readonly string Name;
+
     private readonly VulkanDevice _device;
 
     private bool _isRecording;
+
+    private static int _count = 0;
+
 
     internal unsafe VulkanCommandBuffer(VulkanDevice device, VulkanCommandBufferPool commandPool)
     {
@@ -30,7 +35,9 @@ internal class VulkanCommandBuffer
 
         _device.Api.vkAllocateCommandBuffer(_device.Handle, &commandBufferAllocateInfo, out Handle);
 
-        Fence = new VulkanFence(device, true);
+        Fence = new VulkanFence(device);
+
+        Name = $"VulkanCommandBuffer{_count++}";
 
     }
 
@@ -109,6 +116,14 @@ internal class VulkanCommandBuffer
 
             imageBarrier.dstAccessMask = VkAccessFlags2.None;
             imageBarrier.dstStageMask = VkPipelineStageFlags2.None;
+        }
+        else if (oldLayout == VkImageLayout.TransferDstOptimal && newLayout == VkImageLayout.ShaderReadOnlyOptimal)
+        {
+            imageBarrier.srcAccessMask = VkAccessFlags2.TransferWrite;
+            imageBarrier.srcStageMask = VkPipelineStageFlags2.Transfer;
+
+            imageBarrier.dstAccessMask = VkAccessFlags2.ShaderRead;
+            imageBarrier.dstStageMask = VkPipelineStageFlags2.FragmentShader;
         }
         else
         {
