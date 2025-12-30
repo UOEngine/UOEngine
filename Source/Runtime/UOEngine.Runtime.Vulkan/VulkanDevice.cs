@@ -15,6 +15,7 @@ public struct VulkanDeviceInfo
 {
     public VkPhysicalDevice PhysicalDevice;
     public VkPhysicalDeviceProperties DeviceProperties;
+    public VkPhysicalDeviceMemoryProperties MemoryProperties;
     public VulkanQueueInfo[] Queues;
 }
 
@@ -30,13 +31,18 @@ public enum VulkanQueueType
 //[Service(UOEServiceLifetime.Singleton)]
 public class VulkanDevice : IDisposable
 {
-    public readonly VulkanDeviceInfo DeviceInfo;
-    public VkPhysicalDevice PhysicalDeviceHandle => DeviceInfo.PhysicalDevice;
-    public VkDevice Handle => _device ?? throw new InvalidOperationException("VkDevice is not initialised.");
+    internal readonly VulkanDeviceInfo DeviceInfo;
+    internal VkPhysicalDevice PhysicalDeviceHandle => DeviceInfo.PhysicalDevice;
+    internal VkDevice Handle => _device ?? throw new InvalidOperationException("VulkanDevice: VkDevice is not initialised.");
 
-    public VulkanQueue PresentQueue => GetQueue(VulkanQueueType.Graphics);
+    internal VulkanQueue PresentQueue => GetQueue(VulkanQueueType.Graphics);
+    internal VulkanQueue CopyQueue => GetQueue(VulkanQueueType.Copy);
 
-    public VkDeviceApi Api => _api ?? throw new InvalidOperationException("");
+    internal VkDeviceApi Api => _api ?? throw new InvalidOperationException("VulkanDevice: Api is not initialised.");
+
+    internal readonly VulkanStagingBuffer StagingBuffer;
+
+    internal VulkanGraphicsContext GraphicsContext = null!;
 
     private VkDevice? _device;
     private VkDeviceApi? _api;
@@ -46,6 +52,7 @@ public class VulkanDevice : IDisposable
     public VulkanDevice(in VulkanDeviceInfo deviceInfo)
     {
         DeviceInfo = deviceInfo;
+        StagingBuffer = new(this);
     }
 
     public VulkanQueue GetQueue(VulkanQueueType type) => _queues[(int)type];
@@ -112,9 +119,28 @@ public class VulkanDevice : IDisposable
 
             _queues[i] = new VulkanQueue(this, (VulkanQueueType)i, queue);
         }
+
+        StagingBuffer.Init();
     }
 
     public void WaitForGpuIdle() => Api.vkDeviceWaitIdle(Handle);
+
+    public uint GetMemoryTypeIndex(uint typeBits, VkMemoryPropertyFlags properties)
+    {
+        for (int i = 0; i < DeviceInfo.MemoryProperties.memoryTypeCount; i++)
+        {
+            if ((typeBits & 1) == 1)
+            {
+                if ((DeviceInfo.MemoryProperties.memoryTypes[i].propertyFlags & properties) == properties)
+                {
+                    return (uint)i;
+                }
+            }
+            typeBits >>= 1;
+        }
+
+        throw new Exception("Could not find a suitable memory type!");
+    }
 
     public VkSemaphore CreateSemaphore()
     {

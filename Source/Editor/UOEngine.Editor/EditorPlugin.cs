@@ -51,16 +51,16 @@ internal class UO3DApplication : IPlugin
     {
         //_rendererSystem.OnFrameBegin += OnFrameBegin;
 
-        //string vertexShader = Path.Combine(UOEPaths.ShadersDir, "TexturedQuadVS.hlsl");
-        //string pixelShader = Path.Combine(UOEPaths.ShadersDir, "TexturedQuadPS.hlsl");
+        string vertexShader = Path.Combine(UOEPaths.ShadersDir, "TexturedQuadVS.hlsl");
+        string pixelShader = Path.Combine(UOEPaths.ShadersDir, "TexturedQuadPS.hlsl");
 
-        //_shaderResource = _renderFactory.NewShaderResource();
-        //_shaderResource.Load(vertexShader, pixelShader);
+        _shaderResource = _renderFactory.NewShaderResource();
+        _shaderResource.Load(vertexShader, pixelShader);
 
-        //_shaderInstance = _renderFactory.NewShaderInstance(_shaderResource);
+        _shaderInstance = _renderFactory.NewShaderInstance(_shaderResource);
 
-        //_textureBindingHandle = _shaderInstance.GetBindingHandleTexturePixel("Texture");
-        //_samplerBindingHandle = _shaderInstance.GetBindingHandleSamplerPixel("Sampler");
+        _textureBindingHandle = _shaderInstance.GetBindingHandleTexturePixel("Texture");
+        _samplerBindingHandle = _shaderInstance.GetBindingHandleSamplerPixel("Sampler");
 
         //_whiteTexture = CreateTestTexture(0xFFFFFFFF, "WhiteTexture");
         //_redTexture = CreateTestTexture(0xFF0000FF, "RedTexture");

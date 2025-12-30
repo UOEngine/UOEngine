@@ -7,6 +7,7 @@ using UOEngine.Runtime.Core;
 using UOEngine.Runtime.Platform;
 using UOEngine.Runtime.Plugin;
 using UOEngine.Runtime.RHI;
+using System.Diagnostics;
 
 namespace UOEngine.Runtime.Vulkan;
 
@@ -35,8 +36,6 @@ public class VulkanRenderer : IRenderer
         public VulkanFence SubmitFence;
         public VkSemaphore SwapchainAcquireSemaphore;
         public VkSemaphore SwapchainReleaseSemaphore;
-        public VkCommandPool PrimaryCommandPool;
-        public VkCommandBuffer PrimaryCommandBuffer;
     }
 
     private PerFrameData[] _perFrameData = [new(), new()];
@@ -78,7 +77,6 @@ public class VulkanRenderer : IRenderer
         {
             ref var frameData = ref _perFrameData[i];
 
-            frameData.SubmitFence = new VulkanFence(_device, true);
             frameData.SwapchainAcquireSemaphore = _device.CreateSemaphore();
             frameData.SwapchainReleaseSemaphore = _device.CreateSemaphore();
 
@@ -87,10 +85,6 @@ public class VulkanRenderer : IRenderer
                 flags = VkCommandPoolCreateFlags.Transient,
                 queueFamilyIndex = _device.PresentQueue.FamilyIndex
             };
-
-            _device.Api.vkCreateCommandPool(_device.Handle, &poolCreateInfo, null, out frameData.PrimaryCommandPool).CheckResult();
-            _device.Api.vkAllocateCommandBuffer(_device.Handle, frameData.PrimaryCommandPool, out frameData.PrimaryCommandBuffer).CheckResult();
-
         }
 
         _graphicsContext = new VulkanGraphicsContext(_device);
@@ -106,41 +100,39 @@ public class VulkanRenderer : IRenderer
     {
         _frameIndex++;
 
+        Debug.WriteLine($"VulkanRenderer.FrameBegin: {_frameIndex}");
+
         ref var frameData = ref GetCurrentFrameData();
 
         // Is the previous frame finished?
-        frameData.SubmitFence.WaitForThenReset();
+        frameData.SubmitFence?.WaitForThenReset();
 
-        _device.Api.vkResetCommandPool(_device.Handle, frameData.PrimaryCommandPool, VkCommandPoolResetFlags.None);
-
+        //_device.WaitForGpuIdle();
+;
         AcquireNextImage();
 
-        GraphicsContext.BeginRecording(frameData.PrimaryCommandBuffer);
+        var commandBuffer = _device.GetQueue(VulkanQueueType.Graphics).CreateCommandBuffer();
 
-        GraphicsContext.TransitionImageLayout(_swapchain.BackbufferToRenderInto.Image, VkImageLayout.Undefined, VkImageLayout.ColorAttachmentOptimal,
-            0, VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT, VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT);
+        GraphicsContext.BeginRecording(commandBuffer);
+
+        GraphicsContext.TransitionImageLayout(_swapchain.BackbufferToRenderInto.Image, VkImageLayout.Undefined, VkImageLayout.ColorAttachmentOptimal);
     }
 
     public unsafe void FrameEnd()
     {
         ref var frameData = ref GetCurrentFrameData();
 
-        GraphicsContext.TransitionImageLayout(_swapchain.BackbufferToRenderInto.Image, VkImageLayout.ColorAttachmentOptimal,
-            VkImageLayout.PresentSrcKHR,
-            VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,                 // srcAccessMask
-            0,                                                      // dstAccessMask
-            VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,        // srcStage
-            VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT                  // dstStage
-        );
+        GraphicsContext.TransitionImageLayout(_swapchain.BackbufferToRenderInto.Image, VkImageLayout.ColorAttachmentOptimal, VkImageLayout.PresentSrcKHR);
 
         GraphicsContext.EndRecording();
 
-        VkCommandBuffer commandBuffer = frameData.PrimaryCommandBuffer;
         VkPipelineStageFlags wait_stage = VkPipelineStageFlags.ColorAttachmentOutput;
         VkSemaphore waitSemaphore = frameData.SwapchainAcquireSemaphore;
         VkSemaphore signalSemaphore = frameData.SwapchainReleaseSemaphore;
 
-        _device.PresentQueue.Submit(new VkSubmitInfo
+        VkCommandBuffer commandBuffer = GraphicsContext.CommandBuffer.Handle;
+
+        _device.PresentQueue.Submit(GraphicsContext.CommandBuffer, new VkSubmitInfo
         {
             commandBufferCount = 1,
             pCommandBuffers = &commandBuffer,
@@ -149,8 +141,9 @@ public class VulkanRenderer : IRenderer
             pWaitDstStageMask = &wait_stage,
             signalSemaphoreCount = 1u,
             pSignalSemaphores = &signalSemaphore
+        });
 
-        }, frameData.SubmitFence.Handle);
+        frameData.SubmitFence = GraphicsContext.CommandBuffer.Fence;
 
         _swapchain.Present(frameData.SwapchainReleaseSemaphore);
     }

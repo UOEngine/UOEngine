@@ -6,13 +6,23 @@ using Vortice.Vulkan;
 namespace UOEngine.Runtime.Vulkan;
 
 [DebuggerDisplay("{_type.ToString()} Queue")]
-public class VulkanQueue
+public class VulkanQueue: IDisposable
 {
     public readonly VkQueue Handle;
     public readonly uint FamilyIndex;
 
     private readonly VulkanQueueType _type;
     private readonly VulkanDevice _device;
+
+    //private VulkanFence _submissionFence;
+
+    struct AllocationInfo
+    {
+        public VulkanCommandBufferPool CommandBufferPool;
+        public VulkanCommandBuffer CommandBuffer;
+    }
+
+    private List<AllocationInfo> _freeCommandBufferAllocators = [];
 
     public VulkanQueue(VulkanDevice device, VulkanQueueType type, VkQueue queue)
     {
@@ -22,8 +32,83 @@ public class VulkanQueue
         FamilyIndex = (uint)type;
     }
 
-    public void Submit(in VkSubmitInfo submitInfo, VkFence submissionFence)
+    internal unsafe void Submit(VulkanCommandBuffer commandBuffer)
     {
-        _device.Api.vkQueueSubmit(Handle, submitInfo, submissionFence);
+        VkCommandBuffer buffer = commandBuffer.Handle;
+
+        VkSubmitInfo submitInfo = new()
+        {
+            commandBufferCount = 1,
+            pCommandBuffers = &buffer
+        };
+
+        _device.Api.vkQueueSubmit(Handle, submitInfo, commandBuffer.Fence.Handle);
+
+        AllocationInfo info = new()
+        {
+            CommandBuffer = commandBuffer,
+            CommandBufferPool = commandBuffer.CommandBufferPool
+        };
+
+        _freeCommandBufferAllocators.Add(info);
+
+    }
+
+    internal void Submit(VulkanCommandBuffer commandBuffer, in VkSubmitInfo submitInfo)
+    {
+        AllocationInfo info = new()
+        {
+            CommandBuffer = commandBuffer,
+            CommandBufferPool = commandBuffer.CommandBufferPool
+        };
+
+        commandBuffer.Fence.Reset();
+
+        _device.Api.vkQueueSubmit(Handle, submitInfo, commandBuffer.Fence.Handle);
+
+        _freeCommandBufferAllocators.Add(info);
+    }
+
+    internal VulkanCommandBuffer CreateCommandBuffer()
+    {
+        int freeCommandBufferIndex = -1;
+
+        for(int i = 0; i < _freeCommandBufferAllocators.Count; i++)
+        {
+            if (_freeCommandBufferAllocators[i].CommandBuffer.Fence.IsSignaled())
+            {
+                freeCommandBufferIndex = i;
+                break;
+            }
+        }
+
+        VulkanCommandBuffer commandBuffer = null!;
+        VulkanCommandBufferPool commandBufferPool = null!;
+
+        if (freeCommandBufferIndex >= 0)
+        {
+            commandBuffer = _freeCommandBufferAllocators[freeCommandBufferIndex].CommandBuffer;
+            commandBufferPool = _freeCommandBufferAllocators[freeCommandBufferIndex].CommandBufferPool;
+
+            commandBufferPool.Reset();
+            commandBuffer.Fence.Reset();
+
+            _freeCommandBufferAllocators.RemoveAt(freeCommandBufferIndex);
+        }
+        else
+        {
+            commandBufferPool = new VulkanCommandBufferPool(_device, FamilyIndex);
+            commandBuffer = new VulkanCommandBuffer(_device, commandBufferPool);
+        }
+
+        commandBuffer.BeginRecording();
+
+        return commandBuffer;
+
+    }
+
+    public void Dispose()
+    {
+        throw new NotImplementedException();
     }
 }

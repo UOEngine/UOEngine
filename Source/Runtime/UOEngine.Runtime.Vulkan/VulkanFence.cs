@@ -16,6 +16,7 @@ internal class VulkanFence
         VkFenceCreateFlags flags = createSignaled? VkFenceCreateFlags.Signaled: VkFenceCreateFlags.None;
 
         _device.Api.vkCreateFence(device.Handle, flags, out Handle).CheckResult();
+
     }
     
     public void WaitForThenReset()
@@ -27,5 +28,7 @@ internal class VulkanFence
     public void Wait() => _device.Api.vkWaitForFences(_device.Handle, Handle, true, ulong.MaxValue);
 
     public void Reset() => _device.Api.vkResetFences(_device.Handle, Handle);
+
+    internal bool IsSignaled() => _device.Api.vkGetFenceStatus(_device.Handle, Handle) == VkResult.Success;
 
 }

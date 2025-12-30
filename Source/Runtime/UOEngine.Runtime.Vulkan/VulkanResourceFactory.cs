@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using UOEngine.Runtime.Plugin;
 using UOEngine.Runtime.RHI;
-using Vortice.Vulkan;
 
 namespace UOEngine.Runtime.Vulkan;
 
@@ -12,15 +11,11 @@ internal class VulkanResourceFactory: IRenderResourceFactory
 
     private VulkanDevice? _device;
 
-    public RhiShaderResource NewShaderResource(in RhiShaderResourceCreateParameters createParameters = default)
-    {
-        throw new NotImplementedException();
-    }
+    private VulkanDevice Device => _device ?? throw new InvalidOperationException("VulkanResourceFactory: VulkanDevice is not set.");
 
-    public ShaderInstance NewShaderInstance(RhiShaderResource shaderResource)
-    {
-        throw new NotImplementedException();
-    }
+    public RhiShaderResource NewShaderResource(in RhiShaderResourceCreateParameters createParameters = default) => new VulkanShaderResource(Device, createParameters);
+
+    public ShaderInstance NewShaderInstance(RhiShaderResource shaderResource) => new ShaderInstance(shaderResource);
 
     public IRenderTexture CreateTexture(in RhiTextureDescription description) =>  new VulkanTexture(_device!, description);
 

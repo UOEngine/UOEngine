@@ -178,11 +178,14 @@ internal unsafe class VulkanInstance
 
         Api.vkEnumerateDeviceExtensionProperties(physicalDevice, availableDeviceExtensions).CheckResult();
 
+
         var deviceInfo = new VulkanDeviceInfo
         {
             PhysicalDevice = physicalDevice,
             DeviceProperties = deviceProperties
         };
+
+        Api.vkGetPhysicalDeviceMemoryProperties(physicalDevice, out deviceInfo.MemoryProperties);
 
         Api.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, out uint queueFamilyCount);
         Span<VkQueueFamilyProperties> queueFamilies = stackalloc VkQueueFamilyProperties[(int)queueFamilyCount];
