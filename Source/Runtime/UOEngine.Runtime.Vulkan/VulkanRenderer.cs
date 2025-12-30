@@ -34,6 +34,7 @@ public class VulkanRenderer : IRenderer
     private struct PerFrameData
     {
         public VulkanFence SubmitFence;
+        public uint FenceSignalCount;
         public VkSemaphore SwapchainAcquireSemaphore;
         public VkSemaphore SwapchainReleaseSemaphore;
     }
@@ -111,7 +112,10 @@ public class VulkanRenderer : IRenderer
 
         //_device.WaitForGpuIdle();
         // Is the previous frame finished?
-        frameData.SubmitFence?.WaitForThenReset();
+        if(frameData.FenceSignalCount == frameData.SubmitFence?.SignalCount)
+        {
+            frameData.SubmitFence?.WaitForThenReset();
+        }
 ;
         AcquireNextImage();
 
@@ -149,6 +153,7 @@ public class VulkanRenderer : IRenderer
 
         frameData.SubmitFence = GraphicsContext.CommandBuffer.Fence;
         frameData.SubmitFence.FrameSubmitted = _frameIndex;
+        frameData.FenceSignalCount = frameData.SubmitFence.SignalCount;
 
         _swapchain.Present(frameData.SwapchainReleaseSemaphore);
     }
