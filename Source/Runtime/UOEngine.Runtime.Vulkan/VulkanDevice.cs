@@ -37,7 +37,7 @@ public class VulkanDevice : IDisposable
 
     internal VulkanQueue PresentQueue => GetQueue(VulkanQueueType.Graphics);
     internal VulkanQueue CopyQueue => GetQueue(VulkanQueueType.Copy);
-
+    internal VulkanQueue GraphicsQueue => GetQueue(VulkanQueueType.Graphics);
     internal VkDeviceApi Api => _api ?? throw new InvalidOperationException("VulkanDevice: Api is not initialised.");
 
     internal readonly VulkanStagingBuffer StagingBuffer;

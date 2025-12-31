@@ -49,7 +49,7 @@ internal class UO3DApplication : IPlugin
 
     public void PostStartup()
     {
-        //_rendererSystem.OnFrameBegin += OnFrameBegin;
+        _rendererSystem.OnFrameBegin += OnFrameBegin;
 
         string vertexShader = Path.Combine(UOEPaths.ShadersDir, "TexturedQuadVS.hlsl");
         string pixelShader = Path.Combine(UOEPaths.ShadersDir, "TexturedQuadPS.hlsl");
@@ -66,7 +66,9 @@ internal class UO3DApplication : IPlugin
         //_redTexture = CreateTestTexture(0xFF0000FF, "RedTexture");
         //_greenTexture = CreateTestTexture(0x00FF00FF, "GreenTexture");
 
-        //_checkerboardTexture = CreateCheckerboardTexture(512, 512, Colour.Red, "RedCheckerboard");
+        _checkerboardTexture = CreateCheckerboardTexture(512, 512, Colour.Red, "RedCheckerboard");
+
+        var indexBuffer = _renderFactory.CreateIndexBuffer(6, "IndexBuffer");
     }
 
     public static void ConfigureServices(IServiceCollection services)
@@ -77,6 +79,7 @@ internal class UO3DApplication : IPlugin
 
     public void OnFrameBegin(IRenderContext context)
     {
+        _shaderInstance.SetTexture(_textureBindingHandle, _checkerboardTexture);
     }
 
     private IRenderTexture CreateTestTexture(uint colour, string name)

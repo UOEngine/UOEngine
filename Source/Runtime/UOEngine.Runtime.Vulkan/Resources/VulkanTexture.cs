@@ -191,15 +191,15 @@ internal class VulkanTexture: IRenderTexture, IDisposable
             }
         };
 
-        var commandBuffer = _device.CopyQueue.CreateCommandBuffer();
+        var commandBuffer = _device.GraphicsQueue.CreateCommandBuffer();
 
         commandBuffer.TransitionImageLayout(Image, VkImageLayout.Undefined, VkImageLayout.TransferDstOptimal);
         commandBuffer.CmdCopyBufferToImage(bufferLock.vkBuffer, Image, bufferImageCopy);
-        //commandBuffer.TransitionImageLayout(Image, VkImageLayout.TransferDstOptimal, VkImageLayout.ShaderReadOnlyOptimal);
+        commandBuffer.TransitionImageLayout(Image, VkImageLayout.TransferDstOptimal, VkImageLayout.ShaderReadOnlyOptimal);
         commandBuffer.EndRecording();
 
 
-        _device.CopyQueue.Submit(commandBuffer);
+        _device.GraphicsQueue.Submit(commandBuffer);
         _device.WaitForGpuIdle();
 
         _device.StagingBuffer.ReleaseBuffer(bufferLock);

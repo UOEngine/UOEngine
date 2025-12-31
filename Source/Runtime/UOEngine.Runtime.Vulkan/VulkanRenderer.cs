@@ -101,14 +101,7 @@ public class VulkanRenderer : IRenderer
     {
         _frameIndex++;
 
-        Debug.WriteLine($"VulkanRenderer.FrameBegin: {_frameIndex}");
-
         ref var frameData = ref GetCurrentFrameData();
-
-        if (frameData.SubmitFence != null)
-        {
-            Debug.WriteLine($"[{_frameIndex}]: Wait for {frameData.SubmitFence.Name}");
-        }
 
         //_device.WaitForGpuIdle();
         // Is the previous frame finished?
@@ -116,7 +109,7 @@ public class VulkanRenderer : IRenderer
         {
             frameData.SubmitFence?.WaitForThenReset();
         }
-;
+
         AcquireNextImage();
 
         var commandBuffer = _device.GetQueue(VulkanQueueType.Graphics).CreateCommandBuffer();
