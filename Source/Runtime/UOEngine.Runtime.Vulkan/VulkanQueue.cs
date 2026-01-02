@@ -67,8 +67,6 @@ public class VulkanQueue: IDisposable
 
         UOEDebug.Assert(commandBuffer.Fence.IsSignaled() == false);
 
-        Debug.WriteLine($"Submitting {commandBuffer.Name} - {commandBuffer.Fence.Name}");
-
         _device.Api.vkQueueSubmit(Handle, submitInfo, commandBuffer.Fence.Handle).CheckResult();
 
         _lastCommandBufferSubmitted = commandBuffer;

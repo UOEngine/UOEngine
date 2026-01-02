@@ -1,18 +1,62 @@
 ﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
+using UOEngine.Runtime.Core;
+using UOEngine.Runtime.Renderer;
+using UOEngine.Runtime.RHI;
 using Vortice.Vulkan;
 using static Vortice.Vulkan.Vulkan;
-
-using UOEngine.Runtime.Core;
-using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Runtime.Vulkan;
 
 internal class VulkanGraphicsContext : IRenderContext
 {
     public ShaderInstance ShaderInstance { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-    public IRhiIndexBuffer IndexBuffer { set => throw new NotImplementedException(); }
-    public IRhiVertexBuffer VertexBuffer { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+    public IRhiBuffer IndexBuffer
+    {
+        set
+        {
+            if (ReferenceEquals(_indexBuffer, value))
+            {
+                return;
+            }
+
+            if (value == null)
+            {
+                _indexBuffer = null;
+            }
+            else
+            {
+
+                _indexBuffer = (VulkanBuffer)value;
+            }
+
+            SetDirtyState(DirtyState.IndexBuffer);
+        }
+    }
+
+    public IRhiBuffer VertexBuffer
+    {
+        get => _vertexBuffer ?? throw new InvalidOperationException("VertexBuffer is not set");
+        set
+        {
+            if (ReferenceEquals(_vertexBuffer, value))
+            {
+                return;
+            }
+
+            if (value == null)
+            {
+                _vertexBuffer = null;
+            }
+            else
+            {
+                _vertexBuffer = (VulkanBuffer)value;
+            }
+
+            SetDirtyState(DirtyState.VertexBuffer);
+        }
+    }
+
     public RhiSampler Sampler { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
     internal VulkanCommandBuffer CommandBuffer => _commandBuffer ?? throw new InvalidOperationException("VulkanGraphicsContext: CommandBuffer not initialised");
@@ -23,6 +67,29 @@ internal class VulkanGraphicsContext : IRenderContext
 
     private VulkanCommandBuffer? _commandBuffer;
 
+    private VulkanBuffer? _indexBuffer;
+    private VulkanBuffer? _vertexBuffer;
+
+    [Flags]
+    private enum DirtyState
+    {
+        None = 0,
+        Pipeline = 1 << 0,
+        VertexBuffer = 1 << 1,
+        IndexBuffer = 1 << 2,
+        ShaderParams = 1 << 3,
+        All = Pipeline | VertexBuffer | IndexBuffer | ShaderParams
+    }
+
+    private DirtyState _dirtyState = DirtyState.All;
+
+    private RhiGraphicsPipelineDescription _currentPipelineDescription;
+    private VkPipeline? _currentPipeline;
+
+    private readonly Dictionary<RhiGraphicsPipelineDescription, VulkanGraphicsPipeline> _pipelineCache = [];
+
+    private VulkanGraphicsPipeline? _graphicsPipeline;
+
     public VulkanGraphicsContext(VulkanDevice device)
     {
         _device = device;
@@ -31,16 +98,6 @@ internal class VulkanGraphicsContext : IRenderContext
     public void BeginRecording(VulkanCommandBuffer commandBuffer)
     {
         _commandBuffer = commandBuffer;
-
-        //VkCommandBufferBeginInfo beginInfo = new()
-        //{
-        //    flags = VkCommandBufferUsageFlags.OneTimeSubmit
-        //};
-
-        //unsafe
-        //{
-        //    _device.Api.vkBeginCommandBuffer(CommandBuffer.Handle, &beginInfo).CheckResult();
-        //}
     }
 
     public unsafe void BeginRenderPass(in RenderPassInfo renderPassInfo)
@@ -72,7 +129,11 @@ internal class VulkanGraphicsContext : IRenderContext
 
     public void DrawIndexedPrimitives(uint numIndices, uint numInstances, uint firstIndex, uint vertexOffset, uint firstInstance)
     {
+        VkCommandBuffer commandBuffer = _commandBuffer!.Handle;
 
+        FlushIfNeeded();
+
+        _device.Api.vkCmdDrawIndexed(commandBuffer, numIndices, numInstances, firstIndex, (int)vertexOffset, firstInstance);
     }
 
     public void EndRecording()
@@ -104,4 +165,61 @@ internal class VulkanGraphicsContext : IRenderContext
         CommandBuffer.TransitionImageLayout(image, oldLayout, newLayout);
     }
 
+    private void BindShaderParameters(bool forceRebind)
+    {
+        UOEDebug.NotImplemented();
+    }
+
+    private void FlushIfNeeded()
+    {
+        VkCommandBuffer commandBuffer = _commandBuffer!.Handle;
+
+        if (IsStateDirty(DirtyState.VertexBuffer))
+        {
+            _device.Api.vkCmdBindVertexBuffer(commandBuffer, 0, _vertexBuffer!.Handle);
+
+            ClearDirtyState(DirtyState.VertexBuffer);
+
+            if (_currentPipelineDescription.VertexLayout != _vertexBuffer.VertexDefinition)
+            {
+                _currentPipelineDescription.VertexLayout = _vertexBuffer.VertexDefinition;
+
+                SetDirtyState(DirtyState.Pipeline);
+            }
+        }
+
+        if (IsStateDirty(DirtyState.Pipeline))
+        {
+            if (_pipelineCache.TryGetValue(_currentPipelineDescription, out var graphicsPipeline) == false)
+            {
+                _graphicsPipeline = new VulkanGraphicsPipeline(_device, _currentPipelineDescription);
+
+                _pipelineCache.Add(_currentPipelineDescription, _graphicsPipeline);
+            }
+
+            //_device.Api.vkCmdBindPipeline(commandBuffer, _graphicsPipeline.Handle, VkPipelineBindPoint.Graphics);
+
+            SetDirtyState(DirtyState.ShaderParams);
+            ClearDirtyState(DirtyState.Pipeline);
+        }
+
+        if (IsStateDirty(DirtyState.IndexBuffer))
+        {
+            _device.Api.vkCmdBindIndexBuffer(commandBuffer, _indexBuffer!.Handle, 0, VkIndexType.Uint16);
+
+            ClearDirtyState(DirtyState.IndexBuffer);
+        }
+
+        bool fullRebind = IsStateDirty(DirtyState.ShaderParams);
+
+        BindShaderParameters(fullRebind);
+
+        ClearDirtyState(DirtyState.ShaderParams);
+    }
+
+    private void SetDirtyState(DirtyState flags) => _dirtyState |= flags;
+
+    private bool IsStateDirty(DirtyState flags) => (_dirtyState & flags) != 0;
+
+    private void ClearDirtyState(DirtyState flags) => _dirtyState &= ~flags;
 }

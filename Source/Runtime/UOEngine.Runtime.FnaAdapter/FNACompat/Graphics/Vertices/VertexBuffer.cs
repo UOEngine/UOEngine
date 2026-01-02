@@ -111,15 +111,15 @@ public class VertexBuffer : IDisposable
         {
             flags |= RhiVertexBufferFlags.Dynamic;
         }
+        UOEDebug.NotImplemented();
+        //var vertexBuffer = _graphicsDevice.RenderResourceFactory.NewVertexBuffer(new RhiVertexBufferDescription
+        //{
+        //    VertexCount = (uint)_vertexCount,
+        //    Stride = _vertexDeclaration.RhiVertexDefinition.Stride,
+        //    AttributesDefinition = _vertexDeclaration.RhiVertexDefinition,
+        //    Flags = flags
+        //});
 
-        var vertexBuffer = _graphicsDevice.RenderResourceFactory.CreateVertexBuffer(new RhiVertexBufferDescription
-        {
-            VertexCount = (uint)_vertexCount,
-            Stride = _vertexDeclaration.RhiVertexDefinition.Stride,
-            AttributesDefinition = _vertexDeclaration.RhiVertexDefinition,
-            Flags = flags
-        });
-
-        _vertexBuffers.Add(vertexBuffer);
+        //_vertexBuffers.Add(vertexBuffer);
     }
 }

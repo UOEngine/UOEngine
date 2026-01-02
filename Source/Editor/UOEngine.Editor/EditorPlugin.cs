@@ -9,6 +9,9 @@ using UOEngine.Runtime.Renderer;
 using UOEngine.Runtime.RHI;
 using UOEngine.Runtime.FnaAdapter;
 using UOEngine.Ultima.UOAssets;
+using System.Numerics;
+using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 
 namespace UOEngine.Editor;
 
@@ -31,36 +34,48 @@ internal class UO3DApplication : IPlugin
     private readonly EntityManager _entityManager;
     private readonly RenderSystem _rendererSystem;
     private readonly IRenderResourceFactory _renderFactory;
+    private readonly RendererResourcesFactory rendererResourcesFactory;
     private CameraEntity? _camera;
     private readonly UOAssetLoader _assetLoader;
     private MapEntity _map = null!;
     private IRenderTexture _waterTexture = null!;
     private readonly IWindow _window;
 
+    private IndexBuffer _indexBuffer = null!;
+    private VertexBuffer _vertexBuffer = null!;
+
     public UO3DApplication(IServiceProvider serviceProvider)
     {
         _entityManager = serviceProvider.GetRequiredService<EntityManager>();
         _assetLoader = serviceProvider.GetRequiredService<UOAssetLoader>();
         _renderFactory = serviceProvider.GetRequiredService<IRenderResourceFactory>();
+        rendererResourcesFactory = serviceProvider.GetRequiredService<RendererResourcesFactory>();
         _rendererSystem = serviceProvider.GetRequiredService<RenderSystem>();
 
         _window = serviceProvider.GetRequiredService<IWindow>();
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    struct Vertex
+    {
+        public Vector3 Position;
+        public Colour Colour;
     }
 
     public void PostStartup()
     {
         _rendererSystem.OnFrameBegin += OnFrameBegin;
 
-        string vertexShader = Path.Combine(UOEPaths.ShadersDir, "TexturedQuadVS.hlsl");
-        string pixelShader = Path.Combine(UOEPaths.ShadersDir, "TexturedQuadPS.hlsl");
+        string vertexShader = Path.Combine(UOEPaths.ShadersDir, "Testing/TriangleVS.hlsl");
+        string pixelShader = Path.Combine(UOEPaths.ShadersDir, "Testing/TrianglePS.hlsl");
 
         _shaderResource = _renderFactory.NewShaderResource();
         _shaderResource.Load(vertexShader, pixelShader);
 
         _shaderInstance = _renderFactory.NewShaderInstance(_shaderResource);
 
-        _textureBindingHandle = _shaderInstance.GetBindingHandleTexturePixel("Texture");
-        _samplerBindingHandle = _shaderInstance.GetBindingHandleSamplerPixel("Sampler");
+        //_textureBindingHandle = _shaderInstance.GetBindingHandleTexturePixel("Texture");
+        //_samplerBindingHandle = _shaderInstance.GetBindingHandleSamplerPixel("Sampler");
 
         //_whiteTexture = CreateTestTexture(0xFFFFFFFF, "WhiteTexture");
         //_redTexture = CreateTestTexture(0xFF0000FF, "RedTexture");
@@ -68,7 +83,31 @@ internal class UO3DApplication : IPlugin
 
         _checkerboardTexture = CreateCheckerboardTexture(512, 512, Colour.Red, "RedCheckerboard");
 
-        var indexBuffer = _renderFactory.CreateIndexBuffer(6, "IndexBuffer");
+        _indexBuffer = rendererResourcesFactory.NewIndexBuffer(3, "IndexBuffer");
+
+        _indexBuffer.SetData([0, 1, 2]);
+
+        _vertexBuffer = rendererResourcesFactory.NewVertexBuffer<Vertex>(3);
+
+        var v0 = new Vertex
+        {
+            Position = Vector3.Zero,
+            Colour = Colour.Red,
+        };
+
+        var v1 = new Vertex
+        {
+            Position = Vector3.Zero,
+            Colour = Colour.Green,
+        };
+
+        var v2 = new Vertex
+        {
+            Position = Vector3.Zero,
+            Colour = Colour.Blue,
+        };
+
+        _vertexBuffer.SetData([v0, v1, v2]);
     }
 
     public static void ConfigureServices(IServiceCollection services)
@@ -79,7 +118,12 @@ internal class UO3DApplication : IPlugin
 
     public void OnFrameBegin(IRenderContext context)
     {
-        _shaderInstance.SetTexture(_textureBindingHandle, _checkerboardTexture);
+        //_shaderInstance.SetTexture(_textureBindingHandle, _checkerboardTexture);
+
+        context.IndexBuffer = _indexBuffer.RhiBuffer;
+        context.VertexBuffer = _vertexBuffer.RhiBuffer;
+
+        context.DrawIndexedPrimitives(3, 1, 0, 0, 0);
     }
 
     private IRenderTexture CreateTestTexture(uint colour, string name)

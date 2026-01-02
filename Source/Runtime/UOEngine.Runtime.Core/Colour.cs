@@ -13,6 +13,8 @@ public struct Colour
     public byte A;
 
     public static Colour Red = new(255, 0, 0);
+    public static Colour Green = new(0, 255, 0);
+    public static Colour Blue = new(0, 0, 255);
     public static Colour White = new(255, 255, 255);
 
     public Colour(byte r, byte g, byte b, byte a = 255)

@@ -48,6 +48,13 @@ internal class VulkanCommandBuffer
         _device.Api.vkCmdCopyBufferToImage(Handle, source, image, VkImageLayout.TransferDstOptimal, 1, &copyInfo);
     }
 
+    internal unsafe void CmdCopyBuffer(VkBuffer sourceBuffer, VkBuffer destinationBuffer, VkBufferCopy bufferCopy)
+    {
+        var copyInfo = bufferCopy;
+
+        _device.Api.vkCmdCopyBuffer(Handle, sourceBuffer, destinationBuffer, 1, &copyInfo);
+    }
+
     internal unsafe void BeginRecording()
     {
         VkCommandBufferBeginInfo beginInfo = new()

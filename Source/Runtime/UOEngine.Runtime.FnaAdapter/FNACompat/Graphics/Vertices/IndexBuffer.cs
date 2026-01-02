@@ -1,4 +1,5 @@
 ﻿using System.Runtime.InteropServices;
+using UOEngine.Runtime.Core;
 using UOEngine.Runtime.FnaAdapter;
 using UOEngine.Runtime.RHI;
 
@@ -6,11 +7,16 @@ namespace Microsoft.Xna.Framework.Graphics;
 
 public class IndexBuffer
 {
-    public IRhiIndexBuffer RhiIndexBuffer { get; private set; }
+    public IRhiIndexBuffer RhiIndexBuffer { get; private set; } = null!;
 
     public IndexBuffer(GraphicsDevice graphicsDevice, IndexElementSize indexElementSize, int indexCount, BufferUsage bufferUsage) 
     {
-        RhiIndexBuffer = graphicsDevice.RenderResourceFactory.CreateIndexBuffer((uint)indexCount, "FnaIndexBuffer");
+        UOEDebug.NotImplemented();
+
+        //RhiIndexBuffer = graphicsDevice.RenderResourceFactory.NewBuffer(new RhiBufferDescription
+        //{
+        //    Size = (uint)(indexCount * sizeof(ushort))
+        //});// (uint)indexCount, "FnaIndexBuffer");
     }
 
     public void SetDataPointerEXT(int offsetInBytes, IntPtr data, int dataLength, SetDataOptions options)

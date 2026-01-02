@@ -16,9 +16,9 @@ public interface IRenderContext
 {
     public ShaderInstance ShaderInstance { get; set; }
 
-    public IRhiIndexBuffer IndexBuffer { set; }
+    public IRhiBuffer IndexBuffer { set; }
 
-    public IRhiVertexBuffer VertexBuffer { get; set; }
+    public IRhiBuffer VertexBuffer { get; set; }
 
     public RhiSampler Sampler { get; set; }
 

@@ -24,15 +24,7 @@ internal class VulkanResourceFactory: IRenderResourceFactory
         throw new NotImplementedException();
     }
 
-    public IRhiIndexBuffer CreateIndexBuffer(uint length, string name)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IRhiVertexBuffer CreateVertexBuffer(in RhiVertexBufferDescription description)
-    {
-        throw new NotImplementedException();
-    }
+    public IRhiBuffer NewBuffer(in RhiBufferDescription bufferDescription) => new VulkanBuffer(Device, bufferDescription);
 
     internal void SetDevice(VulkanDevice device) => _device = device;
 }
