@@ -5,7 +5,8 @@ using System.Diagnostics;
 namespace UOEngine.Runtime.RHI;
 
 [DebuggerDisplay("{Offset}, {Type}")]
-public class RhiVertexAttribute
+//public class RhiVertexAttribute
+public readonly record struct RhiVertexAttribute
 {
     public readonly RhiVertexAttributeType Type;
     public readonly RhiVertexAttributeFormat Format;

@@ -2,12 +2,12 @@
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 namespace UOEngine.Runtime.RHI;
 
-public class RhiVertexDefinition
+public sealed class RhiVertexDefinition
 {
     public readonly uint Stride;
 
     public readonly RhiVertexAttribute[] Attributes;
-    public RhiVertexDefinition(RhiVertexAttribute[] attributes)
+    public RhiVertexDefinition(params RhiVertexAttribute[] attributes)
     {
         Attributes = attributes;
 
@@ -22,6 +22,7 @@ public class RhiVertexDefinition
         RhiVertexAttributeFormat.Vector3        => 12,
         RhiVertexAttributeFormat.Vector4        => 16,
         RhiVertexAttributeFormat.R8G8B8A8_UNorm => 4,
+        RhiVertexAttributeFormat.UInt32         => 4,
         _ => throw new NotSupportedException()
     };
 }

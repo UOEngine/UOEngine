@@ -16,12 +16,16 @@ internal class VulkanShaderProgram
 
     public readonly VkShaderModule Handle;
 
+    public readonly string EntryPoint;
+
     internal unsafe VulkanShaderProgram(VulkanDevice device, ShaderProgramType type, in ShaderProgramCompileResult compileResult)
     {
         Type = type;
 
         StreamBindings = compileResult.StreamBindings;
         InputBindings = compileResult.ShaderBindings;
+
+        EntryPoint = compileResult.EntryPointName;
 
         Span<byte> entryPointNameAsBytes = Encoding.ASCII.GetBytes(compileResult.EntryPointName);
 

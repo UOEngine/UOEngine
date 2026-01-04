@@ -42,7 +42,7 @@ internal class UO3DApplication : IPlugin
     private readonly IWindow _window;
 
     private IndexBuffer _indexBuffer = null!;
-    private VertexBuffer _vertexBuffer = null!;
+    private VertexBuffer<PositionAndColourVertex> _vertexBuffer = null!;
 
     public UO3DApplication(IServiceProvider serviceProvider)
     {
@@ -87,24 +87,24 @@ internal class UO3DApplication : IPlugin
 
         _indexBuffer.SetData([0, 1, 2]);
 
-        _vertexBuffer = rendererResourcesFactory.NewVertexBuffer<Vertex>(3);
+        _vertexBuffer = rendererResourcesFactory.NewVertexBuffer<PositionAndColourVertex>(3);
 
-        var v0 = new Vertex
+        var v0 = new PositionAndColourVertex
         {
             Position = Vector3.Zero,
-            Colour = Colour.Red,
+            Colour = Colour.Red.ToUint32(),
         };
 
-        var v1 = new Vertex
+        var v1 = new PositionAndColourVertex
         {
-            Position = Vector3.Zero,
-            Colour = Colour.Green,
+            Position = new Vector3(0.5f, 0.0f, 0.0f),
+            Colour = Colour.Green.ToUint32(),
         };
 
-        var v2 = new Vertex
+        var v2 = new PositionAndColourVertex
         {
-            Position = Vector3.Zero,
-            Colour = Colour.Blue,
+            Position = new Vector3(0.0f, 1.0f, 0.0f),
+            Colour = Colour.Blue.ToUint32(),
         };
 
         _vertexBuffer.SetData([v0, v1, v2]);
@@ -122,6 +122,16 @@ internal class UO3DApplication : IPlugin
 
         context.IndexBuffer = _indexBuffer.RhiBuffer;
         context.VertexBuffer = _vertexBuffer.RhiBuffer;
+
+        context.SetGraphicsPipeline(new RhiGraphicsPipelineDescription
+        {
+            Shader = _shaderInstance,
+            PrimitiveType = RhiPrimitiveType.TriangleList,
+            Rasteriser = RhiRasteriserState.CullCounterClockwise,
+            BlendState = RhiBlendState.Opaque,
+            DepthStencilState = RhiDepthStencilState.None,
+            VertexLayout = PositionAndColourVertex.Layout
+        });
 
         context.DrawIndexedPrimitives(3, 1, 0, 0, 0);
     }

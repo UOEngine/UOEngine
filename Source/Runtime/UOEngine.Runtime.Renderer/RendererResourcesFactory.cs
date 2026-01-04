@@ -20,13 +20,9 @@ public class RendererResourcesFactory
     {
         return new IndexBuffer(_rhiResourceFactory, size);
     }
-    public VertexBuffer NewVertexBuffer(uint size, uint stride, string? name = default)
-    {
-        return new VertexBuffer(_rhiResourceFactory, size, stride);
-    }
 
-    public VertexBuffer NewVertexBuffer<T>(uint size)
+    public VertexBuffer<T> NewVertexBuffer<T>(uint size) where T: unmanaged, IVertex, IVertexLayoutProvider
     {
-        return new VertexBuffer(_rhiResourceFactory, size, (uint)Unsafe.SizeOf<T>());
+        return new VertexBuffer<T>(_rhiResourceFactory, size);
     }
 }

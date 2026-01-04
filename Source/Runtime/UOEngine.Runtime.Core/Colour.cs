@@ -24,4 +24,9 @@ public struct Colour
         B = b; 
         A = a;
     }
+
+    public uint ToUint32()
+    {
+        return ((uint)A << 24) | ((uint)B << 16) | ((uint)G << 8) | R;
+    }
 }

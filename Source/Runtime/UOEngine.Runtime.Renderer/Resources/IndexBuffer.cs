@@ -10,12 +10,14 @@ public class IndexBuffer
 
     private ushort[] _indices = [];
    
-    internal IndexBuffer(IRenderResourceFactory factory, uint size)
+    internal IndexBuffer(IRenderResourceFactory factory, uint numIndices)
     {
+        uint stride = sizeof(ushort);
+
         RhiBuffer = factory.NewBuffer(new RhiBufferDescription
         {
-            Size = size,
-            Stride = sizeof(ushort),
+            Size = numIndices * stride,
+            Stride = stride,
             Usage = RhiBufferUsageFlags.Index | RhiBufferUsageFlags.Dynamic
         });
     }
