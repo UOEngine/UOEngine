@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -89,4 +89,15 @@ public struct PositionAndColourVertex: IVertex, IVertexLayoutProvider
     public static RhiVertexDefinition Layout => new(
         new RhiVertexAttribute(RhiVertexAttributeType.Position, RhiVertexAttributeFormat.Vector3, 0),
         new RhiVertexAttribute(RhiVertexAttributeType.Colour, RhiVertexAttributeFormat.R8G8B8A8_UNorm, 12));
+}
+
+[StructLayout(LayoutKind.Sequential)]
+public struct PositionUVVertex : IVertex, IVertexLayoutProvider
+{
+    public Vector3 Position;
+    public Vector2 UV;
+
+    public static RhiVertexDefinition Layout => new(
+        new RhiVertexAttribute(RhiVertexAttributeType.Position, RhiVertexAttributeFormat.Vector3, 0),
+        new RhiVertexAttribute(RhiVertexAttributeType.TextureCoordinate, RhiVertexAttributeFormat.Vector2, 12));
 }

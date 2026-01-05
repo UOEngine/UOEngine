@@ -280,9 +280,9 @@ internal class VulkanGraphicsContext : IRenderContext
             VkViewport viewport = new()
             {
                 x = 0.0f,
-                y = 0.0f,
+                y = _viewport.height,
                 width = _viewport.width,
-                height = _viewport.height,
+                height = -_viewport.height,
                 minDepth = 0.0f,
                 maxDepth = 1.0f
             };
@@ -290,7 +290,7 @@ internal class VulkanGraphicsContext : IRenderContext
             _device.Api.vkCmdSetViewport(commandBuffer, 0, viewport);
 
             // Update dynamic scissor state
-            VkRect2D scissor = new(0, 0, (uint)viewport.width, (uint)viewport.height);
+            VkRect2D scissor = new(0, 0, (uint)viewport.width, (uint)_viewport.height);
 
             _device.Api.vkCmdSetScissor(commandBuffer, 0, scissor);
 

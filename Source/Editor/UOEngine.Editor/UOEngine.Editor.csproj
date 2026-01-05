@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Runtime\UOEngine.Runtime.Application\UOEngine.Runtime.Application.csproj" />
     <ProjectReference Include="..\..\Runtime\UOEngine.Runtime.FnaAdapter\UOEngine.Runtime.FnaAdapter.csproj" />
     <ProjectReference Include="..\..\Runtime\UOEngine.Runtime.Plugin\UOEngine.Runtime.Plugin.csproj" />
     <ProjectReference Include="..\..\Runtime\UOEngine.Runtime.RHI\UOEngine.Runtime.RHI.csproj" />

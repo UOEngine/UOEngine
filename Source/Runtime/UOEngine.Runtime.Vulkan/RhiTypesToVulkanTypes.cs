@@ -1,6 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿// Copyright (c) 2026 UOEngine Project, Scotty1234
+// Licensed under the MIT License. See LICENSE file in the project root for details.
 using UOEngine.Runtime.RHI;
 using Vortice.Vulkan;
 

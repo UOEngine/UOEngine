@@ -28,6 +28,9 @@
     </Project>
   </Folder>
   <Folder Name="/Runtime/">
+    <Project Path="Source/Runtime/UOEngine.Runtime.Application/UOEngine.Runtime.Application.csproj" Id="3e3597c3-e24d-44da-a605-d5183402aec7">
+      <Platform Project="x64" />
+    </Project>
     <Project Path="Source/Runtime/UOEngine.Runtime.Core/UOEngine.Runtime.Core.csproj" Id="cf99cafa-d9ec-4dcf-a635-947b2299e8df">
       <Platform Project="x64" />
     </Project>
@@ -60,6 +63,11 @@
     </Project>
   </Folder>
   <Folder Name="/Shaders/" />
+  <Folder Name="/Tests/">
+    <Project Path="Source/Tests/UOEngine.Tests.Triangle/UOEngine.Tests.Triangle.csproj" Id="6ad37294-6cad-45cd-a282-593c5abcfde7">
+      <Platform Project="x64" />
+    </Project>
+  </Folder>
   <Folder Name="/ThirdParty/">
     <File Path="ThirdParty/Directory.Build.Props" />
     <Project Path="ThirdParty/FAudio/csharp/FAudio-CS.Core.csproj">

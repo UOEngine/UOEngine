@@ -65,7 +65,7 @@ public class VulkanDevice : IDisposable
     public unsafe void InitGpu(VkInstanceApi instanceApi)
     {
 
-        List<VkUtf8String> enabledExtensions = [VK_KHR_SWAPCHAIN_EXTENSION_NAME];
+        List<VkUtf8String> enabledExtensions = [VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_MAINTENANCE_1_EXTENSION_NAME];
 
         using var deviceExtensionNames = new VkStringArray(enabledExtensions);
 

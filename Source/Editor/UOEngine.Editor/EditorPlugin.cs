@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using Microsoft.Extensions.DependencyInjection;
 
@@ -31,22 +31,16 @@ internal class UO3DApplication : IPlugin
     private ShaderBindingHandle _textureBindingHandle = ShaderBindingHandle.Invalid;
     private ShaderBindingHandle _samplerBindingHandle = ShaderBindingHandle.Invalid;
 
-    private readonly EntityManager _entityManager;
     private readonly RenderSystem _rendererSystem;
     private readonly IRenderResourceFactory _renderFactory;
     private readonly RendererResourcesFactory rendererResourcesFactory;
-    private CameraEntity? _camera;
     private readonly UOAssetLoader _assetLoader;
     private MapEntity _map = null!;
     private IRenderTexture _waterTexture = null!;
     private readonly IWindow _window;
 
-    private IndexBuffer _indexBuffer = null!;
-    private VertexBuffer<PositionAndColourVertex> _vertexBuffer = null!;
-
     public UO3DApplication(IServiceProvider serviceProvider)
     {
-        _entityManager = serviceProvider.GetRequiredService<EntityManager>();
         _assetLoader = serviceProvider.GetRequiredService<UOAssetLoader>();
         _renderFactory = serviceProvider.GetRequiredService<IRenderResourceFactory>();
         rendererResourcesFactory = serviceProvider.GetRequiredService<RendererResourcesFactory>();
@@ -55,59 +49,11 @@ internal class UO3DApplication : IPlugin
         _window = serviceProvider.GetRequiredService<IWindow>();
     }
 
-    [StructLayout(LayoutKind.Sequential)]
-    struct Vertex
-    {
-        public Vector3 Position;
-        public Colour Colour;
-    }
-
     public void PostStartup()
     {
         _rendererSystem.OnFrameBegin += OnFrameBegin;
 
-        string vertexShader = Path.Combine(UOEPaths.ShadersDir, "Testing/TriangleVS.hlsl");
-        string pixelShader = Path.Combine(UOEPaths.ShadersDir, "Testing/TrianglePS.hlsl");
-
-        _shaderResource = _renderFactory.NewShaderResource();
-        _shaderResource.Load(vertexShader, pixelShader);
-
-        _shaderInstance = _renderFactory.NewShaderInstance(_shaderResource);
-
-        //_textureBindingHandle = _shaderInstance.GetBindingHandleTexturePixel("Texture");
-        //_samplerBindingHandle = _shaderInstance.GetBindingHandleSamplerPixel("Sampler");
-
-        //_whiteTexture = CreateTestTexture(0xFFFFFFFF, "WhiteTexture");
-        //_redTexture = CreateTestTexture(0xFF0000FF, "RedTexture");
-        //_greenTexture = CreateTestTexture(0x00FF00FF, "GreenTexture");
-
         _checkerboardTexture = CreateCheckerboardTexture(512, 512, Colour.Red, "RedCheckerboard");
-
-        _indexBuffer = rendererResourcesFactory.NewIndexBuffer(3, "IndexBuffer");
-
-        _indexBuffer.SetData([0, 1, 2]);
-
-        _vertexBuffer = rendererResourcesFactory.NewVertexBuffer<PositionAndColourVertex>(3);
-
-        var v0 = new PositionAndColourVertex
-        {
-            Position = Vector3.Zero,
-            Colour = Colour.Red.ToUint32(),
-        };
-
-        var v1 = new PositionAndColourVertex
-        {
-            Position = new Vector3(0.5f, 0.0f, 0.0f),
-            Colour = Colour.Green.ToUint32(),
-        };
-
-        var v2 = new PositionAndColourVertex
-        {
-            Position = new Vector3(0.0f, 1.0f, 0.0f),
-            Colour = Colour.Blue.ToUint32(),
-        };
-
-        _vertexBuffer.SetData([v0, v1, v2]);
     }
 
     public static void ConfigureServices(IServiceCollection services)
@@ -118,22 +64,7 @@ internal class UO3DApplication : IPlugin
 
     public void OnFrameBegin(IRenderContext context)
     {
-        //_shaderInstance.SetTexture(_textureBindingHandle, _checkerboardTexture);
 
-        context.IndexBuffer = _indexBuffer.RhiBuffer;
-        context.VertexBuffer = _vertexBuffer.RhiBuffer;
-
-        context.SetGraphicsPipeline(new RhiGraphicsPipelineDescription
-        {
-            Shader = _shaderInstance,
-            PrimitiveType = RhiPrimitiveType.TriangleList,
-            Rasteriser = RhiRasteriserState.CullCounterClockwise,
-            BlendState = RhiBlendState.Opaque,
-            DepthStencilState = RhiDepthStencilState.None,
-            VertexLayout = PositionAndColourVertex.Layout
-        });
-
-        context.DrawIndexedPrimitives(3, 1, 0, 0, 0);
     }
 
     private IRenderTexture CreateTestTexture(uint colour, string name)

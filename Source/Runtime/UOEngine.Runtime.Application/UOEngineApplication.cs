@@ -1,18 +1,21 @@
-﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+﻿// Copyright (c) 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
+using Microsoft.Extensions.DependencyInjection;
+
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.Loader;
 
-using Microsoft.Extensions.DependencyInjection;
-
+using UOEngine.Developer.RenderDoc;
+using UOEngine.Runtime.Core;
 using UOEngine.Runtime.Platform;
 using UOEngine.Runtime.Plugin;
 using UOEngine.Runtime.Renderer;
+using UOEngine.Runtime.Vulkan;
 
-namespace UOEngine.Runtime.Core;
+namespace UOEngine.Runtime.Application;
 
-public class Application: IDisposable
+public class UOEngineApplication : IDisposable
 {
     public static int FrameNumber { get; private set; }
 
@@ -22,19 +25,18 @@ public class Application: IDisposable
 
     private ApplicationLoop _applicationLoop = null!;
 
-    private RenderSystem _renderSystem = null!; 
-
-    private CameraEntity _camera = null!;
+    private RenderSystem _renderSystem = null!;
 
     private Window _window = new();
     private PlatformEventLoop _platformEventLoop = null!;
-
 
     private readonly Assembly[] _loadedAssemblies = [];
 
     private readonly PluginRegistry _pluginRegistry = new();
 
-    public Application()
+    private bool _disposed = false;
+
+    public UOEngineApplication()
     {
         AppDomain.CurrentDomain.FirstChanceException += (_, e) =>
         {
@@ -55,9 +57,10 @@ public class Application: IDisposable
         };
     }
 
-    public void Start()
+    internal void Start()
     {
         InitialiseInternal();
+        OnInitialisationCompleted();
 
         float deltaSeconds = 0.0f;
 
@@ -87,23 +90,37 @@ public class Application: IDisposable
         return Services.GetRequiredService<T>();
     }
 
+    public void Dispose()
+    {
+        Dispose(disposing: true);
+
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void OnInitialisationCompleted()
+    {
+    }
+
     private void InitialiseInternal()
     {
         PluginRegistrationExtensions.Initialise(_pluginRegistry);
 
-        _services.AddSingleton<EntityManager>();
+        // Some basic defaults.
         _services.AddSingleton<ApplicationLoop>();
         _services.AddSingleton<InputManager>();
         _services.AddSingleton<IWindow>(_window);
         _services.AddSingleton<PlatformEventLoop>();
 
+        _pluginRegistry.LoadPlugin<RendererPlugin>();
+        _pluginRegistry.LoadPlugin<VulkanPlugin>();
+
         if (CommandLine.HasOption("-renderdoc"))
         {
-            _pluginRegistry.LoadPlugin("UOEngine.Developer.RenderDoc.dll");
+            _services.AddSingleton<RenderDocPlugin>();
         }
 
-        _pluginRegistry.LoadPlugins(UOEPaths.ExeDir);
-        _pluginRegistry.LoadPlugins(UOEPaths.PluginDir, true);
+        //_pluginRegistry.LoadPlugins(UOEPaths.ExeDir);
+        //_pluginRegistry.LoadPlugins(UOEPaths.PluginDir, true);
 
         _pluginRegistry.Build(_services);
 
@@ -132,10 +149,6 @@ public class Application: IDisposable
             _applicationLoop.RequestExit("Platform event quit");
         };
 
-        var entityManager = GetService<EntityManager>();
-
-        _camera = entityManager.NewEntity<CameraEntity>();
-
         _window.OnResized += (window) =>
         {
             _renderSystem.ResizeSwapchain(window.Width, window.Height);
@@ -144,7 +157,7 @@ public class Application: IDisposable
 
     private void Update(float gameTime)
     {
-        if(_platformEventLoop.PollEvents())
+        if (_platformEventLoop.PollEvents())
         {
             return;
         }
@@ -154,8 +167,16 @@ public class Application: IDisposable
         FrameNumber++;
     }
 
-    public void Dispose()
+    protected virtual void Dispose(bool disposing)
     {
+        if (_disposed == false)
+        {
+            if (disposing)
+            {
+            }
+
+            _disposed = true;
+        }
     }
 
     private bool IsAssemblyLoaded(string path)

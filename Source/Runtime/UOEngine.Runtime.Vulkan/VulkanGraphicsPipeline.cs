@@ -51,7 +51,7 @@ internal class VulkanGraphicsPipeline
         VkPipelineViewportStateCreateInfo viewportState = new(1, 1);
 
         // Rasterization state
-        VkPipelineRasterizationStateCreateInfo rasterizationState = VkPipelineRasterizationStateCreateInfo.CullNone;
+        VkPipelineRasterizationStateCreateInfo rasterizationState = VkPipelineRasterizationStateCreateInfo.CullClockwise;
 
         // Multi sampling state
         VkPipelineMultisampleStateCreateInfo multisampleState = VkPipelineMultisampleStateCreateInfo.Default;
