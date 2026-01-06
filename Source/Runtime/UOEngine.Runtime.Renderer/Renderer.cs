@@ -78,10 +78,4 @@ public class RenderSystem
 
         _frameNumber++;
     }
-
-    public void ResizeSwapchain(uint width,  uint height)
-    {
-        //_context.WaitForGpuIdle();
-
-    }
 }

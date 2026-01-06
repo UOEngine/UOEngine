@@ -1,6 +1,7 @@
 ﻿// Copyright (c) 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using System.Numerics;
+
 using UOEngine.Runtime.Application;
 using UOEngine.Runtime.Core;
 using UOEngine.Runtime.Renderer;
@@ -8,7 +9,7 @@ using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Tests.Triangle;
 
-internal class TriangleTest: UOEngineApplication
+internal class TriangleTest(IServiceProvider serviceProvider) : UOEngineApplication(serviceProvider)
 {
     private IndexBuffer _indexBuffer = null!;
     private VertexBuffer<PositionAndColourVertex> _vertexBuffer = null!;

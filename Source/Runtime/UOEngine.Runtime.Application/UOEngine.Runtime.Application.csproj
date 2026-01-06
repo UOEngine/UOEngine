@@ -8,8 +8,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Developer\UOEngine.Developer.RenderDoc\UOEngine.Developer.RenderDoc.csproj" />
-    <ProjectReference Include="..\UOEngine.Runtime.Core\UOEngine.Runtime.Core.csproj" />
-    <ProjectReference Include="..\UOEngine.Runtime.Platform\UOEngine.Runtime.Platform.csproj" />
     <ProjectReference Include="..\UOEngine.Runtime.Plugin\UOEngine.Runtime.Plugin.csproj" />
     <ProjectReference Include="..\UOEngine.Runtime.Renderer\UOEngine.Runtime.Renderer.csproj" />
     <ProjectReference Include="..\UOEngine.Runtime.Vulkan\UOEngine.Runtime.Vulkan.csproj" />

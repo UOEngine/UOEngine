@@ -8,8 +8,9 @@ internal class Program
 {
     static int Main(string[] args)
     {
-        return BuildApp().UseDefaults().Start(args);
+        return BuildApp().StartWithDefault(args);
     }
 
-    public static UOEngineAppBuilder BuildApp() => UOEngineAppBuilder.Configure<TriangleTest>();
+    public static UOEngineAppBuilder BuildApp() => UOEngineAppBuilder.Configure<TexturedQuad>();
 }
+
