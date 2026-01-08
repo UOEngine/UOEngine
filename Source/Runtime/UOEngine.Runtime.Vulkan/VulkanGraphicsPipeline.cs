@@ -13,7 +13,7 @@ internal class VulkanGraphicsPipeline
 {
     public readonly VkPipeline Handle;
 
-    private readonly VkPipelineLayout _pipelineLayout;
+    public readonly VkPipelineLayout PipelineLayout;
 
     internal unsafe VulkanGraphicsPipeline(VulkanDevice device, in RhiGraphicsPipelineDescription pipelineDescription, VkFormat attachmentFormat)
     {
@@ -39,12 +39,18 @@ internal class VulkanGraphicsPipeline
             pName = pixelEntryPoint
         };
 
+        VkDescriptorSetLayout* descriptorSetLayout = stackalloc VkDescriptorSetLayout[2];
+
+        descriptorSetLayout[0] = shaderResource.VertexProgram.DescriptorSetLayout;
+        descriptorSetLayout[1] = shaderResource.PixelProgram.DescriptorSetLayout;
+
         VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = new()
         {
-           
+           setLayoutCount = 2,
+           pSetLayouts = descriptorSetLayout
         };
 
-        device.Api.vkCreatePipelineLayout(device.Handle, pipelineLayoutCreateInfo, out _pipelineLayout);
+        device.Api.vkCreatePipelineLayout(device.Handle, pipelineLayoutCreateInfo, out PipelineLayout);
 
         VkPipelineInputAssemblyStateCreateInfo inputAssemblyState = new(pipelineDescription.PrimitiveType.ToVkPrimitiveTopology());
 
@@ -145,7 +151,7 @@ internal class VulkanGraphicsPipeline
             pDepthStencilState = &depthStencilState,
             pColorBlendState = &colourBlendState,
             pDynamicState = &dynamicState,
-            layout = _pipelineLayout,
+            layout = PipelineLayout,
         };
 
         device.Api.vkCreateGraphicsPipeline(device.Handle, graphicsPipelineCreateInfo, out Handle);

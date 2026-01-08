@@ -116,6 +116,7 @@ internal class VulkanGraphicsContext : IRenderContext
 
     private VulkanTexture _renderTarget = null!;
 
+    private readonly Dictionary<VkDescriptorSetLayout, VkDescriptorPool> _descriptorSetPools = [];
     public VulkanGraphicsContext(VulkanDevice device)
     {
         _device = device;
@@ -212,6 +213,11 @@ internal class VulkanGraphicsContext : IRenderContext
 
     private void BindShaderParameters(bool forceRebind)
     {
+        _descriptorSetPools.TryGetValue(_graphicsPipeline.de)
+
+        //_device.Api.vkCmdBindDescriptorSets(_commandBuffer, VkPipelineBindPoint.Graphics, GraphicsPipeline.PipelineLayout, )
+
+
         for (int i = 0; i < (int)ShaderProgramType.Count; i++)
         {
             ref var bindings = ref ShaderInstance.BindingData[i].Bindings;
@@ -308,6 +314,7 @@ internal class VulkanGraphicsContext : IRenderContext
         }
 
         bool fullRebind = IsStateDirty(DirtyState.ShaderParams);
+
 
         BindShaderParameters(fullRebind);
 

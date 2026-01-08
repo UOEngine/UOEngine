@@ -37,6 +37,7 @@ public class VulkanRenderer : IRenderer
         public uint FenceSignalCount;
         public VkSemaphore SwapchainAcquireSemaphore;
         public VkSemaphore SwapchainReleaseSemaphore;
+        public VkDescriptorPool DescriptorPool;
     }
 
     private PerFrameData[] _perFrameData = [new(), new()];
@@ -81,11 +82,20 @@ public class VulkanRenderer : IRenderer
             frameData.SwapchainAcquireSemaphore = _device.CreateSemaphore();
             frameData.SwapchainReleaseSemaphore = _device.CreateSemaphore();
 
-            VkCommandPoolCreateInfo poolCreateInfo = new()
+            VkDescriptorPoolSize descriptorPoolSize = new()
             {
-                flags = VkCommandPoolCreateFlags.Transient,
-                queueFamilyIndex = _device.PresentQueue.FamilyIndex
+                descriptorCount = 1,
+                type = VkDescriptorType.UniformBuffer
             };
+
+            VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = new()
+            {
+                poolSizeCount = 1,
+                pPoolSizes = &descriptorPoolSize,
+                maxSets = 1
+            };
+
+            _device.Api.vkCreateDescriptorPool(_device.Handle, descriptorPoolCreateInfo, out frameData.DescriptorPool);
         }
 
         _graphicsContext = new VulkanGraphicsContext(_device);

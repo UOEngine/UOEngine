@@ -21,4 +21,19 @@ internal static class RhiTypesToVulkanTypes
         RhiVertexAttributeFormat.R8G8B8A8_UNorm => VkFormat.R8G8B8A8Unorm,
         _ => throw new NotImplementedException()
     };
+
+    internal static VkShaderStageFlags ToVkShaderStage(this ShaderProgramType shaderProgramType) => shaderProgramType switch
+    {
+        ShaderProgramType.Vertex => VkShaderStageFlags.Vertex,
+        ShaderProgramType.Pixel => VkShaderStageFlags.Fragment,
+        _ => throw new NotImplementedException()
+    };
+
+    internal static VkDescriptorType ToVkDescriptorType(this RhiShaderInputType shaderInputType) => shaderInputType switch
+    {
+        RhiShaderInputType.Constant => VkDescriptorType.UniformBuffer,
+        RhiShaderInputType.Texture => VkDescriptorType.SampledImage,
+        RhiShaderInputType.Sampler => VkDescriptorType.Sampler,
+        _ => throw new NotImplementedException()
+    };
 }

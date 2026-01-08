@@ -98,11 +98,6 @@ internal class UOEngineDxcCompiler
 
             if (resourceDescription.Type == ShaderInputType.ConstantBuffer)
             {
-                if (resourceDescription.Space != 1)
-                {
-                    throw new ArgumentException("Constant buffer variables must be in shader register space 1 for Sdl3Gpu");
-                }
-
                 ID3D12ShaderReflectionConstantBuffer constantBuffer = reflection.GetConstantBufferByName(resourceDescription.Name);
 
                 inputType = RhiShaderInputType.Constant;
@@ -172,19 +167,9 @@ internal class UOEngineDxcCompiler
             else if(resourceDescription.Type == ShaderInputType.Sampler)
             {
                 inputType = RhiShaderInputType.Sampler;
-
-                if(resourceDescription.Space != 2)
-                {
-                    throw new ArgumentException("Samplers must be in shader register space 2 for Sdl3Gpu");
-                }
             }
             else if (resourceDescription.Type == ShaderInputType.Texture)
             {
-                if (resourceDescription.Space != 2)
-                {
-                    throw new ArgumentException("Textures must be in shader register space 2 for Sdl3Gpu");
-                }
-
                 inputType = RhiShaderInputType.Texture;
 
                 var t = reflection.GetVariableByName(resourceDescription.Name);

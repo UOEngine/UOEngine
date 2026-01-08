@@ -11,11 +11,16 @@ struct VsToPs
     float4 colour : COLOR;
 };
 
+cbuffer ProjectionMatrix : register(b0, space0)
+{
+    float4x4 WorldViewProj;
+};
+
 VsToPs main(VSInput input)
 {
     VsToPs output;
 
-    output.position = float4(input.position, 1.0f);
+    output.position = mul(WorldViewProj, float4(input.position, 1.0f));
     output.colour = input.colour;
 
     return output;

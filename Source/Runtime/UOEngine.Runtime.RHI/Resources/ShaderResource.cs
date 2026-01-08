@@ -110,7 +110,9 @@ public abstract class RhiShaderResource
             }
         }
 
-        throw new UnreachableException("Could not find shader binding handle in vertex shader.");
+        var parameterNames = GetParameterNames(programType);
+
+        throw new UnreachableException($"Could not find shader binding handle in vertex shader for {name}. Available variables are: {string.Join(", ", parameterNames)}");
     }
 
     public ShaderBindingHandle GetBindingHandle(ShaderProgramType programType, RhiShaderInputType inputType, int index)

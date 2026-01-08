@@ -11,7 +11,7 @@ public class UOEngineApplication: IDisposable
     public readonly IServiceProvider ServiceProvider;
 
     private readonly ApplicationLoop _applicationLoop = null!;
-    private bool disposedValue;
+    private bool _disposed;
 
     public UOEngineApplication(IServiceProvider serviceProvider)
     {
@@ -26,17 +26,15 @@ public class UOEngineApplication: IDisposable
         OnInitialisationCompleted();
     }
 
-    public T GetService<T>() where T : notnull
-    {
-        return ServiceProvider.GetRequiredService<T>();
-    }
+    public T GetService<T>() where T : notnull => ServiceProvider.GetRequiredService<T>();
+
     public virtual void Update(float deltaSeconds) { }
 
     protected virtual void OnInitialisationCompleted(){}
 
     protected virtual void Dispose(bool disposing)
     {
-        if (!disposedValue)
+        if (!_disposed)
         {
             if (disposing)
             {
@@ -45,7 +43,7 @@ public class UOEngineApplication: IDisposable
 
             // TODO: free unmanaged resources (unmanaged objects) and override finalizer
             // TODO: set large fields to null
-            disposedValue = true;
+            _disposed = true;
         }
     }
 
