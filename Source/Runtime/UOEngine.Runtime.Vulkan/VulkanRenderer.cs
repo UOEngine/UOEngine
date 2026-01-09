@@ -118,6 +118,7 @@ public class VulkanRenderer : IRenderer
         if(frameData.FenceSignalCount == frameData.SubmitFence?.SignalCount)
         {
             frameData.SubmitFence?.WaitForThenReset();
+            _device.Api.vkResetDescriptorPool(_device.Handle, frameData.DescriptorPool, VkDescriptorPoolResetFlags.None);
         }
 
         AcquireNextImage();

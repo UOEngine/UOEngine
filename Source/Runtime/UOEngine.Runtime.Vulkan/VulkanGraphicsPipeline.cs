@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using System.Text;
 
@@ -9,14 +9,21 @@ using UOEngine.Runtime.Core;
 
 namespace UOEngine.Runtime.Vulkan;
 
-internal class VulkanGraphicsPipeline
+internal class VulkanGraphicsPipeline: IDisposable
 {
     public readonly VkPipeline Handle;
 
     public readonly VkPipelineLayout PipelineLayout;
+    private bool disposedValue;
+
+    public VkDescriptorSetLayout DescriptorSetLayout { get; private set; }
+
+    private readonly VulkanDevice _device;
 
     internal unsafe VulkanGraphicsPipeline(VulkanDevice device, in RhiGraphicsPipelineDescription pipelineDescription, VkFormat attachmentFormat)
     {
+        _device = device;
+
         VulkanShaderResource shaderResource = (VulkanShaderResource)pipelineDescription.Shader.ShaderResource;
 
         VkUtf8ReadOnlyString vertexEntryPoint = Encoding.UTF8.GetBytes(shaderResource.VertexProgram.EntryPoint);
@@ -39,16 +46,52 @@ internal class VulkanGraphicsPipeline
             pName = pixelEntryPoint
         };
 
-        VkDescriptorSetLayout* descriptorSetLayout = stackalloc VkDescriptorSetLayout[2];
+        int numDescriptorSets = shaderResource.VertexProgram.InputBindings.Length + shaderResource.PixelProgram.InputBindings.Length;
 
-        descriptorSetLayout[0] = shaderResource.VertexProgram.DescriptorSetLayout;
-        descriptorSetLayout[1] = shaderResource.PixelProgram.DescriptorSetLayout;
+        //VkDescriptorSetLayout* descriptorSetLayout = stackalloc VkDescriptorSetLayout[numDescriptorSets];
+
+        //descriptorSetLayout[0] = shaderResource.VertexProgram.DescriptorSetLayout;
+        //descriptorSetLayout[1] = shaderResource.PixelProgram.DescriptorSetLayout;
+
+        VkDescriptorSetLayoutBinding* descriptorSetLayoutBindings = stackalloc VkDescriptorSetLayoutBinding[numDescriptorSets];
+
+        int descriptorIndex = 0;
+
+        void AddDescriptorSetLayout(VkShaderStageFlags shaderStage, ShaderParameter[] shaderParameters)
+        {
+            foreach(var shaderParameter in shaderParameters)
+            {
+                ref var descriptorSetLayoutBinding = ref descriptorSetLayoutBindings[descriptorIndex];
+
+                descriptorSetLayoutBinding.stageFlags = shaderStage;
+                descriptorSetLayoutBinding.binding = shaderParameter.SlotIndex;
+                descriptorSetLayoutBinding.descriptorType = shaderParameter.InputType.ToVkDescriptorType();
+                descriptorSetLayoutBinding.descriptorCount = 1;
+
+                descriptorIndex++;
+            }
+        }
+
+        AddDescriptorSetLayout(VkShaderStageFlags.Vertex, shaderResource.VertexProgram.InputBindings);
+        AddDescriptorSetLayout(VkShaderStageFlags.Fragment, shaderResource.PixelProgram.InputBindings);
+
+        VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = new()
+        {
+            bindingCount = (uint)numDescriptorSets,
+            pBindings = descriptorSetLayoutBindings
+        };
+
+        VkDescriptorSetLayout descriptorSetLayout;
+
+        device.Api.vkCreateDescriptorSetLayout(device.Handle, descriptorSetLayoutCreateInfo, out descriptorSetLayout);
 
         VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = new()
         {
-           setLayoutCount = 2,
-           pSetLayouts = descriptorSetLayout
+           setLayoutCount = (uint)numDescriptorSets,
+           pSetLayouts = &descriptorSetLayout
         };
+
+        DescriptorSetLayout = descriptorSetLayout;
 
         device.Api.vkCreatePipelineLayout(device.Handle, pipelineLayoutCreateInfo, out PipelineLayout);
 
@@ -155,5 +198,35 @@ internal class VulkanGraphicsPipeline
         };
 
         device.Api.vkCreateGraphicsPipeline(device.Handle, graphicsPipelineCreateInfo, out Handle);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposedValue)
+        {
+            if (disposing)
+            {
+                // TODO: dispose managed state (managed objects)
+            }
+
+            _device.Api.vkDestroyDescriptorSetLayout(_device.Handle, DescriptorSetLayout);
+
+            DescriptorSetLayout = VkDescriptorSetLayout.Null;
+            disposedValue = true;
+        }
+    }
+
+    // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+    // ~VulkanGraphicsPipeline()
+    // {
+    //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+    //     Dispose(disposing: false);
+    // }
+
+    public void Dispose()
+    {
+        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
     }
 }

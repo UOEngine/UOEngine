@@ -42,6 +42,8 @@ public class VulkanDevice : IDisposable
 
     internal readonly VulkanStagingBuffer StagingBuffer;
 
+    internal readonly VulkanMemoryManager MemoryManager;
+
     internal VulkanGraphicsContext GraphicsContext = null!;
 
     private VkDevice? _device;
@@ -119,6 +121,8 @@ public class VulkanDevice : IDisposable
 
             _queues[i] = new VulkanQueue(this, (VulkanQueueType)i, queue);
         }
+
+        MemoryManager.Init();
 
         StagingBuffer.Init();
     }

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using UOEngine.Runtime.Core;
 using UOEngine.Runtime.RHI;
 using Vortice.Vulkan;
+
 using static Vortice.Vulkan.Vulkan;
 
 namespace UOEngine.Runtime.Vulkan;
@@ -211,12 +212,20 @@ internal class VulkanGraphicsContext : IRenderContext
         CommandBuffer.TransitionImageLayout(image, oldLayout, newLayout);
     }
 
-    private void BindShaderParameters(bool forceRebind)
+    private unsafe void BindShaderParameters(bool forceRebind)
     {
-        _descriptorSetPools.TryGetValue(_graphicsPipeline.de)
+        //_descriptorSetPools.TryGetValue(_graphicsPipeline.de)
 
         //_device.Api.vkCmdBindDescriptorSets(_commandBuffer, VkPipelineBindPoint.Graphics, GraphicsPipeline.PipelineLayout, )
 
+        VkWriteDescriptorSet* writeDescriptorSets = stackalloc VkWriteDescriptorSet[ShaderInstance.NumBindings];
+
+        uint numDescriptorsToUpdate = 0;
+
+        VkDescriptorBufferInfo bufferInfo = new()
+        {
+
+        };
 
         for (int i = 0; i < (int)ShaderProgramType.Count; i++)
         {
@@ -232,26 +241,134 @@ internal class VulkanGraphicsContext : IRenderContext
                 continue;
             }
 
-            UOEDebug.NotImplemented();
-
-            switch ((ShaderProgramType)i)
+            foreach(var entry in bindings)
             {
-                case ShaderProgramType.Vertex:
-                    {
-                        //BindParametersForVertexProgram(bindings, forceRebind);
+                if ((entry.Dirty == false) && (forceRebind == false))
+                {
+                    continue;
+                }
 
-                        break;
-                    }
-                case ShaderProgramType.Pixel:
-                    {
-                        //BindParametersForPixelProgram(bindings, forceRebind);
+                VkWriteDescriptorSet descriptorWrite = new()
+                {
+                    dstBinding = entry.BindingIndex,
+                    descriptorCount = 1
+                };
 
-                        break;
-                    }
-                default:
-                    throw new UnreachableException("No bind parameters implements.");
+                switch (entry.InputType)
+                {
+                    case RhiShaderInputType.Buffer:
+                    case RhiShaderInputType.Constant:
+                        {
+                            descriptorWrite.descriptorType = VkDescriptorType.UniformBuffer;
+
+                            bufferInfo.range = (ulong)entry.Data.Buffer.LongLength;
+                            //bufferInfo.buffer = vkbuffer
+
+                            descriptorWrite.pBufferInfo = &bufferInfo;
+
+
+                            fixed (byte* ptr = entry.Data.Buffer)
+                            {
+                            }
+
+                            break;
+                        }
+
+                    default:
+                        throw new UnreachableException("BindParametersForVertexProgram: Unhandled input type");
+                }
+                
+                writeDescriptorSets[numDescriptorsToUpdate++] = descriptorWrite;
+
             }
         }
+
+        _device.Api.vkUpdateDescriptorSets(_device.Handle, numDescriptorsToUpdate, writeDescriptorSets, 0, null);
+
+    }
+
+    private unsafe void BindParametersForVertexProgram(ShaderBindingDataEntry[] bindingEntries, bool forceRebind)
+    {
+        for (int i = 0; i < bindingEntries.Length; i++)
+        {
+            ref var entry = ref bindingEntries[i];
+
+            if ((entry.Dirty == false) && (forceRebind == false))
+            {
+                continue;
+            }
+
+            VkWriteDescriptorSet descriptorWrite = new()
+            {
+                des
+            }
+
+            switch (entry.InputType)
+            {
+                case RhiShaderInputType.Buffer:
+                case RhiShaderInputType.Constant:
+                    {
+                        descriptorWrite.descriptorType = VkDescriptorType.UniformBuffer;
+
+                         fixed (byte* ptr = entry.Data.Buffer)
+                         {
+                         }
+
+                        break;
+                    }
+
+                default:
+                    throw new UnreachableException("BindParametersForVertexProgram: Unhandled input type");
+            }
+
+            _device.Api.vkUpdateDescriptorSets(_device.Handle, 1, &descriptorWrite, 0, null);
+
+            entry.Dirty = false;
+        }
+    }
+
+    private void BindParametersForPixelProgram(ShaderBindingDataEntry[] bindingEntries, bool forceRebind)
+    {
+        //Span<SDL_GPUTextureSamplerBinding> samplerBindings = stackalloc SDL_GPUTextureSamplerBinding[bindingEntries.Length / 2];
+
+        //uint numBindings = 0;
+
+        //for (int i = 0; i < bindingEntries.Length; i++)
+        //{
+        //    ref var entry = ref bindingEntries[i];
+
+        //    if ((entry.Dirty == false) && (forceRebind == false))
+        //    {
+        //        continue;
+        //    }
+
+        //    switch (entry.InputType)
+        //    {
+        //        case RhiShaderInputType.Texture:
+        //            {
+        //                samplerBindings[(int)entry.BindingIndex].texture = entry.Texture.Handle;
+
+        //                if (samplerBindings[(int)entry.BindingIndex].sampler == IntPtr.Zero)
+        //                {
+        //                    samplerBindings[(int)entry.BindingIndex].sampler = _globalSamplers.GetSampler(_sampler).Handle;
+        //                }
+
+        //                numBindings++;
+
+        //                break;
+        //            }
+
+        //        case RhiShaderInputType.Sampler:
+        //            {
+        //                samplerBindings[(int)entry.BindingIndex].sampler = _globalSamplers.GetSampler(_sampler).Handle;
+        //                break;
+        //            }
+        //        default:
+        //            throw new UnreachableException("BindParametersForPixelProgram: Unhandled input type");
+        //    }
+
+        //    entry.Dirty = false;
+        //}
     }
 
     private void FlushIfNeeded()

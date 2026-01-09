@@ -14,13 +14,14 @@ internal class VulkanShaderProgram: IDisposable
     public readonly ShaderParameter[] InputBindings = [];
     public readonly ShaderStreamBinding[] StreamBindings = [];
 
-    public VkShaderModule Handle { get; private set; }
-    public VkDescriptorSetLayout DescriptorSetLayout { get; private set; }
+    public VkShaderModule Handle => _handle;
 
     public readonly string EntryPoint;
     private bool _disposed;
 
     private readonly VulkanDevice _device;
+
+    private VkShaderModule _handle;
 
     internal unsafe VulkanShaderProgram(VulkanDevice device, ShaderProgramType shaderProgramType, in ShaderProgramCompileResult compileResult)
     {
@@ -34,28 +35,9 @@ internal class VulkanShaderProgram: IDisposable
 
         Span<byte> entryPointNameAsBytes = Encoding.ASCII.GetBytes(compileResult.EntryPointName);
 
-        device.Api.vkCreateShaderModule(device.Handle, compileResult.ByteCode.AsSpan(), null, out Handle);
+        device.Api.vkCreateShaderModule(device.Handle, compileResult.ByteCode.AsSpan(), null, out _handle);
 
         UOEDebug.Assert(Handle != VkShaderModule.Null);
-
-        VkDescriptorSetLayoutBinding* descriptorSetLayoutBindings = stackalloc VkDescriptorSetLayoutBinding[InputBindings.Length];
-
-        for(int i = 0; i < InputBindings.Length;  i++)
-        {
-            descriptorSetLayoutBindings[i].stageFlags = shaderProgramType.ToVkShaderStage();
-            descriptorSetLayoutBindings[i].binding = InputBindings[i].SlotIndex;
-            descriptorSetLayoutBindings[i].descriptorType = InputBindings[i].InputType.ToVkDescriptorType();
-            descriptorSetLayoutBindings[i].descriptorCount = 1;
-        }
-
-        VkDescriptorSetLayoutCreateInfo  descriptorSetLayoutCreateInfo = new()
-        {
-            bindingCount = (uint)InputBindings.Length,
-            pBindings = descriptorSetLayoutBindings
-        };
-
-        device.Api.vkCreateDescriptorSetLayout(device.Handle, descriptorSetLayoutCreateInfo, out DescriptorSetLayout);
-
     }
 
     public void Dispose()
@@ -73,12 +55,8 @@ internal class VulkanShaderProgram: IDisposable
                 // TODO: dispose managed state (managed objects)
             }
 
-            _device.Api.vkDestroyShaderModule(_device.Handle, Handle);
-            Handle = VkShaderModule.Null;
-
-            _device.Api.vkDestroyDescriptorSetLayout(_device.Handle, DescriptorSetLayout);
-
-            DescriptorSetLayout = VkDescriptorSetLayout.Null;
+            _device.Api.vkDestroyShaderModule(_device.Handle, _handle);
+            _handle = VkShaderModule.Null;
 
             _disposed = true;
         }
