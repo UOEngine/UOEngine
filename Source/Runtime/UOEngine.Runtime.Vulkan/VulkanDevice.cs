@@ -1,5 +1,6 @@
 ﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
+using System.Buffers;
 using Vortice.Vulkan;
 using static Vortice.Vulkan.Vulkan;
 
@@ -43,6 +44,7 @@ public class VulkanDevice : IDisposable
     internal readonly VulkanStagingBuffer StagingBuffer;
 
     internal readonly VulkanMemoryManager MemoryManager;
+    internal readonly VulkanDeviceMemoryManager DeviceMemoryManager;
 
     internal VulkanGraphicsContext GraphicsContext = null!;
 
@@ -54,6 +56,8 @@ public class VulkanDevice : IDisposable
     public VulkanDevice(in VulkanDeviceInfo deviceInfo)
     {
         DeviceInfo = deviceInfo;
+        MemoryManager = new(this);
+        DeviceMemoryManager = new(this);
         StagingBuffer = new(this);
     }
 

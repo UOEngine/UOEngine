@@ -11,4 +11,9 @@ internal class VulkanUniformBuffer
     {
         device.MemoryManager.AllocateUniformBuffer(size, out _allocation);
     }
+
+    internal void Update(VulkanGraphicsContext context, byte[] data)
+    {
+
+    }
 }

@@ -1,11 +1,12 @@
-﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using System.Diagnostics;
+
+using Vortice.Vulkan;
+using static Vortice.Vulkan.Vulkan;
+
 using UOEngine.Runtime.Core;
 using UOEngine.Runtime.RHI;
-using Vortice.Vulkan;
-
-using static Vortice.Vulkan.Vulkan;
 
 namespace UOEngine.Runtime.Vulkan;
 
@@ -118,17 +119,20 @@ internal class VulkanGraphicsContext : IRenderContext
     private VulkanTexture _renderTarget = null!;
 
     private readonly Dictionary<VkDescriptorSetLayout, VkDescriptorPool> _descriptorSetPools = [];
+
+    private VulkanScratchBlockAllocator _uniformBufferObjectScratchAllocator = null!;
     public VulkanGraphicsContext(VulkanDevice device)
     {
         _device = device;
     }
 
-    public void BeginRecording(VulkanCommandBuffer commandBuffer)
+    public void BeginRecording(VulkanCommandBuffer commandBuffer, VulkanScratchBlockAllocator uniformBufferObjectScratchAllocator)
     {
         _vertexBuffer = null;
         _indexBuffer = null;
 
         _commandBuffer = commandBuffer;
+        _uniformBufferObjectScratchAllocator = uniformBufferObjectScratchAllocator;
     }
 
     public unsafe void BeginRenderPass(in RenderPassInfo renderPassInfo)
@@ -251,7 +255,8 @@ internal class VulkanGraphicsContext : IRenderContext
                 VkWriteDescriptorSet descriptorWrite = new()
                 {
                     dstBinding = entry.BindingIndex,
-                    descriptorCount = 1
+                    descriptorCount = 1,
+                    //dstSet = 
                 };
 
                 switch (entry.InputType)
@@ -259,17 +264,19 @@ internal class VulkanGraphicsContext : IRenderContext
                     case RhiShaderInputType.Buffer:
                     case RhiShaderInputType.Constant:
                         {
+                            Span<byte> mappedMem = _uniformBufferObjectScratchAllocator.Allocate((uint)entry.Data.Buffer.Length, out var memoryAllocation);
+
+                            entry.Data.Buffer.CopyTo(mappedMem);
+
                             descriptorWrite.descriptorType = VkDescriptorType.UniformBuffer;
 
-                            bufferInfo.range = (ulong)entry.Data.Buffer.LongLength;
-                            //bufferInfo.buffer = vkbuffer
+                            bufferInfo.range = memoryAllocation.Size;
+                            bufferInfo.buffer = memoryAllocation.Buffer;
+                            bufferInfo.offset = memoryAllocation.Offset;
 
                             descriptorWrite.pBufferInfo = &bufferInfo;
 
-
-                            fixed (byte* ptr = entry.Data.Buffer)
-                            {
-                            }
+                            memoryAllocation.FlushMappedMemory(memoryAllocation.Offset, memoryAllocation.Size);
 
                             break;
                         }
@@ -300,8 +307,7 @@ internal class VulkanGraphicsContext : IRenderContext
 
             VkWriteDescriptorSet descriptorWrite = new()
             {
-                des
-            }
+            };
 
             switch (entry.InputType)
             {
@@ -325,50 +331,6 @@ internal class VulkanGraphicsContext : IRenderContext
 
             entry.Dirty = false;
         }
-    }
-
-    private void BindParametersForPixelProgram(ShaderBindingDataEntry[] bindingEntries, bool forceRebind)
-    {
-        //Span<SDL_GPUTextureSamplerBinding> samplerBindings = stackalloc SDL_GPUTextureSamplerBinding[bindingEntries.Length / 2];
-
-        //uint numBindings = 0;
-
-        //for (int i = 0; i < bindingEntries.Length; i++)
-        //{
-        //    ref var entry = ref bindingEntries[i];
-
-        //    if ((entry.Dirty == false) && (forceRebind == false))
-        //    {
-        //        continue;
-        //    }
-
-        //    switch (entry.InputType)
-        //    {
-        //        case RhiShaderInputType.Texture:
-        //            {
-        //                samplerBindings[(int)entry.BindingIndex].texture = entry.Texture.Handle;
-
-        //                if (samplerBindings[(int)entry.BindingIndex].sampler == IntPtr.Zero)
-        //                {
-        //                    samplerBindings[(int)entry.BindingIndex].sampler = _globalSamplers.GetSampler(_sampler).Handle;
-        //                }
-
-        //                numBindings++;
-
-        //                break;
-        //            }
-
-        //        case RhiShaderInputType.Sampler:
-        //            {
-        //                samplerBindings[(int)entry.BindingIndex].sampler = _globalSamplers.GetSampler(_sampler).Handle;
-        //                break;
-        //            }
-        //        default:
-        //            throw new UnreachableException("BindParametersForPixelProgram: Unhandled input type");
-        //    }
-
-        //    entry.Dirty = false;
-        //}
     }
 
     private void FlushIfNeeded()

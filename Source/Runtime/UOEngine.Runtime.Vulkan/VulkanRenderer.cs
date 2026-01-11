@@ -38,6 +38,7 @@ public class VulkanRenderer : IRenderer
         public VkSemaphore SwapchainAcquireSemaphore;
         public VkSemaphore SwapchainReleaseSemaphore;
         public VkDescriptorPool DescriptorPool;
+        public VulkanScratchBlockAllocator UniformBufferScratchAllocator;
     }
 
     private PerFrameData[] _perFrameData = [new(), new()];
@@ -81,6 +82,7 @@ public class VulkanRenderer : IRenderer
 
             frameData.SwapchainAcquireSemaphore = _device.CreateSemaphore();
             frameData.SwapchainReleaseSemaphore = _device.CreateSemaphore();
+            frameData.UniformBufferScratchAllocator = new VulkanScratchBlockAllocator(_device);
 
             VkDescriptorPoolSize descriptorPoolSize = new()
             {
@@ -118,6 +120,8 @@ public class VulkanRenderer : IRenderer
         if(frameData.FenceSignalCount == frameData.SubmitFence?.SignalCount)
         {
             frameData.SubmitFence?.WaitForThenReset();
+
+            frameData.UniformBufferScratchAllocator.Reset();
             _device.Api.vkResetDescriptorPool(_device.Handle, frameData.DescriptorPool, VkDescriptorPoolResetFlags.None);
         }
 
@@ -125,7 +129,7 @@ public class VulkanRenderer : IRenderer
 
         var commandBuffer = _device.GetQueue(VulkanQueueType.Graphics).CreateCommandBuffer();
 
-        GraphicsContext.BeginRecording(commandBuffer);
+        GraphicsContext.BeginRecording(commandBuffer, frameData.UniformBufferScratchAllocator);
 
         GraphicsContext.TransitionImageLayout(_swapchain.BackbufferToRenderInto.Image, VkImageLayout.Undefined, VkImageLayout.ColorAttachmentOptimal);
     }

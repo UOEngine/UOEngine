@@ -81,6 +81,7 @@ internal class VulkanBuffer: IRhiBuffer, IDisposable
             usage = usage
         };
 
+
         device.Api.vkCreateBuffer(device.Handle, &bufferCreateInfo, out Handle);
 
         device.Api.vkGetBufferMemoryRequirements(device.Handle, Handle, out var memoryRequirements);
@@ -91,6 +92,8 @@ internal class VulkanBuffer: IRhiBuffer, IDisposable
         {
             memoryPropertyFlags |= (VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
         }
+
+        //_device.MemoryManager.AllocateBuffer(bufferDescription.Size, usage, memoryPropertyFlags, out var memoryAllocation);
 
         _allocationSize = memoryRequirements.size;
 
