@@ -12,12 +12,13 @@ internal class VulkanFence
     public uint FrameSubmitted;
     public uint SignalCount { get; private set; }
 
+    public bool IsSignaled { get; private set; }
+
     public readonly VkFence Handle;
     private readonly VulkanDevice _device;
 
     public readonly string Name;
 
-    private bool _isSignaled;
     private static int _count = 0;
 
     public VulkanFence(VulkanDevice device, bool createSignaled = false)
@@ -28,7 +29,7 @@ internal class VulkanFence
 
         _device.Api.vkCreateFence(device.Handle, flags, out Handle).CheckResult();
 
-        _isSignaled = createSignaled;
+        IsSignaled = createSignaled;
 
         Name = $"Fence{_count++}";
     }
@@ -41,54 +42,55 @@ internal class VulkanFence
 
     public void Wait()
     {
-        if (_isSignaled)
+        if (IsSignaled)
         {
             return;
         }
 
+        //Debug.WriteLine($"VulkanFence.Wait: {Name}");
+
         _device.Api.vkWaitForFences(_device.Handle, Handle, true, ulong.MaxValue);
 
         SignalCount++;
-        _isSignaled = true;
+        IsSignaled = true;
     }
 
     public void Reset()
     {
-        if(_isSignaled == false)
+        if(IsSignaled == false)
         {
             return;
         }
 
         _device.Api.vkResetFences(_device.Handle, Handle);
-        _isSignaled = false;
+        IsSignaled = false;
     }
 
-    internal bool IsSignaled()
+    internal void Refresh()
     {
-        if(_isSignaled)
+        if (IsSignaled)
         {
-            return true;
+            return;
         }
 
         var result = _device.Api.vkGetFenceStatus(_device.Handle, Handle);
 
-        switch(result)
+        switch (result)
         {
             case VkResult.Success:
                 {
-                    _isSignaled = true;
+                    IsSignaled = true;
                     SignalCount++;
-                    return true;
+                    break;
                 }
 
             case VkResult.NotReady:
                 {
-                    return false;
+                    break;
                 }
 
             default:
                 throw new NotImplementedException();
         }
     }
-
 }

@@ -11,6 +11,8 @@ internal class VulkanCommandBufferPool
     private readonly uint _queueIndex;
     private readonly VulkanDevice _device;
 
+    private readonly List<VulkanCommandBuffer> _commandBuffers = [];
+
     internal unsafe VulkanCommandBufferPool(VulkanDevice device, uint queueFamilyIndex)
     {
         _device = device;
@@ -18,6 +20,7 @@ internal class VulkanCommandBufferPool
         VkCommandPoolCreateInfo commandPoolCreateInfo = new()
         {
             queueFamilyIndex = queueFamilyIndex,
+            flags = VkCommandPoolCreateFlags.ResetCommandBuffer
         };
 
         _device.Api.vkCreateCommandPool(_device.Handle, &commandPoolCreateInfo, out var commandPool);
@@ -25,4 +28,13 @@ internal class VulkanCommandBufferPool
         Handle = commandPool;
     }
     internal void Reset() => _device.Api.vkResetCommandPool(_device.Handle, Handle, VkCommandPoolResetFlags.None);
+
+    internal VulkanCommandBuffer Create()
+    {
+        var commandBuffer = new VulkanCommandBuffer(_device, this);
+
+        _commandBuffers.Add(commandBuffer);
+
+        return commandBuffer;
+    }
 }

@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using Vortice.Vulkan;
 using static Vortice.Vulkan.Vulkan;
@@ -37,8 +37,10 @@ public class VulkanRenderer : IRenderer
         public uint FenceSignalCount;
         public VkSemaphore SwapchainAcquireSemaphore;
         public VkSemaphore SwapchainReleaseSemaphore;
-        public VkDescriptorPool DescriptorPool;
         public VulkanScratchBlockAllocator UniformBufferScratchAllocator;
+        public VulkanDescriptorPool DescriptorPool;
+        public VulkanCommandBuffer CommandBuffer;
+
     }
 
     private PerFrameData[] _perFrameData = [new(), new()];
@@ -80,24 +82,12 @@ public class VulkanRenderer : IRenderer
         {
             ref var frameData = ref _perFrameData[i];
 
+            frameData.SubmitFence = new VulkanFence(_device, true);
             frameData.SwapchainAcquireSemaphore = _device.CreateSemaphore();
             frameData.SwapchainReleaseSemaphore = _device.CreateSemaphore();
             frameData.UniformBufferScratchAllocator = new VulkanScratchBlockAllocator(_device);
-
-            VkDescriptorPoolSize descriptorPoolSize = new()
-            {
-                descriptorCount = 1,
-                type = VkDescriptorType.UniformBuffer
-            };
-
-            VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = new()
-            {
-                poolSizeCount = 1,
-                pPoolSizes = &descriptorPoolSize,
-                maxSets = 1
-            };
-
-            _device.Api.vkCreateDescriptorPool(_device.Handle, descriptorPoolCreateInfo, out frameData.DescriptorPool);
+            frameData.DescriptorPool = new VulkanDescriptorPool(_device);
+            frameData.CommandBuffer = _device.GraphicsQueue.CreateCommandBuffer();
         }
 
         _graphicsContext = new VulkanGraphicsContext(_device);
@@ -113,23 +103,28 @@ public class VulkanRenderer : IRenderer
     {
         _frameIndex++;
 
+        //Debug.WriteLine($"VulkanRenderer.FrameBegin: {_frameIndex}");
+
         ref var frameData = ref GetCurrentFrameData();
 
         //_device.WaitForGpuIdle();
         // Is the previous frame finished?
-        if(frameData.FenceSignalCount == frameData.SubmitFence?.SignalCount)
+        //if(frameData.FenceSignalCount <= frameData.SubmitFence?.SignalCount)
         {
+            frameData.SubmitFence?.Refresh();
             frameData.SubmitFence?.WaitForThenReset();
 
             frameData.UniformBufferScratchAllocator.Reset();
-            _device.Api.vkResetDescriptorPool(_device.Handle, frameData.DescriptorPool, VkDescriptorPoolResetFlags.None);
+            frameData.DescriptorPool.Reset();
         }
 
         AcquireNextImage();
 
-        var commandBuffer = _device.GetQueue(VulkanQueueType.Graphics).CreateCommandBuffer();
+        var commandBuffer = frameData.CommandBuffer;// _device.GetQueue(VulkanQueueType.Graphics).CreateCommandBuffer();
 
-        GraphicsContext.BeginRecording(commandBuffer, frameData.UniformBufferScratchAllocator);
+        commandBuffer.BeginRecording();
+
+        GraphicsContext.BeginRecording(commandBuffer, frameData.UniformBufferScratchAllocator, frameData.DescriptorPool);
 
         GraphicsContext.TransitionImageLayout(_swapchain.BackbufferToRenderInto.Image, VkImageLayout.Undefined, VkImageLayout.ColorAttachmentOptimal);
     }
@@ -157,11 +152,11 @@ public class VulkanRenderer : IRenderer
             pWaitDstStageMask = &wait_stage,
             signalSemaphoreCount = 1u,
             pSignalSemaphores = &signalSemaphore
-        });
+        }, frameData.SubmitFence);
 
-        frameData.SubmitFence = GraphicsContext.CommandBuffer.Fence;
-        frameData.SubmitFence.FrameSubmitted = _frameIndex;
-        frameData.FenceSignalCount = frameData.SubmitFence.SignalCount;
+        //frameData.SubmitFence = GraphicsContext.CommandBuffer.Fence;
+        //frameData.SubmitFence.FrameSubmitted = _frameIndex;
+        //frameData.FenceSignalCount = frameData.SubmitFence.SignalCount;
 
         _swapchain.Present(frameData.SwapchainReleaseSemaphore);
     }

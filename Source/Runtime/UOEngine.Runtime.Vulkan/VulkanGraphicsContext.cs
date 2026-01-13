@@ -121,18 +121,20 @@ internal class VulkanGraphicsContext : IRenderContext
     private readonly Dictionary<VkDescriptorSetLayout, VkDescriptorPool> _descriptorSetPools = [];
 
     private VulkanScratchBlockAllocator _uniformBufferObjectScratchAllocator = null!;
+    private VulkanDescriptorPool _descriptorPool = null!;
     public VulkanGraphicsContext(VulkanDevice device)
     {
         _device = device;
     }
 
-    public void BeginRecording(VulkanCommandBuffer commandBuffer, VulkanScratchBlockAllocator uniformBufferObjectScratchAllocator)
+    public void BeginRecording(VulkanCommandBuffer commandBuffer, VulkanScratchBlockAllocator uniformBufferObjectScratchAllocator, VulkanDescriptorPool descriptorPool)
     {
         _vertexBuffer = null;
         _indexBuffer = null;
 
         _commandBuffer = commandBuffer;
         _uniformBufferObjectScratchAllocator = uniformBufferObjectScratchAllocator;
+        _descriptorPool = descriptorPool;
     }
 
     public unsafe void BeginRenderPass(in RenderPassInfo renderPassInfo)
@@ -218,13 +220,11 @@ internal class VulkanGraphicsContext : IRenderContext
 
     private unsafe void BindShaderParameters(bool forceRebind)
     {
-        //_descriptorSetPools.TryGetValue(_graphicsPipeline.de)
-
-        //_device.Api.vkCmdBindDescriptorSets(_commandBuffer, VkPipelineBindPoint.Graphics, GraphicsPipeline.PipelineLayout, )
-
         VkWriteDescriptorSet* writeDescriptorSets = stackalloc VkWriteDescriptorSet[ShaderInstance.NumBindings];
 
         uint numDescriptorsToUpdate = 0;
+
+        VkDescriptorSet descriptorSet = _descriptorPool.Allocate(GraphicsPipeline.DescriptorSetLayout);
 
         VkDescriptorBufferInfo bufferInfo = new()
         {
@@ -256,7 +256,6 @@ internal class VulkanGraphicsContext : IRenderContext
                 {
                     dstBinding = entry.BindingIndex,
                     descriptorCount = 1,
-                    //dstSet = 
                 };
 
                 switch (entry.InputType)
@@ -275,6 +274,7 @@ internal class VulkanGraphicsContext : IRenderContext
                             bufferInfo.offset = memoryAllocation.Offset;
 
                             descriptorWrite.pBufferInfo = &bufferInfo;
+                            descriptorWrite.dstSet = descriptorSet;
 
                             memoryAllocation.FlushMappedMemory(memoryAllocation.Offset, memoryAllocation.Size);
 
@@ -290,47 +290,12 @@ internal class VulkanGraphicsContext : IRenderContext
             }
         }
 
-        _device.Api.vkUpdateDescriptorSets(_device.Handle, numDescriptorsToUpdate, writeDescriptorSets, 0, null);
-
-    }
-
-    private unsafe void BindParametersForVertexProgram(ShaderBindingDataEntry[] bindingEntries, bool forceRebind)
-    {
-        for (int i = 0; i < bindingEntries.Length; i++)
+        if(numDescriptorsToUpdate > 0)
         {
-            ref var entry = ref bindingEntries[i];
-
-            if ((entry.Dirty == false) && (forceRebind == false))
-            {
-                continue;
-            }
-
-            VkWriteDescriptorSet descriptorWrite = new()
-            {
-            };
-
-            switch (entry.InputType)
-            {
-                case RhiShaderInputType.Buffer:
-                case RhiShaderInputType.Constant:
-                    {
-                        descriptorWrite.descriptorType = VkDescriptorType.UniformBuffer;
-
-                         fixed (byte* ptr = entry.Data.Buffer)
-                         {
-                         }
-
-                        break;
-                    }
-
-                default:
-                    throw new UnreachableException("BindParametersForVertexProgram: Unhandled input type");
-            }
-
-            _device.Api.vkUpdateDescriptorSets(_device.Handle, 1, &descriptorWrite, 0, null);
-
-            entry.Dirty = false;
+            _device.Api.vkUpdateDescriptorSets(_device.Handle, numDescriptorsToUpdate, writeDescriptorSets, 0, null);
         }
+
+        _device.Api.vkCmdBindDescriptorSets(CommandBuffer.Handle, VkPipelineBindPoint.Graphics, GraphicsPipeline.PipelineLayout, 0, descriptorSet);
     }
 
     private void FlushIfNeeded()

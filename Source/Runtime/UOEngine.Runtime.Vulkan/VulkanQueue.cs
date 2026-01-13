@@ -27,6 +27,9 @@ public class VulkanQueue: IDisposable
 
     private List<AllocationInfo> _freeCommandBufferAllocators = [];
 
+    private List<VulkanCommandBufferPool> _commandBufferPools = [];
+
+
     public VulkanQueue(VulkanDevice device, VulkanQueueType type, VkQueue queue)
     {
         _device = device;
@@ -57,7 +60,7 @@ public class VulkanQueue: IDisposable
 
     }
 
-    internal void Submit(VulkanCommandBuffer commandBuffer, in VkSubmitInfo submitInfo)
+    internal void Submit(VulkanCommandBuffer commandBuffer, in VkSubmitInfo submitInfo, VulkanFence fence)
     {
         AllocationInfo info = new()
         {
@@ -65,9 +68,13 @@ public class VulkanQueue: IDisposable
             CommandBufferPool = commandBuffer.CommandBufferPool
         };
 
-        UOEDebug.Assert(commandBuffer.Fence.IsSignaled() == false);
+        UOEDebug.Assert(fence.IsSignaled == false);
 
-        _device.Api.vkQueueSubmit(Handle, submitInfo, commandBuffer.Fence.Handle).CheckResult();
+        //Debug.WriteLine($"Submitting {commandBuffer.Name} with fence {fence.Name}");
+
+        _device.Api.vkQueueSubmit(Handle, submitInfo, fence.Handle).CheckResult();
+
+        commandBuffer.MarkSubmitted();
 
         _lastCommandBufferSubmitted = commandBuffer;
 
@@ -80,7 +87,9 @@ public class VulkanQueue: IDisposable
 
         for(int i = 0; i < _freeCommandBufferAllocators.Count; i++)
         {
-            if (_freeCommandBufferAllocators[i].CommandBuffer.Fence.IsSignaled())
+            _freeCommandBufferAllocators[i].CommandBuffer.Fence.Refresh();
+
+            if (_freeCommandBufferAllocators[i].CommandBuffer.Fence.IsSignaled)
             {
                 freeCommandBufferIndex = i;
                 break;
@@ -95,14 +104,17 @@ public class VulkanQueue: IDisposable
             commandBuffer = _freeCommandBufferAllocators[freeCommandBufferIndex].CommandBuffer;
             commandBufferPool = _freeCommandBufferAllocators[freeCommandBufferIndex].CommandBufferPool;
 
-            commandBufferPool.Reset();
+            //commandBufferPool.Reset(); // ??
 
             _freeCommandBufferAllocators.RemoveAt(freeCommandBufferIndex);
         }
         else
         {
             commandBufferPool = new VulkanCommandBufferPool(_device, FamilyIndex);
-            commandBuffer = new VulkanCommandBuffer(_device, commandBufferPool);
+
+            _commandBufferPools.Add(commandBufferPool);
+
+            commandBuffer = commandBufferPool.Create();
         }
 
         commandBuffer.Fence.Reset();

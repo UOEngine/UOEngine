@@ -64,6 +64,9 @@
   </Folder>
   <Folder Name="/Shaders/" />
   <Folder Name="/Tests/">
+    <Project Path="Source/Tests/UOEngine.Tests.Present/UOEngine.Tests.Present.csproj" Id="a0ad9551-fa77-4504-9c56-91f34e0fa812">
+      <Platform Project="x64" />
+    </Project>
     <Project Path="Source/Tests/UOEngine.Tests.TexturedQuad/UOEngine.Tests.TexturedQuad.csproj" Id="e87f3e13-011d-48e9-bf55-b7a52ae5ef8a">
       <Platform Project="x64" />
     </Project>

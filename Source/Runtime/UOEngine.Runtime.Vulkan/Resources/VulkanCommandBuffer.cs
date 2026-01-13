@@ -1,28 +1,38 @@
 ﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
+using System.Diagnostics;
 using UOEngine.Runtime.Core;
 using Vortice.Vulkan;
 using static Vortice.Vulkan.Vulkan;
 
 namespace UOEngine.Runtime.Vulkan;
 
+internal enum VulkanCommandBufferState
+{
+    Initial,
+    Recording,
+    Executable,
+    Submitted
+}
+
 internal class VulkanCommandBuffer
 {
     public readonly VkCommandBuffer Handle;
     public readonly VulkanCommandBufferPool CommandBufferPool;
 
-    public readonly VulkanFence Fence;
+    public VulkanCommandBufferState State { get; private set; }
+
+    public VulkanFence Fence { get; private set; }
 
     public readonly string Name;
 
-    private readonly VulkanDevice _device;
+    public readonly bool IsUploadOnly;
 
-    private bool _isRecording;
+    private readonly VulkanDevice _device;
 
     private static int _count = 0;
 
-
-    internal unsafe VulkanCommandBuffer(VulkanDevice device, VulkanCommandBufferPool commandPool)
+    internal unsafe VulkanCommandBuffer(VulkanDevice device, VulkanCommandBufferPool commandPool, string? name = null)
     {
         _device = device;
         CommandBufferPool = commandPool;
@@ -30,15 +40,17 @@ internal class VulkanCommandBuffer
         VkCommandBufferAllocateInfo commandBufferAllocateInfo = new()
         {
             commandBufferCount = 1,
-            commandPool = commandPool.Handle
+            commandPool = commandPool.Handle,
+            level = VkCommandBufferLevel.Primary
         };
 
         _device.Api.vkAllocateCommandBuffer(_device.Handle, &commandBufferAllocateInfo, out Handle);
 
         Fence = new VulkanFence(device);
 
-        Name = $"VulkanCommandBuffer{_count++}";
+        State = VulkanCommandBufferState.Initial;
 
+        Name = name ?? $"VulkanCommandBuffer{_count++}";
     }
 
     internal unsafe void CmdCopyBufferToImage(VkBuffer source, VkImage image, in VkBufferImageCopy bufferImageCopy)
@@ -57,19 +69,24 @@ internal class VulkanCommandBuffer
 
     internal unsafe void BeginRecording()
     {
+        Debug.WriteLine($"VulkanCommandBuffer.BeginRecording: {Name}");
+
         VkCommandBufferBeginInfo beginInfo = new()
         {
             flags = VkCommandBufferUsageFlags.OneTimeSubmit
         };
 
+        _device.Api.vkResetCommandBuffer(Handle, VkCommandBufferResetFlags.None);
         _device.Api.vkBeginCommandBuffer(Handle, &beginInfo);
-        _isRecording = true;
+
+        State = VulkanCommandBufferState.Recording;
     }
 
     internal void EndRecording()
     {
         _device.Api.vkEndCommandBuffer(Handle);
-        _isRecording = false;
+
+        State = VulkanCommandBufferState.Executable;
     }
 
     internal unsafe void TransitionImageLayout(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout, 
@@ -148,4 +165,12 @@ internal class VulkanCommandBuffer
         // Record the pipeline barrier into the command buffer
         _device.Api.vkCmdPipelineBarrier2(Handle, &dependencyInfo);
     }
+
+    internal void MarkSubmitted()
+    {
+        //Fence = fence;
+        State = VulkanCommandBufferState.Submitted;
+    }
+
+    internal void MarkFinished() => State = VulkanCommandBufferState.Initial;
 }

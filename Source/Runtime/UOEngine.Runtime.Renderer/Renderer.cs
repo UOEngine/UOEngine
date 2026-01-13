@@ -62,11 +62,11 @@ public class RenderSystem
 
         UIOverlay.Setup(uiTexture);
 
-        uint defaultTextureSize = 128;
+        //uint defaultTextureSize = 128;
 
-        CreateDefaultTexture(DefaultTextureType.Red, defaultTextureSize, defaultTextureSize, Colour.Red, "DefaultRedTexture");
-        CreateDefaultTexture(DefaultTextureType.Green, defaultTextureSize, defaultTextureSize, Colour.Green, "DefaultRedTexture");
-        CreateDefaultTexture(DefaultTextureType.Blue, defaultTextureSize, defaultTextureSize, Colour.Blue, "DefaultRedTexture");
+        //CreateDefaultTexture(DefaultTextureType.Red, defaultTextureSize, defaultTextureSize, Colour.Red, "DefaultRedTexture");
+        //CreateDefaultTexture(DefaultTextureType.Green, defaultTextureSize, defaultTextureSize, Colour.Green, "DefaultRedTexture");
+        //CreateDefaultTexture(DefaultTextureType.Blue, defaultTextureSize, defaultTextureSize, Colour.Blue, "DefaultRedTexture");
     }
 
     public void FrameBegin()

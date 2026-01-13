@@ -73,7 +73,9 @@ internal class TexturedQuadTest(IServiceProvider serviceProvider) : UOEngineAppl
         context.IndexBuffer = _indexBuffer.RhiBuffer;
         context.VertexBuffer = _vertexBuffer.RhiBuffer;
 
-        _shaderInstance.SetParameter(_worldProjectionHandle, Matrix4x4.Identity);
+        var transform = Matrix4x4.CreateTranslation(0.5f, 0.0f, 0.0f);
+
+        _shaderInstance.SetParameter(_worldProjectionHandle, transform);
 
         context.SetGraphicsPipeline(new RhiGraphicsPipelineDescription
         {
