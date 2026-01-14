@@ -87,7 +87,7 @@ internal class VulkanGraphicsPipeline: IDisposable
 
         VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = new()
         {
-           setLayoutCount = (uint)numDescriptorSets,
+           setLayoutCount = 1,
            pSetLayouts = &descriptorSetLayout
         };
 

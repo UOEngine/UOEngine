@@ -12,6 +12,7 @@ public enum DefaultTextureType
     Red,
     Green, 
     Blue,
+    RedCheckerboard,
 
     Count
 }
@@ -62,11 +63,12 @@ public class RenderSystem
 
         UIOverlay.Setup(uiTexture);
 
-        //uint defaultTextureSize = 128;
+        uint defaultTextureSize = 128;
 
-        //CreateDefaultTexture(DefaultTextureType.Red, defaultTextureSize, defaultTextureSize, Colour.Red, "DefaultRedTexture");
-        //CreateDefaultTexture(DefaultTextureType.Green, defaultTextureSize, defaultTextureSize, Colour.Green, "DefaultRedTexture");
-        //CreateDefaultTexture(DefaultTextureType.Blue, defaultTextureSize, defaultTextureSize, Colour.Blue, "DefaultRedTexture");
+        CreateDefaultTexture(DefaultTextureType.Red, defaultTextureSize, defaultTextureSize, Colour.Red, FillWithSolidColour, "DefaultRedTexture");
+        CreateDefaultTexture(DefaultTextureType.Green, defaultTextureSize, defaultTextureSize, Colour.Green, FillWithSolidColour, "DefaultRedTexture");
+        CreateDefaultTexture(DefaultTextureType.Blue, defaultTextureSize, defaultTextureSize, Colour.Blue, FillWithSolidColour, "DefaultRedTexture");
+        CreateDefaultTexture(DefaultTextureType.RedCheckerboard, defaultTextureSize, defaultTextureSize, Colour.Red, FillWithCheckerboardEffect, "DefaultRedCheckerboardTexture");
     }
 
     public void FrameBegin()
@@ -100,7 +102,7 @@ public class RenderSystem
         _frameNumber++;
     }
 
-    private void CreateDefaultTexture(DefaultTextureType type, uint  width, uint height, in Colour colour, string? name = null)
+    private void CreateDefaultTexture(DefaultTextureType type, uint width, uint height, in Colour colour, Action<uint, uint, Colour, Span<Colour>> pixelFillFunction, string? name = null)
     {
         var texture = _resourceFactory.CreateTexture(new RhiTextureDescription
         {
@@ -112,25 +114,36 @@ public class RenderSystem
 
         Span<Colour> texels = texture.GetTexelsAs<Colour>();
 
-        texels.Fill(colour);
+        pixelFillFunction(width, height, colour, texels);
 
         texture.Upload();
 
         _defaultTextures[(int)type] = texture;
     }
 
-    private IRenderTexture CreateCheckerboardTexture(uint width, uint height, in Colour colour, string name)
+    private void FillWithSolidColour(uint width, uint height, Colour colour, Span<Colour> texels) => texels.Fill(colour);
+
+    //private void CreateDefaultTexture(DefaultTextureType type, uint  width, uint height, in Colour colour, string? name = null)
+    //{
+    //    var texture = _resourceFactory.CreateTexture(new RhiTextureDescription
+    //    {
+    //        Width = width,
+    //        Height = height,
+    //        Name = name,
+    //        Usage = RhiRenderTextureUsage.Sampler
+    //    });
+
+    //    Span<Colour> texels = texture.GetTexelsAs<Colour>();
+
+    //    texels.Fill(colour);
+
+    //    texture.Upload();
+
+    //    _defaultTextures[(int)type] = texture;
+    //}
+
+    private void FillWithCheckerboardEffect(uint width, uint height, Colour colour, Span<Colour> texels)
     {
-        var texture = _resourceFactory.CreateTexture(new RhiTextureDescription
-        {
-            Width = width,
-            Height = height,
-            Name = name,
-            Usage = RhiRenderTextureUsage.Sampler
-        });
-
-        Span<Colour> texels = texture.GetTexelsAs<Colour>();
-
         int checkSize = 16;
 
         for (int y = 0; y < width; y++)
@@ -151,9 +164,5 @@ public class RenderSystem
                 }
             }
         }
-
-        texture.Upload();
-
-        return texture;
     }
 }

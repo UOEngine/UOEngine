@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using System.Diagnostics;
 using UOEngine.Runtime.Core;
@@ -69,7 +69,7 @@ internal class VulkanCommandBuffer
 
     internal unsafe void BeginRecording()
     {
-        Debug.WriteLine($"VulkanCommandBuffer.BeginRecording: {Name}");
+        //Debug.WriteLine($"VulkanCommandBuffer.BeginRecording: {Name}");
 
         VkCommandBufferBeginInfo beginInfo = new()
         {

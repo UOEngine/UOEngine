@@ -17,6 +17,7 @@ internal class TexturedQuadTest(IServiceProvider serviceProvider) : UOEngineAppl
     private ShaderInstance _shaderInstance = null!;
 
     private ShaderBindingHandle _worldProjectionHandle;
+    private ShaderBindingHandle _textureHandle;
 
     protected override void OnInitialisationCompleted()
     {
@@ -26,7 +27,7 @@ internal class TexturedQuadTest(IServiceProvider serviceProvider) : UOEngineAppl
         var graphicsFactory = GetService<IRenderResourceFactory>();
 
         string vertexShader = Path.Combine(UOEPaths.ShadersDir, "Testing/TexturedQuadVS.hlsl");
-        string pixelShader = Path.Combine(UOEPaths.ShadersDir, "Testing/TrianglePS.hlsl");
+        string pixelShader = Path.Combine(UOEPaths.ShadersDir, "Testing/TexturedQuadPS.hlsl");
 
         _shaderResource = graphicsFactory.NewShaderResource();
         _shaderResource.Load(vertexShader, pixelShader);
@@ -34,6 +35,7 @@ internal class TexturedQuadTest(IServiceProvider serviceProvider) : UOEngineAppl
         _shaderInstance = graphicsFactory.NewShaderInstance(_shaderResource);
 
         _worldProjectionHandle = _shaderInstance.GetBindingHandleConstantVertex("ProjectionMatrix");
+        _textureHandle = _shaderInstance.GetBindingHandleTexturePixel("Texture");
 
         _indexBuffer = rendererResourcesFactory.NewIndexBuffer(6, "IndexBuffer");
 
@@ -76,6 +78,7 @@ internal class TexturedQuadTest(IServiceProvider serviceProvider) : UOEngineAppl
         var transform = Matrix4x4.CreateTranslation(0.5f, 0.0f, 0.0f);
 
         _shaderInstance.SetParameter(_worldProjectionHandle, transform);
+        _shaderInstance.SetTexture(_textureHandle, GetService<RenderSystem>().GetDefaultTexture(DefaultTextureType.RedCheckerboard));
 
         context.SetGraphicsPipeline(new RhiGraphicsPipelineDescription
         {

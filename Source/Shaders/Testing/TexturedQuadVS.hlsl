@@ -1,14 +1,14 @@
 
 struct VSInput {
     float3 position : POSITION;
-    float4 colour : COLOR;
+    float2 uv : TEXCOORD0;
 };
 
 
 struct VsToPs
 {
     float4 position : SV_Position;
-    float4 colour : COLOR;
+    float2 uv : TEXCOORD0;
 };
 
 cbuffer ProjectionMatrix : register(b0, space0)
@@ -21,7 +21,7 @@ VsToPs main(VSInput input)
     VsToPs output;
 
     output.position = mul(WorldViewProj, float4(input.position, 1.0f));
-    output.colour = input.colour;
+    output.uv = input.uv;
 
     return output;
 }

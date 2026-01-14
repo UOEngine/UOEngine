@@ -40,7 +40,6 @@ internal class VulkanTexture: IRenderTexture, IDisposable
 
     private readonly VulkanDevice _device;
 
-
     public string Name { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
     public nint Handle => throw new NotImplementedException();
@@ -77,7 +76,7 @@ internal class VulkanTexture: IRenderTexture, IDisposable
                 },
                 mipLevels = 1,
                 arrayLayers = 1,
-                format = VkFormat.R8G8B8A8Unorm,
+                format = textureDescription.Format,
                 tiling = VkImageTiling.Optimal,
                 initialLayout = VkImageLayout.Undefined,
                 usage = VkImageUsageFlags.TransferDst | VkImageUsageFlags.Sampled,
@@ -111,6 +110,8 @@ internal class VulkanTexture: IRenderTexture, IDisposable
         const int bytesPerTexel = 4;
 
         Texels = new byte[Width * Height * bytesPerTexel];
+
+        CreateImageView();
 
     }
 

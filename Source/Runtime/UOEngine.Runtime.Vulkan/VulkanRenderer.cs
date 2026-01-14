@@ -31,6 +31,8 @@ public class VulkanRenderer : IRenderer
 
     private VulkanGraphicsContext GraphicsContext => _graphicsContext ?? throw new InvalidOperationException("Graphics context not initialised");
 
+    private VulkanGlobalSamplers _globalSamplers = null!;
+
     private struct PerFrameData
     {
         public VulkanFence SubmitFence;
@@ -90,7 +92,8 @@ public class VulkanRenderer : IRenderer
             frameData.CommandBuffer = _device.GraphicsQueue.CreateCommandBuffer();
         }
 
-        _graphicsContext = new VulkanGraphicsContext(_device);
+        _globalSamplers = new VulkanGlobalSamplers(_device);
+        _graphicsContext = new VulkanGraphicsContext(_device, _globalSamplers);
 
     }
 

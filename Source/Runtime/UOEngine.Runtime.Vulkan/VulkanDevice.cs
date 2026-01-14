@@ -101,6 +101,11 @@ public class VulkanDevice : IDisposable
             pNext = &dynamicRenderingFeatures
         };
 
+        VkPhysicalDeviceFeatures enabledFeatures = new()
+        {
+            samplerAnisotropy = true
+        };
+
         VkDeviceCreateInfo deviceCreateInfo = new()
         {
             pNext = &sync2,
@@ -108,7 +113,7 @@ public class VulkanDevice : IDisposable
             pQueueCreateInfos = queueCreateInfos,
             enabledExtensionCount = deviceExtensionNames.Length,
             ppEnabledExtensionNames = deviceExtensionNames,
-            pEnabledFeatures = null,
+            pEnabledFeatures = &enabledFeatures,
         };
 
         VkDevice device;

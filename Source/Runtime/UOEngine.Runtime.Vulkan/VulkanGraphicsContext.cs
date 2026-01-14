@@ -122,9 +122,12 @@ internal class VulkanGraphicsContext : IRenderContext
 
     private VulkanScratchBlockAllocator _uniformBufferObjectScratchAllocator = null!;
     private VulkanDescriptorPool _descriptorPool = null!;
-    public VulkanGraphicsContext(VulkanDevice device)
+    private readonly VulkanGlobalSamplers _globalSamplers;
+
+    public VulkanGraphicsContext(VulkanDevice device, VulkanGlobalSamplers globalSamplers)
     {
         _device = device;
+        _globalSamplers = globalSamplers;
     }
 
     public void BeginRecording(VulkanCommandBuffer commandBuffer, VulkanScratchBlockAllocator uniformBufferObjectScratchAllocator, VulkanDescriptorPool descriptorPool)
@@ -213,7 +216,7 @@ internal class VulkanGraphicsContext : IRenderContext
         _device.WaitForGpuIdle();
     }
 
-    internal unsafe void TransitionImageLayout(VkImage image, VkImageLayout oldLayout,VkImageLayout newLayout)
+    internal unsafe void TransitionImageLayout(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout)
     {
         CommandBuffer.TransitionImageLayout(image, oldLayout, newLayout);
     }
@@ -240,12 +243,12 @@ internal class VulkanGraphicsContext : IRenderContext
                 continue;
             }
 
-            if(bindings.Length == 0)
+            if (bindings.Length == 0)
             {
                 continue;
             }
 
-            foreach(var entry in bindings)
+            foreach (var entry in bindings)
             {
                 if ((entry.Dirty == false) && (forceRebind == false))
                 {
@@ -256,6 +259,7 @@ internal class VulkanGraphicsContext : IRenderContext
                 {
                     dstBinding = entry.BindingIndex,
                     descriptorCount = 1,
+                    dstSet = descriptorSet
                 };
 
                 switch (entry.InputType)
@@ -274,17 +278,45 @@ internal class VulkanGraphicsContext : IRenderContext
                             bufferInfo.offset = memoryAllocation.Offset;
 
                             descriptorWrite.pBufferInfo = &bufferInfo;
-                            descriptorWrite.dstSet = descriptorSet;
 
                             memoryAllocation.FlushMappedMemory(memoryAllocation.Offset, memoryAllocation.Size);
+
+
+                            break;
+                        }
+
+                    case RhiShaderInputType.Sampler:
+                        {
+                            descriptorWrite.descriptorType = VkDescriptorType.Sampler;
+
+                            VulkanSampler sampler = _globalSamplers.PointClamp;
+
+                            VkDescriptorImageInfo imageInfo;
+
+                            imageInfo.sampler = sampler.Handle;
+
+                            descriptorWrite.pImageInfo = &imageInfo;
+
+                            break;
+                        }
+                    case RhiShaderInputType.Texture:
+                        {
+                            VkDescriptorImageInfo imageInfo;
+
+                            descriptorWrite.descriptorType = VkDescriptorType.SampledImage;
+                            
+                            imageInfo.imageView = ((VulkanTexture)entry.GetTexture()).ImageView;
+                            imageInfo.imageLayout = VkImageLayout.ShaderReadOnlyOptimal;
+
+                            descriptorWrite.pImageInfo = &imageInfo;
 
                             break;
                         }
 
                     default:
-                        throw new UnreachableException("BindParametersForVertexProgram: Unhandled input type");
+                        throw new UnreachableException($"BindParametersForVertexProgram: Unhandled input type {entry.InputType}");
                 }
-                
+
                 writeDescriptorSets[numDescriptorsToUpdate++] = descriptorWrite;
 
             }
