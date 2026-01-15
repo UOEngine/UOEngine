@@ -15,6 +15,7 @@ internal static class RhiTypesToVulkanTypes
 
     internal static VkFormat ToVkFormat(this RhiVertexAttributeFormat vertexFormat) => vertexFormat switch
     {
+        RhiVertexAttributeFormat.Vector2 => VkFormat.R32G32Sfloat,
         RhiVertexAttributeFormat.Vector3 => VkFormat.R32G32B32Sfloat,
         RhiVertexAttributeFormat.Vector4 => VkFormat.R32G32B32A32Sfloat,
         RhiVertexAttributeFormat.UInt32 => VkFormat.R32Uint,

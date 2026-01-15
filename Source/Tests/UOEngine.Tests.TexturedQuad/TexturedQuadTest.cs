@@ -12,7 +12,7 @@ namespace UOEngine.Tests.TexturedQuad;
 internal class TexturedQuadTest(IServiceProvider serviceProvider) : UOEngineApplication(serviceProvider)
 {
     private IndexBuffer _indexBuffer = null!;
-    private VertexBuffer<PositionAndColourVertex> _vertexBuffer = null!;
+    private VertexBuffer<PositionUVVertex> _vertexBuffer = null!;
     private RhiShaderResource _shaderResource = null!;
     private ShaderInstance _shaderInstance = null!;
 
@@ -41,33 +41,34 @@ internal class TexturedQuadTest(IServiceProvider serviceProvider) : UOEngineAppl
 
         _indexBuffer.SetData([0, 1, 2, 0, 2, 3]);
 
-        _vertexBuffer = rendererResourcesFactory.NewVertexBuffer<PositionAndColourVertex>(4);
+        _vertexBuffer = rendererResourcesFactory.NewVertexBuffer<PositionUVVertex>(4);
 
-        var v0 = new PositionAndColourVertex
+        _vertexBuffer.Add(new PositionUVVertex
         {
             Position = new Vector3(-0.5f, -0.5f, 0.0f),
-            Colour = Colour.Red.ToUint32(),
-        };
+            UV = new Vector2(0.0f, 0.0f)
+        });
 
-        var v1 = new PositionAndColourVertex
+        _vertexBuffer.Add(new PositionUVVertex
         {
             Position = new Vector3(0.5f, -0.5f, 0.0f),
-            Colour = Colour.Green.ToUint32(),
-        };
+            UV = new Vector2(0.0f, 0.0f)
+        });
 
-        var v2 = new PositionAndColourVertex
+        _vertexBuffer.Add(new PositionUVVertex
         {
             Position = new Vector3(0.5f, 0.5f, 0.0f),
-            Colour = Colour.Blue.ToUint32(),
-        };
+            UV = new Vector2(0.0f, 0.0f)
+        });
 
-        var v3 = new PositionAndColourVertex
+        _vertexBuffer.Add(new PositionUVVertex
         {
             Position = new Vector3(-0.5f, 0.5f, 0.0f),
-            Colour = Colour.Blue.ToUint32(),
-        };
+            UV = new Vector2(0.0f, 0.0f)
+        });
 
-        _vertexBuffer.SetData([v0, v1, v2, v3]);
+        _vertexBuffer.SetData();
+
     }
 
     public void OnFrameBegin(IRenderContext context)
@@ -87,7 +88,7 @@ internal class TexturedQuadTest(IServiceProvider serviceProvider) : UOEngineAppl
             Rasteriser = RhiRasteriserState.CullCounterClockwise,
             BlendState = RhiBlendState.Opaque,
             DepthStencilState = RhiDepthStencilState.None,
-            VertexLayout = PositionAndColourVertex.Layout
+            VertexLayout = _vertexBuffer.VertexDefinition
         });
 
         context.DrawIndexedPrimitives(6, 1, 0, 0, 0);

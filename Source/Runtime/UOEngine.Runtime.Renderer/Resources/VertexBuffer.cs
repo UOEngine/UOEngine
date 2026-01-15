@@ -3,7 +3,7 @@
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-
+using UOEngine.Runtime.Core;
 using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Runtime.Renderer;
@@ -17,6 +17,10 @@ public class VertexBuffer<TVertex> where TVertex : unmanaged, IVertex, IVertexLa
     public RhiVertexDefinition VertexDefinition = TVertex.Layout;
 
     public uint Stride => TVertex.Layout.Stride;
+
+    public int Capacity => Data.Length;
+    public int Count { get; private set; }
+    
 
     internal VertexBuffer(IRenderResourceFactory factory, uint numVertices)
     {
@@ -32,43 +36,36 @@ public class VertexBuffer<TVertex> where TVertex : unmanaged, IVertex, IVertexLa
         Data = new TVertex[numVertices];
     }
 
-    public void SetData(TVertex[] data)
+    public void SetData()
     { 
-        RhiBuffer.SetData<TVertex>(data.AsSpan());
+        // Upload it.
+        RhiBuffer.SetData(Data.AsSpan(0, Count));
+    }
+
+    public void Add(TVertex vertex)
+    {
+        UOEDebug.Assert(Count < Data.Length, "VertexBuffer overflow");
+
+        Data[Count++] = vertex;
+    }
+
+    public void AddRange(ReadOnlySpan<TVertex> vertices)
+    {
+        UOEDebug.Assert(Count + vertices.Length > Data.Length, "VertexBuffer overflow");
+
+        vertices.CopyTo(Data.AsSpan(Count));
+
+        Count += vertices.Length;
+    }
+
+    public Span<TVertex> GetWriteSpan(int count)
+    {
+        UOEDebug.Assert(count >= 0);
+        UOEDebug.Assert(Count + count < Data.Length);
+
+        return Data.AsSpan(Count, count);
     }
 }
-
-//public readonly record struct VertexElement(
-//    string Semantic,
-//    int Location,
-//    RhiVertexAttributeFormat Format,
-//    int OffsetBytes
-//);
-
-//public sealed class VertexLayout
-//{
-//    public uint StrideBytes { get; }
-//    public VertexElement[] Elements { get; }
-
-//    public VertexLayout(params VertexElement[] elements)
-//    {
-//        StrideBytes = 0;
-//        Elements = elements;
-
-//        foreach (var vertexElement in elements)
-//        {
-//            StrideBytes += SizeOfFormat(vertexElement.Format);
-//        }
-//    }
-//    private static uint SizeOfFormat(RhiVertexAttributeFormat f) => f switch
-//    {
-//        RhiVertexAttributeFormat.Vector2 => 8,
-//        RhiVertexAttributeFormat.Vector3 => 12,
-//        RhiVertexAttributeFormat.Vector4 => 16,
-//        RhiVertexAttributeFormat.R8G8B8A8_UNorm => 4,
-//        _ => throw new NotSupportedException()
-//    };
-//}
 
 public interface IVertexLayoutProvider
 {
