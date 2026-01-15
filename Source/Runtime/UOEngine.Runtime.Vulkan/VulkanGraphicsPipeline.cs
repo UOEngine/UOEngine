@@ -11,7 +11,7 @@ namespace UOEngine.Runtime.Vulkan;
 
 internal class VulkanGraphicsPipeline: IDisposable
 {
-    public readonly VkPipeline Handle;
+    public VkPipeline Handle { get; private set; }
 
     public readonly VkPipelineLayout PipelineLayout;
     private bool disposedValue;
@@ -197,7 +197,9 @@ internal class VulkanGraphicsPipeline: IDisposable
             layout = PipelineLayout,
         };
 
-        device.Api.vkCreateGraphicsPipeline(device.Handle, graphicsPipelineCreateInfo, out Handle);
+        device.Api.vkCreateGraphicsPipeline(device.Handle, graphicsPipelineCreateInfo, out var pipeline);
+
+        Handle = pipeline;
     }
 
     protected virtual void Dispose(bool disposing)
@@ -210,6 +212,9 @@ internal class VulkanGraphicsPipeline: IDisposable
             }
 
             _device.Api.vkDestroyDescriptorSetLayout(_device.Handle, DescriptorSetLayout);
+            _device.Api.vkDestroyPipeline(_device.Handle, Handle);
+
+            Handle = VkPipeline.Null;
 
             DescriptorSetLayout = VkDescriptorSetLayout.Null;
             disposedValue = true;

@@ -135,6 +135,10 @@ internal class VulkanGraphicsContext : IRenderContext
         _vertexBuffer = null;
         _indexBuffer = null;
 
+        _graphicsPipeline = null;
+
+        _dirtyState = DirtyState.All;
+
         _commandBuffer = commandBuffer;
         _uniformBufferObjectScratchAllocator = uniformBufferObjectScratchAllocator;
         _descriptorPool = descriptorPool;
@@ -352,7 +356,7 @@ internal class VulkanGraphicsContext : IRenderContext
         {
             _currentPipelineDescription.AttachmentFormat = _renderTarget.Description.Format;
 
-            if (_pipelineCache.TryGetValue(_currentPipelineDescription, out var graphicsPipeline) == false)
+            if (_pipelineCache.TryGetValue(_currentPipelineDescription, out _graphicsPipeline) == false)
             {
                 _graphicsPipeline = new VulkanGraphicsPipeline(_device, _currentPipelineDescription.Description, _currentPipelineDescription.AttachmentFormat);
 

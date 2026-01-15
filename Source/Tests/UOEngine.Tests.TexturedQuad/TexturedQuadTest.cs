@@ -52,19 +52,19 @@ internal class TexturedQuadTest(IServiceProvider serviceProvider) : UOEngineAppl
         _vertexBuffer.Add(new PositionUVVertex
         {
             Position = new Vector3(0.5f, -0.5f, 0.0f),
-            UV = new Vector2(0.0f, 0.0f)
+            UV = new Vector2(1.0f, 0.0f)
         });
 
         _vertexBuffer.Add(new PositionUVVertex
         {
             Position = new Vector3(0.5f, 0.5f, 0.0f),
-            UV = new Vector2(0.0f, 0.0f)
+            UV = new Vector2(1.0f, 1.0f)
         });
 
         _vertexBuffer.Add(new PositionUVVertex
         {
             Position = new Vector3(-0.5f, 0.5f, 0.0f),
-            UV = new Vector2(0.0f, 0.0f)
+            UV = new Vector2(0.0f, 1.0f)
         });
 
         _vertexBuffer.SetData();
@@ -76,7 +76,7 @@ internal class TexturedQuadTest(IServiceProvider serviceProvider) : UOEngineAppl
         context.IndexBuffer = _indexBuffer.RhiBuffer;
         context.VertexBuffer = _vertexBuffer.RhiBuffer;
 
-        var transform = Matrix4x4.CreateTranslation(0.5f, 0.0f, 0.0f);
+        var transform = Matrix4x4.CreateOrthographic(4.0f, 4.0f, -1.0f, 1.0f);
 
         _shaderInstance.SetParameter(_worldProjectionHandle, transform);
         _shaderInstance.SetTexture(_textureHandle, GetService<RenderSystem>().GetDefaultTexture(DefaultTextureType.RedCheckerboard));

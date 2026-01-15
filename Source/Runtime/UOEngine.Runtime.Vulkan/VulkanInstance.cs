@@ -338,6 +338,8 @@ internal unsafe class VulkanInstance
             Debug.WriteLine($"[Vulkan]: {messageSeverity} - {message}");
         }
 
+        Debugger.Break();
+
         return VK_FALSE;
     }
 }
