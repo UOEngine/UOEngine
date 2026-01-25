@@ -60,6 +60,12 @@ public class VulkanRenderer : IRenderer
         }
 
         _resourceFactory = (VulkanResourceFactory)resourceFactory;
+
+        window.OnResized += (obj) =>
+        {
+            _device.WaitForGpuIdle();
+            _swapchain.Resize();
+        };
     }
 
     public unsafe void Startup()

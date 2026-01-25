@@ -1,5 +1,6 @@
 ﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
+using UOEngine.Runtime.Core;
 using Vortice.Vulkan;
 
 namespace UOEngine.Runtime.Vulkan;
@@ -9,6 +10,13 @@ internal class VulkanSwapchain: IDisposable
     public VkSwapchainKHR Handle => _handle;
 
     public VulkanTexture BackbufferToRenderInto => _backbuffer[_nextImageToPresent];
+
+    internal enum PresentStatus
+    {
+        Okay,
+        OutOfDate,
+        Unknown
+    }
 
     private VkSurfaceKHR _surface;
     private nint _windowHandle;
@@ -59,9 +67,14 @@ internal class VulkanSwapchain: IDisposable
 
     private void Cleanup()
     {
+        foreach (var image in _backbuffer)
+        {
+            image.Dispose();
+        }
+
         _device.Api.vkDestroySwapchainKHR(_device.Handle, _handle);
 
-        _handle = 0;
+        _handle = VkSwapchainKHR.Null;
     }
 
     private unsafe void CreateSwapchain()
@@ -127,12 +140,14 @@ internal class VulkanSwapchain: IDisposable
 
     public void Present(VkSemaphore semaphore)
     {
-        _device.Api.vkQueuePresentKHR(_device.PresentQueue.Handle, semaphore, Handle, _nextImageToPresent);
+        VkResult result = _device.Api.vkQueuePresentKHR(_device.PresentQueue.Handle, semaphore, Handle, _nextImageToPresent);
     }
 
     public void Resize()
     {
-        throw new NotImplementedException();
+        Cleanup();
+
+        CreateSwapchain();
     }
 
     private static VkPresentModeKHR ChooseSwapPresentMode(ReadOnlySpan<VkPresentModeKHR> availablePresentModes)

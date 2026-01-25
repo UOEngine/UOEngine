@@ -37,7 +37,7 @@ internal class VulkanTexture: IRenderTexture, IDisposable
     public readonly byte[] Texels = [];
 
     private VkImageView _imageView;
-
+    private bool _disposed;
     private readonly VulkanDevice _device;
 
     public string Name { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
@@ -48,7 +48,9 @@ internal class VulkanTexture: IRenderTexture, IDisposable
 
     public uint Height => Description.Height;
 
-    private readonly VkDeviceMemory _deviceMemory;
+    private VkDeviceMemory _deviceMemory;
+
+    private bool _ownsImage = true;
 
     internal unsafe VulkanTexture(VulkanDevice device, in VulkanTextureDescription textureDescription)
     {
@@ -120,16 +122,13 @@ internal class VulkanTexture: IRenderTexture, IDisposable
     {
     }
 
-    public unsafe void InitFromExistingResource(VkImage image)
+    internal unsafe void InitFromExistingResource(VkImage image)
     {
+        _ownsImage = false;
+
         Image = image;
 
         CreateImageView();
-    }
-
-    public void Dispose()
-    {
-        throw new NotImplementedException();
     }
 
     public Span<T> GetTexelsAs<T>() where T : unmanaged
@@ -204,6 +203,41 @@ internal class VulkanTexture: IRenderTexture, IDisposable
         _device.WaitForGpuIdle();
 
         _device.StagingBuffer.ReleaseBuffer(bufferLock);
+    }
+
+    public void Dispose()
+    {
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed)
+        {
+            return;
+        }
+        
+        if(_ownsImage)
+        {
+            _device.Api.vkDestroyImage(_device.Handle, Image);
+            Image = VkImage.Null;
+
+            _device.Api.vkFreeMemory(_device.Handle, _deviceMemory);
+
+            _deviceMemory = VkDeviceMemory.Null;
+        }
+
+         _device.Api.vkDestroyImageView(_device.Handle, ImageView);
+
+         ImageView = VkImageView.Null;
+
+         _disposed = true;
+    }
+
+    ~VulkanTexture()
+    {
+        Dispose(disposing: false);
     }
 
     private unsafe void CreateImageView()
