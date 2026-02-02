@@ -79,6 +79,8 @@ public class VulkanRenderer : IRenderer
 
         _device.InitGpu(_instance.Api);
 
+        VulkanDebug.Init(_device, _instance);
+
         _resourceFactory.SetDevice(_device);
 
         _swapchain = new VulkanSwapchain(_instance, _device);

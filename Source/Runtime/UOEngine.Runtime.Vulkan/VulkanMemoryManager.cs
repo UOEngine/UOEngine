@@ -1,5 +1,6 @@
 ﻿// Copyright (c) 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
+using UOEngine.Runtime.Core;
 using Vortice.Vulkan;
 
 namespace UOEngine.Runtime.Vulkan;
@@ -9,8 +10,13 @@ internal struct VulkanMemoryAllocation
     internal VkBuffer Buffer;
     internal uint Offset;
     internal uint Size;
-    internal int AllocatorIndex;
+    internal int AllocatorIndex = -1;
     internal int AllocatedBlockIndex;
+
+    public VulkanMemoryAllocation()
+    {
+
+    }
 
     internal unsafe Span<byte> Map(VulkanDevice device)
     {
@@ -21,7 +27,12 @@ internal struct VulkanMemoryAllocation
 
     internal void FlushMappedMemory(VulkanDevice device) => GetSubresourceAllocator(device).Flush(Offset, Size);
 
-    internal VulkanSubresourceAllocator GetSubresourceAllocator(VulkanDevice device) => device.MemoryManager.GetSubresourceAllocator(AllocatorIndex);
+    internal VulkanSubresourceAllocator GetSubresourceAllocator(VulkanDevice device)
+    {
+        UOEDebug.Assert(AllocatorIndex != -1);
+
+        return device.MemoryManager.GetSubresourceAllocator(AllocatorIndex);
+    }
 }
 
 internal class VulkanMemoryManager

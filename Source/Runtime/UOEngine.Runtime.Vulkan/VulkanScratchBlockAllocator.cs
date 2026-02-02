@@ -43,7 +43,8 @@ internal class VulkanScratchBlockAllocator
             Buffer = blockToUse.MemoryAllocation.Buffer,
             Offset = allocationOffset,
             Size = size,
-            //DeviceMemoryAllocation = blockToUse.MemoryAllocation.DeviceMemoryAllocation
+            AllocatorIndex = blockToUse.MemoryAllocation.AllocatorIndex,
+            AllocatedBlockIndex = blockToUse.MemoryAllocation.AllocatedBlockIndex
         };
 
         return memoryAllocation.Map(_device);
@@ -68,6 +69,8 @@ internal class VulkanScratchBlockAllocator
         _device.MemoryManager.AllocateBuffer(_sizePerBlock, VkBufferUsageFlags.UniformBuffer | VkBufferUsageFlags.TransferSrc, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent, out block.MemoryAllocation, _name);
 
         block.MappedPtr = block.MemoryAllocation.GetSubresourceAllocator(_device).MappedPointer;
+
+        VulkanDebug.SetDebugName(block.MemoryAllocation.Buffer, $"{_name}");
 
         _blocks.Add(block);
 

@@ -198,5 +198,6 @@ internal class VulkanBuffer: IRhiBuffer, IDisposable
 
         _device.MemoryManager.AllocateBuffer(Description.Size, _usageFlags, memoryPropertyFlags, out allocation);
 
+
     }
 }
