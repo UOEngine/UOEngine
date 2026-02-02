@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using System.Buffers;
 using Vortice.Vulkan;
@@ -46,6 +46,8 @@ public class VulkanDevice : IDisposable
     internal readonly VulkanMemoryManager MemoryManager;
     internal readonly VulkanDeviceMemoryManager DeviceMemoryManager;
 
+    internal readonly VulkanDeferredDeletionQueue DeferredDeletionQueue;
+
     internal VulkanGraphicsContext GraphicsContext = null!;
 
     private VkDevice? _device;
@@ -59,6 +61,7 @@ public class VulkanDevice : IDisposable
         MemoryManager = new(this);
         DeviceMemoryManager = new(this);
         StagingBuffer = new(this);
+        DeferredDeletionQueue = new(this);
     }
 
     public VulkanQueue GetQueue(VulkanQueueType type) => _queues[(int)type];

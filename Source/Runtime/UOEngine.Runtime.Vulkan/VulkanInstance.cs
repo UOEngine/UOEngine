@@ -53,7 +53,7 @@ internal unsafe class VulkanInstance
                 instanceExtensions.Add(VK_EXT_SWAPCHAIN_COLOR_SPACE_EXTENSION_NAME);
             }
         }
-
+        
         VkUtf8ReadOnlyString pApplicationName = Encoding.UTF8.GetBytes(applicationName);
         VkUtf8ReadOnlyString pEngineName = "UOEngine"u8;
 

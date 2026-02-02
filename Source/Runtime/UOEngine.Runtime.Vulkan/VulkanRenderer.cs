@@ -7,7 +7,6 @@ using UOEngine.Runtime.Core;
 using UOEngine.Runtime.Platform;
 using UOEngine.Runtime.Plugin;
 using UOEngine.Runtime.RHI;
-using System.Diagnostics;
 
 namespace UOEngine.Runtime.Vulkan;
 
@@ -93,7 +92,7 @@ public class VulkanRenderer : IRenderer
             frameData.SubmitFence = new VulkanFence(_device, true);
             frameData.SwapchainAcquireSemaphore = _device.CreateSemaphore();
             frameData.SwapchainReleaseSemaphore = _device.CreateSemaphore();
-            frameData.UniformBufferScratchAllocator = new VulkanScratchBlockAllocator(_device);
+            frameData.UniformBufferScratchAllocator = new VulkanScratchBlockAllocator(_device, $"UniformBufferScratchAllocator{i}");
             frameData.DescriptorPool = new VulkanDescriptorPool(_device);
             frameData.CommandBuffer = _device.GraphicsQueue.CreateCommandBuffer();
         }
@@ -111,6 +110,7 @@ public class VulkanRenderer : IRenderer
     public void FrameBegin()
     {
         _frameIndex++;
+        _device.DeferredDeletionQueue.CurrentFrame = _frameIndex;
 
         //Debug.WriteLine($"VulkanRenderer.FrameBegin: {_frameIndex}");
 
@@ -168,6 +168,8 @@ public class VulkanRenderer : IRenderer
         //frameData.FenceSignalCount = frameData.SubmitFence.SignalCount;
 
         _swapchain.Present(frameData.SwapchainReleaseSemaphore);
+
+        _device.DeferredDeletionQueue.ReleaseResources(_frameIndex);
     }
 
     public IRenderContext CreateRenderContext()

@@ -9,18 +9,20 @@ namespace UOEngine.Runtime.Vulkan;
 internal class VulkanDeviceMemoryAllocation
 {
     internal VkDeviceMemory Handle { get; private set; }
-    internal IntPtr MappedPtr;
+    internal nint MappedPtr;
     internal ulong Size;
     internal ulong Offset;
 
     private readonly VulkanDevice _device;
+    private readonly bool IsCoherent;
 
-    internal VulkanDeviceMemoryAllocation(VulkanDevice device, ulong size, uint offset, VkDeviceMemory gpuMemory)
+    internal VulkanDeviceMemoryAllocation(VulkanDevice device, ulong size, uint offset, VkDeviceMemory gpuMemory, bool isCoherent)
     {
         _device = device;
         Size = size;
         Handle = gpuMemory;
         Offset = offset;
+        IsCoherent = isCoherent;
     }
 
     internal bool IsMapped => MappedPtr != IntPtr.Zero;
@@ -48,6 +50,7 @@ internal class VulkanDeviceMemoryAllocation
 
     internal void FlushMappedMemory(uint offset, uint size)
     {
+        UOEDebug.Assert(IsCoherent == false);
         UOEDebug.Assert(IsMapped);
         UOEDebug.Assert(offset + size <= Size);
 
@@ -91,7 +94,9 @@ internal class VulkanDeviceMemoryManager
             throw new OutOfMemoryException("Out of device memory!");
         }
 
-        VulkanDeviceMemoryAllocation deviceAllocation = new(_device, size, 0, gpuMemory);
+        bool isCoherent = (memoryPropertyFlags & VkMemoryPropertyFlags.HostCoherent) != 0;
+
+        VulkanDeviceMemoryAllocation deviceAllocation = new(_device, size, 0, gpuMemory, isCoherent);
 
         _totalAllocated += size;
 

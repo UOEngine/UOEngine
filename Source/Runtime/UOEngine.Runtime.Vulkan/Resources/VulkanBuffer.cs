@@ -1,11 +1,10 @@
-﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using System.Runtime.InteropServices;
-
-using Vortice.Vulkan;
-
 using UOEngine.Runtime.Core;
 using UOEngine.Runtime.RHI;
+using Vortice.DXGI;
+using Vortice.Vulkan;
 
 namespace UOEngine.Runtime.Vulkan;
 
@@ -26,18 +25,32 @@ internal static class RhiBufferUsageExtensions
 
 internal class VulkanBuffer: IRhiBuffer, IDisposable
 {
-    public readonly VkBuffer Handle;
+    public VkBuffer Handle => GetAllocation().Buffer;
 
     private readonly VulkanDevice _device;
-    private readonly VkDeviceMemory _gpuBufferMemory;
 
     private readonly RhiBufferDescription Description;
 
-    private VulkanAllocation _mappedMemory;
+    private VulkanMemoryAllocation? _allocation;
 
-    private ulong _allocationSize;
+    private VulkanMemoryAllocation GetAllocation() => _allocation ?? throw new InvalidOperationException("Allocation is missing.");
+
+    private bool _disposed;
+
+    private int _lockCount = 0;
+
+    private readonly VkBufferUsageFlags _usageFlags;
 
     internal bool IsDynamic => ((Description.Usage & RhiBufferUsageFlags.Dynamic) != 0);
+    internal bool IsStatic => ((Description.Usage & RhiBufferUsageFlags.Static) != 0);
+
+    enum LockStatus
+    {
+        Unlocked,
+        Locked
+    }
+
+    private LockStatus _lockStatus = LockStatus.Unlocked;
 
     public void SetData<T>(ReadOnlySpan<T> data) where T : unmanaged
     {
@@ -45,10 +58,11 @@ internal class VulkanBuffer: IRhiBuffer, IDisposable
 
         if (IsDynamic)
         {
-            unsafe
-            {
-                dataBytes.CopyTo(_mappedMemory.AsSpan());
-            }
+            var bytes = Lock();
+
+            dataBytes.CopyTo(bytes);
+
+            Unlock();
 
             return;
         }
@@ -56,7 +70,13 @@ internal class VulkanBuffer: IRhiBuffer, IDisposable
         Upload(dataBytes);
     }
 
-    internal unsafe VulkanBuffer(VulkanDevice device, in RhiBufferDescription bufferDescription)
+    public void Dispose()
+    {
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
+
+    internal VulkanBuffer(VulkanDevice device, in RhiBufferDescription bufferDescription)
     {
         _device = device;
         Description = bufferDescription;
@@ -73,62 +93,55 @@ internal class VulkanBuffer: IRhiBuffer, IDisposable
             usage |= VkBufferUsageFlags.IndexBuffer;
         }
 
-        bool isDynamic = ((bufferDescription.Usage & RhiBufferUsageFlags.Dynamic) != 0);
+        _usageFlags = usage;
 
-        VkBufferCreateInfo bufferCreateInfo = new()
-        {
-            size = bufferDescription.Size,
-            usage = usage
-        };
+        AllocateMemory(out var allocation);
 
-
-        device.Api.vkCreateBuffer(device.Handle, &bufferCreateInfo, out Handle);
-
-        device.Api.vkGetBufferMemoryRequirements(device.Handle, Handle, out var memoryRequirements);
-
-        VkMemoryPropertyFlags memoryPropertyFlags = VkMemoryPropertyFlags.None;
-
-        if ((bufferDescription.Usage & RhiBufferUsageFlags.Dynamic) != 0)
-        {
-            memoryPropertyFlags |= (VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
-        }
-
-        //_device.MemoryManager.AllocateBuffer(bufferDescription.Size, usage, memoryPropertyFlags, out var memoryAllocation);
-
-        _allocationSize = memoryRequirements.size;
-
-        _mappedMemory = new VulkanAllocation()
-        {
-            Size = memoryRequirements.size
-        };
-
-         VkMemoryAllocateInfo memoryAllocateInfo = new()
-        {
-            allocationSize = memoryRequirements.size,
-            memoryTypeIndex = device.GetMemoryTypeIndex(memoryRequirements.memoryTypeBits, memoryPropertyFlags),
-        };
-
-        device.Api.vkAllocateMemory(device.Handle, &memoryAllocateInfo, out _gpuBufferMemory);
-
-        device.Api.vkBindBufferMemory(device.Handle, Handle, _gpuBufferMemory, 0);
-
-        if (isDynamic)
-        {
-            Map();
-        }
+        _allocation = allocation;
     }
 
-    public unsafe void Dispose()
+    internal Span<byte> Lock()
     {
-        _device.Api.vkDestroyBuffer(_device.Handle, Handle);
-        _device.Api.vkFreeMemory(_device.Handle, _gpuBufferMemory, null);
+        UOEDebug.Assert(_lockStatus == LockStatus.Unlocked);
+
+        _lockStatus = LockStatus.Locked;
+
+        bool firstLock = _lockCount == 0;
+        _lockCount++;
+
+        if(IsDynamic && firstLock)
+        {
+
+        }
+        else if(IsStatic)
+        {
+            UOEDebug.NotImplemented();
+        }
+        else
+        {
+            AllocateMemory(out var allocation);
+
+            _device.MemoryManager.Free(GetAllocation(), true);
+
+            _allocation = allocation;
+        }
+
+        return GetAllocation().Map(_device);
+    }
+
+    internal void Unlock()
+    {
+        UOEDebug.Assert(_lockStatus == LockStatus.Locked);
+
+        _lockStatus = LockStatus.Unlocked;
+
     }
 
     internal unsafe void Upload(ReadOnlySpan<byte> data)
     {
         UOEDebug.Assert((Description.Usage | RhiBufferUsageFlags.Dynamic) == 0);
 
-        var bufferLock = _device.StagingBuffer.AcquireBuffer((uint)_allocationSize);
+        var bufferLock = _device.StagingBuffer.AcquireBuffer(Description.Size);
 
         data.CopyTo(bufferLock.buffer);
 
@@ -137,7 +150,7 @@ internal class VulkanBuffer: IRhiBuffer, IDisposable
         VkBufferCopy bufferCopy = new()
         {
             dstOffset = 0,
-            size = _allocationSize,
+            size = Description.Size,
             srcOffset = 0
         };
 
@@ -149,18 +162,41 @@ internal class VulkanBuffer: IRhiBuffer, IDisposable
         _device.StagingBuffer.ReleaseBuffer(bufferLock);
     }
 
-    private unsafe void Map()
+    protected virtual void Dispose(bool disposing)
     {
-        void* mapped;
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+            }
 
-        _device.Api.vkMapMemory(_device.Handle, _gpuBufferMemory, 0, Description.Size, 0, &mapped);
+            _device.MemoryManager.Free(GetAllocation(), true);
 
-        _mappedMemory.Ptr = (byte*)mapped;
+            _allocation = null;
+
+            _disposed = true;
+        }
     }
 
-    private unsafe void Unmap()
+    ~VulkanBuffer()
     {
-        _device.Api.vkUnmapMemory(_device.Handle, _gpuBufferMemory);
-        _mappedMemory.Ptr = (byte*)0;
+        Dispose(disposing: false);
+    }
+
+    private void AllocateMemory(out VulkanMemoryAllocation allocation)
+    {
+        VkMemoryPropertyFlags memoryPropertyFlags = VkMemoryPropertyFlags.None;
+
+        if (IsDynamic)
+        {
+            memoryPropertyFlags |= (VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
+        }
+        else
+        {
+            memoryPropertyFlags |= VkMemoryPropertyFlags.DeviceLocal;
+        }
+
+        _device.MemoryManager.AllocateBuffer(Description.Size, _usageFlags, memoryPropertyFlags, out allocation);
+
     }
 }

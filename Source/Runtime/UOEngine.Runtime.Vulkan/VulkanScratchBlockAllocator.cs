@@ -1,10 +1,12 @@
 ﻿// Copyright (c) 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Vortice.Vulkan;
 
 namespace UOEngine.Runtime.Vulkan;
 
+[DebuggerDisplay("VulkanScratchBlockAllocator {_name}")]
 internal class VulkanScratchBlockAllocator
 {
     private struct Block
@@ -22,9 +24,12 @@ internal class VulkanScratchBlockAllocator
 
     private readonly uint _sizePerBlock = 4 * 1024 * 1024;
 
-    internal VulkanScratchBlockAllocator(VulkanDevice device)
+    private string _name;
+
+    internal VulkanScratchBlockAllocator(VulkanDevice device, string name)
     {
         _device = device;
+        _name = name;
 
         _currentBlock = AllocateBlock();
     }
@@ -38,10 +43,10 @@ internal class VulkanScratchBlockAllocator
             Buffer = blockToUse.MemoryAllocation.Buffer,
             Offset = allocationOffset,
             Size = size,
-            DeviceMemoryAllocation = blockToUse.MemoryAllocation.DeviceMemoryAllocation
+            //DeviceMemoryAllocation = blockToUse.MemoryAllocation.DeviceMemoryAllocation
         };
 
-        return memoryAllocation.Map();
+        return memoryAllocation.Map(_device);
     }
 
     internal void Reset()
@@ -50,7 +55,7 @@ internal class VulkanScratchBlockAllocator
 
         _currentBlock = blocks[0];
 
-        for(int i = 0; i < blocks.Length; i++)
+        for (int i = 0; i < blocks.Length; i++)
         {
             blocks[i].Offset = 0;
         }
@@ -60,9 +65,9 @@ internal class VulkanScratchBlockAllocator
     {
         var block = new Block();
 
-        _device.MemoryManager.AllocateBuffer(_sizePerBlock, VkBufferUsageFlags.UniformBuffer | VkBufferUsageFlags.TransferSrc, VkMemoryPropertyFlags.HostVisible, out block.MemoryAllocation);
+        _device.MemoryManager.AllocateBuffer(_sizePerBlock, VkBufferUsageFlags.UniformBuffer | VkBufferUsageFlags.TransferSrc, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent, out block.MemoryAllocation, _name);
 
-        block.MappedPtr = block.MemoryAllocation.MappedPtr;
+        block.MappedPtr = block.MemoryAllocation.GetSubresourceAllocator(_device).MappedPointer;
 
         _blocks.Add(block);
 

@@ -7,11 +7,11 @@ public enum RhiBufferUsageFlags
 {
     None = 0,
 
-    Static,
-    Dynamic,
+    Static = 1,
+    Dynamic = 2,
 
-    Vertex,
-    Index
+    Vertex = 4,
+    Index = 8
 }
 
 public struct RhiBufferDescription

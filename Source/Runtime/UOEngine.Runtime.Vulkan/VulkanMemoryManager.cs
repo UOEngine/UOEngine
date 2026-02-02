@@ -9,12 +9,19 @@ internal struct VulkanMemoryAllocation
     internal VkBuffer Buffer;
     internal uint Offset;
     internal uint Size;
-    internal VulkanDeviceMemoryAllocation DeviceMemoryAllocation;
+    internal int AllocatorIndex;
+    internal int AllocatedBlockIndex;
 
-    internal Span<byte> Map() => DeviceMemoryAllocation.Map();
-    internal IntPtr MappedPtr => DeviceMemoryAllocation.MappedPtr;
+    internal unsafe Span<byte> Map(VulkanDevice device)
+    {
+        var allocator = GetSubresourceAllocator(device);
 
-    internal void FlushMappedMemory(uint offset, uint size) => DeviceMemoryAllocation.FlushMappedMemory(offset, size);
+        return new Span<byte>((void*)(allocator.MappedPointer + Offset), (int)Size);
+    }
+
+    internal void FlushMappedMemory(VulkanDevice device) => GetSubresourceAllocator(device).Flush(Offset, Size);
+
+    internal VulkanSubresourceAllocator GetSubresourceAllocator(VulkanDevice device) => device.MemoryManager.GetSubresourceAllocator(AllocatorIndex);
 }
 
 internal class VulkanMemoryManager
@@ -22,6 +29,10 @@ internal class VulkanMemoryManager
     private VulkanDevice _device;
 
     private ulong _totalAllocated;
+
+    private List<VulkanSubresourceAllocator> _freeBufferAllocations = [];
+
+    private List<VulkanSubresourceAllocator> _subresourceAllocations = [];
 
     internal VulkanMemoryManager(VulkanDevice device)
     {
@@ -38,36 +49,70 @@ internal class VulkanMemoryManager
         return AllocateBuffer(size, VkBufferUsageFlags.UniformBuffer, VkMemoryPropertyFlags.HostCoherent | VkMemoryPropertyFlags.HostVisible, out memoryAllocation);
     }
 
-    internal unsafe bool AllocateBuffer(uint size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memoryProperties, out VulkanMemoryAllocation memoryAllocation)
+    internal unsafe bool AllocateBuffer(uint size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memoryProperties, out VulkanMemoryAllocation memoryAllocation, string? context = null)
     {
+        for (int i = 0; i < _freeBufferAllocations.Count; i++)
+        {
+            if ((_freeBufferAllocations[i].Usage == usage) && (_freeBufferAllocations[i].MemoryProperties == memoryProperties))
+            {
+                if (_freeBufferAllocations[i].TryAllocate(size, out memoryAllocation))
+                {
+                    _freeBufferAllocations.RemoveAt(i);
+
+                    return true;
+                }
+            }
+        }
+
+        uint bufferSize = size;// Math.Max(size, 1024 * 1024);
+
         VkBufferCreateInfo bufferCreateInfo = new()
         {
-            size = size,
+            size = bufferSize,
             usage = usage
         };
 
-        memoryAllocation = new();
+        _device.Api.vkCreateBuffer(_device.Handle, &bufferCreateInfo, out var buffer);
 
-        _device.Api.vkCreateBuffer(_device.Handle, &bufferCreateInfo, out memoryAllocation.Buffer);
+        _device.Api.vkGetBufferMemoryRequirements(_device.Handle, buffer, out var memoryRequirements);
 
-        _device.Api.vkGetBufferMemoryRequirements(_device.Handle, memoryAllocation.Buffer, out var memoryRequirements);
+        var deviceAllocation = _device.DeviceMemoryManager.Allocate(memoryRequirements.size, _device.GetMemoryTypeIndex(memoryRequirements.memoryTypeBits, memoryProperties), memoryProperties);
 
-        memoryAllocation.DeviceMemoryAllocation = _device.DeviceMemoryManager.Allocate(memoryRequirements.size, _device.GetMemoryTypeIndex(memoryRequirements.memoryTypeBits, memoryProperties), memoryProperties);
+        _device.Api.vkBindBufferMemory(_device.Handle, buffer, deviceAllocation.Handle, 0);
 
-        _device.Api.vkBindBufferMemory(_device.Handle, memoryAllocation.Buffer, memoryAllocation.DeviceMemoryAllocation.Handle, 0);
+        _totalAllocated += bufferSize;
 
-        _totalAllocated += size;
-
-        if(memoryProperties.HasFlag(VkMemoryPropertyFlags.HostVisible))
+        if (memoryProperties.HasFlag(VkMemoryPropertyFlags.HostVisible))
         {
-            memoryAllocation.DeviceMemoryAllocation.Map();
+            deviceAllocation.Map();
         }
 
-        return true;
+        var subresourceAllocation = new VulkanSubresourceAllocator(bufferSize, usage, memoryProperties, buffer, deviceAllocation, _subresourceAllocations.Count, context);
+
+        _subresourceAllocations.Add(subresourceAllocation);
+
+        if (subresourceAllocation.TryAllocate(size, out memoryAllocation))
+        {
+            return true;
+        }
+
+        return false;
     }
 
-    internal void AllocateBufferMemory()
+    internal void Free(in VulkanMemoryAllocation memoryAllocation, bool defer)
     {
+        if (defer)
+        {
+            _device.DeferredDeletionQueue.EnqueueResourceAllocation(memoryAllocation);
+
+            return;
+        }
+
+        _subresourceAllocations[memoryAllocation.AllocatorIndex].Free(memoryAllocation);
+
+        _freeBufferAllocations.Add(_subresourceAllocations[memoryAllocation.AllocatorIndex]);
 
     }
+
+    internal VulkanSubresourceAllocator GetSubresourceAllocator(int allocatorIndex) => _subresourceAllocations[allocatorIndex];
 }

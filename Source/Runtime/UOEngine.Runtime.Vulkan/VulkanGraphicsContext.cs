@@ -283,8 +283,7 @@ internal class VulkanGraphicsContext : IRenderContext
 
                             descriptorWrite.pBufferInfo = &bufferInfo;
 
-                            memoryAllocation.FlushMappedMemory(memoryAllocation.Offset, memoryAllocation.Size);
-
+                            //memoryAllocation.FlushMappedMemory(_device);
 
                             break;
                         }
@@ -394,7 +393,6 @@ internal class VulkanGraphicsContext : IRenderContext
         }
 
         bool fullRebind = IsStateDirty(DirtyState.ShaderParams);
-
 
         BindShaderParameters(fullRebind);
 

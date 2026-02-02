@@ -78,6 +78,8 @@ internal class TexturedQuadTest(IServiceProvider serviceProvider) : UOEngineAppl
 
         var transform = Matrix4x4.CreateOrthographic(4.0f, 4.0f, -1.0f, 1.0f);
 
+        //_vertexBuffer.SetData();
+
         _shaderInstance.SetParameter(_worldProjectionHandle, transform);
         _shaderInstance.SetTexture(_textureHandle, GetService<RenderSystem>().GetDefaultTexture(DefaultTextureType.RedCheckerboard));
 
