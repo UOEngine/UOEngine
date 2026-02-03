@@ -100,7 +100,9 @@ internal class VulkanBuffer: IRhiBuffer, IDisposable
         _allocation = allocation;
     }
 
-    internal Span<byte> Lock()
+    public Span<byte> Lock() => Lock(Description.Stride, 0);
+
+    public Span<byte> Lock(uint size, uint offset)
     {
         UOEDebug.Assert(_lockStatus == LockStatus.Unlocked);
 
@@ -129,7 +131,7 @@ internal class VulkanBuffer: IRhiBuffer, IDisposable
         return GetAllocation().Map(_device);
     }
 
-    internal void Unlock()
+    public void Unlock()
     {
         UOEDebug.Assert(_lockStatus == LockStatus.Locked);
 

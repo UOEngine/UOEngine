@@ -1,6 +1,7 @@
 ﻿// Copyright (c) 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using Microsoft.Extensions.DependencyInjection;
+using System.Diagnostics;
 using System.Runtime.Loader;
 
 using UOEngine.Runtime.Core;
@@ -119,14 +120,24 @@ public sealed class UOEngineAppBuilder
 
         app.Start();
 
-        float deltaSeconds = 0.0f;
+        var stopWatch = Stopwatch.StartNew();
+        long lastTicks = stopWatch.ElapsedTicks;
 
         while (applicationLoop.ExitRequested == false)
         {
-            if(platformEventLoop.PollEvents())
+            long now = stopWatch.ElapsedTicks;
+            long deltaTicks = now - lastTicks;
+            
+            lastTicks = now;
+
+            float deltaSeconds = (float)deltaTicks / Stopwatch.Frequency;
+
+            if (platformEventLoop.PollEvents())
             {
                 break;
             }
+
+            applicationLoop.Update(deltaSeconds);
 
             app.Update(deltaSeconds);
 

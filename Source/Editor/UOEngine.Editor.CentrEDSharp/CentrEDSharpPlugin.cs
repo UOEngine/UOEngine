@@ -15,7 +15,6 @@ namespace UOEngine.Editor.CentredSharp;
 [PluginEntry]
 [PluginDependency(typeof(FnaAdapterPlugin))]
 [PluginLoadingPhase(PluginLoadingPhase.Default)]
-[DisablePlugin]
 public class CentrEdSharpPlugin: IPlugin
 {
     static public string WorkDir { get; } = AppContext.BaseDirectory;

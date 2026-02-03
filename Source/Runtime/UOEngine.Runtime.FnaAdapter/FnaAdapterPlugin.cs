@@ -13,7 +13,6 @@ namespace UOEngine.Runtime.FnaAdapter;
 
 [PluginEntry]
 [PluginLoadingPhase(PluginLoadingPhase.Runtime)]
-[DisablePlugin]
 public class FnaAdapterPlugin: IPlugin
 {
     public PluginLoadingPhase Priority => PluginLoadingPhase.Runtime;
@@ -140,5 +139,7 @@ public class FnaAdapterPlugin: IPlugin
     public void RegisterGame(Game game)
     {
         _hostedFNAGames.Add(game);
+
+        game.DoInitialise();
     }
 }

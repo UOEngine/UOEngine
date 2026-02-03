@@ -220,8 +220,7 @@ public class GraphicsDevice
 
     private void BindIndexBufferIfNeeded()
     {
-        UOEDebug.NotImplemented();
-        //RenderContext.IndexBuffer = _indices.RhiIndexBuffer;
+        RenderContext.IndexBuffer = _indices.RhiIndexBuffer;
     }
 
     internal void RegisterDynamicVertexBuffer(VertexBuffer vertexBuffer)
@@ -240,11 +239,6 @@ public class GraphicsDevice
 
     internal void OnFrameBegin(IRenderContext renderContext)
     {
-        foreach (var vertexBuffer in _dynamicVertexBuffers)
-        {
-            vertexBuffer.Reset();
-        }
-
         RenderContext = renderContext;
     }
 
@@ -277,9 +271,8 @@ public class GraphicsDevice
             return;
         }
 
-        UOEDebug.NotImplemented();
+        RenderContext.VertexBuffer = _vertexBuffer?.RhiVertexBuffer!;
 
-        //RenderContext.VertexBuffer = _vertexBuffer?.RhiVertexBuffer!;
         _vertexBufferDirty = false;
     }
 

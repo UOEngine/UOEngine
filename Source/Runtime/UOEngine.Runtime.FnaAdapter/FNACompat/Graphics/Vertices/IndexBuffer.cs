@@ -7,28 +7,40 @@ namespace Microsoft.Xna.Framework.Graphics;
 
 public class IndexBuffer
 {
-    public IRhiIndexBuffer RhiIndexBuffer { get; private set; } = null!;
+    public IRhiBuffer RhiIndexBuffer { get; private set; } = null!;
+
+    private readonly uint _size;
 
     public IndexBuffer(GraphicsDevice graphicsDevice, IndexElementSize indexElementSize, int indexCount, BufferUsage bufferUsage) 
     {
-        UOEDebug.NotImplemented();
+        _size = (uint)(indexCount * sizeof(ushort));
 
-        //RhiIndexBuffer = graphicsDevice.RenderResourceFactory.NewBuffer(new RhiBufferDescription
-        //{
-        //    Size = (uint)(indexCount * sizeof(ushort))
-        //});// (uint)indexCount, "FnaIndexBuffer");
+        RhiIndexBuffer = graphicsDevice.RenderResourceFactory.NewBuffer(new RhiBufferDescription
+        {
+            Size = _size,
+            Usage = RhiBufferUsageFlags.Dynamic | RhiBufferUsageFlags.Index,
+            Name = "FnaIndexBuffer"
+        });
     }
 
-    public void SetDataPointerEXT(int offsetInBytes, IntPtr data, int dataLength, SetDataOptions options)
+    public unsafe void SetDataPointerEXT(int offsetInBytes, IntPtr data, int dataLength, SetDataOptions options)
     {
-        RhiIndexBuffer.SetData(offsetInBytes, data, dataLength);
-        RhiIndexBuffer.Upload();
+        Span<byte> indices = RhiIndexBuffer.Lock((uint)dataLength, (uint)offsetInBytes);
+
+        var src = new ReadOnlySpan<byte>((void*)data, dataLength);
+
+        src.CopyTo(indices);
+
+        RhiIndexBuffer.Unlock();
     }
 
     public void SetData(short[] data)
     {
-        RhiIndexBuffer.SetData(MemoryMarshal.Cast<short, ushort>(data));
-        RhiIndexBuffer.Upload();
+        Span<byte> indices = RhiIndexBuffer.Lock(_size, 0);
+
+        MemoryMarshal.AsBytes(data.AsSpan()).CopyTo(indices);
+
+        RhiIndexBuffer.Unlock();
     }
 
     public void Dispose()

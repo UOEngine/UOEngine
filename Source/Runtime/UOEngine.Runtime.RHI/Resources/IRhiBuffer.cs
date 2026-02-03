@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 namespace UOEngine.Runtime.RHI;
 
@@ -16,7 +16,10 @@ public enum RhiBufferUsageFlags
 
 public struct RhiBufferDescription
 {
+    // Number of bytes in the buffer
     public uint Size;
+
+    // The stride in bytes of the buffer.
     public uint Stride;
     public RhiBufferUsageFlags Usage;
     public byte[] InitialData;
@@ -26,4 +29,8 @@ public struct RhiBufferDescription
 public interface IRhiBuffer
 {
     public void SetData<T>(ReadOnlySpan<T> data) where T : unmanaged;
+
+    public Span<byte> Lock(uint size, uint offset);
+
+    public void Unlock();
 }
