@@ -42,12 +42,13 @@ internal class VulkanBuffer: IRhiBuffer, IDisposable
     private readonly VkBufferUsageFlags _usageFlags;
 
     internal bool IsDynamic => ((Description.Usage & RhiBufferUsageFlags.Dynamic) != 0);
-    internal bool IsStatic => ((Description.Usage & RhiBufferUsageFlags.Static) != 0);
+    internal bool IsStatic => ((Description.Usage & RhiBufferUsageFlags.Static) != 0) || (IsDynamic == false);
 
     enum LockStatus
     {
         Unlocked,
-        Locked
+        Locked,
+        PersistentMapping
     }
 
     private LockStatus _lockStatus = LockStatus.Unlocked;
@@ -106,18 +107,26 @@ internal class VulkanBuffer: IRhiBuffer, IDisposable
     {
         UOEDebug.Assert(_lockStatus == LockStatus.Unlocked);
 
-        _lockStatus = LockStatus.Locked;
+
+        Span<byte> data = null;
 
         bool firstLock = _lockCount == 0;
         _lockCount++;
 
         if(IsDynamic && firstLock)
         {
+            data = GetAllocation().Map(_device);
+
+            _lockStatus = LockStatus.PersistentMapping;
 
         }
         else if(IsStatic)
         {
-            UOEDebug.NotImplemented();
+            var stagingBuffer = _device.StagingBuffer.AcquireBuffer(size);
+
+            data = stagingBuffer.buffer;
+
+            _lockStatus = LockStatus.Locked;
         }
         else
         {
@@ -126,17 +135,26 @@ internal class VulkanBuffer: IRhiBuffer, IDisposable
             _device.MemoryManager.Free(GetAllocation(), true);
 
             _allocation = allocation;
+
+            data = GetAllocation().Map(_device);
+
+            _lockStatus = LockStatus.PersistentMapping;
+
         }
 
-        return GetAllocation().Map(_device);
+        return data;
     }
 
     public void Unlock()
     {
-        UOEDebug.Assert(_lockStatus == LockStatus.Locked);
+        UOEDebug.Assert(_lockStatus != LockStatus.Unlocked);
+
+        if(_lockStatus == LockStatus.Locked)
+        {
+
+        }
 
         _lockStatus = LockStatus.Unlocked;
-
     }
 
     internal unsafe void Upload(ReadOnlySpan<byte> data)

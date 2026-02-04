@@ -25,6 +25,8 @@ internal unsafe class VulkanStagingBuffer: IDisposable
 
     private List<AllocationInfo> _freeAllocations = [];
 
+    private VulkanMemoryAllocation _allocation;
+
     private struct AllocationInfo
     {
 
@@ -38,40 +40,41 @@ internal unsafe class VulkanStagingBuffer: IDisposable
 
     internal unsafe void Init()
     {
-        VkBufferCreateInfo transferBuffer = new()
-        {
-            size = _mappedBufferSize,
-            usage = VkBufferUsageFlags.TransferSrc
-        };
+        //VkBufferCreateInfo transferBuffer = new()
+        //{
+        //    size = _mappedBufferSize,
+        //    usage = VkBufferUsageFlags.TransferSrc
+        //};
 
-        _device.Api.vkCreateBuffer(_device.Handle, &transferBuffer, out _buffer);
+        _device.MemoryManager.AllocateBuffer(_mappedBufferSize, VkBufferUsageFlags.TransferSrc, VkMemoryPropertyFlags.HostVisible, out _allocation, "StagingBuffer");
+        //_device.Api.vkCreateBuffer(_device.Handle, &transferBuffer, out _buffer);
 
-        _device.Api.vkGetBufferMemoryRequirements(_device.Handle, _buffer, out VkMemoryRequirements memReqs);
+        //_device.Api.vkGetBufferMemoryRequirements(_device.Handle, _buffer, out VkMemoryRequirements memReqs);
 
-        VkMemoryAllocateInfo memAlloc = new()
-        {
-            allocationSize = memReqs.size,
-            // Request a host visible memory type that can be used to copy our data do
-            // Also request it to be coherent, so that writes are visible to the GPU right after unmapping the buffer
-            memoryTypeIndex = _device.GetMemoryTypeIndex(memReqs.memoryTypeBits, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent)
-        };
+        //VkMemoryAllocateInfo memAlloc = new()
+        //{
+        //    allocationSize = memReqs.size,
+        //    // Request a host visible memory type that can be used to copy our data do
+        //    // Also request it to be coherent, so that writes are visible to the GPU right after unmapping the buffer
+        //    memoryTypeIndex = _device.GetMemoryTypeIndex(memReqs.memoryTypeBits, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent)
+        //};
 
-        _device.Api.vkAllocateMemory(_device.Handle, &memAlloc, null, out VkDeviceMemory stagingBufferMemory);
+        //_device.Api.vkAllocateMemory(_device.Handle, &memAlloc, null, out VkDeviceMemory stagingBufferMemory);
 
-        void* mappedMemory;
+        //void* mappedMemory;
 
-        _device.Api.vkMapMemory(_device.Handle, stagingBufferMemory, 0, memAlloc.allocationSize, 0, &mappedMemory);
+        //_device.Api.vkMapMemory(_device.Handle, stagingBufferMemory, 0, memAlloc.allocationSize, 0, &mappedMemory);
 
-        _mappedbufferPtr = (byte*)mappedMemory;
+        //_mappedbufferPtr = (byte*)mappedMemory;
 
-        _device.Api.vkBindBufferMemory(_device.Handle, _buffer, stagingBufferMemory, 0);
+        //_device.Api.vkBindBufferMemory(_device.Handle, _buffer, stagingBufferMemory, 0);
 
         // Now in system RAM but visible to GPU to copy. 
     }
 
     internal VulkanStagingBufferLock AcquireBuffer(uint size)
     {
-        uint bytesLeft = _mappedBufferSize - _used;
+        uint bytesLeft = _allocation.Size - _used;
 
         if(bytesLeft < size)
         {

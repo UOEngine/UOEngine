@@ -74,7 +74,11 @@ internal class VulkanGraphicsContext : IRenderContext
         }
     }
 
-    public RhiSampler Sampler { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+    public RhiSampler Sampler
+    {
+        get => _sampler;
+        set => _sampler = Sampler;
+    }
 
     internal VulkanCommandBuffer CommandBuffer => _commandBuffer ?? throw new InvalidOperationException("VulkanGraphicsContext: CommandBuffer not initialised");
 
@@ -123,6 +127,8 @@ internal class VulkanGraphicsContext : IRenderContext
     private VulkanScratchBlockAllocator _uniformBufferObjectScratchAllocator = null!;
     private VulkanDescriptorPool _descriptorPool = null!;
     private readonly VulkanGlobalSamplers _globalSamplers;
+
+    private RhiSampler _sampler;
 
     public VulkanGraphicsContext(VulkanDevice device, VulkanGlobalSamplers globalSamplers)
     {

@@ -132,13 +132,13 @@ internal class VulkanGraphicsPipeline: IDisposable
         };
 
         VkVertexInputBindingDescription vertexInputBinding;
-        VkVertexInputAttributeDescription* vertexInputAttributes = stackalloc VkVertexInputAttributeDescription[16];
+        int numAttributes = pipelineDescription.VertexLayout?.Attributes.Length ?? shaderResource.VertexProgram.StreamBindings.Length;
+
+        VkVertexInputAttributeDescription* vertexInputAttributes = stackalloc VkVertexInputAttributeDescription[numAttributes];
 
         if (pipelineDescription.VertexLayout != null)
         {
             vertexInputBinding = new(pipelineDescription.VertexLayout.Stride);
-
-            int numAttributes = pipelineDescription.VertexLayout.Attributes.Length;
 
             uint location = 0;
 
@@ -146,7 +146,6 @@ internal class VulkanGraphicsPipeline: IDisposable
             {
                 ref var attribute = ref vertexInputAttributes[i];
                 ref var incomingAttribute = ref pipelineDescription.VertexLayout.Attributes[i];
-
 
                 attribute.binding = 0; // Assume slot 0 for now.
                 attribute.location = location++;
@@ -158,18 +157,19 @@ internal class VulkanGraphicsPipeline: IDisposable
         }
         else
         {
-            UOEDebug.NotImplemented();
-            //for (var i = 0; i < vertexAttributes.Length; i++)
-            //{
-            //    ref var attribute = ref vertexAttributes[i];
+            uint offset = 0;
 
-            //    attribute.buffer_slot = 0; // Assume slot 0 for now.
-            //    attribute.location = VertexProgram.StreamBindings[i].SemanticIndex;
-            //    attribute.offset = offset;
-            //    attribute.format = MapToSdl3GpuVertexElementFormat(VertexProgram.StreamBindings[i].Format);
+            for (var i = 0; i < numAttributes; i++)
+            {
+                ref var attribute = ref vertexInputAttributes[i];
 
-            //    offset += MapToSize(VertexProgram.StreamBindings[i].Format);
-            //}
+                attribute.binding = 0; // Assume slot 0 for now.
+                attribute.location = shaderResource.VertexProgram.StreamBindings[i].SemanticIndex;
+                attribute.offset = offset;
+                attribute.format = shaderResource.VertexProgram.StreamBindings[i].Format.ToVkFormat();
+
+                offset += shaderResource.VertexProgram.StreamBindings[i].Format.ToSize();
+            }
         }
 
         VkPipelineVertexInputStateCreateInfo vertexInputState = new()
