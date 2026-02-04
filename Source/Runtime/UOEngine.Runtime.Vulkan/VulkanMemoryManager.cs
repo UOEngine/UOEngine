@@ -13,6 +13,8 @@ internal struct VulkanMemoryAllocation
     internal int AllocatorIndex = -1;
     internal int AllocatedBlockIndex;
 
+    internal bool IsValid => Size != 0;
+
     public VulkanMemoryAllocation()
     {
 
@@ -33,6 +35,21 @@ internal struct VulkanMemoryAllocation
 
         return device.MemoryManager.GetSubresourceAllocator(AllocatorIndex);
     }
+
+    VkDeviceMemory GetDeviceMemoryHandle(VulkanDevice device) => GetSubresourceAllocator(device).MemoryAllocation.Handle;
+
+    internal void BindImage(VulkanDevice device, VkImage image)
+    {
+        var result = device.Api.vkBindImageMemory(device.Handle, image, GetDeviceMemoryHandle(device), Offset);
+
+        UOEDebug.Assert(result != VkResult.ErrorOutOfDeviceMemory);
+        UOEDebug.Assert(result != VkResult.ErrorOutOfHostMemory);
+    }
+
+    internal nint GetMappedPointer(VulkanDevice device)
+    {
+        return GetSubresourceAllocator(device).GetMappedPointer();
+    }
 }
 
 internal class VulkanMemoryManager
@@ -45,6 +62,8 @@ internal class VulkanMemoryManager
 
     private List<VulkanSubresourceAllocator> _subresourceAllocations = [];
 
+    private List<VulkanSubresourceAllocator> _textureAllocations = [];
+
     internal VulkanMemoryManager(VulkanDevice device)
     {
         _device = device;
@@ -53,6 +72,25 @@ internal class VulkanMemoryManager
     internal void Init()
     {
 
+    }
+
+    internal bool AllocateImageMemory(VkMemoryPropertyFlags memoryProperties, VkMemoryRequirements memoryRequirements, out VulkanMemoryAllocation memoryAllocation)
+    {
+        uint memoryTypeIndex = _device.GetMemoryTypeIndex(memoryRequirements.memoryTypeBits, memoryProperties);
+
+        var deviceAllocation = _device.DeviceMemoryManager.Allocate(memoryRequirements.size, memoryTypeIndex, memoryProperties);
+
+        var newTextureAllocation = new VulkanSubresourceAllocator((uint)memoryRequirements.size, memoryProperties, deviceAllocation, _subresourceAllocations.Count);
+
+        _textureAllocations.Add(newTextureAllocation);
+        _subresourceAllocations.Add(newTextureAllocation);
+
+        return newTextureAllocation.TryAllocate((uint)memoryRequirements.size, out memoryAllocation);
+    }
+
+    internal void FreeImage(in VulkanMemoryAllocation allocation)
+    {
+        UOEDebug.NotImplemented();
     }
 
     internal bool AllocateUniformBuffer(uint size, out VulkanMemoryAllocation memoryAllocation)

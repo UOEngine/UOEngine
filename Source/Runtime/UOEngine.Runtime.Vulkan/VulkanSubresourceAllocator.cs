@@ -1,9 +1,10 @@
 ﻿// Copyright (c) 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
-using Vortice.Vulkan;
-
-using UOEngine.Runtime.Core;
+using System;
 using System.Diagnostics;
+using UOEngine.Runtime.Core;
+using Vortice.DXGI;
+using Vortice.Vulkan;
 
 namespace UOEngine.Runtime.Vulkan;
 
@@ -15,6 +16,8 @@ internal class VulkanSubresourceAllocator
     internal readonly int AllocatorIndex;
 
     internal nint MappedPointer => GetMappedPointer();
+
+    internal VulkanDeviceMemoryAllocation MemoryAllocation => _deviceMemoryAllocation;
 
     [DebuggerDisplay("FreeRange {Offset}, {Size}")]
 
@@ -58,6 +61,12 @@ internal class VulkanSubresourceAllocator
             Offset = 0,
             Size = size
         });
+    }
+
+    internal VulkanSubresourceAllocator(uint size, VkMemoryPropertyFlags memoryProperties, VulkanDeviceMemoryAllocation deviceMemoryAllocation, int allocatorIndex, string? context = null)
+        : this(size, VkBufferUsageFlags.None, memoryProperties, VkBuffer.Null, deviceMemoryAllocation, allocatorIndex, context)
+    {
+
     }
 
     internal bool TryAllocate(uint size, out VulkanMemoryAllocation memoryAllocation)

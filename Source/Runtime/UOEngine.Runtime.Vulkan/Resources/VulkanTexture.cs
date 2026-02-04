@@ -1,9 +1,11 @@
-﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using System.Runtime.InteropServices;
+
+using Vortice.Vulkan;
+
 using UOEngine.Runtime.Core;
 using UOEngine.Runtime.RHI;
-using Vortice.Vulkan;
 
 namespace UOEngine.Runtime.Vulkan;
 
@@ -48,7 +50,7 @@ internal class VulkanTexture: IRenderTexture, IDisposable
 
     public uint Height => Description.Height;
 
-    private VkDeviceMemory _deviceMemory;
+    private VulkanMemoryAllocation _allocation;
 
     private bool _ownsImage = true;
 
@@ -97,17 +99,9 @@ internal class VulkanTexture: IRenderTexture, IDisposable
 
         _device.Api.vkGetImageMemoryRequirements(_device.Handle, image, out var memoryRequirements);
 
-        VkMemoryAllocateInfo memoryAllocateInfo = new()
-        {
-            allocationSize = memoryRequirements.size,
-            memoryTypeIndex = _device.GetMemoryTypeIndex(memoryRequirements.memoryTypeBits, VkMemoryPropertyFlags.DeviceLocal)
-        };
+        _device.MemoryManager.AllocateImageMemory(VkMemoryPropertyFlags.DeviceLocal, memoryRequirements, out _allocation);
 
-        _device.Api.vkAllocateMemory(_device.Handle, &memoryAllocateInfo, out var deviceMemory);
-
-        _deviceMemory = deviceMemory;
-
-        _device.Api.vkBindImageMemory(_device.Handle, Image, deviceMemory, 0);
+        _allocation.BindImage(_device, image);
 
         const int bytesPerTexel = 4;
 
@@ -198,7 +192,6 @@ internal class VulkanTexture: IRenderTexture, IDisposable
         commandBuffer.TransitionImageLayout(Image, VkImageLayout.TransferDstOptimal, VkImageLayout.ShaderReadOnlyOptimal);
         commandBuffer.EndRecording();
 
-
         _device.GraphicsQueue.Submit(commandBuffer);
         _device.WaitForGpuIdle();
 
@@ -223,9 +216,7 @@ internal class VulkanTexture: IRenderTexture, IDisposable
             _device.Api.vkDestroyImage(_device.Handle, Image);
             Image = VkImage.Null;
 
-            _device.Api.vkFreeMemory(_device.Handle, _deviceMemory);
-
-            _deviceMemory = VkDeviceMemory.Null;
+            _device.MemoryManager.Free(_allocation, true);
         }
 
          _device.Api.vkDestroyImageView(_device.Handle, ImageView);

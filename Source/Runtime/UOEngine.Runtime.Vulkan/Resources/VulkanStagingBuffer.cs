@@ -17,10 +17,8 @@ internal unsafe class VulkanStagingBuffer: IDisposable
 {
     private uint _used = 0;
 
-    private VkBuffer _buffer;
     private readonly VulkanDevice _device;
 
-    private byte* _mappedbufferPtr;
     private readonly uint _mappedBufferSize;
 
     private List<AllocationInfo> _freeAllocations = [];
@@ -40,36 +38,7 @@ internal unsafe class VulkanStagingBuffer: IDisposable
 
     internal unsafe void Init()
     {
-        //VkBufferCreateInfo transferBuffer = new()
-        //{
-        //    size = _mappedBufferSize,
-        //    usage = VkBufferUsageFlags.TransferSrc
-        //};
-
         _device.MemoryManager.AllocateBuffer(_mappedBufferSize, VkBufferUsageFlags.TransferSrc, VkMemoryPropertyFlags.HostVisible, out _allocation, "StagingBuffer");
-        //_device.Api.vkCreateBuffer(_device.Handle, &transferBuffer, out _buffer);
-
-        //_device.Api.vkGetBufferMemoryRequirements(_device.Handle, _buffer, out VkMemoryRequirements memReqs);
-
-        //VkMemoryAllocateInfo memAlloc = new()
-        //{
-        //    allocationSize = memReqs.size,
-        //    // Request a host visible memory type that can be used to copy our data do
-        //    // Also request it to be coherent, so that writes are visible to the GPU right after unmapping the buffer
-        //    memoryTypeIndex = _device.GetMemoryTypeIndex(memReqs.memoryTypeBits, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent)
-        //};
-
-        //_device.Api.vkAllocateMemory(_device.Handle, &memAlloc, null, out VkDeviceMemory stagingBufferMemory);
-
-        //void* mappedMemory;
-
-        //_device.Api.vkMapMemory(_device.Handle, stagingBufferMemory, 0, memAlloc.allocationSize, 0, &mappedMemory);
-
-        //_mappedbufferPtr = (byte*)mappedMemory;
-
-        //_device.Api.vkBindBufferMemory(_device.Handle, _buffer, stagingBufferMemory, 0);
-
-        // Now in system RAM but visible to GPU to copy. 
     }
 
     internal VulkanStagingBufferLock AcquireBuffer(uint size)
@@ -81,18 +50,18 @@ internal unsafe class VulkanStagingBuffer: IDisposable
             UOEDebug.Assert(false);
         }
 
-        if (_used + size > _mappedBufferSize)
+        if (_used + size > _allocation.Size)
         {
             UOEDebug.Assert(false);
         }
 
-        byte* offset = _mappedbufferPtr + _used;
+        nint offset = _allocation.GetMappedPointer(_device) + (nint)_used;
 
         var bufferLock = new VulkanStagingBufferLock
         {
-            buffer = new Span<byte>(offset, (int)size),
+            buffer = new Span<byte>((void*)offset, (int)size),
             Offset = _used,
-            vkBuffer = _buffer
+            vkBuffer = _allocation.Buffer
         };
 
         _used += size;

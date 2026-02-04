@@ -1,10 +1,12 @@
 ﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using System.Runtime.InteropServices;
+using System.Threading.Tasks.Dataflow;
 using UOEngine.Runtime.Core;
 using UOEngine.Runtime.RHI;
 using Vortice.DXGI;
 using Vortice.Vulkan;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace UOEngine.Runtime.Vulkan;
 
@@ -52,6 +54,8 @@ internal class VulkanBuffer: IRhiBuffer, IDisposable
     }
 
     private LockStatus _lockStatus = LockStatus.Unlocked;
+
+    private VulkanStagingBuffer? _pendingStagingBuffer = null;
 
     public void SetData<T>(ReadOnlySpan<T> data) where T : unmanaged
     {
@@ -122,9 +126,11 @@ internal class VulkanBuffer: IRhiBuffer, IDisposable
         }
         else if(IsStatic)
         {
-            var stagingBuffer = _device.StagingBuffer.AcquireBuffer(size);
+            UOEDebug.NotImplemented();
 
-            data = stagingBuffer.buffer;
+            //_pendingStagingBuffer = _device.StagingBuffer.AcquireBuffer(size);
+
+            //data = _pendingStagingBuffer.buffer;
 
             _lockStatus = LockStatus.Locked;
         }
@@ -151,7 +157,16 @@ internal class VulkanBuffer: IRhiBuffer, IDisposable
 
         if(_lockStatus == LockStatus.Locked)
         {
+            UOEDebug.NotImplemented();
+            //var commandBuffer = _device.GraphicsQueue.CreateCommandBuffer();
 
+            //commandBuffer.CmdCopyBufferToImage(bufferLock.vkBuffer, Image, bufferImageCopy);
+            //commandBuffer.EndRecording();
+
+            //_device.GraphicsQueue.Submit(commandBuffer);
+            //_device.WaitForGpuIdle();
+
+            //_device.StagingBuffer.ReleaseBuffer(bufferLock);
         }
 
         _lockStatus = LockStatus.Unlocked;
