@@ -1,8 +1,9 @@
 ﻿// Copyright (c) 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-
+using UOEngine.Runtime.Core;
 using Vortice.Vulkan;
 
 namespace UOEngine.Runtime.Vulkan;
@@ -88,9 +89,17 @@ internal class VulkanScratchBlockAllocator
 
         allocationoffset = _currentBlock.Offset;
 
-        _currentBlock.Offset += size;
+        _currentBlock.Offset += (uint)AlignUp(size, _device.Limits.minUniformBufferOffsetAlignment);
 
         return _currentBlock;
         
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static ulong AlignUp(ulong value, ulong alignment)
+    {
+        //UOEDebug.Assert((alignment & (alignment - 1)) != 0), "Alignment must be a power of 2");
+
+        return (value + alignment - 1) & ~(alignment - 1);
     }
 }

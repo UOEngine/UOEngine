@@ -258,7 +258,7 @@ public class GraphicsDevice
             Rasteriser = GetRasteriserState(),
             BlendState = _blendStates[_fnaBlendState],
             DepthStencilState = GetDepthStencilState(),
-            VertexLayout = null
+            VertexLayout = _vertexBuffer!.VertexDeclaration.RhiVertexDefinition
         });
 
         _graphicsPipelineDirty = false;

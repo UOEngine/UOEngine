@@ -1,12 +1,12 @@
-Texture2D Texture : register(t0, space2);
-SamplerState TextureSampler : register(s0, space2);
+Texture2D Texture : register(t0, space0);
+SamplerState TextureSampler : register(s1, space0);
 
-cbuffer Parameters : register(b0, space1)
+cbuffer Parameters : register(b2, space0)
 {
     float4 DiffuseColor = float4(1.0f, 1.0f, 1.0f, 1.0f);  
 }
 
-cbuffer ProjectionMatrix : register(b1, space1)
+cbuffer ProjectionMatrix : register(b3, space0)
 {
     float4x4 WorldViewProj;
 };
@@ -68,9 +68,9 @@ CommonVSOutput ComputeCommonVSOutput(float4 position)
 
 struct VSInputTxVc
 {
-    float2 Position : TEXCOORD0;
-    float2 TexCoord : TEXCOORD1;
-    float4 Color : TEXCOORD2;
+    float2 Position : POSTION0;
+    float2 TexCoord : TEXCOORD0;
+    float4 Color : COLOR0;
 };
 
 struct VSOutputTxNoFog

@@ -20,8 +20,8 @@ public class RendererResourcesFactory
         return new IndexBuffer(_rhiResourceFactory, size);
     }
 
-    public VertexBuffer<T> NewVertexBuffer<T>(uint size) where T: unmanaged, IVertex, IVertexLayoutProvider
+    public VertexBuffer<T> NewVertexBuffer<T>(in VertexBufferDescription description) where T: unmanaged, IVertex, IVertexLayoutProvider
     {
-        return new VertexBuffer<T>(_rhiResourceFactory, size);
+        return new VertexBuffer<T>(_rhiResourceFactory, description);
     }
 }

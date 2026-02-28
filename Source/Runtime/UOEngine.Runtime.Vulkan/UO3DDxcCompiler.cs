@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -8,6 +8,7 @@ using Vortice.Direct3D12.Shader;
 using Vortice.Dxc;
 
 using UOEngine.Runtime.RHI;
+using UOEngine.Runtime.Core;
 
 namespace UOEngine.Runtime.Vulkan;
 
@@ -54,6 +55,7 @@ internal class UOEngineDxcCompiler
 
         if(compileForSpirv)
         {
+            // -fvk-auto-shift-bindings can auto shift the bindings for spirv slots.
             arguments = [.. arguments, "-spirv"];
         }
 
@@ -180,10 +182,16 @@ internal class UOEngineDxcCompiler
                 Debug.Assert(false);
             }
 
+            if(resourceDescription.Space != 0)
+            {
+                UOEDebug.NotImplemented($"Only support space 0 so far, not {resourceDescription.Space} in {shaderFile}");
+            }
+
             shaderParameters.Add(new ShaderParameter
             {
                 Name = resourceDescription.Name,
                 SlotIndex = resourceDescription.BindPoint,
+                Space = resourceDescription.Space,
                 Size = size,
                 InputType = inputType,
                 Variables = shaderVariables

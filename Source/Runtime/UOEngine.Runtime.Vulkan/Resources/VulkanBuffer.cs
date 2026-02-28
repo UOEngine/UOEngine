@@ -1,12 +1,11 @@
 ﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using System.Runtime.InteropServices;
-using System.Threading.Tasks.Dataflow;
+
+using Vortice.Vulkan;
+
 using UOEngine.Runtime.Core;
 using UOEngine.Runtime.RHI;
-using Vortice.DXGI;
-using Vortice.Vulkan;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace UOEngine.Runtime.Vulkan;
 
@@ -31,7 +30,7 @@ internal class VulkanBuffer: IRhiBuffer, IDisposable
 
     private readonly VulkanDevice _device;
 
-    private readonly RhiBufferDescription Description;
+    public RhiBufferDescription Description { get; private set;  }
 
     private VulkanMemoryAllocation? _allocation;
 
@@ -55,24 +54,17 @@ internal class VulkanBuffer: IRhiBuffer, IDisposable
 
     private LockStatus _lockStatus = LockStatus.Unlocked;
 
-    private VulkanStagingBuffer? _pendingStagingBuffer = null;
+    private VulkanStagingBufferLock _pendingStagingBuffer;
 
     public void SetData<T>(ReadOnlySpan<T> data) where T : unmanaged
     {
         var dataBytes = MemoryMarshal.Cast<T, byte>(data);
 
-        if (IsDynamic)
-        {
-            var bytes = Lock();
+        var bytes = Lock();
 
-            dataBytes.CopyTo(bytes);
+        dataBytes.CopyTo(bytes);
 
-            Unlock();
-
-            return;
-        }
-
-        Upload(dataBytes);
+        Unlock();
     }
 
     public void Dispose()
@@ -105,12 +97,11 @@ internal class VulkanBuffer: IRhiBuffer, IDisposable
         _allocation = allocation;
     }
 
-    public Span<byte> Lock() => Lock(Description.Stride, 0);
+    public Span<byte> Lock() => Lock(Description.Size, 0);
 
     public Span<byte> Lock(uint size, uint offset)
     {
         UOEDebug.Assert(_lockStatus == LockStatus.Unlocked);
-
 
         Span<byte> data = null;
 
@@ -126,11 +117,9 @@ internal class VulkanBuffer: IRhiBuffer, IDisposable
         }
         else if(IsStatic)
         {
-            UOEDebug.NotImplemented();
+            _pendingStagingBuffer = _device.StagingBuffer.AcquireBuffer(size);
 
-            //_pendingStagingBuffer = _device.StagingBuffer.AcquireBuffer(size);
-
-            //data = _pendingStagingBuffer.buffer;
+            data = _pendingStagingBuffer.buffer.GetSpan();
 
             _lockStatus = LockStatus.Locked;
         }
@@ -157,45 +146,54 @@ internal class VulkanBuffer: IRhiBuffer, IDisposable
 
         if(_lockStatus == LockStatus.Locked)
         {
-            UOEDebug.NotImplemented();
-            //var commandBuffer = _device.GraphicsQueue.CreateCommandBuffer();
+            var commandBuffer = _device.GraphicsQueue.CreateCommandBuffer();
 
-            //commandBuffer.CmdCopyBufferToImage(bufferLock.vkBuffer, Image, bufferImageCopy);
-            //commandBuffer.EndRecording();
+            VkBufferCopy bufferCopy = new()
+            {
+                srcOffset = _pendingStagingBuffer.Offset,
+                dstOffset = GetAllocation().Offset,
+                size = _pendingStagingBuffer.buffer.Length
+            };
 
-            //_device.GraphicsQueue.Submit(commandBuffer);
-            //_device.WaitForGpuIdle();
+            commandBuffer.CmdCopyBuffer(_pendingStagingBuffer.vkBuffer, Handle, bufferCopy);
 
-            //_device.StagingBuffer.ReleaseBuffer(bufferLock);
+            // Barrier?
+
+            commandBuffer.EndRecording();
+
+            _device.GraphicsQueue.Submit(commandBuffer);
+            _device.WaitForGpuIdle();
+
+            _device.StagingBuffer.ReleaseBuffer(_pendingStagingBuffer);
         }
 
         _lockStatus = LockStatus.Unlocked;
     }
 
-    internal unsafe void Upload(ReadOnlySpan<byte> data)
-    {
-        UOEDebug.Assert((Description.Usage | RhiBufferUsageFlags.Dynamic) == 0);
+    //internal unsafe void Upload(ReadOnlySpan<byte> data)
+    //{
+    //    UOEDebug.Assert((Description.Usage | RhiBufferUsageFlags.Dynamic) == 0);
 
-        var bufferLock = _device.StagingBuffer.AcquireBuffer(Description.Size);
+    //    var bufferLock = _device.StagingBuffer.AcquireBuffer(Description.Size);
 
-        data.CopyTo(bufferLock.buffer);
+    //    data.CopyTo(bufferLock.buffer);
 
-        var commandBuffer = _device.GraphicsQueue.CreateCommandBuffer();
+    //    var commandBuffer = _device.GraphicsQueue.CreateCommandBuffer();
 
-        VkBufferCopy bufferCopy = new()
-        {
-            dstOffset = 0,
-            size = Description.Size,
-            srcOffset = 0
-        };
+    //    VkBufferCopy bufferCopy = new()
+    //    {
+    //        dstOffset = 0,
+    //        size = Description.Size,
+    //        srcOffset = 0
+    //    };
 
-        commandBuffer.CmdCopyBuffer(bufferLock.vkBuffer, Handle, bufferCopy);
+    //    commandBuffer.CmdCopyBuffer(bufferLock.vkBuffer, Handle, bufferCopy);
 
-        _device.GraphicsQueue.Submit(commandBuffer);
-        _device.WaitForGpuIdle();
+    //    _device.GraphicsQueue.Submit(commandBuffer);
+    //    _device.WaitForGpuIdle();
 
-        _device.StagingBuffer.ReleaseBuffer(bufferLock);
-    }
+    //    _device.StagingBuffer.ReleaseBuffer(bufferLock);
+    //}
 
     protected virtual void Dispose(bool disposing)
     {
@@ -222,6 +220,8 @@ internal class VulkanBuffer: IRhiBuffer, IDisposable
     {
         VkMemoryPropertyFlags memoryPropertyFlags = VkMemoryPropertyFlags.None;
 
+        VkBufferUsageFlags usageFlags = _usageFlags;
+
         if (IsDynamic)
         {
             memoryPropertyFlags |= (VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
@@ -229,9 +229,11 @@ internal class VulkanBuffer: IRhiBuffer, IDisposable
         else
         {
             memoryPropertyFlags |= VkMemoryPropertyFlags.DeviceLocal;
+
+            usageFlags |= VkBufferUsageFlags.TransferDst;
         }
 
-        _device.MemoryManager.AllocateBuffer(Description.Size, _usageFlags, memoryPropertyFlags, out allocation);
+        _device.MemoryManager.AllocateBuffer(Description.Size, usageFlags, memoryPropertyFlags, out allocation);
 
 
     }

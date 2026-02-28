@@ -28,7 +28,7 @@ internal class VulkanGraphicsPipeline: IDisposable
 
         VkUtf8ReadOnlyString vertexEntryPoint = Encoding.UTF8.GetBytes(shaderResource.VertexProgram.EntryPoint);
 
-        VkPipelineShaderStageCreateInfo* shaderStages = stackalloc VkPipelineShaderStageCreateInfo[2];
+        Span<VkPipelineShaderStageCreateInfo> shaderStages = stackalloc VkPipelineShaderStageCreateInfo[2];
 
         shaderStages[0] = new()
         {
@@ -53,14 +53,19 @@ internal class VulkanGraphicsPipeline: IDisposable
         //descriptorSetLayout[0] = shaderResource.VertexProgram.DescriptorSetLayout;
         //descriptorSetLayout[1] = shaderResource.PixelProgram.DescriptorSetLayout;
 
-        VkDescriptorSetLayoutBinding* descriptorSetLayoutBindings = stackalloc VkDescriptorSetLayoutBinding[numDescriptorSets];
+        Span<VkDescriptorSetLayoutBinding> descriptorSetLayoutBindings = stackalloc VkDescriptorSetLayoutBinding[numDescriptorSets];
 
         int descriptorIndex = 0;
 
-        void AddDescriptorSetLayout(VkShaderStageFlags shaderStage, ShaderParameter[] shaderParameters)
+        void AddDescriptorSetLayout(VkShaderStageFlags shaderStage, ShaderParameter[] shaderParameters, Span<VkDescriptorSetLayoutBinding> descriptorSetLayoutBindings)
         {
             foreach(var shaderParameter in shaderParameters)
             {
+                if(shaderParameter.Space != 0)
+                {
+                    UOEDebug.NotImplemented("Only space/set 0 is currently supported.");
+                }
+
                 ref var descriptorSetLayoutBinding = ref descriptorSetLayoutBindings[descriptorIndex];
 
                 descriptorSetLayoutBinding.stageFlags = shaderStage;
@@ -72,18 +77,21 @@ internal class VulkanGraphicsPipeline: IDisposable
             }
         }
 
-        AddDescriptorSetLayout(VkShaderStageFlags.Vertex, shaderResource.VertexProgram.InputBindings);
-        AddDescriptorSetLayout(VkShaderStageFlags.Fragment, shaderResource.PixelProgram.InputBindings);
-
-        VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = new()
-        {
-            bindingCount = (uint)numDescriptorSets,
-            pBindings = descriptorSetLayoutBindings
-        };
+        AddDescriptorSetLayout(VkShaderStageFlags.Vertex, shaderResource.VertexProgram.InputBindings, descriptorSetLayoutBindings);
+        AddDescriptorSetLayout(VkShaderStageFlags.Fragment, shaderResource.PixelProgram.InputBindings, descriptorSetLayoutBindings);
 
         VkDescriptorSetLayout descriptorSetLayout;
 
-        device.Api.vkCreateDescriptorSetLayout(device.Handle, descriptorSetLayoutCreateInfo, out descriptorSetLayout);
+        fixed (VkDescriptorSetLayoutBinding* pDescriptorSetLayoutBinding = descriptorSetLayoutBindings)
+        {
+            VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = new()
+            {
+                bindingCount = (uint)numDescriptorSets,
+                pBindings = pDescriptorSetLayoutBinding
+            };
+
+            device.Api.vkCreateDescriptorSetLayout(device.Handle, descriptorSetLayoutCreateInfo, out descriptorSetLayout);
+        }
 
         VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = new()
         {
@@ -100,7 +108,12 @@ internal class VulkanGraphicsPipeline: IDisposable
         VkPipelineViewportStateCreateInfo viewportState = new(1, 1);
 
         // Rasterization state
-        VkPipelineRasterizationStateCreateInfo rasterizationState = VkPipelineRasterizationStateCreateInfo.CullClockwise;
+        VkPipelineRasterizationStateCreateInfo rasterizationState = new()
+        {
+            cullMode = pipelineDescription.Rasteriser.CullMode.ToVkCullModeFlags(),
+            frontFace = VkFrontFace.Clockwise,// pipelineDescription.Rasteriser.FrontFace.ToVkFrontFace(),
+            lineWidth = 1.0f
+        };
 
         // Multi sampling state
         VkPipelineMultisampleStateCreateInfo multisampleState = VkPipelineMultisampleStateCreateInfo.Default;
@@ -134,7 +147,7 @@ internal class VulkanGraphicsPipeline: IDisposable
         VkVertexInputBindingDescription vertexInputBinding;
         int numAttributes = pipelineDescription.VertexLayout?.Attributes.Length ?? shaderResource.VertexProgram.StreamBindings.Length;
 
-        VkVertexInputAttributeDescription* vertexInputAttributes = stackalloc VkVertexInputAttributeDescription[numAttributes];
+        Span<VkVertexInputAttributeDescription> vertexInputAttributes = stackalloc VkVertexInputAttributeDescription[numAttributes];
 
         if (pipelineDescription.VertexLayout != null)
         {
@@ -172,34 +185,37 @@ internal class VulkanGraphicsPipeline: IDisposable
             }
         }
 
-        VkPipelineVertexInputStateCreateInfo vertexInputState = new()
+        fixed (VkVertexInputAttributeDescription* pVertexInputAttributes = vertexInputAttributes)
+        fixed (VkPipelineShaderStageCreateInfo* pStages = shaderStages)
         {
-            vertexBindingDescriptionCount = 1,
-            pVertexBindingDescriptions = &vertexInputBinding,
-            vertexAttributeDescriptionCount = 2,
-            pVertexAttributeDescriptions = vertexInputAttributes
-        };
+            VkPipelineVertexInputStateCreateInfo vertexInputState = new()
+            {
+                vertexBindingDescriptionCount = 1,
+                pVertexBindingDescriptions = &vertexInputBinding,
+                vertexAttributeDescriptionCount = (uint)numAttributes,
+                pVertexAttributeDescriptions = pVertexInputAttributes
+            };
 
-        VkGraphicsPipelineCreateInfo graphicsPipelineCreateInfo = new()
-        {
-            pNext = &renderingInfo,
-            stageCount = 2,
-            pStages = shaderStages,
-            pVertexInputState = &vertexInputState,
-            pInputAssemblyState = &inputAssemblyState,
-            pTessellationState = null,
-            pViewportState = &viewportState,
-            pRasterizationState = &rasterizationState,
-            pMultisampleState = &multisampleState,
-            pDepthStencilState = &depthStencilState,
-            pColorBlendState = &colourBlendState,
-            pDynamicState = &dynamicState,
-            layout = PipelineLayout,
-        };
+            VkGraphicsPipelineCreateInfo graphicsPipelineCreateInfo = new()
+            {
+                pNext = &renderingInfo,
+                stageCount = 2,
+                pStages = pStages,
+                pVertexInputState = &vertexInputState,
+                pInputAssemblyState = &inputAssemblyState,
+                pTessellationState = null,
+                pViewportState = &viewportState,
+                pRasterizationState = &rasterizationState,
+                pMultisampleState = &multisampleState,
+                pDepthStencilState = &depthStencilState,
+                pColorBlendState = &colourBlendState,
+                pDynamicState = &dynamicState,
+                layout = PipelineLayout,
+            };
 
-        device.Api.vkCreateGraphicsPipeline(device.Handle, graphicsPipelineCreateInfo, out var pipeline);
-
-        Handle = pipeline;
+            device.Api.vkCreateGraphicsPipeline(device.Handle, graphicsPipelineCreateInfo, out var pipeline);
+            Handle = pipeline;
+        }
     }
 
     protected virtual void Dispose(bool disposing)

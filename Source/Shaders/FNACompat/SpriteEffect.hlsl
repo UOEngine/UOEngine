@@ -1,15 +1,15 @@
-Texture2D SpriteTexture : register(t0, space2);
-SamplerState SpriteSampler : register(s0, space2);
+Texture2D SpriteTexture : register(t0, space0);
+SamplerState SpriteSampler : register(s1, space0);
 
-cbuffer SpriteBatchBuffer : register(b0, space1)
+cbuffer SpriteBatchBuffer : register(b2, space0)
 {
     float4x4 MatrixTransform;
 };
 
 struct VSInput
 {
-    float3 Position : TEXCOORD0; // xy = vertex position, z = layer depth
-    float4 Color : TEXCOORD01;
+    float3 Position : POSITION0; // xy = vertex position, z = layer depth
+    float4 Color : COLOR0;
     float2 TexCoord: TEXCOORD2;
 };
 

@@ -107,7 +107,6 @@ internal class VulkanGraphicsContext : IRenderContext
     private DirtyState _dirtyState = DirtyState.All;
 
     private VulkanGraphicsPipelineDescription _currentPipelineDescription;
-    private VkPipeline? _currentPipeline;
 
     private readonly Dictionary<VulkanGraphicsPipelineDescription, VulkanGraphicsPipeline> _pipelineCache = [];
 
@@ -233,7 +232,7 @@ internal class VulkanGraphicsContext : IRenderContext
 
     private unsafe void BindShaderParameters(bool forceRebind)
     {
-        VkWriteDescriptorSet* writeDescriptorSets = stackalloc VkWriteDescriptorSet[ShaderInstance.NumBindings];
+        Span<VkWriteDescriptorSet> writeDescriptorSets = stackalloc VkWriteDescriptorSet[ShaderInstance.NumBindings];
 
         uint numDescriptorsToUpdate = 0;
 
@@ -241,7 +240,7 @@ internal class VulkanGraphicsContext : IRenderContext
 
         VkDescriptorBufferInfo bufferInfo = new()
         {
-
+             
         };
 
         for (int i = 0; i < (int)ShaderProgramType.Count; i++)
@@ -326,14 +325,17 @@ internal class VulkanGraphicsContext : IRenderContext
                         throw new UnreachableException($"BindParametersForVertexProgram: Unhandled input type {entry.InputType}");
                 }
 
-                writeDescriptorSets[numDescriptorsToUpdate++] = descriptorWrite;
+                writeDescriptorSets[(int)numDescriptorsToUpdate++] = descriptorWrite;
 
             }
         }
 
         if(numDescriptorsToUpdate > 0)
         {
-            _device.Api.vkUpdateDescriptorSets(_device.Handle, numDescriptorsToUpdate, writeDescriptorSets, 0, null);
+            fixed(VkWriteDescriptorSet* pWriteDescriporSets = writeDescriptorSets)
+            {
+                _device.Api.vkUpdateDescriptorSets(_device.Handle, numDescriptorsToUpdate, pWriteDescriporSets, 0, null);
+            }
         }
 
         _device.Api.vkCmdBindDescriptorSets(CommandBuffer.Handle, VkPipelineBindPoint.Graphics, GraphicsPipeline.PipelineLayout, 0, descriptorSet);
@@ -349,12 +351,6 @@ internal class VulkanGraphicsContext : IRenderContext
 
             ClearDirtyState(DirtyState.VertexBuffer);
 
-            //if (_currentPipelineDescription.VertexLayout != _vertexBuffer.VertexDefinition)
-            //{
-            //    _currentPipelineDescription.VertexLayout = _vertexBuffer.VertexDefinition;
-
-            //    SetDirtyState(DirtyState.Pipeline);
-            //}
         }
 
         if (IsStateDirty(DirtyState.Pipeline))
@@ -398,7 +394,7 @@ internal class VulkanGraphicsContext : IRenderContext
             ClearDirtyState(DirtyState.IndexBuffer);
         }
 
-        bool fullRebind = IsStateDirty(DirtyState.ShaderParams);
+        bool fullRebind = true;// IsStateDirty(DirtyState.ShaderParams);
 
         BindShaderParameters(fullRebind);
 

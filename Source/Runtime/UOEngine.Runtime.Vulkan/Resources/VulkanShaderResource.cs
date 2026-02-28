@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using UOEngine.Runtime.RHI;
 
@@ -10,7 +10,6 @@ internal class VulkanShaderResource : RhiShaderResource
     internal VulkanShaderProgram PixelProgram => _pixelProgram ?? throw new InvalidOperationException("VulkanShaderResource: Vertex program is not initialised.");
 
     private readonly VulkanDevice _device;
-    private readonly string _name;
 
     private VulkanShaderProgram? _vertexProgram;
     private VulkanShaderProgram? _pixelProgram;
@@ -18,7 +17,7 @@ internal class VulkanShaderResource : RhiShaderResource
     internal VulkanShaderResource(VulkanDevice device, in RhiShaderResourceCreateParameters parameters)
     {
         _device = device;
-        _name = parameters.Name;
+        Name = parameters.Name;
     }
 
     public override void Load(string vertexShader, string fragmentShader)

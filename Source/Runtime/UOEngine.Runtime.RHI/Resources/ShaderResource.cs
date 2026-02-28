@@ -44,6 +44,10 @@ public readonly struct ShaderParameter
     public readonly uint Size { get; init; }
     public readonly RhiShaderInputType InputType { get; init; }
     public readonly uint SlotIndex { get; init; }
+
+    // The space (D3D) or set (Vulkan)
+    public readonly uint Space { get; init; }
+
     public readonly ShaderVariable[] Variables { get; init; }
 }
 

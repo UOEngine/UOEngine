@@ -64,6 +64,9 @@
   </Folder>
   <Folder Name="/Shaders/" />
   <Folder Name="/Tests/">
+    <Project Path="Source/Tests/UOEngine.Tests.DynamicVertexBuffer/UOEngine.Tests.DynamicVertexBuffer.csproj" Id="956aa0d7-92d2-4344-9758-3089e74a6472">
+      <Platform Project="x64" />
+    </Project>
     <Project Path="Source/Tests/UOEngine.Tests.Present/UOEngine.Tests.Present.csproj" Id="a0ad9551-fa77-4504-9c56-91f34e0fa812">
       <Platform Project="x64" />
     </Project>

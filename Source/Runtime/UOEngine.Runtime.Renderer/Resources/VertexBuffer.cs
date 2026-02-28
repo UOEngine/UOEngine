@@ -8,6 +8,13 @@ using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Runtime.Renderer;
 
+public struct VertexBufferDescription
+{
+    public uint NumVertices;
+    public bool Dynamic;
+    public string Name;
+}
+
 public class VertexBuffer<TVertex> where TVertex : unmanaged, IVertex, IVertexLayoutProvider
 {
     public readonly IRhiBuffer RhiBuffer;
@@ -22,24 +29,30 @@ public class VertexBuffer<TVertex> where TVertex : unmanaged, IVertex, IVertexLa
     public int Count { get; private set; }
     
 
-    internal VertexBuffer(IRenderResourceFactory factory, uint numVertices)
+    internal VertexBuffer(IRenderResourceFactory factory, in VertexBufferDescription description)
     {
         uint stride = (uint)Unsafe.SizeOf<TVertex>();
 
         RhiBuffer = factory.NewBuffer(new RhiBufferDescription
         {
-            Size = numVertices * stride,
+            Size = description.NumVertices * stride,
             Stride = stride,
-            Usage = RhiBufferUsageFlags.Vertex | RhiBufferUsageFlags.Dynamic
+            Usage = RhiBufferUsageFlags.Vertex | (description.Dynamic? RhiBufferUsageFlags.Dynamic : RhiBufferUsageFlags.None),
+            Name = description.Name
         });
 
-        Data = new TVertex[numVertices];
+        Data = new TVertex[description.NumVertices];
     }
 
     public void SetData()
     { 
         // Upload it.
         RhiBuffer.SetData(Data.AsSpan(0, Count));
+
+        if(RhiBuffer.Description.Usage.HasFlag(RhiBufferUsageFlags.Dynamic))
+        {
+            Count = 0;
+        }
     }
 
     public void Add(TVertex vertex)
@@ -51,7 +64,7 @@ public class VertexBuffer<TVertex> where TVertex : unmanaged, IVertex, IVertexLa
 
     public void AddRange(ReadOnlySpan<TVertex> vertices)
     {
-        UOEDebug.Assert(Count + vertices.Length > Data.Length, "VertexBuffer overflow");
+        UOEDebug.Assert(Count + vertices.Length <= Data.Length, "VertexBuffer overflow");
 
         vertices.CopyTo(Data.AsSpan(Count));
 

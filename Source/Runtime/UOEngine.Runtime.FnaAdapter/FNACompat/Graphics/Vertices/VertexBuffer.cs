@@ -6,8 +6,9 @@ public class VertexBuffer : IDisposable
 {
     public IRhiBuffer RhiVertexBuffer { get; private set; }
 
+    public readonly VertexDeclaration VertexDeclaration;
+
     private GraphicsDevice _graphicsDevice;
-    private VertexDeclaration _vertexDeclaration;
     private int _vertexCount;
     private bool _dynamic;
     private bool _disposed = false;
@@ -31,7 +32,7 @@ public class VertexBuffer : IDisposable
     protected VertexBuffer(GraphicsDevice graphicsDevice, VertexDeclaration vertexDeclaration, int vertexCount, BufferUsage bufferUsage, bool dynamic)
     {
         _graphicsDevice = graphicsDevice;
-        _vertexDeclaration = vertexDeclaration;
+        VertexDeclaration = vertexDeclaration;
         _vertexCount = vertexCount;
         _dynamic = dynamic;
 
@@ -44,9 +45,9 @@ public class VertexBuffer : IDisposable
 
         RhiVertexBuffer = _graphicsDevice.RenderResourceFactory.NewBuffer(new RhiBufferDescription
         {
-            Size = (uint)vertexCount * _vertexDeclaration.RhiVertexDefinition.Stride,
+            Size = (uint)vertexCount * VertexDeclaration.RhiVertexDefinition.Stride,
             Usage = flags,
-            Stride = _vertexDeclaration.RhiVertexDefinition.Stride,
+            Stride = VertexDeclaration.RhiVertexDefinition.Stride,
         });
 
         //RhiVertexBuffer = _vertexBuffers[0];

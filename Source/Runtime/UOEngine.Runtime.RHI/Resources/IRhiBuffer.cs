@@ -28,6 +28,8 @@ public struct RhiBufferDescription
 
 public interface IRhiBuffer
 {
+    public RhiBufferDescription Description { get; }
+
     public void SetData<T>(ReadOnlySpan<T> data) where T : unmanaged;
 
     public Span<byte> Lock(uint size, uint offset);

@@ -50,6 +50,9 @@ public class VulkanDevice : IDisposable
 
     internal VulkanGraphicsContext GraphicsContext = null!;
 
+    internal VkPhysicalDeviceProperties DeviceProperties { get; private set; }
+    internal VkPhysicalDeviceLimits Limits => DeviceProperties.limits;
+
     private VkDevice? _device;
     private VkDeviceApi? _api;
 
@@ -133,6 +136,12 @@ public class VulkanDevice : IDisposable
 
             _queues[i] = new VulkanQueue(this, (VulkanQueueType)i, queue);
         }
+
+        VkPhysicalDeviceProperties2 deviceProperties2 = new();
+
+        instanceApi.vkGetPhysicalDeviceProperties2(DeviceInfo.PhysicalDevice, &deviceProperties2);
+
+        DeviceProperties = deviceProperties2.properties;
 
         MemoryManager.Init();
 

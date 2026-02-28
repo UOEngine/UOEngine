@@ -148,7 +148,7 @@ internal class VulkanTexture: IRenderTexture, IDisposable
 
         unsafe
         {
-            var dst = bufferLock.buffer;
+            var dst = bufferLock.buffer.GetSpan();
 
             for (uint row = 0; row < h; row++)
             {

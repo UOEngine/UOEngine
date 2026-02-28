@@ -8,17 +8,17 @@ static const float TileSize = 44 * rsqrt(2);
 static const float3 LIGHT_DIRECTION = float3(0.0f, 1.0f, 1.0f);
 static const float Brightlight = 1.5f; //This can be parametrized, but 1.5f is default :)
 
-SamplerState TextureSampler : register(s0, space2);
-Texture2D Texture : register(t0, space2);
+SamplerState TextureSampler : register(s0, space0);
+Texture2D Texture : register(t1, space0);
 
-SamplerState HueSampler : register(s1, space2);
-Texture2D HueTexture : register(t1, space2);
+SamplerState HueSampler : register(s2, space0);
+Texture2D HueTexture : register(t3, space0);
 
-SamplerState LightSampler : register(s2, space2);
-Texture2D LightTexture : register(t2, space2);
+SamplerState LightSampler : register(s4, space0);
+Texture2D LightTexture : register(t5, space0);
 
 //Effect parameters
-cbuffer Parameters : register(b0, space1)
+cbuffer Parameters : register(b6, space0)
 {
     row_major float4x4 WorldViewProj;
     float4 VirtualLayerFillColor;

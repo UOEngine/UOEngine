@@ -7,15 +7,20 @@ namespace UOEngine.Runtime.Core;
 public class UOEDebug
 {
     [DebuggerHidden]
-    public static void NotImplemented()
+    public static void NotImplemented(string? message = default)
     {
         if(Debugger.IsAttached)
         {
+            if(message != null)
+            {
+                Debug.WriteLine($"NotImplemented: {message}");
+            }
+
             Debugger.Break();
         }
         else
         {
-            throw new NotImplementedException();
+            throw new NotImplementedException(message);
         }
     }
 

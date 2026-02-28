@@ -37,4 +37,21 @@ internal static class RhiTypesToVulkanTypes
         RhiShaderInputType.Sampler => VkDescriptorType.Sampler,
         _ => throw new NotImplementedException()
     };
+
+    internal static VkCullModeFlags ToVkCullModeFlags(this RhiCullMode cullMode) => cullMode switch
+    {
+        RhiCullMode.Disable => VkCullModeFlags.None,
+        RhiCullMode.Back => VkCullModeFlags.Back,
+        RhiCullMode.Front => VkCullModeFlags.Front,
+        RhiCullMode.FrontAndBack => VkCullModeFlags.FrontAndBack,
+        _ => throw new NotImplementedException()
+
+    };
+
+    internal static VkFrontFace ToVkFrontFace(this RhiFrontFace frontFace) => frontFace switch
+    {
+        RhiFrontFace.Clockwise => VkFrontFace.Clockwise,
+        RhiFrontFace.CounterClockwise => VkFrontFace.CounterClockwise,
+        _ => throw new NotImplementedException()
+    };
 }

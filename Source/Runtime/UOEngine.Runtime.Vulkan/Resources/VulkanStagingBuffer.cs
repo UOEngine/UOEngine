@@ -1,16 +1,38 @@
-﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using Vortice.Vulkan;
 
 using UOEngine.Runtime.Core;
+using System.Buffers;
 
 namespace UOEngine.Runtime.Vulkan;
 
-internal ref struct VulkanStagingBufferLock
+internal struct VulkanStagingBufferLock
 {
-    internal Span<byte> buffer;
+    internal VulkanMappedMemoryManager buffer;
     internal uint Offset;
     internal VkBuffer vkBuffer;
+}
+
+internal unsafe class VulkanMappedMemoryManager : MemoryManager<byte>
+{
+    public readonly uint Length;
+
+    private readonly byte* _pointer;
+
+    internal VulkanMappedMemoryManager(void* pointer, uint length)
+    {
+        _pointer = (byte*)pointer;
+        Length = length;
+    }
+
+    public override Span<byte> GetSpan() => new(_pointer, (int)Length);
+
+    public override MemoryHandle Pin(int elementIndex = 0) => new(_pointer + elementIndex);
+
+    public override void Unpin(){}
+
+    protected override void Dispose(bool disposing){}
 }
 
 internal unsafe class VulkanStagingBuffer: IDisposable
@@ -47,19 +69,19 @@ internal unsafe class VulkanStagingBuffer: IDisposable
 
         if(bytesLeft < size)
         {
-            UOEDebug.Assert(false);
+            UOEDebug.NotImplemented();
         }
 
         if (_used + size > _allocation.Size)
         {
-            UOEDebug.Assert(false);
+            UOEDebug.NotImplemented();
         }
 
         nint offset = _allocation.GetMappedPointer(_device) + (nint)_used;
 
         var bufferLock = new VulkanStagingBufferLock
         {
-            buffer = new Span<byte>((void*)offset, (int)size),
+            buffer = new VulkanMappedMemoryManager((void*)offset, size),
             Offset = _used,
             vkBuffer = _allocation.Buffer
         };
@@ -71,7 +93,8 @@ internal unsafe class VulkanStagingBuffer: IDisposable
 
     internal void ReleaseBuffer(in VulkanStagingBufferLock bufferLock)
     {
-       
+        // ToDo: temp as currently do immediate uploads so the buffer never becomes full.
+        _used = 0;
     }
 
     public void Dispose()

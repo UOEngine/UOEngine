@@ -1,15 +1,12 @@
-﻿// Copyright (c) 2026 UOEngine Project, Scotty1234
-// Licensed under the MIT License. See LICENSE file in the project root for details.
-using System.Numerics;
-
+﻿using System.Numerics;
 using UOEngine.Runtime.Application;
 using UOEngine.Runtime.Core;
 using UOEngine.Runtime.Renderer;
 using UOEngine.Runtime.RHI;
 
-namespace UOEngine.Tests.Triangle;
+namespace UOEngine.Tests.DynamicVertexBuffer;
 
-internal class TriangleTest(IServiceProvider serviceProvider) : UOEngineApplication(serviceProvider)
+internal class DynamicVertexBufferTest(IServiceProvider serviceProvider) : UOEngineApplication(serviceProvider)
 {
     private IndexBuffer _indexBuffer = null!;
     private VertexBuffer<PositionAndColourVertex> _vertexBuffer = null!;
@@ -41,6 +38,10 @@ internal class TriangleTest(IServiceProvider serviceProvider) : UOEngineApplicat
             Dynamic = true,
         });
 
+    }
+
+    public void OnFrameBegin(IRenderContext context)
+    {
         var v0 = new PositionAndColourVertex
         {
             Position = Vector3.Zero,
@@ -61,10 +62,7 @@ internal class TriangleTest(IServiceProvider serviceProvider) : UOEngineApplicat
 
         _vertexBuffer.AddRange([v0, v1, v2]);
         _vertexBuffer.SetData();
-    }
 
-    public void OnFrameBegin(IRenderContext context)
-    {
         context.IndexBuffer = _indexBuffer.RhiBuffer;
         context.VertexBuffer = _vertexBuffer.RhiBuffer;
 
@@ -79,10 +77,5 @@ internal class TriangleTest(IServiceProvider serviceProvider) : UOEngineApplicat
         });
 
         context.DrawIndexedPrimitives(3, 1, 0, 0, 0);
-    }
-
-    protected override void Dispose(bool disposing)
-    {
-        base.Dispose(disposing);
     }
 }
