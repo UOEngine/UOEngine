@@ -48,7 +48,7 @@ internal class UOEngineDxcCompiler
             "-T",               targetProfile,
             "-Zi",                                  // Debug info
             "-Qembed_debug",                        // Embed debug info in the shader
-            "-O0"                                   // Optimization level
+            "-Od"                                   // Optimization level
         ];
 
         string[] arguments = strings;
@@ -56,7 +56,7 @@ internal class UOEngineDxcCompiler
         if(compileForSpirv)
         {
             // -fvk-auto-shift-bindings can auto shift the bindings for spirv slots.
-            arguments = [.. arguments, "-spirv"];
+            arguments = [.. arguments, "-spirv", "-fspv-debug=vulkan-with-source"];
         }
 
         using IDxcResult result = DxcCompiler.Compile(source, arguments);
