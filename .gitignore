@@ -3,8 +3,11 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
+# UOEngine custom
 Binaries/
 Intermediate/
+
+launchSettings.json
 
 # User-specific files
 *.rsuser
