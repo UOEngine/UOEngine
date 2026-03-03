@@ -54,4 +54,20 @@ internal static class RhiTypesToVulkanTypes
         RhiFrontFace.CounterClockwise => VkFrontFace.CounterClockwise,
         _ => throw new NotImplementedException()
     };
+
+    internal static VkBlendFactor ToVkBlendFactor(this RhiBlendFactor blendFactor) => blendFactor switch
+    {
+        RhiBlendFactor.Zero => VkBlendFactor.Zero,
+        RhiBlendFactor.One => VkBlendFactor.One,
+        RhiBlendFactor.SourceAlpha => VkBlendFactor.SrcAlpha,
+        RhiBlendFactor.InverseSourceAlpha => VkBlendFactor.OneMinusSrcAlpha,
+        _ => throw new NotImplementedException()
+    };
+
+    internal static VkBlendOp ToVkBlendOp(this RhiBlendOperation blendOperation) => blendOperation switch
+    {
+        RhiBlendOperation.Add => VkBlendOp.Add,
+        RhiBlendOperation.Subtract => VkBlendOp.Subtract,
+        _ => throw new NotImplementedException()
+    };
 }

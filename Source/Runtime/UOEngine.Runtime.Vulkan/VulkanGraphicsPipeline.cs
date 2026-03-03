@@ -119,14 +119,33 @@ internal class VulkanGraphicsPipeline: IDisposable
         VkPipelineMultisampleStateCreateInfo multisampleState = VkPipelineMultisampleStateCreateInfo.Default;
 
         // DepthStencil
-        VkPipelineDepthStencilStateCreateInfo depthStencilState = VkPipelineDepthStencilStateCreateInfo.Default;
+        VkPipelineDepthStencilStateCreateInfo depthStencilState = new()
+        {
+            depthTestEnable = false,
+            depthWriteEnable = false
+        };
+
+        //pipelineDescription.BlendState.
 
         // BlendStates
-        VkPipelineColorBlendAttachmentState blendAttachmentState = default;
-        blendAttachmentState.colorWriteMask = VkColorComponentFlags.All;
-        blendAttachmentState.blendEnable = false;
+        VkPipelineColorBlendAttachmentState blendAttachmentState = new()
+        {
+            blendEnable = pipelineDescription.BlendState.Enabled,
+            srcColorBlendFactor = pipelineDescription.BlendState.SourceColourFactor.ToVkBlendFactor(),
+            dstColorBlendFactor = pipelineDescription.BlendState.DestinationColourFactor.ToVkBlendFactor(),
+            colorBlendOp = pipelineDescription.BlendState.ColourBlendOp.ToVkBlendOp(),
+            srcAlphaBlendFactor = pipelineDescription.BlendState.SourceAlphaFactor.ToVkBlendFactor(),
+            dstAlphaBlendFactor = pipelineDescription.BlendState.DestinationAlphaFactor.ToVkBlendFactor(),
+            alphaBlendOp = pipelineDescription.BlendState.AlphaBlendOp.ToVkBlendOp(),
+            colorWriteMask = VkColorComponentFlags.All
+        };
 
-        VkPipelineColorBlendStateCreateInfo colourBlendState = new(blendAttachmentState);
+
+        VkPipelineColorBlendStateCreateInfo colourBlendState = new()
+        {
+            pAttachments = &blendAttachmentState,
+            attachmentCount = 1
+        };
 
         VkDynamicState* dynamicStateEnables = stackalloc VkDynamicState[2];
         dynamicStateEnables[0] = VkDynamicState.Viewport;
