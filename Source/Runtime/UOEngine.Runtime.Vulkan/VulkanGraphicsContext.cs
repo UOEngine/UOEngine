@@ -238,10 +238,11 @@ internal class VulkanGraphicsContext : IRenderContext
 
         VkDescriptorSet descriptorSet = _descriptorPool.Allocate(GraphicsPipeline.DescriptorSetLayout);
 
-        VkDescriptorBufferInfo bufferInfo = new()
-        {
-             
-        };
+        int maxNumBuffers = 4;
+
+        VkDescriptorBufferInfo* bufferInfos = stackalloc VkDescriptorBufferInfo[maxNumBuffers];
+
+        int numBuffers = 0;
 
         for (int i = 0; i < (int)ShaderProgramType.Count; i++)
         {
@@ -282,11 +283,20 @@ internal class VulkanGraphicsContext : IRenderContext
 
                             descriptorWrite.descriptorType = VkDescriptorType.UniformBuffer;
 
-                            bufferInfo.range = memoryAllocation.Size;
-                            bufferInfo.buffer = memoryAllocation.Buffer;
-                            bufferInfo.offset = memoryAllocation.Offset;
+                            ref var bufferInfo = ref bufferInfos[numBuffers];
 
-                            descriptorWrite.pBufferInfo = &bufferInfo;
+                            bufferInfo = new VkDescriptorBufferInfo
+                            {
+                                range = memoryAllocation.Size,
+                                buffer = memoryAllocation.Buffer,
+                                offset = memoryAllocation.Offset
+                            };
+
+                            descriptorWrite.pBufferInfo = &bufferInfos[numBuffers];
+
+                            numBuffers++;
+
+                            UOEDebug.Assert(numBuffers <= maxNumBuffers);
 
                             //memoryAllocation.FlushMappedMemory(_device);
 
