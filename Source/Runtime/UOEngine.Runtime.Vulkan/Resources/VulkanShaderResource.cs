@@ -22,16 +22,16 @@ internal class VulkanShaderResource : RhiShaderResource
 
     public override void Load(string vertexShader, string fragmentShader)
     {
-        UOEngineDxcCompiler.Compile(vertexShader, ShaderProgramType.Vertex, out var vertexCompileResult, true, "main");
-        UOEngineDxcCompiler.Compile(fragmentShader, ShaderProgramType.Pixel, out var pixelCompileResult, true, "main");
+        UOEngineDxcCompiler.Compile(vertexShader, ShaderProgramType.Vertex, out var vertexCompileResult, "main");
+        UOEngineDxcCompiler.Compile(fragmentShader, ShaderProgramType.Pixel, out var pixelCompileResult, "main");
 
         LoadCommon(vertexCompileResult, pixelCompileResult);
     }
 
     public override void Load(string shaderFile, string vertexMainName, string pixelNameMain)
     {
-        UOEngineDxcCompiler.Compile(shaderFile, ShaderProgramType.Vertex, out var vertexCompileResult, true, vertexMainName);
-        UOEngineDxcCompiler.Compile(shaderFile, ShaderProgramType.Pixel, out var pixelCompileResult,   true, pixelNameMain);
+        UOEngineDxcCompiler.Compile(shaderFile, ShaderProgramType.Vertex, out var vertexCompileResult, vertexMainName);
+        UOEngineDxcCompiler.Compile(shaderFile, ShaderProgramType.Pixel, out var pixelCompileResult, pixelNameMain);
 
         LoadCommon(vertexCompileResult, pixelCompileResult);
     }

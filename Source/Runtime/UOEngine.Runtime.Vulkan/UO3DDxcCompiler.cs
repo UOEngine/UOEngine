@@ -1,11 +1,10 @@
 ﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 
-using Vortice.Direct3D;
-using Vortice.Direct3D12.Shader;
 using Vortice.Dxc;
+using Vortice.SPIRV.Reflect;
+using static Vortice.SPIRV.Reflect.SPIRVReflectApi;
 
 using UOEngine.Runtime.RHI;
 using UOEngine.Runtime.Core;
@@ -22,7 +21,7 @@ struct ShaderProgramCompileResult
 
 internal class UOEngineDxcCompiler
 {
-    public static void Compile(string shaderFile, ShaderProgramType type, out ShaderProgramCompileResult outCompileResult, bool compileForSpirv, string programMainName = "main")
+    public static void Compile(string shaderFile, ShaderProgramType type, out ShaderProgramCompileResult outCompileResult, string programMainName = "main")
     {
         if(File.Exists(shaderFile) == false)
         {
@@ -53,11 +52,8 @@ internal class UOEngineDxcCompiler
 
         string[] arguments = strings;
 
-        if(compileForSpirv)
-        {
-            // -fvk-auto-shift-bindings can auto shift the bindings for spirv slots.
-            arguments = [.. arguments, "-spirv", "-fspv-debug=vulkan-with-source"];
-        }
+        // -fvk-auto-shift-bindings can auto shift the bindings for spirv slots.
+        arguments = [.. arguments, "-spirv", "-fspv-debug=vulkan-with-source"];
 
         using IDxcResult result = DxcCompiler.Compile(source, arguments);
 
@@ -71,167 +67,134 @@ internal class UOEngineDxcCompiler
         outCompileResult = new ShaderProgramCompileResult();
         outCompileResult.EntryPointName = programMainName;
 
-        if(compileForSpirv)
-        {
-            // Can only get reflection from DXIL. Compile it again as DXIL and attach the SPIRV blob.
-            // TODO: Probably better to do this with SPIRV-reflect?
-            Compile(shaderFile, type, out var resultForReflection, false, programMainName);
-
-            outCompileResult = resultForReflection;
-            outCompileResult.ByteCode = blob.AsBytes();
-
-            return;
-        }
-
         outCompileResult.ByteCode = blob.AsBytes();
 
-        using ID3D12ShaderReflection reflection = DxcCompiler.Utils.CreateReflection<ID3D12ShaderReflection>(blob);
+        ReflectSpirv(outCompileResult.ByteCode, out outCompileResult.StreamBindings, out outCompileResult.ShaderBindings);
+    }
+
+    private static unsafe void ReflectSpirv(byte[] inByteCode, out ShaderStreamBinding[] outStreamBindings, out ShaderParameter[] outShaderBindings)
+    {
+        SpvReflectShaderModule module;
+
+        if (spvReflectCreateShaderModule(inByteCode, &module) != SpvReflectResult.Success)
+        {
+            UOEDebug.NotImplemented();
+        }
 
         List<ShaderParameter> shaderParameters = [];
 
-        for(uint i = 0; i < reflection.BoundResources.Length; i++)
+        for (int i = 0; i < module.descriptor_binding_count; i++)
         {
-            var resourceDescription = reflection.BoundResources[i];
+            var resourceDescription = module.descriptor_bindings[i];
+
+            if(resourceDescription.accessed == 0)
+            {
+                continue;
+            }
 
             uint size = 0;
             RhiShaderInputType inputType = RhiShaderInputType.Invalid;
 
             ShaderVariable[] shaderVariables = [];
 
-            if (resourceDescription.Type == ShaderInputType.ConstantBuffer)
+            if (resourceDescription.descriptor_type == SpvReflectDescriptorType.UniformBuffer)
             {
-                ID3D12ShaderReflectionConstantBuffer constantBuffer = reflection.GetConstantBufferByName(resourceDescription.Name);
+                SpvReflectBlockVariable constantBuffer = resourceDescription.block;
 
                 inputType = RhiShaderInputType.Constant;
 
-                shaderVariables = new ShaderVariable[constantBuffer.Variables.Length];
+                shaderVariables = new ShaderVariable[constantBuffer.member_count];
 
-                for (uint j = 0; j < constantBuffer.Variables.Length; j++)
+                for (uint j = 0; j < constantBuffer.member_count; j++)
                 {
-                    var variable = constantBuffer.GetVariableByIndex(j);
+                    var variable = constantBuffer.members[j];
 
-                    ShaderVariableDescription varDesc = variable.Description;
-
-                    size += varDesc.Size;
+                    size += variable.size;
 
                     RhiShaderVariableType variableType = RhiShaderVariableType.Invalid;
 
-                    switch (variable.VariableType.Description.Class)
+                    SpvReflectTypeFlags typeFlags = variable.type_description[0].type_flags;
+
+                    if(typeFlags.HasFlag(SpvReflectTypeFlags.FlagMatrix))
                     {
-                        case ShaderVariableClass.MatrixRows:
-                        case ShaderVariableClass.MatrixColumns:
-                            {
-                                variableType = RhiShaderVariableType.Matrix;
-                                break;
-                            }
-
-                        case ShaderVariableClass.Scalar:
-                            {
-                                variableType = RhiShaderVariableType.Scalar;
-
-                                break;
-                            }
-
-                        case ShaderVariableClass.Vector:
-                            {
-                                variableType = RhiShaderVariableType.Vector;
-
-                                break;
-                            }
-
-                        case ShaderVariableClass.Object:
-                            {
-                                variableType = RhiShaderVariableType.Object;
-
-                                break;
-                            }
-
-                        case ShaderVariableClass.Struct:
-                            {
-                                variableType = RhiShaderVariableType.Struct;
-
-                                break;
-                            }
-
-                        default:
-                            throw new SwitchExpressionException("Unhandled ShaderVariableClass type");
+                        variableType = RhiShaderVariableType.Matrix;
+                    }
+                    else if (typeFlags.HasFlag(SpvReflectTypeFlags.FlagVector))
+                    {
+                        variableType = RhiShaderVariableType.Vector;
+                    }
+                    else if (typeFlags.HasFlag(SpvReflectTypeFlags.FlagStruct))
+                    {
+                        variableType = RhiShaderVariableType.Struct;
+                    }
+                    else
+                    {
+                        UOEDebug.NotImplemented("");
                     }
 
                     shaderVariables[j] = new ShaderVariable
                     {
-                        Name = varDesc.Name,
-                        Offset = (int)varDesc.StartOffset,
-                        Size = varDesc.Size,
+                        Name = variable.Name,
+                        Offset = (int)variable.offset,
+                        Size = variable.size,
                         Type = variableType
                     };
                 }
             }
-            else if(resourceDescription.Type == ShaderInputType.Sampler)
+            else if (resourceDescription.descriptor_type == SpvReflectDescriptorType.Sampler)
             {
                 inputType = RhiShaderInputType.Sampler;
             }
-            else if (resourceDescription.Type == ShaderInputType.Texture)
+            else if (resourceDescription.descriptor_type == SpvReflectDescriptorType.SampledImage)
             {
                 inputType = RhiShaderInputType.Texture;
-
-                var t = reflection.GetVariableByName(resourceDescription.Name);
-
             }
             else
             {
-                Debug.Assert(false);
-            }
-
-            if(resourceDescription.Space != 0)
-            {
-                UOEDebug.NotImplemented($"Only support space 0 so far, not {resourceDescription.Space} in {shaderFile}");
+                UOEDebug.NotImplemented();
             }
 
             shaderParameters.Add(new ShaderParameter
             {
                 Name = resourceDescription.Name,
-                SlotIndex = resourceDescription.BindPoint,
-                Space = resourceDescription.Space,
+                SlotIndex = resourceDescription.binding,
+                Space = resourceDescription.set,
                 Size = size,
                 InputType = inputType,
                 Variables = shaderVariables
             });
         }
 
-        outCompileResult.ShaderBindings = [.. shaderParameters];
+        outShaderBindings = shaderParameters.ToArray();
 
-        List<ShaderStreamBinding> streamBindings = new List<ShaderStreamBinding>(reflection.InputParameters.Length);
+        outStreamBindings = new ShaderStreamBinding[(int)module.input_variable_count];
 
-        for (int i = 0; i < reflection.InputParameters.Length; i++)
+        for (int i = 0; i < module.input_variable_count; i++)
         {
-            var param = reflection.InputParameters[i];
+            ref var inputVariable = ref module.input_variables[0][i];
+            //var param = reflection.InputParameters[i];
+            //if (param.SystemValueType != SystemValueType.Undefined)
+            //{
+            //    // SV_InstanceID, SV_VertexID, etc.
+            //    continue;
+            //}
 
-            if(param.SystemValueType != SystemValueType.Undefined)
+            outStreamBindings[i] = new ShaderStreamBinding
             {
-                // SV_InstanceID, SV_VertexID, etc.
-                continue;
-            }
-
-            // Is vertex attribute.
-
-            streamBindings.Add(new ShaderStreamBinding
-            {
-                SemanticName = param.SemanticName,
-                SemanticIndex = param.Register,
-                Format = ToRhiVertexFormat(param.ComponentType, (byte)param.UsageMask)
-            });
+                SemanticName = inputVariable.Name,
+                SemanticIndex = inputVariable.location,
+                Format = ToRhiVertexFormat(inputVariable.format)
+            };
         }
-
-        outCompileResult.StreamBindings = [.. streamBindings];
     }
 
-    private static RhiVertexAttributeFormat ToRhiVertexFormat(RegisterComponentType type, byte mask) => (type, mask) switch
+    private static RhiVertexAttributeFormat ToRhiVertexFormat(SpvReflectFormat format) => format switch
     {
-        (RegisterComponentType.Float32, 0x1) => RhiVertexAttributeFormat.Float,
-        (RegisterComponentType.Float32, 0x3) => RhiVertexAttributeFormat.Vector2,
-        (RegisterComponentType.Float32, 0x7) => RhiVertexAttributeFormat.Vector3,
-        (RegisterComponentType.Float32, 0xF) => RhiVertexAttributeFormat.Vector4,
-        (RegisterComponentType.UInt32,  0x1) => RhiVertexAttributeFormat.UInt32,
+        SpvReflectFormat.R32Sfloat          => RhiVertexAttributeFormat.Float,
+        SpvReflectFormat.R32g32Sfloat       => RhiVertexAttributeFormat.Vector2,
+        SpvReflectFormat.R32g32b32Sfloat    => RhiVertexAttributeFormat.Vector3,
+        SpvReflectFormat.R32g32b32a32Sfloat => RhiVertexAttributeFormat.Vector4,
+        SpvReflectFormat.R32Uint            => RhiVertexAttributeFormat.UInt32,
                                            _ => throw new NotSupportedException()
     };
 }
