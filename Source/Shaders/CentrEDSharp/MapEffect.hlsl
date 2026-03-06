@@ -30,18 +30,18 @@ cbuffer Parameters : register(b6, space0)
 /* For now, all the techniques use the same vertex definition */
 struct VSInput
 {
-    float3 Position : TEXCOORD0;
-    float3 Texture : TEXCOORD1; //uv, screenPos z offset
-    float4 Hue : TEXCOORD2; //rgb,mode or hueId, unused, alpha, mode
-    float3 Normal : TEXCOORD3;
+    float3 Position : POSITION0;
+    float3 Texture : TEXCOORD0; //uv, screenPos z offset
+    float4 Hue : COLOR0; //rgb,mode or hueId, unused, alpha, mode
+    float3 Normal : NORMAL0;
 };
 
 struct PSInput
 {
     float4 OutputPosition : SV_Position;
     float3 Texture : TEXCOORD0;
-    float4 Hue : TEXCOORD1;
-    float3 Normal : TEXCOORD2;
+    float4 Hue : COLOR0;
+    float3 Normal : NORMAL0;
 };
 
 bool is_zero_vector(float3 v)

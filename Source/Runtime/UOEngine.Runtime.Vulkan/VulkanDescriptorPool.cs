@@ -19,12 +19,14 @@ internal class VulkanDescriptorPool
         VkDescriptorType.UniformBuffer
     ];
 
+    private uint _numAllocated = 0;
+
     internal unsafe VulkanDescriptorPool(VulkanDevice device)
     {
         _device = device;
 
-        const uint numDescriptorsAvailable = 64;
-        const uint maxSets = 64;
+        const uint numDescriptorsAvailable = 1024;
+        const uint maxSets = 256;
 
         VkDescriptorPoolSize* descriptorPoolSizes = stackalloc VkDescriptorPoolSize[_typesForAllocation.Length];
 
@@ -61,8 +63,17 @@ internal class VulkanDescriptorPool
 
         if(result != VkResult.Success)
         {
-            UOEDebug.Assert(false);
+            if(result == VkResult.ErrorOutOfPoolMemory)
+            {
+                UOEDebug.NotImplemented($"Out of pool memory! Allocated {_numAllocated}");
+            }
+            else
+            {
+                UOEDebug.NotImplemented("Error allocating descriptor sets.");
+            }
         }
+
+        _numAllocated++;
 
         return descriptorSet;
     }
@@ -70,5 +81,6 @@ internal class VulkanDescriptorPool
     internal void Reset()
     {
         _device.Api.vkResetDescriptorPool(_device.Handle, _descriptorPool, VkDescriptorPoolResetFlags.None);
+        _numAllocated = 0;
     }
 }

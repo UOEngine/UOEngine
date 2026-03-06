@@ -32,10 +32,10 @@ internal class VulkanGraphicsContext : IRenderContext
     {
         set
         {
-            if (ReferenceEquals(_indexBuffer, value))
-            {
-                return;
-            }
+            //if (ReferenceEquals(_indexBuffer, value))
+            //{
+            //    return;
+            //}
 
             if (value == null)
             {
@@ -56,10 +56,10 @@ internal class VulkanGraphicsContext : IRenderContext
         get => _vertexBuffer ?? throw new InvalidOperationException("VertexBuffer is not set");
         set
         {
-            if (ReferenceEquals(_vertexBuffer, value))
-            {
-                return;
-            }
+            //if (ReferenceEquals(_vertexBuffer, value))
+            //{
+            //    return;
+            //}
 
             if (value == null)
             {
@@ -239,10 +239,19 @@ internal class VulkanGraphicsContext : IRenderContext
         VkDescriptorSet descriptorSet = _descriptorPool.Allocate(GraphicsPipeline.DescriptorSetLayout);
 
         int maxNumBuffers = 4;
+        int maxNumImages = 4;
 
         VkDescriptorBufferInfo* bufferInfos = stackalloc VkDescriptorBufferInfo[maxNumBuffers];
+        VkDescriptorImageInfo* imageInfos = stackalloc VkDescriptorImageInfo[maxNumImages];
+
+        VulkanSampler sampler = _globalSamplers.PointClamp;
+
+        VkDescriptorImageInfo imageSamplerInfo;
+
+        imageSamplerInfo.sampler = sampler.Handle;
 
         int numBuffers = 0;
+        int numImages = 0;
 
         for (int i = 0; i < (int)ShaderProgramType.Count; i++)
         {
@@ -307,26 +316,27 @@ internal class VulkanGraphicsContext : IRenderContext
                         {
                             descriptorWrite.descriptorType = VkDescriptorType.Sampler;
 
-                            VulkanSampler sampler = _globalSamplers.PointClamp;
-
-                            VkDescriptorImageInfo imageInfo;
-
-                            imageInfo.sampler = sampler.Handle;
-
-                            descriptorWrite.pImageInfo = &imageInfo;
+                            descriptorWrite.pImageInfo = &imageSamplerInfo;
 
                             break;
                         }
                     case RhiShaderInputType.Texture:
                         {
-                            VkDescriptorImageInfo imageInfo;
+                            ref var imageInfo = ref imageInfos[numImages];
 
                             descriptorWrite.descriptorType = VkDescriptorType.SampledImage;
-                            
+
+                            UOEDebug.Assert(((VulkanTexture)entry.GetTexture()).ImageView.IsNotNull);
+
                             imageInfo.imageView = ((VulkanTexture)entry.GetTexture()).ImageView;
                             imageInfo.imageLayout = VkImageLayout.ShaderReadOnlyOptimal;
 
-                            descriptorWrite.pImageInfo = &imageInfo;
+                            descriptorWrite.pImageInfo = &imageInfos[numImages];
+
+                            numImages++;
+
+                            UOEDebug.Assert(numImages <= maxNumImages);
+
 
                             break;
                         }

@@ -5,12 +5,12 @@ namespace Microsoft.Xna.Framework.Graphics;
 public class VertexBuffer : IDisposable
 {
     public IRhiBuffer RhiVertexBuffer { get; private set; }
+    public bool Dynamic { get; private set;  }
 
     public readonly VertexDeclaration VertexDeclaration;
 
     private GraphicsDevice _graphicsDevice;
     private int _vertexCount;
-    private bool _dynamic;
     private bool _disposed = false;
 
     public VertexBuffer(GraphicsDevice graphicsDevice, VertexDeclaration vertexDeclaration, int vertexCount, BufferUsage bufferUsage)
@@ -34,11 +34,11 @@ public class VertexBuffer : IDisposable
         _graphicsDevice = graphicsDevice;
         VertexDeclaration = vertexDeclaration;
         _vertexCount = vertexCount;
-        _dynamic = dynamic;
+        Dynamic = dynamic;
 
         RhiBufferUsageFlags flags = RhiBufferUsageFlags.Vertex;
 
-        if (_dynamic)
+        if (Dynamic)
         {
             flags |= RhiBufferUsageFlags.Dynamic;
         }
