@@ -28,6 +28,9 @@
     </Project>
   </Folder>
   <Folder Name="/Runtime/">
+    <Project Path="Source/Runtime/UOEngine.Runtime.Application/UOEngine.Runtime.Application.csproj" Id="3e3597c3-e24d-44da-a605-d5183402aec7">
+      <Platform Project="x64" />
+    </Project>
     <Project Path="Source/Runtime/UOEngine.Runtime.Core/UOEngine.Runtime.Core.csproj" Id="cf99cafa-d9ec-4dcf-a635-947b2299e8df">
       <Platform Project="x64" />
     </Project>
@@ -55,8 +58,25 @@
     <Project Path="Source/Runtime/UOEngine.Runtime.UI/UOEngine.Runtime.UI.csproj" Id="a4500abb-2b74-4bd6-bdc2-423bb8a11d48">
       <Platform Project="x64" />
     </Project>
+    <Project Path="Source/Runtime/UOEngine.Runtime.Vulkan/UOEngine.Runtime.Vulkan.csproj" Id="6a64be71-a27e-4a7d-acdf-9cf84a2a80c0">
+      <Platform Project="x64" />
+    </Project>
   </Folder>
   <Folder Name="/Shaders/" />
+  <Folder Name="/Tests/">
+    <Project Path="Source/Tests/UOEngine.Tests.DynamicVertexBuffer/UOEngine.Tests.DynamicVertexBuffer.csproj" Id="956aa0d7-92d2-4344-9758-3089e74a6472">
+      <Platform Project="x64" />
+    </Project>
+    <Project Path="Source/Tests/UOEngine.Tests.Present/UOEngine.Tests.Present.csproj" Id="a0ad9551-fa77-4504-9c56-91f34e0fa812">
+      <Platform Project="x64" />
+    </Project>
+    <Project Path="Source/Tests/UOEngine.Tests.TexturedQuad/UOEngine.Tests.TexturedQuad.csproj" Id="e87f3e13-011d-48e9-bf55-b7a52ae5ef8a">
+      <Platform Project="x64" />
+    </Project>
+    <Project Path="Source/Tests/UOEngine.Tests.Triangle/UOEngine.Tests.Triangle.csproj" Id="6ad37294-6cad-45cd-a282-593c5abcfde7">
+      <Platform Project="x64" />
+    </Project>
+  </Folder>
   <Folder Name="/ThirdParty/">
     <File Path="ThirdParty/Directory.Build.Props" />
     <Project Path="ThirdParty/FAudio/csharp/FAudio-CS.Core.csproj">

@@ -10,6 +10,7 @@ public enum RhiShaderInputType
     Texture,
     Sampler,
     Constant,
+
     Count,
     Invalid
 }
@@ -43,6 +44,10 @@ public readonly struct ShaderParameter
     public readonly uint Size { get; init; }
     public readonly RhiShaderInputType InputType { get; init; }
     public readonly uint SlotIndex { get; init; }
+
+    // The space (D3D) or set (Vulkan)
+    public readonly uint Space { get; init; }
+
     public readonly ShaderVariable[] Variables { get; init; }
 }
 
@@ -109,7 +114,9 @@ public abstract class RhiShaderResource
             }
         }
 
-        throw new UnreachableException("Could not find shader binding handle in vertex shader.");
+        var parameterNames = GetParameterNames(programType);
+
+        throw new UnreachableException($"Could not find shader binding handle in vertex shader for {name}. Available variables are: {string.Join(", ", parameterNames)}");
     }
 
     public ShaderBindingHandle GetBindingHandle(ShaderProgramType programType, RhiShaderInputType inputType, int index)

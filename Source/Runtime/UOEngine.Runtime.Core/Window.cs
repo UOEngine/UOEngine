@@ -26,14 +26,20 @@ public class Window: IWindow, IDisposable
 
     private bool _disposed;
 
-    public void Startup(PlatformEventLoop eventLoop)
+    public Window(PlatformEventLoop eventLoop)
+    {
+        eventLoop.OnWindowResized += OnWindowResize;
+        eventLoop.RegisterWindow(this);
+
+        Startup();
+    }
+
+    public void Startup()
     {
         if (!SDL_Init(SDL_InitFlags.SDL_INIT_EVENTS))
         {
             throw new Exception("SDL_Init failed: " + SDL_GetError());
         }
-
-        eventLoop.OnWindowResized += OnWindowResize;
 
         string title = "UOEngine";
 
@@ -50,8 +56,6 @@ public class Window: IWindow, IDisposable
         }
 
         UpdateRenderTargetSize();
-
-        eventLoop.RegisterWindow(this);
 
         // Win32 handle if needed
         //Handle = SDL.SDL_GetPointerProperty(SDL.SDL_GetWindowProperties(_sdlHandle), SDL.SDL_PROP_WINDOW_WIN32_HWND_POINTER, IntPtr.Zero);

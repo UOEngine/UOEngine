@@ -8,17 +8,17 @@ static const float TileSize = 44 * rsqrt(2);
 static const float3 LIGHT_DIRECTION = float3(0.0f, 1.0f, 1.0f);
 static const float Brightlight = 1.5f; //This can be parametrized, but 1.5f is default :)
 
-SamplerState TextureSampler : register(s0, space2);
-Texture2D Texture : register(t0, space2);
+SamplerState TextureSampler : register(s0, space0);
+Texture2D Texture : register(t1, space0);
 
-SamplerState HueSampler : register(s1, space2);
-Texture2D HueTexture : register(t1, space2);
+SamplerState HueSampler : register(s2, space0);
+Texture2D HueTexture : register(t3, space0);
 
-SamplerState LightSampler : register(s2, space2);
-Texture2D LightTexture : register(t2, space2);
+SamplerState LightSampler : register(s4, space0);
+Texture2D LightTexture : register(t5, space0);
 
 //Effect parameters
-cbuffer Parameters : register(b0, space1)
+cbuffer Parameters : register(b6, space0)
 {
     row_major float4x4 WorldViewProj;
     float4 VirtualLayerFillColor;
@@ -30,18 +30,18 @@ cbuffer Parameters : register(b0, space1)
 /* For now, all the techniques use the same vertex definition */
 struct VSInput
 {
-    float3 Position : TEXCOORD0;
-    float3 Texture : TEXCOORD1; //uv, screenPos z offset
-    float4 Hue : TEXCOORD2; //rgb,mode or hueId, unused, alpha, mode
-    float3 Normal : TEXCOORD3;
+    float3 Position : POSITION0;
+    float3 Texture : TEXCOORD0; //uv, screenPos z offset
+    float4 Hue : COLOR0; //rgb,mode or hueId, unused, alpha, mode
+    float3 Normal : NORMAL0;
 };
 
 struct PSInput
 {
     float4 OutputPosition : SV_Position;
     float3 Texture : TEXCOORD0;
-    float4 Hue : TEXCOORD1;
-    float3 Normal : TEXCOORD2;
+    float4 Hue : COLOR0;
+    float3 Normal : NORMAL0;
 };
 
 bool is_zero_vector(float3 v)

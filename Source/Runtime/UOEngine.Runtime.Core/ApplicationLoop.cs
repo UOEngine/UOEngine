@@ -8,12 +8,18 @@ public class ApplicationLoop
 
     public event Action<float>? OnUpdate;
 
+    public event Action? OnStartup;
+
+    public event Action? OnExit;
+
     public bool ExitRequested { get; private set; }
 
     public void FrameBegin()
     {
         OnFrameBegin?.Invoke();
     }
+
+    public void Start() => OnStartup?.Invoke();
 
     public void RequestExit(string? reason = null)
     {

@@ -16,11 +16,9 @@ public interface IRenderContext
 {
     public ShaderInstance ShaderInstance { get; set; }
 
-    public IRhiIndexBuffer IndexBuffer { set; }
+    public IRhiBuffer IndexBuffer { set; }
 
-    public IRhiVertexBuffer VertexBuffer { get; set; }
-
-    public ModelViewProjection MVP { get; set; }
+    public IRhiBuffer VertexBuffer { get; set; }
 
     public RhiSampler Sampler { get; set; }
 
@@ -28,7 +26,7 @@ public interface IRenderContext
     public void BeginRenderPass(in RenderPassInfo renderPassInfo);
     public void EndRenderPass();
 
-    public void BeginRecording();
+    //public void BeginRecording();
     public void EndRecording();
 
     public void DrawIndexedPrimitives(uint numIndices, uint numInstances, uint firstIndex, uint vertexOffset, uint firstInstance);

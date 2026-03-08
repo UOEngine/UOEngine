@@ -85,7 +85,6 @@ public class Remapper
                 shaderInstances[i] = _renderResourceFactory.NewShaderInstance(shaderResource);
             }
 
-
             effectTechniques.Add(new UOEEffectTechnique
             {
                 Name = technique.Name,

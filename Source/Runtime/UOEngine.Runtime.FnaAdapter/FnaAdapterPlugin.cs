@@ -139,5 +139,7 @@ public class FnaAdapterPlugin: IPlugin
     public void RegisterGame(Game game)
     {
         _hostedFNAGames.Add(game);
+
+        game.DoInitialise();
     }
 }

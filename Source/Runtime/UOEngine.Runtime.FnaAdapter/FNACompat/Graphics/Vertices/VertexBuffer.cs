@@ -1,125 +1,85 @@
-﻿using System.Diagnostics;
-using UOEngine.Runtime.Core;
-using UOEngine.Runtime.RHI;
+﻿using UOEngine.Runtime.RHI;
 
 namespace Microsoft.Xna.Framework.Graphics;
 
 public class VertexBuffer : IDisposable
 {
-    public IRhiVertexBuffer RhiVertexBuffer { get; private set; }
+    public IRhiBuffer RhiVertexBuffer { get; private set; }
+    public bool Dynamic { get; private set;  }
 
-    private bool _disposed = false;
-
-    private List<IRhiVertexBuffer> _vertexBuffers = [];
+    public readonly VertexDeclaration VertexDeclaration;
 
     private GraphicsDevice _graphicsDevice;
-    private VertexDeclaration _vertexDeclaration;
     private int _vertexCount;
-    private bool _dynamic;
-
-    private int _activeVertexBufferIndex = 0;
-    private int _timesCalledPerFrame = 0;
+    private bool _disposed = false;
 
     public VertexBuffer(GraphicsDevice graphicsDevice, VertexDeclaration vertexDeclaration, int vertexCount, BufferUsage bufferUsage)
         : this(graphicsDevice, vertexDeclaration, vertexCount, bufferUsage, false)
     {
     }
 
-    public void SetDataPointerEXT(int offsetInBytes, IntPtr data, int dataLength, SetDataOptions options)
+    public unsafe void SetDataPointerEXT(int offsetInBytes, IntPtr data, int dataLength, SetDataOptions options)
     {
-        // Doing this is meh. 
-        // FNA seems to hold them all in different transfer buffers before flushing them when the limit is reached
-        // and also flushing the command lists to submit them and do the draws, even mid frame draw.
-        // Not a good idea but this is the easiest way to get this working for now. 
-        // FNA Compat is just that...temp compat. Anyone using it should really do dynamic
-        // per frame vertex update properly :). 
-        if (_dynamic && _timesCalledPerFrame >= 1)
-        {
-            _activeVertexBufferIndex++;
+        Span<byte> vertexData = RhiVertexBuffer.Lock((uint)dataLength, (uint)offsetInBytes);
 
-            if (_vertexBuffers.Count == _activeVertexBufferIndex)
-            {
-                AddVertexBuffer();
-            }
-            RhiVertexBuffer = _vertexBuffers[_activeVertexBufferIndex];
-        }
+        var src = new ReadOnlySpan<byte>((void*)data, dataLength);
 
-        RhiVertexBuffer.SetData(offsetInBytes, data, dataLength);
-        RhiVertexBuffer.Upload();
+        src.CopyTo(vertexData);
 
-        if(_dynamic)
-        {
-            _timesCalledPerFrame++;
-        }
-    }
-
-    public void Dispose()
-    {
-        Dispose(true);
-
-        GC.SuppressFinalize(this);
-    }
-
-    internal void Reset()
-    {
-        _activeVertexBufferIndex = 0;
-        _timesCalledPerFrame = 0;
+        RhiVertexBuffer.Unlock();
     }
 
     protected VertexBuffer(GraphicsDevice graphicsDevice, VertexDeclaration vertexDeclaration, int vertexCount, BufferUsage bufferUsage, bool dynamic)
     {
         _graphicsDevice = graphicsDevice;
-        _vertexDeclaration = vertexDeclaration;
+        VertexDeclaration = vertexDeclaration;
         _vertexCount = vertexCount;
-        _dynamic = dynamic;
+        Dynamic = dynamic;
 
-        if(_dynamic)
+        RhiBufferUsageFlags flags = RhiBufferUsageFlags.Vertex;
+
+        if (Dynamic)
         {
-            graphicsDevice.RegisterDynamicVertexBuffer(this);
+            flags |= RhiBufferUsageFlags.Dynamic;
         }
 
-        AddVertexBuffer();
+        RhiVertexBuffer = _graphicsDevice.RenderResourceFactory.NewBuffer(new RhiBufferDescription
+        {
+            Size = (uint)vertexCount * VertexDeclaration.RhiVertexDefinition.Stride,
+            Usage = flags,
+            Stride = VertexDeclaration.RhiVertexDefinition.Stride,
+        });
 
-        RhiVertexBuffer = _vertexBuffers[0];
+        //RhiVertexBuffer = _vertexBuffers[0];
     }
 
     protected virtual void Dispose(bool disposing)
     {
-        if (_disposed)
+        if (!_disposed)
         {
-            return;
-        }
+            if (disposing)
+            {
+                // TODO: dispose managed state (managed objects)
+            }
 
-        foreach(var vertexBuffer in _vertexBuffers)
-        {
-            vertexBuffer.CleanUp();
+            //RhiVertexBuffer.Dis
+            // TODO: free unmanaged resources (unmanaged objects) and override finalizer
+            // TODO: set large fields to null
+            _disposed = true;
         }
-
-        if (_dynamic)
-        {
-            _graphicsDevice.UnregisterDynamicVertexBuffer(this);
-        }
-
-        _disposed = true;
     }
 
-    private void AddVertexBuffer()
+    // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+    // ~VertexBuffer()
+    // {
+    //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+    //     Dispose(disposing: false);
+    // }
+
+    public void Dispose()
     {
-        RhiVertexBufferFlags flags = RhiVertexBufferFlags.None;
-
-        if(_dynamic)
-        {
-            flags |= RhiVertexBufferFlags.Dynamic;
-        }
-
-        var vertexBuffer = _graphicsDevice.RenderResourceFactory.CreateVertexBuffer(new RhiVertexBufferDescription
-        {
-            VertexCount = (uint)_vertexCount,
-            Stride = _vertexDeclaration.RhiVertexDefinition.Stride,
-            AttributesDefinition = _vertexDeclaration.RhiVertexDefinition,
-            Flags = flags
-        });
-
-        _vertexBuffers.Add(vertexBuffer);
+        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
     }
 }

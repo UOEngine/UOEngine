@@ -84,7 +84,6 @@ public class GraphicsDevice
         get => _indices;
         set
         {
-            if (ReferenceEquals(_indices, value)) return;
             _indices = value;
             _indicesDirty = true;
         }
@@ -122,6 +121,7 @@ public class GraphicsDevice
 
     private VertexBuffer? _vertexBuffer;
     private bool _vertexBufferDirty = false;
+    private uint _vertexOffset = 0;
 
     private readonly bool[] _modifiedSamplers = new bool[MAX_TEXTURE_SAMPLERS];
     private readonly bool[] _modifiedVertexSamplers = new bool[MAX_VERTEXTEXTURE_SAMPLERS];
@@ -176,6 +176,7 @@ public class GraphicsDevice
     {
         _vertexBuffer = vertexBuffer;
         _vertexBufferDirty = true;
+        _vertexOffset = 0;
     }
 
     public void DrawIndexedPrimitives(PrimitiveType primitiveType, int baseVertex, int minVertexIndex, int numVertices, int startIndex, int primitiveCount)
@@ -183,7 +184,7 @@ public class GraphicsDevice
         ApplyState();
 
         int numIndices = primitiveCount * 3;
-
+     
         RenderContext.DrawIndexedPrimitives((uint)numIndices, 1, (uint)startIndex, (uint)baseVertex, 0);
     }
 
@@ -239,11 +240,6 @@ public class GraphicsDevice
 
     internal void OnFrameBegin(IRenderContext renderContext)
     {
-        foreach (var vertexBuffer in _dynamicVertexBuffers)
-        {
-            vertexBuffer.Reset();
-        }
-
         RenderContext = renderContext;
     }
 
@@ -263,7 +259,7 @@ public class GraphicsDevice
             Rasteriser = GetRasteriserState(),
             BlendState = _blendStates[_fnaBlendState],
             DepthStencilState = GetDepthStencilState(),
-            VertexLayout = null
+            VertexLayout = _vertexBuffer!.VertexDeclaration.RhiVertexDefinition
         });
 
         _graphicsPipelineDirty = false;
@@ -277,6 +273,7 @@ public class GraphicsDevice
         }
 
         RenderContext.VertexBuffer = _vertexBuffer?.RhiVertexBuffer!;
+
         _vertexBufferDirty = false;
     }
 

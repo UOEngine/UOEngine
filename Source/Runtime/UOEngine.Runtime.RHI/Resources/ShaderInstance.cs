@@ -118,6 +118,8 @@ public class ShaderInstance
 
     public RhiShaderResource ShaderResource => _shaderResource;
 
+    public readonly int NumBindings;
+
     private readonly RhiShaderResource _shaderResource;
 
     public ShaderInstance(RhiShaderResource shaderResource)
@@ -132,6 +134,8 @@ public class ShaderInstance
             {
                 continue;
             }
+
+            NumBindings += bindingsForProgram.Parameters.Length;
 
             BindingData[i].Bindings = new ShaderBindingDataEntry[bindingsForProgram.Parameters.Length];
 

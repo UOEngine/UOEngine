@@ -7,15 +7,20 @@ namespace UOEngine.Runtime.Core;
 public class UOEDebug
 {
     [DebuggerHidden]
-    public static void NotImplemented()
+    public static void NotImplemented(string? message = default)
     {
         if(Debugger.IsAttached)
         {
+            if(message != null)
+            {
+                Debug.WriteLine($"NotImplemented: {message}");
+            }
+
             Debugger.Break();
         }
         else
         {
-            throw new NotImplementedException();
+            throw new NotImplementedException(message);
         }
     }
 
@@ -63,10 +68,10 @@ public class UOEDebug
 
     public static void Trace(string message)
     {
-        string output = $"{Application.FrameNumber}: {message}";
+        //string output = $"{Application.FrameNumber}: {message}";
 
-        Console.WriteLine(output);
-        Debug.WriteLine(output);
+        //Console.WriteLine(output);
+        //Debug.WriteLine(output);
 
     }
 

@@ -1,19 +1,22 @@
-﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
-using UOEngine.Runtime.Core;
+using UOEngine.Editor;
+using UOEngine.Editor.CentredSharp;
+
+using UOEngine.Runtime.Application;
+using UOEngine.Runtime.FnaAdapter;
 
 public static class Program
 {
-    public static void Main(string[] args)
+    public static int Main(string[] args)
     {
-        if(CommandLine.HasOption("-wait_for_debugger"))
-        {
-            UOEDebug.WaitForDebugger();
-        }
-
-        using (var app = new Application())
-        {
-            app.Start();
-        }
+        return UOEngineAppBuilder.Configure<UOEngineEditor>()
+            .UseDefaults()
+            .ConfigurePlugins(pluginRegistry =>
+            {
+                pluginRegistry.LoadPlugin<FnaAdapterPlugin>();
+                pluginRegistry.LoadPlugin<CentrEdSharpPlugin>();
+            })
+            .Start(args);
     }
 }
