@@ -79,9 +79,11 @@ internal class UOEngineSkiaGpu : ISkiaGpu
             SharingMode = vkImageInterop.SharingMode
         };
 
+        var renderTarget = new GRBackendRenderTarget(size.Width, size.Height, imageInfo);
+
         var skSurface = SKSurface.Create(
             _grContext,
-            new GRBackendRenderTarget(size.Width, size.Height, imageInfo),
+            renderTarget,
             GRSurfaceOrigin.TopLeft,
             SKColorType.Rgba8888,
             new SKSurfaceProperties(SKPixelGeometry.RgbHorizontal)

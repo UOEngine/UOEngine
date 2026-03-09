@@ -70,12 +70,8 @@ internal class VulkanTexture: IRenderTexture, IDisposable
 
         VkImage image;
 
-        VkImageUsageFlags usageFlags = textureDescription.Usage;
-
-        if(usageFlags.HasFlag(VkImageUsageFlags.Sampled))
-        {
-            usageFlags |= VkImageUsageFlags.TransferDst;
-        }
+       Description.Usage = VkImageUsageFlags.TransferDst | VkImageUsageFlags.TransferSrc | VkImageUsageFlags.Sampled;
+       Description.Usage |= textureDescription.Usage;
 
         fixed (uint* ptr = sharedQueueFamilyIndices)
         {
@@ -93,7 +89,7 @@ internal class VulkanTexture: IRenderTexture, IDisposable
                 format = textureDescription.Format,
                 tiling = VkImageTiling.Optimal,
                 initialLayout = VkImageLayout.Undefined,
-                usage = usageFlags,
+                usage = Description.Usage,
                 samples = VkSampleCountFlags.Count1,
                 sharingMode = VkSharingMode.Concurrent,
                 queueFamilyIndexCount = 2,
