@@ -1,11 +1,10 @@
 ﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using System.Runtime.InteropServices;
-
-using Vortice.Vulkan;
-
 using UOEngine.Runtime.Core;
 using UOEngine.Runtime.RHI;
+using Vortice.Vulkan;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace UOEngine.Runtime.Vulkan;
 
@@ -14,6 +13,7 @@ public struct VulkanTextureDescription
     public uint Width;
     public uint Height;
     public VkFormat Format;
+    public VkImageUsageFlags Usage;
 }
 
 internal static class RhiTextureDescriptionExtensions
@@ -24,9 +24,11 @@ internal static class RhiTextureDescriptionExtensions
         {
             Width = rhiTextureDescription.Width,
             Height = rhiTextureDescription.Height,
-            Format = VkFormat.R8G8B8A8Unorm
+            Format = VkFormat.R8G8B8A8Unorm,
+            Usage = rhiTextureDescription.Usage.ToVkImageUsageFlags()
         };
     }
+
 }
 
 internal class VulkanTexture: IRenderTexture, IDisposable
@@ -54,6 +56,8 @@ internal class VulkanTexture: IRenderTexture, IDisposable
 
     private bool _ownsImage = true;
 
+    private RhiVkImageInterop _imageInterop;
+
     internal unsafe VulkanTexture(VulkanDevice device, in VulkanTextureDescription textureDescription)
     {
         _device = device;
@@ -66,9 +70,15 @@ internal class VulkanTexture: IRenderTexture, IDisposable
 
         VkImage image;
 
+        VkImageUsageFlags usageFlags = textureDescription.Usage;
+
+        if(usageFlags.HasFlag(VkImageUsageFlags.Sampled))
+        {
+            usageFlags |= VkImageUsageFlags.TransferDst;
+        }
+
         fixed (uint* ptr = sharedQueueFamilyIndices)
         {
-
             VkImageCreateInfo imageCreateInfo = new()
             {
                 imageType = VkImageType.Image2D,
@@ -83,7 +93,7 @@ internal class VulkanTexture: IRenderTexture, IDisposable
                 format = textureDescription.Format,
                 tiling = VkImageTiling.Optimal,
                 initialLayout = VkImageLayout.Undefined,
-                usage = VkImageUsageFlags.TransferDst | VkImageUsageFlags.Sampled,
+                usage = usageFlags,
                 samples = VkSampleCountFlags.Count1,
                 sharingMode = VkSharingMode.Concurrent,
                 queueFamilyIndexCount = 2,
@@ -107,8 +117,7 @@ internal class VulkanTexture: IRenderTexture, IDisposable
 
         Texels = new byte[Width * Height * bytesPerTexel];
 
-        CreateImageView();
-
+        FinaliseSetup();
     }
 
     internal VulkanTexture(VulkanDevice device, in RhiTextureDescription description)
@@ -122,7 +131,7 @@ internal class VulkanTexture: IRenderTexture, IDisposable
 
         Image = image;
 
-        CreateImageView();
+        FinaliseSetup();
     }
 
     public Span<T> GetTexelsAs<T>() where T : unmanaged
@@ -203,6 +212,17 @@ internal class VulkanTexture: IRenderTexture, IDisposable
         Dispose(disposing: true);
         GC.SuppressFinalize(this);
     }
+    public void GetFeature<T>(out T feature) where T : IRhiTextureInterop
+    {
+        if(_imageInterop is T typed)
+        {
+            feature = typed;
+
+            return;
+        }
+
+        throw new InvalidOperationException();
+    }
 
     protected virtual void Dispose(bool disposing)
     {
@@ -229,6 +249,18 @@ internal class VulkanTexture: IRenderTexture, IDisposable
     ~VulkanTexture()
     {
         Dispose(disposing: false);
+    }
+
+    private void FinaliseSetup()
+    {
+        CreateImageView();
+
+        _imageInterop.Handle = (ulong)Image;
+        _imageInterop.Format = (uint)Description.Format;
+        _imageInterop.SharingMode = (uint)VkSharingMode.Exclusive;
+        _imageInterop.ImageUsageFlags = (uint)Description.Usage;
+        _imageInterop.ImageTiling = (uint)VkImageTiling.Optimal;
+        _imageInterop.ImageLayout = (uint)VkImageLayout.ColorAttachmentOptimal;
     }
 
     private unsafe void CreateImageView()

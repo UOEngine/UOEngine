@@ -70,4 +70,12 @@ internal static class RhiTypesToVulkanTypes
         RhiBlendOperation.Subtract => VkBlendOp.Subtract,
         _ => throw new NotImplementedException()
     };
+
+    internal static VkImageUsageFlags ToVkImageUsageFlags(this RhiRenderTextureUsage usage) => usage switch
+    {
+        RhiRenderTextureUsage.Sampler => VkImageUsageFlags.Sampled,
+        RhiRenderTextureUsage.ColourTarget => VkImageUsageFlags.ColorAttachment,
+        _ => throw new NotImplementedException(),
+    };
+
 }

@@ -122,7 +122,8 @@ internal class VulkanSwapchain: IDisposable
             {
                 Width = Extent.width,
                 Height = Extent.height,
-                Format = surfaceFormat.format
+                Format = surfaceFormat.format,
+                Usage = VkImageUsageFlags.ColorAttachment
             });
 
             texture.InitFromExistingResource(swapChainImages[i]);

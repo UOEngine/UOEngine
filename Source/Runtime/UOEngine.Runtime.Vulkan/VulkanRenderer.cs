@@ -48,7 +48,6 @@ public class VulkanRenderer : IRenderer
 
     private ref PerFrameData GetCurrentFrameData() => ref _perFrameData[_frameIndex & 0x1];
 
-
     public VulkanRenderer(IWindow window, IRenderResourceFactory resourceFactory)
     {
         _window = window;
@@ -186,6 +185,39 @@ public class VulkanRenderer : IRenderer
         renderTarget.Setup(_swapchain.BackbufferToRenderInto);
 
         return renderTarget;
+    }
+
+    public void GetInteropContext(out RhiInteropContext interopContext)
+    {
+        interopContext = new RhiInteropContext
+        {
+            Instance = _instance.Instance,
+            PhysicalDevice = _device.PhysicalDeviceHandle,
+            Device = _device.Handle,
+            GraphicsQueue = _device.GraphicsQueue.Handle,
+            GetProcAddress = (name, instance, device) =>
+            {
+                if (device != 0)
+                {
+                    unsafe
+                    {
+                        return (nint)_instance.Api.vkGetDeviceProcAddr(device, name).Value;
+                    }
+                    //var p = _instance.Api.GetDeviceProcAddress(new((ulong)device), name);
+                    //if (p != 0) return p;
+                }
+
+                //if (instance != 0)
+                {
+                    unsafe
+                    {
+                        return (nint)vkGetInstanceProcAddr(instance, name).Value;
+                    }
+                }
+
+                //return vkGetInstanceProcAddr(default, name);
+            }
+        };
     }
 
     private void AcquireNextImage()

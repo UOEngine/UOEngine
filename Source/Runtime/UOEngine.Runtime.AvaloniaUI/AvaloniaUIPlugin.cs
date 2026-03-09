@@ -1,9 +1,10 @@
-﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using Avalonia;
 
 using UOEngine.Runtime.Plugin;
 using UOEngine.Runtime.Renderer;
+using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Runtime.AvaloniaUI;
 
@@ -12,9 +13,14 @@ namespace UOEngine.Runtime.AvaloniaUI;
 public class AvaloniaUIPlugin: IPlugin
 {
     private AvaloniaControl? _rootControl;
+    private readonly IRenderer _renderer;
+    private readonly IRenderResourceFactory _resourceFactory;
 
-    public AvaloniaUIPlugin(RenderSystem renderSystem)
+    public AvaloniaUIPlugin(RenderSystem renderSystem, IRenderer renderer, IRenderResourceFactory resourceFactory)
     {
+        _renderer = renderer;
+        _resourceFactory = resourceFactory;
+
         renderSystem.OnFrameEnd += (renderContext) =>
         {
             _rootControl!.Draw();
@@ -24,7 +30,7 @@ public class AvaloniaUIPlugin: IPlugin
     public void PostStartup()
     {
         AppBuilder.Configure<AvaloniaApp>()
-            .UseUOEngine()
+            .UseUOEngine(_renderer, _resourceFactory)
             .SetupWithoutStarting();
 
         _rootControl = new AvaloniaControl();
@@ -35,9 +41,9 @@ public class AvaloniaUIPlugin: IPlugin
 
 public static class AppBuilderExtensions
 {
-    public static AppBuilder UseUOEngine(this AppBuilder builder)
+    public static AppBuilder UseUOEngine(this AppBuilder builder, IRenderer renderer, IRenderResourceFactory resourceFactory)
         => builder
             .UseStandardRuntimePlatformSubsystem()
             .UseSkia()
-            .UseWindowingSubsystem(UOEnginePlatform.Initialise);
+            .UseWindowingSubsystem(() => UOEnginePlatform.Initialise(renderer, resourceFactory));
 }

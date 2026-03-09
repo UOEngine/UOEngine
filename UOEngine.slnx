@@ -91,10 +91,28 @@
     </Project>
   </Folder>
   <Folder Name="/ThirdParty/Avalonia/">
-    <Project Path="../GitRepos/Avalonia/src/Avalonia.Controls/Avalonia.Controls.csproj" />
-    <Project Path="../GitRepos/Avalonia/src/Skia/Avalonia.Skia/Avalonia.Skia.csproj" />
-    <Project Path="../GitRepos/Avalonia/src/tools/Avalonia.Analyzers/Avalonia.Analyzers.csproj" />
-    <Project Path="../GitRepos/Avalonia/src/tools/DevAnalyzers/DevAnalyzers.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/Avalonia.Base/Avalonia.Base.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/Avalonia.Build.Tasks/Avalonia.Build.Tasks.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/Avalonia.Controls/Avalonia.Controls.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/Avalonia.DesignerSupport/Avalonia.DesignerSupport.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/Avalonia.Dialogs/Avalonia.Dialogs.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/Avalonia.Metal/Avalonia.Metal.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/Avalonia.MicroCom/Avalonia.MicroCom.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/Avalonia.OpenGL/Avalonia.OpenGL.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/Avalonia.Remote.Protocol/Avalonia.Remote.Protocol.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/Avalonia.Vulkan/Avalonia.Vulkan.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/Skia/Avalonia.Skia/Avalonia.Skia.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/tools/Avalonia.Analyzers/Avalonia.Analyzers.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/tools/Avalonia.Generators/Avalonia.Generators.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/tools/DevAnalyzers/DevAnalyzers.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/tools/DevGenerators/DevGenerators.csproj" />
+  </Folder>
+  <Folder Name="/ThirdParty/Avalonia/Markup/">
+    <Project Path="ThirdParty/Avalonia/src/Markup/Avalonia.Markup.Xaml/Avalonia.Markup.Xaml.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/Markup/Avalonia.Markup/Avalonia.Markup.csproj" />
+  </Folder>
+  <Folder Name="/ThirdParty/Avalonia/Packages/">
+    <Project Path="ThirdParty/Avalonia/packages/Avalonia/Avalonia.csproj" />
   </Folder>
   <Folder Name="/ThirdParty/CentrEDSharp/">
     <Project Path="ThirdParty/centredsharp/CentrED/CentrED.csproj" />

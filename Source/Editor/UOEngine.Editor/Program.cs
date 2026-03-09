@@ -4,6 +4,7 @@ using UOEngine.Editor;
 using UOEngine.Editor.CentredSharp;
 
 using UOEngine.Runtime.Application;
+using UOEngine.Runtime.AvaloniaUI;
 using UOEngine.Runtime.FnaAdapter;
 
 public static class Program
@@ -16,6 +17,7 @@ public static class Program
             {
                 pluginRegistry.LoadPlugin<FnaAdapterPlugin>();
                 pluginRegistry.LoadPlugin<CentrEdSharpPlugin>();
+                pluginRegistry.LoadPlugin<AvaloniaUIPlugin>();
             })
             .Start(args);
     }

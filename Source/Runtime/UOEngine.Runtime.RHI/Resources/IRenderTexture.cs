@@ -16,6 +16,8 @@ public struct RhiTextureDescription
     public string? Name;
 }
 
+public interface IRhiTextureInterop { }
+
 public interface IRenderTexture
 {
     public string Name { get; set; }
@@ -25,14 +27,21 @@ public interface IRenderTexture
     public uint Width { get; }
     public uint Height { get; }
 
-    //public void SetData(Span<uint> texels);
-
-    //public void SetData(Span<byte> texels);
-
     public Span<T> GetTexelsAs<T>() where T : unmanaged;
 
     public void Upload();
 
     public void Upload(uint x = 0, uint y = 0, uint w = 0, uint h = 0);
 
+    void GetFeature<T>(out T? feature) where T : IRhiTextureInterop;
+
+}
+public struct RhiVkImageInterop : IRhiTextureInterop
+{
+    public ulong Handle;
+    public uint Format;
+    public uint ImageLayout;
+    public uint ImageTiling;
+    public uint ImageUsageFlags;
+    public uint SharingMode;
 }

@@ -1,9 +1,11 @@
-﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using Avalonia;
+using Avalonia.Rendering;
 using Avalonia.Skia;
 using SkiaSharp;
-using System.Drawing;
+
+using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Runtime.AvaloniaUI;
 
@@ -13,9 +15,32 @@ internal class UOEngineSkiaGpu : ISkiaGpu
 
     private GRContext _grContext = null!;
 
-    public UOEngineSkiaGpu()
+    private readonly RhiInteropContext _interopContext;
+    private readonly IRenderResourceFactory _resourceFactory;
+    private readonly RHI.IRenderer _renderer;
+
+    public UOEngineSkiaGpu(RHI.IRenderer renderer, IRenderResourceFactory resourceFactory)
     {
-        //_grContext = grContext;
+        _renderer = renderer;
+        _resourceFactory = resourceFactory;
+        renderer.GetInteropContext(out var interopContext);
+
+        _interopContext = interopContext;
+
+        var vkContext = new GRVkBackendContext
+        {
+            VkInstance = interopContext.Instance,
+            VkPhysicalDevice = interopContext.PhysicalDevice,
+            VkDevice = interopContext.Device,
+            VkQueue = interopContext.GraphicsQueue,
+            GraphicsQueueIndex = interopContext.QueueFamilyIndex,
+            GetProcedureAddress = (name, instance, device) => interopContext.GetProcAddress(name, instance, device)
+        };
+
+        if (GRContext.CreateVulkan(vkContext) is not { } grContext)
+            throw new InvalidOperationException("Couldn't create Vulkan context");
+        
+        _grContext = grContext;
     }
 
     public IDisposable EnsureCurrent() => EmptyDisposable.Instance;
@@ -30,18 +55,40 @@ internal class UOEngineSkiaGpu : ISkiaGpu
 
     public UOEngineSkiaSurface CreateSurface(PixelSize size)
     {
-        //var grVkImageInfo = new GRVkImageInfo(); // Setup info from vulkan here.
+        var texture = _resourceFactory.CreateTexture(new RhiTextureDescription
+        {
+            Width = (uint)size.Width,
+            Height = (uint)size.Height,
+            Name = "AvaloniaUISurface",
+            Usage = RhiRenderTextureUsage.ColourTarget
+        });
 
-        var imageInfo = new SKImageInfo(size.Width, size.Height, SKColorType.Bgra8888, SKAlphaType.Premul);
-        var skSurface = SKSurface.Create(imageInfo);
+        texture.GetFeature<RhiVkImageInterop>(out var vkImageInterop);
 
-        //var skSurface = SKSurface.Create(
-        //    _grContext,
-        //    new GRBackendRenderTarget(size.Width, size.Height, imageInfo),
-        //    GRSurfaceOrigin.TopLeft,
-        //    SKColorType.Rgba8888,
-        //    new SKSurfaceProperties(SKPixelGeometry.RgbHorizontal)
-        //);
+        var imageInfo = new GRVkImageInfo
+        {
+            CurrentQueueFamily = _interopContext.QueueFamilyIndex,
+            LevelCount = 1,
+            SampleCount = 1,
+            Protected = false,
+            Format = vkImageInterop!.Format,
+            Image = vkImageInterop.Handle,
+            ImageLayout = vkImageInterop.ImageLayout,
+            ImageTiling = vkImageInterop.ImageTiling,
+            ImageUsageFlags = vkImageInterop.ImageUsageFlags,
+            SharingMode = vkImageInterop.SharingMode
+        };
+
+        var skSurface = SKSurface.Create(
+            _grContext,
+            new GRBackendRenderTarget(size.Width, size.Height, imageInfo),
+            GRSurfaceOrigin.TopLeft,
+            SKColorType.Rgba8888,
+            new SKSurfaceProperties(SKPixelGeometry.RgbHorizontal)
+        );
+
+        if (skSurface is null)
+            throw new InvalidOperationException("Failed to create Vulkan-backed SKSurface");
 
         return new UOEngineSkiaSurface(skSurface);
     }
