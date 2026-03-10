@@ -4,7 +4,7 @@ using Avalonia;
 using Avalonia.Rendering;
 using Avalonia.Skia;
 using SkiaSharp;
-
+using UOEngine.Runtime.Core;
 using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Runtime.AvaloniaUI;
@@ -50,11 +50,14 @@ internal class UOEngineSkiaGpu : ISkiaGpu
 
     public ISkiaSurface? TryCreateSurface(PixelSize size, ISkiaGpuRenderSession? session)
     {
-        throw new NotImplementedException();
+        return CreateSurface(size);
     }
 
     public UOEngineSkiaSurface CreateSurface(PixelSize size)
     {
+        UOEDebug.Assert(size.Width > 0);
+        UOEDebug.Assert(size.Height > 0);
+
         var texture = _resourceFactory.CreateTexture(new RhiTextureDescription
         {
             Width = (uint)size.Width,

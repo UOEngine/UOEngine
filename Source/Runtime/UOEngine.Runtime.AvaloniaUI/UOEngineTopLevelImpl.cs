@@ -125,6 +125,10 @@ internal class UOEngineTopLevelImpl : ITopLevelImpl
             return;
         }
 
+        const float renderScale = 1.0f;
+
+        ClientSize = renderSize.ToSize(renderScale);
+
         _renderSize = renderSize;
         _surface = CreateSurface();
     }
