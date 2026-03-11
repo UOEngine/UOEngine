@@ -23,7 +23,7 @@ public class AvaloniaUIPlugin: IPlugin
 
         renderSystem.OnFrameEnd += (renderContext) =>
         {
-            _rootControl!.Draw();
+            _rootControl!.Draw(renderContext);
         };
     }
 

@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using Avalonia;
 using Avalonia.Platform;
+using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Runtime.AvaloniaUI;
 
@@ -30,8 +31,8 @@ internal class AvaloniaControl
         _topLevel.StartRendering();
     }
 
-    public void Draw()
+    public void Draw(IRenderContext renderContext)
     {
-        _topLevel!.OnDraw(new Avalonia.Rect(0, 0, 1, 1));
+        _topLevel!.OnDraw(renderContext, new Rect(0, 0, _topLevel.ClientSize.Width, _topLevel.ClientSize.Height));
     }
 }

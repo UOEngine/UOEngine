@@ -151,6 +151,8 @@ internal class VulkanGraphicsContext : IRenderContext
 
     public unsafe void BeginRenderPass(in RenderPassInfo renderPassInfo)
     {
+        UOEDebug.Assert(IsInRenderPass == false, "Can not begin renderpass when already in one.");
+
         VulkanTexture texture = (VulkanTexture)renderPassInfo.RenderTarget.Texture;
 
         _renderTarget = texture;
@@ -201,6 +203,8 @@ internal class VulkanGraphicsContext : IRenderContext
 
     public void EndRenderPass()
     {
+        UOEDebug.Assert(IsInRenderPass, "Can not end renderpass when not in one.");
+
         _device.Api.vkCmdEndRendering(CommandBuffer.Handle);
 
         IsInRenderPass = false;

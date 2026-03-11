@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using Avalonia;
 using Avalonia.Controls;
@@ -50,6 +50,8 @@ internal class UOEngineTopLevelImpl : ITopLevelImpl
     }
 
     public AcrylicPlatformCompensationLevels AcrylicCompensationLevels => throw new NotImplementedException();
+
+    public UOEngineSkiaSurface Surface => _surface ?? throw new InvalidOperationException();
 
     private WindowTransparencyLevel _transparencyLevel = WindowTransparencyLevel.Transparent;
 
