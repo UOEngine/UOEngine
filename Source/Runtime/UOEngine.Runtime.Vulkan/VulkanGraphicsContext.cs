@@ -367,6 +367,8 @@ internal class VulkanGraphicsContext : IRenderContext
 
     private void FlushIfNeeded()
     {
+        UOEDebug.Assert(IsInRenderPass, "Must be in renderpass");
+
         VkCommandBuffer commandBuffer = _commandBuffer!.Handle;
 
         if (IsStateDirty(DirtyState.VertexBuffer))

@@ -87,13 +87,16 @@ public class RenderSystem
         CurrentRenderContext.BeginRenderPass(_mainPass);
 
         OnFrameBegin?.Invoke(CurrentRenderContext);
+
+        CurrentRenderContext.EndRenderPass();
+
     }
 
     public void FrameEnd()
     {
         OnFrameEnd?.Invoke(CurrentRenderContext);
 
-        CurrentRenderContext.EndRenderPass();
+        //CurrentRenderContext.EndRenderPass();
         //CurrentRenderContext.EndRecording();
 
         _rhiRenderer.FrameEnd();

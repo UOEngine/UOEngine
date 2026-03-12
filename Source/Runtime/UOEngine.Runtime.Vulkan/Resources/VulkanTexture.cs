@@ -1,19 +1,32 @@
 ﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using System.Runtime.InteropServices;
+using Vortice.Vulkan;
+
 using UOEngine.Runtime.Core;
 using UOEngine.Runtime.RHI;
-using Vortice.Vulkan;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace UOEngine.Runtime.Vulkan;
 
-public struct VulkanTextureDescription
+internal struct VulkanTextureDescription
 {
     public uint Width;
     public uint Height;
     public VkFormat Format;
     public VkImageUsageFlags Usage;
+}
+
+internal struct VulkanTextureState
+{
+    internal required VkImageLayout Layout = VkImageLayout.Undefined;
+    internal required VkAccessFlags2 AccessMask = VkAccessFlags2.None;
+    internal required VkPipelineStageFlags2 StageMask = VkPipelineStageFlags2.None;
+    internal required uint QueueFamilyIndex = 0;
+
+    public VulkanTextureState()
+    {
+
+    }
 }
 
 internal static class RhiTextureDescriptionExtensions
@@ -26,6 +39,55 @@ internal static class RhiTextureDescriptionExtensions
             Height = rhiTextureDescription.Height,
             Format = VkFormat.R8G8B8A8Unorm,
             Usage = rhiTextureDescription.Usage.ToVkImageUsageFlags()
+        };
+    }
+
+    internal static VulkanTextureState ToVkTextureState(this RhiRenderTextureUsage rhiRenderTextureUsage, uint queueFamilyIndex)
+    {
+        return rhiRenderTextureUsage switch
+        {
+            RhiRenderTextureUsage.CopyDestination => new VulkanTextureState
+            {
+                Layout = VkImageLayout.TransferDstOptimal,
+                AccessMask = VkAccessFlags2.TransferWrite,
+                StageMask = VkPipelineStageFlags2.Transfer,
+                QueueFamilyIndex = queueFamilyIndex
+            },
+            RhiRenderTextureUsage.CopySource => new VulkanTextureState
+            {
+                Layout = VkImageLayout.TransferSrcOptimal,
+                AccessMask = VkAccessFlags2.TransferRead,
+                StageMask = VkPipelineStageFlags2.Transfer,
+                QueueFamilyIndex = queueFamilyIndex
+            },
+            RhiRenderTextureUsage.Sampler => new VulkanTextureState
+            {
+                Layout = VkImageLayout.ShaderReadOnlyOptimal,
+                AccessMask = VkAccessFlags2.ShaderRead,
+                StageMask = VkPipelineStageFlags2.FragmentShader,
+                QueueFamilyIndex = queueFamilyIndex
+            },
+            RhiRenderTextureUsage.ColourTarget => new VulkanTextureState
+            {
+                Layout = VkImageLayout.ColorAttachmentOptimal,
+                AccessMask = VkAccessFlags2.ColorAttachmentWrite,
+                StageMask = VkPipelineStageFlags2.ColorAttachmentOutput,
+                QueueFamilyIndex = queueFamilyIndex
+            },
+            RhiRenderTextureUsage.Present => new VulkanTextureState
+            {
+                Layout = VkImageLayout.PresentSrcKHR,
+                AccessMask = VkAccessFlags2.None,
+                StageMask = VkPipelineStageFlags2.None,
+                QueueFamilyIndex = queueFamilyIndex
+            },
+            _ => new VulkanTextureState
+            {
+                Layout = VkImageLayout.Undefined,
+                AccessMask = VkAccessFlags2.None,
+                StageMask = VkPipelineStageFlags2.None,
+                QueueFamilyIndex = queueFamilyIndex
+            }
         };
     }
 
@@ -51,6 +113,8 @@ internal class VulkanTexture: IRenderTexture, IDisposable
     public uint Width => Description.Width;
 
     public uint Height => Description.Height;
+
+    public VulkanTextureState State;
 
     private VulkanMemoryAllocation _allocation;
 

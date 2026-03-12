@@ -19,7 +19,7 @@ internal class UOEngineTopLevel: EmbeddableControlRoot
     {
         var renderTarget = new RhiRenderTarget("AvaloniaUI RenderTarget");
 
-        //renderTarget.Setup(Impl.Surface.Surface.);
+        renderTarget.Setup(Impl.Surface.RhiTexture);
 
         // Prep vkimage
         renderContext.BeginRenderPass(new RenderPassInfo

@@ -3,6 +3,7 @@
 using Avalonia.Controls.Platform.Surfaces;
 using Avalonia.Skia;
 using SkiaSharp;
+using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Runtime.AvaloniaUI;
 
@@ -12,8 +13,11 @@ internal class UOEngineSkiaSurface : ISkiaSurface
 
     public bool CanBlit => false;
 
-    public UOEngineSkiaSurface(SKSurface surface)
+    public readonly IRenderTexture RhiTexture;
+
+    public UOEngineSkiaSurface(SKSurface surface, IRenderTexture rhiTexture)
     {
+        RhiTexture = rhiTexture;
         Surface = surface;
     }
 

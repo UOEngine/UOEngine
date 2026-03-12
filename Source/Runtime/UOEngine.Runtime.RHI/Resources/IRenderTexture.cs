@@ -4,8 +4,12 @@ namespace UOEngine.Runtime.RHI;
 
 public enum RhiRenderTextureUsage
 {
+    Unknown,
+    CopySource,
+    CopyDestination,
     Sampler,
-    ColourTarget
+    ColourTarget,
+    Present
 }
 
 public struct RhiTextureDescription

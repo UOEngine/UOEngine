@@ -94,7 +94,7 @@ internal class UOEngineSkiaGpu : ISkiaGpu
         if (skSurface is null)
             throw new InvalidOperationException("Failed to create Vulkan-backed SKSurface");
 
-        return new UOEngineSkiaSurface(skSurface);
+        return new UOEngineSkiaSurface(skSurface, texture);
     }
 
     public object? TryGetFeature(Type featureType) => null;
