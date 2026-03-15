@@ -155,6 +155,8 @@ internal class VulkanGraphicsContext : IRenderContext
 
         VulkanTexture texture = (VulkanTexture)renderPassInfo.RenderTarget.Texture;
 
+        CommandBuffer.EnsureState(texture, RhiRenderTextureUsage.ColourTarget);
+
         _renderTarget = texture;
 
         VkRenderingAttachmentInfo colorAttachment = new()

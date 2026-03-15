@@ -1,10 +1,10 @@
 ﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using System.Runtime.InteropServices;
-using Vortice.Vulkan;
-
 using UOEngine.Runtime.Core;
 using UOEngine.Runtime.RHI;
+using Vortice.Vulkan;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace UOEngine.Runtime.Vulkan;
 
@@ -14,6 +14,7 @@ internal struct VulkanTextureDescription
     public uint Height;
     public VkFormat Format;
     public VkImageUsageFlags Usage;
+    public string? Name;
 }
 
 internal struct VulkanTextureState
@@ -38,7 +39,8 @@ internal static class RhiTextureDescriptionExtensions
             Width = rhiTextureDescription.Width,
             Height = rhiTextureDescription.Height,
             Format = VkFormat.R8G8B8A8Unorm,
-            Usage = rhiTextureDescription.Usage.ToVkImageUsageFlags()
+            Usage = rhiTextureDescription.Usage.ToVkImageUsageFlags(),
+            Name = rhiTextureDescription.Name
         };
     }
 
@@ -122,15 +124,22 @@ internal class VulkanTexture: IRenderTexture, IDisposable
 
     private RhiVkImageInterop _imageInterop;
 
+    private static uint _debugTextureCount = uint.MaxValue;
+
     internal unsafe VulkanTexture(VulkanDevice device, in VulkanTextureDescription textureDescription)
     {
         _device = device;
         Description = textureDescription;
 
-        Span<uint> sharedQueueFamilyIndices = stackalloc uint[2];
+        uint debugTextureCount = _debugTextureCount++;
 
-        sharedQueueFamilyIndices[0] = _device.PresentQueue.FamilyIndex;
-        sharedQueueFamilyIndices[1] = _device.CopyQueue.FamilyIndex;
+        Description.Name = textureDescription.Name ?? $"Texture{debugTextureCount}";
+
+        Span<uint> sharedQueueFamilyIndices =
+        [
+            _device.PresentQueue.FamilyIndex,
+            _device.CopyQueue.FamilyIndex,
+        ];
 
         VkImage image;
 
@@ -157,7 +166,7 @@ internal class VulkanTexture: IRenderTexture, IDisposable
                 samples = VkSampleCountFlags.Count1,
                 sharingMode = VkSharingMode.Concurrent,
                 queueFamilyIndexCount = 2,
-                pQueueFamilyIndices = ptr
+                pQueueFamilyIndices = ptr,
             };
 
             _device.Api.vkCreateImage(_device.Handle, &imageCreateInfo, out image);
@@ -177,7 +186,8 @@ internal class VulkanTexture: IRenderTexture, IDisposable
 
         Texels = new byte[Width * Height * bytesPerTexel];
 
-        FinaliseSetup();
+        FinaliseCommonSetup();
+
     }
 
     internal VulkanTexture(VulkanDevice device, in RhiTextureDescription description)
@@ -185,13 +195,13 @@ internal class VulkanTexture: IRenderTexture, IDisposable
     {
     }
 
-    internal unsafe void InitFromExistingResource(VkImage image)
+    internal void InitFromExistingResource(VkImage image)
     {
         _ownsImage = false;
 
         Image = image;
 
-        FinaliseSetup();
+        FinaliseCommonSetup();
     }
 
     public Span<T> GetTexelsAs<T>() where T : unmanaged
@@ -256,9 +266,10 @@ internal class VulkanTexture: IRenderTexture, IDisposable
 
         var commandBuffer = _device.GraphicsQueue.CreateCommandBuffer();
 
-        commandBuffer.TransitionImageLayout(Image, VkImageLayout.Undefined, VkImageLayout.TransferDstOptimal);
-        commandBuffer.CmdCopyBufferToImage(bufferLock.vkBuffer, Image, bufferImageCopy);
-        commandBuffer.TransitionImageLayout(Image, VkImageLayout.TransferDstOptimal, VkImageLayout.ShaderReadOnlyOptimal);
+        //commandBuffer.TransitionImageLayout(Image, VkImageLayout.Undefined, VkImageLayout.TransferDstOptimal);
+        commandBuffer.CmdCopyBufferToImage(bufferLock.vkBuffer, this, bufferImageCopy);
+        commandBuffer.EnsureState(this, RhiRenderTextureUsage.Sampler);
+        //commandBuffer.TransitionImageLayout(Image, VkImageLayout.TransferDstOptimal, VkImageLayout.ShaderReadOnlyOptimal);
         commandBuffer.EndRecording();
 
         _device.GraphicsQueue.Submit(commandBuffer);
@@ -311,7 +322,7 @@ internal class VulkanTexture: IRenderTexture, IDisposable
         Dispose(disposing: false);
     }
 
-    private void FinaliseSetup()
+    private void FinaliseCommonSetup()
     {
         CreateImageView();
 
@@ -321,6 +332,8 @@ internal class VulkanTexture: IRenderTexture, IDisposable
         _imageInterop.ImageUsageFlags = (uint)Description.Usage;
         _imageInterop.ImageTiling = (uint)VkImageTiling.Optimal;
         _imageInterop.ImageLayout = (uint)VkImageLayout.ColorAttachmentOptimal;
+
+        VulkanDebug.SetDebugName(Image, Description.Name!);
     }
 
     private unsafe void CreateImageView()
