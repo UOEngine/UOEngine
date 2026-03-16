@@ -126,14 +126,24 @@ internal class VulkanTexture: IRenderTexture, IDisposable
 
     private static uint _debugTextureCount = uint.MaxValue;
 
-    internal unsafe VulkanTexture(VulkanDevice device, in VulkanTextureDescription textureDescription)
+    internal unsafe VulkanTexture(VulkanDevice device, in VulkanTextureDescription textureDescription, VkImage existingImage = default)
     {
         _device = device;
         Description = textureDescription;
 
-        uint debugTextureCount = _debugTextureCount++;
+        uint debugTextureCount = ++_debugTextureCount;
 
         Description.Name = textureDescription.Name ?? $"Texture{debugTextureCount}";
+
+        if(existingImage.IsNotNull)
+        {
+            Image = existingImage;
+            _ownsImage = false;
+
+            FinaliseCommonSetup();
+
+            return;
+        }
 
         Span<uint> sharedQueueFamilyIndices =
         [
@@ -146,6 +156,8 @@ internal class VulkanTexture: IRenderTexture, IDisposable
        Description.Usage = VkImageUsageFlags.TransferDst | VkImageUsageFlags.TransferSrc | VkImageUsageFlags.Sampled;
        Description.Usage |= textureDescription.Usage;
 
+        // TODO: Not all textures are created by us, e.g. swapchain. So this currently results in an extra one that gets
+        // orphaned.
         fixed (uint* ptr = sharedQueueFamilyIndices)
         {
             VkImageCreateInfo imageCreateInfo = new()
@@ -193,15 +205,6 @@ internal class VulkanTexture: IRenderTexture, IDisposable
     internal VulkanTexture(VulkanDevice device, in RhiTextureDescription description)
         : this(device, description.ToVulkanTextureDescription())
     {
-    }
-
-    internal void InitFromExistingResource(VkImage image)
-    {
-        _ownsImage = false;
-
-        Image = image;
-
-        FinaliseCommonSetup();
     }
 
     public Span<T> GetTexelsAs<T>() where T : unmanaged

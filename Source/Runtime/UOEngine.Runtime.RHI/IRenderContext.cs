@@ -36,4 +36,6 @@ public interface IRenderContext
 
     public void WaitForGpuIdle();
 
+    public void TransitionTextureUsage(IRenderTexture texture, RhiRenderTextureUsage usage);
+
 }

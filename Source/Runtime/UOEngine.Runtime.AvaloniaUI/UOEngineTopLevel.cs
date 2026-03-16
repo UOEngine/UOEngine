@@ -17,20 +17,22 @@ internal class UOEngineTopLevel: EmbeddableControlRoot
 
     public void OnDraw(IRenderContext renderContext, Rect rect)
     {
-        var renderTarget = new RhiRenderTarget("AvaloniaUI RenderTarget");
+        //var renderTarget = new RhiRenderTarget("AvaloniaUI RenderTarget");
 
-        renderTarget.Setup(Impl.Surface.RhiTexture);
+        //renderTarget.Setup(Impl.Surface.RhiTexture);
+
+        //renderContext.TransitionTextureUsage(Impl.Surface.RhiTexture, RhiRenderTextureUsage.ColourTarget);
 
         // Prep vkimage
-        renderContext.BeginRenderPass(new RenderPassInfo
-        {
-            RenderTarget = renderTarget,
-            Name = "AvaloniaUI Renderpass"
-        });
+        //renderContext.BeginRenderPass(new RenderPassInfo
+        //{
+        //    RenderTarget = renderTarget,
+        //    Name = "AvaloniaUI Renderpass"
+        //});
 
         PlatformImpl!.Paint?.Invoke(rect);
 
-        renderContext.EndRenderPass();
+        //renderContext.EndRenderPass();
 
         // Transition vkimage
     }

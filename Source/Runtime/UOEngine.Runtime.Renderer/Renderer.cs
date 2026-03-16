@@ -22,20 +22,20 @@ public class RenderSystem
     public event Action<IRenderContext>? OnFrameBegin;
     public event Action<IRenderContext>? OnFrameEnd;
 
-    public RhiRenderTarget GBufferDiffuse => _gBufferDiffuse ?? throw new InvalidOperationException("GBufferDiffuse not set");
+    //public RhiRenderTarget GBufferDiffuse => _gBufferDiffuse ?? throw new InvalidOperationException("GBufferDiffuse not set");
     public RhiRenderTarget UIOverlay = new();
 
-    public IRenderContext CurrentRenderContext => _context ?? throw new InvalidOperationException("Not initialized");
+    //public IRenderContext CurrentRenderContext => _context ?? throw new InvalidOperationException("Not initialized");
 
     public IRenderTexture GetDefaultTexture(DefaultTextureType type) => _defaultTextures[(int)type];
 
-    private IRenderContext? _context;
+    //private IRenderContext? _context;
     private readonly IRenderer _rhiRenderer;
     private readonly IRenderResourceFactory _resourceFactory;
 
     private RenderPassInfo _mainPass;
 
-    private RhiRenderTarget? _gBufferDiffuse;
+    //private RhiRenderTarget? _gBufferDiffuse;
 
     private uint _frameNumber = 0;
 
@@ -49,7 +49,6 @@ public class RenderSystem
 
     public void Startup()
     {
-        _context = _rhiRenderer.CreateRenderContext();
 
         UIOverlay = new RhiRenderTarget();
 
@@ -74,27 +73,27 @@ public class RenderSystem
     {
         _rhiRenderer.FrameBegin();
 
-        //CurrentRenderContext.BeginRecording();
+        //_context = _rhiRenderer.CreateRenderContext("MainGraphicsContext");
 
-        _gBufferDiffuse = _rhiRenderer.GetViewportRenderTarget();
+        //_gBufferDiffuse = _rhiRenderer.GetViewportRenderTarget();
 
-        _mainPass = new RenderPassInfo
-        {
-            RenderTarget = GBufferDiffuse,
-            Name = "MainPass"
-        };
+        //_mainPass = new RenderPassInfo
+        //{
+        //    RenderTarget = GBufferDiffuse,
+        //    Name = "MainPass"
+        //};
 
-        CurrentRenderContext.BeginRenderPass(_mainPass);
+        //CurrentRenderContext.BeginRenderPass(_mainPass);
 
-        OnFrameBegin?.Invoke(CurrentRenderContext);
+        //OnFrameBegin?.Invoke(CurrentRenderContext);
 
-        CurrentRenderContext.EndRenderPass();
+        //CurrentRenderContext.EndRenderPass();
 
     }
 
     public void FrameEnd()
     {
-        OnFrameEnd?.Invoke(CurrentRenderContext);
+       // OnFrameEnd?.Invoke(CurrentRenderContext);
 
         //CurrentRenderContext.EndRenderPass();
         //CurrentRenderContext.EndRecording();
@@ -111,7 +110,7 @@ public class RenderSystem
             Width = width,
             Height = height,
             Name = name,
-            Usage = RhiRenderTextureUsage.Sampler
+            Usage = RhiRenderTextureUsage.Sampler,
         });
 
         Span<Colour> texels = texture.GetTexelsAs<Colour>();
@@ -124,25 +123,6 @@ public class RenderSystem
     }
 
     private void FillWithSolidColour(uint width, uint height, Colour colour, Span<Colour> texels) => texels.Fill(colour);
-
-    //private void CreateDefaultTexture(DefaultTextureType type, uint  width, uint height, in Colour colour, string? name = null)
-    //{
-    //    var texture = _resourceFactory.CreateTexture(new RhiTextureDescription
-    //    {
-    //        Width = width,
-    //        Height = height,
-    //        Name = name,
-    //        Usage = RhiRenderTextureUsage.Sampler
-    //    });
-
-    //    Span<Colour> texels = texture.GetTexelsAs<Colour>();
-
-    //    texels.Fill(colour);
-
-    //    texture.Upload();
-
-    //    _defaultTextures[(int)type] = texture;
-    //}
 
     private void FillWithCheckerboardEffect(uint width, uint height, Colour colour, Span<Colour> texels)
     {

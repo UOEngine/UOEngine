@@ -8,7 +8,7 @@ public interface IRenderer
     public void FrameEnd();
     public RhiRenderTarget GetViewportRenderTarget();
 
-    public IRenderContext CreateRenderContext();
+    public IRenderContext CreateRenderContext(string name);
 
     public void GetInteropContext(out RhiInteropContext interopContext);
 }

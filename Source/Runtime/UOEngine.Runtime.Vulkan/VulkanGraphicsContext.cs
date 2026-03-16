@@ -84,6 +84,8 @@ internal class VulkanGraphicsContext : IRenderContext
 
     public bool IsInRenderPass { get; private set; }
 
+    internal VulkanFence? SubmitFence;
+
     private readonly VulkanDevice _device;
 
     private VulkanCommandBuffer? _commandBuffer;
@@ -129,13 +131,20 @@ internal class VulkanGraphicsContext : IRenderContext
 
     private RhiSampler _sampler;
 
-    public VulkanGraphicsContext(VulkanDevice device, VulkanGlobalSamplers globalSamplers)
+    public VulkanGraphicsContext(VulkanDevice device, VulkanGlobalSamplers globalSamplers, int id)
     {
         _device = device;
         _globalSamplers = globalSamplers;
+
+        _commandBuffer = _device.GraphicsQueue.CreateCommandBuffer();
+        _descriptorPool = new VulkanDescriptorPool(_device);
+        _uniformBufferObjectScratchAllocator = new VulkanScratchBlockAllocator(_device, $"UniformBufferScratchAllocator{id}");
+
     }
 
-    public void BeginRecording(VulkanCommandBuffer commandBuffer, VulkanScratchBlockAllocator uniformBufferObjectScratchAllocator, VulkanDescriptorPool descriptorPool)
+    public void TransitionTextureUsage(IRenderTexture texture, RhiRenderTextureUsage usage) => CommandBuffer.EnsureState((VulkanTexture)texture, usage);
+
+    public void BeginRecording()
     {
         _vertexBuffer = null;
         _indexBuffer = null;
@@ -144,9 +153,9 @@ internal class VulkanGraphicsContext : IRenderContext
 
         _dirtyState = DirtyState.All;
 
-        _commandBuffer = commandBuffer;
-        _uniformBufferObjectScratchAllocator = uniformBufferObjectScratchAllocator;
-        _descriptorPool = descriptorPool;
+        _commandBuffer!.BeginRecording();
+        _uniformBufferObjectScratchAllocator.Reset();
+        _descriptorPool.Reset();
     }
 
     public unsafe void BeginRenderPass(in RenderPassInfo renderPassInfo)
@@ -229,11 +238,6 @@ internal class VulkanGraphicsContext : IRenderContext
     public void WaitForGpuIdle()
     {
         _device.WaitForGpuIdle();
-    }
-
-    internal unsafe void TransitionImageLayout(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout)
-    {
-        CommandBuffer.TransitionImageLayout(image, oldLayout, newLayout);
     }
 
     private unsafe void BindShaderParameters(bool forceRebind)

@@ -26,11 +26,13 @@ public class VulkanRenderer : IRenderer
 
     private uint _frameIndex = uint.MaxValue;
 
-    private VulkanGraphicsContext? _graphicsContext;
+    //private VulkanGraphicsContext? _graphicsContext;
 
-    private VulkanGraphicsContext GraphicsContext => _graphicsContext ?? throw new InvalidOperationException("Graphics context not initialised");
+    //private VulkanGraphicsContext GraphicsContext => _graphicsContext ?? throw new InvalidOperationException("Graphics context not initialised");
 
     private VulkanGlobalSamplers _globalSamplers = null!;
+
+    private VulkanContextManager _contextManager = null!;
 
     private struct PerFrameData
     {
@@ -38,9 +40,9 @@ public class VulkanRenderer : IRenderer
         public uint FenceSignalCount;
         public VkSemaphore SwapchainAcquireSemaphore;
         public VkSemaphore SwapchainReleaseSemaphore;
-        public VulkanScratchBlockAllocator UniformBufferScratchAllocator;
-        public VulkanDescriptorPool DescriptorPool;
-        public VulkanCommandBuffer CommandBuffer;
+        //public VulkanScratchBlockAllocator UniformBufferScratchAllocator;
+        //public VulkanDescriptorPool DescriptorPool;
+        //public VulkanCommandBuffer CommandBuffer;
 
     }
 
@@ -93,13 +95,14 @@ public class VulkanRenderer : IRenderer
             frameData.SubmitFence = new VulkanFence(_device, true);
             frameData.SwapchainAcquireSemaphore = _device.CreateSemaphore();
             frameData.SwapchainReleaseSemaphore = _device.CreateSemaphore();
-            frameData.UniformBufferScratchAllocator = new VulkanScratchBlockAllocator(_device, $"UniformBufferScratchAllocator{i}");
-            frameData.DescriptorPool = new VulkanDescriptorPool(_device);
-            frameData.CommandBuffer = _device.GraphicsQueue.CreateCommandBuffer();
+            //frameData.UniformBufferScratchAllocator = new VulkanScratchBlockAllocator(_device, $"UniformBufferScratchAllocator{i}");
+            //frameData.DescriptorPool = new VulkanDescriptorPool(_device);
+            //frameData.CommandBuffer = _device.GraphicsQueue.CreateCommandBuffer();
         }
 
         _globalSamplers = new VulkanGlobalSamplers(_device);
-        _graphicsContext = new VulkanGraphicsContext(_device, _globalSamplers);
+        _contextManager = new VulkanContextManager(_device);
+        //_graphicsContext = new VulkanGraphicsContext(_device, _globalSamplers);
 
     }
 
@@ -124,17 +127,22 @@ public class VulkanRenderer : IRenderer
             frameData.SubmitFence?.Refresh();
             frameData.SubmitFence?.WaitForThenReset();
 
-            frameData.UniformBufferScratchAllocator.Reset();
-            frameData.DescriptorPool.Reset();
+            //frameData.UniformBufferScratchAllocator.Reset();
+            //frameData.DescriptorPool.Reset();
         }
 
         AcquireNextImage();
 
-        var commandBuffer = frameData.CommandBuffer;// _device.GetQueue(VulkanQueueType.Graphics).CreateCommandBuffer();
+        //var startFrameContext = _contextManager.AllocateGraphicsContext("EndFrame");
 
-        commandBuffer.BeginRecording();
+        //startFrameContext.CommandBuffer.EnsureState(_swapchain.BackbufferToRenderInto, RhiRenderTextureUsage.ColourTarget);
+        //startFrameContext.EndRecording();
 
-        GraphicsContext.BeginRecording(commandBuffer, frameData.UniformBufferScratchAllocator, frameData.DescriptorPool);
+        //var commandBuffer = frameData.CommandBuffer;// _device.GetQueue(VulkanQueueType.Graphics).CreateCommandBuffer();
+
+        //commandBuffer.BeginRecording();
+
+        //GraphicsContext.BeginRecording(commandBuffer, frameData.UniformBufferScratchAllocator, frameData.DescriptorPool);
 
         //GraphicsContext.TransitionImageLayout(_swapchain.BackbufferToRenderInto.Image, VkImageLayout.Undefined, VkImageLayout.ColorAttachmentOptimal);
     }
@@ -143,26 +151,43 @@ public class VulkanRenderer : IRenderer
     {
         ref var frameData = ref GetCurrentFrameData();
 
-        GraphicsContext.CommandBuffer.EnsureState(_swapchain.BackbufferToRenderInto, RhiRenderTextureUsage.Present);
-        GraphicsContext.EndRecording();
+        var endFrameContext = _contextManager.AllocateGraphicsContext("PresentContext");
 
-        VkPipelineStageFlags wait_stage = VkPipelineStageFlags.ColorAttachmentOutput;
+        endFrameContext.BeginRecording();
+
+        var renderTarget = new RhiRenderTarget();
+
+        renderTarget.Setup(_swapchain.BackbufferToRenderInto);
+
+        // Tell it to wait on the render pipeline.
+        //endFrameContext.CommandBuffer.EnsureState(_swapchain.BackbufferToRenderInto, RhiRenderTextureUsage.ColourTarget);
+        endFrameContext.BeginRenderPass(new RenderPassInfo
+        {
+            RenderTarget = renderTarget,
+            Name = "Compose"
+        });
+        endFrameContext.EndRenderPass();
+        endFrameContext.CommandBuffer.EnsureState(_swapchain.BackbufferToRenderInto, RhiRenderTextureUsage.Present);
+        endFrameContext.EndRecording();
+
+        VkPipelineStageFlags waitStage = VkPipelineStageFlags.ColorAttachmentOutput;
         VkSemaphore waitSemaphore = frameData.SwapchainAcquireSemaphore;
         VkSemaphore signalSemaphore = frameData.SwapchainReleaseSemaphore;
 
-        VkCommandBuffer commandBuffer = GraphicsContext.CommandBuffer.Handle;
+        //VkCommandBuffer commandBuffer = endFrameContext.CommandBuffer.Handle;
 
-        _device.PresentQueue.Submit(GraphicsContext.CommandBuffer, new VkSubmitInfo
-        {
-            commandBufferCount = 1,
-            pCommandBuffers = &commandBuffer,
-            waitSemaphoreCount = 1u,
-            pWaitSemaphores = &waitSemaphore,
-            pWaitDstStageMask = &wait_stage,
-            signalSemaphoreCount = 1u,
-            pSignalSemaphores = &signalSemaphore
-        }, frameData.SubmitFence);
+        //_device.PresentQueue.Submit(endFrameContext.CommandBuffer, new VkSubmitInfo
+        //{
+        //    commandBufferCount = 1,
+        //    pCommandBuffers = &commandBuffer,
+        //    waitSemaphoreCount = 1u,
+        //    pWaitSemaphores = &waitSemaphore,
+        //    pWaitDstStageMask = &wait_stage,
+        //    signalSemaphoreCount = 1u,
+        //    pSignalSemaphores = &signalSemaphore
+        //}, frameData.SubmitFence);
 
+        SubmitContext(endFrameContext, [waitSemaphore], [waitStage], [signalSemaphore], frameData.SubmitFence);
         //frameData.SubmitFence = GraphicsContext.CommandBuffer.Fence;
         //frameData.SubmitFence.FrameSubmitted = _frameIndex;
         //frameData.FenceSignalCount = frameData.SubmitFence.SignalCount;
@@ -172,10 +197,7 @@ public class VulkanRenderer : IRenderer
         _device.DeferredDeletionQueue.ReleaseResources(_frameIndex);
     }
 
-    public IRenderContext CreateRenderContext()
-    {
-        return GraphicsContext;
-    }
+    public IRenderContext CreateRenderContext(string name) => _contextManager.AllocateGraphicsContext(name);
 
     public RhiRenderTarget GetViewportRenderTarget()
     {
@@ -231,6 +253,33 @@ public class VulkanRenderer : IRenderer
             _swapchain.Resize();
         }
 
+    }
+
+    private unsafe void SubmitContext(VulkanGraphicsContext context, ReadOnlySpan<VkSemaphore> waitSemaphores, 
+        ReadOnlySpan<VkPipelineStageFlags> waitStages, ReadOnlySpan<VkSemaphore> signalSemaphores, VulkanFence fence)
+    {
+        VkCommandBuffer cmd = context.CommandBuffer.Handle;
+
+        fixed (VkSemaphore* pWait = waitSemaphores)
+        fixed (VkPipelineStageFlags* pStages = waitStages)
+        fixed (VkSemaphore* pSignal = signalSemaphores)
+        {
+            VkSubmitInfo submitInfo = new()
+            {
+                commandBufferCount = 1,
+                pCommandBuffers = &cmd,
+                waitSemaphoreCount = (uint)waitSemaphores.Length,
+                pWaitSemaphores = pWait,
+                pWaitDstStageMask = pStages,
+                signalSemaphoreCount = (uint)signalSemaphores.Length,
+                pSignalSemaphores = pSignal
+            };
+
+            _device.GraphicsQueue.Submit(context.CommandBuffer, submitInfo, fence);
+        }
+
+        context.SubmitFence = fence;
+        _contextManager.Release(context);
     }
 
 }
