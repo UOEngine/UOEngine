@@ -73,7 +73,7 @@ public class RenderSystem
     {
         _rhiRenderer.FrameBegin();
 
-        //_context = _rhiRenderer.CreateRenderContext("MainGraphicsContext");
+        var context = _rhiRenderer.CreateRenderContext("MainGraphicsContext");
 
         //_gBufferDiffuse = _rhiRenderer.GetViewportRenderTarget();
 
@@ -85,7 +85,7 @@ public class RenderSystem
 
         //CurrentRenderContext.BeginRenderPass(_mainPass);
 
-        //OnFrameBegin?.Invoke(CurrentRenderContext);
+        OnFrameBegin?.Invoke(context);
 
         //CurrentRenderContext.EndRenderPass();
 

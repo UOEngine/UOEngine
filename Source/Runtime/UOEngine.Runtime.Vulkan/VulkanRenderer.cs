@@ -101,7 +101,7 @@ public class VulkanRenderer : IRenderer
         }
 
         _globalSamplers = new VulkanGlobalSamplers(_device);
-        _contextManager = new VulkanContextManager(_device);
+        _contextManager = new VulkanContextManager(_device, _globalSamplers);
         //_graphicsContext = new VulkanGraphicsContext(_device, _globalSamplers);
 
     }
@@ -133,6 +133,8 @@ public class VulkanRenderer : IRenderer
 
         AcquireNextImage();
 
+        _contextManager.OnFrameBegin(_swapchain.BackbufferToRenderInto);
+
         //var startFrameContext = _contextManager.AllocateGraphicsContext("EndFrame");
 
         //startFrameContext.CommandBuffer.EnsureState(_swapchain.BackbufferToRenderInto, RhiRenderTextureUsage.ColourTarget);
@@ -149,24 +151,29 @@ public class VulkanRenderer : IRenderer
 
     public unsafe void FrameEnd()
     {
+        foreach(var context in _contextManager._inUseGraphicsContexts)
+        {
+            context.EndRecording();
+
+            SubmitContext(context, [], [], [], context.SubmitFence!);
+        }
+
         ref var frameData = ref GetCurrentFrameData();
 
         var endFrameContext = _contextManager.AllocateGraphicsContext("PresentContext");
 
-        endFrameContext.BeginRecording();
+        //var renderTarget = new RhiRenderTarget();
 
-        var renderTarget = new RhiRenderTarget();
+        //renderTarget.Setup(_swapchain.BackbufferToRenderInto);
 
-        renderTarget.Setup(_swapchain.BackbufferToRenderInto);
-
-        // Tell it to wait on the render pipeline.
-        //endFrameContext.CommandBuffer.EnsureState(_swapchain.BackbufferToRenderInto, RhiRenderTextureUsage.ColourTarget);
-        endFrameContext.BeginRenderPass(new RenderPassInfo
-        {
-            RenderTarget = renderTarget,
-            Name = "Compose"
-        });
-        endFrameContext.EndRenderPass();
+        //// Tell it to wait on the render pipeline.
+        ////endFrameContext.CommandBuffer.EnsureState(_swapchain.BackbufferToRenderInto, RhiRenderTextureUsage.ColourTarget);
+        //endFrameContext.BeginRenderPass(new RenderPassInfo
+        //{
+        //    RenderTarget = renderTarget,
+        //    Name = "Compose"
+        //});
+        //endFrameContext.EndRenderPass();
         endFrameContext.CommandBuffer.EnsureState(_swapchain.BackbufferToRenderInto, RhiRenderTextureUsage.Present);
         endFrameContext.EndRecording();
 
@@ -187,26 +194,21 @@ public class VulkanRenderer : IRenderer
         //    pSignalSemaphores = &signalSemaphore
         //}, frameData.SubmitFence);
 
-        SubmitContext(endFrameContext, [waitSemaphore], [waitStage], [signalSemaphore], frameData.SubmitFence);
+        SubmitContext(endFrameContext, [waitSemaphore], [waitStage], [signalSemaphore], endFrameContext.SubmitFence!);
         //frameData.SubmitFence = GraphicsContext.CommandBuffer.Fence;
         //frameData.SubmitFence.FrameSubmitted = _frameIndex;
         //frameData.FenceSignalCount = frameData.SubmitFence.SignalCount;
 
+        frameData.SubmitFence = endFrameContext.SubmitFence!;
+
         _swapchain.Present(frameData.SwapchainReleaseSemaphore);
 
         _device.DeferredDeletionQueue.ReleaseResources(_frameIndex);
+
+        _contextManager._inUseGraphicsContexts.Clear();
     }
 
     public IRenderContext CreateRenderContext(string name) => _contextManager.AllocateGraphicsContext(name);
-
-    public RhiRenderTarget GetViewportRenderTarget()
-    {
-        var renderTarget = new RhiRenderTarget();
-
-        renderTarget.Setup(_swapchain.BackbufferToRenderInto);
-
-        return renderTarget;
-    }
 
     public void GetInteropContext(out RhiInteropContext interopContext)
     {
@@ -278,7 +280,6 @@ public class VulkanRenderer : IRenderer
             _device.GraphicsQueue.Submit(context.CommandBuffer, submitInfo, fence);
         }
 
-        context.SubmitFence = fence;
         _contextManager.Release(context);
     }
 

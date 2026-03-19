@@ -10,6 +10,7 @@ using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Runtime.Vulkan;
 
+[DebuggerDisplay("VulkanGraphicsContext {_currentName}")]
 internal class VulkanGraphicsContext : IRenderContext
 {
     public ShaderInstance ShaderInstance
@@ -82,9 +83,11 @@ internal class VulkanGraphicsContext : IRenderContext
 
     internal VulkanCommandBuffer CommandBuffer => _commandBuffer ?? throw new InvalidOperationException("VulkanGraphicsContext: CommandBuffer not initialised");
 
-    public bool IsInRenderPass { get; private set; }
+    public bool IsInRenderPass { get; private set; } = false;
 
-    internal VulkanFence? SubmitFence;
+    internal readonly VulkanFence SubmitFence;
+
+    internal bool IsRecording { get; private set; } = false;
 
     private readonly VulkanDevice _device;
 
@@ -129,7 +132,11 @@ internal class VulkanGraphicsContext : IRenderContext
     private VulkanDescriptorPool _descriptorPool = null!;
     private readonly VulkanGlobalSamplers _globalSamplers;
 
+    private VulkanTexture? _defaultBackbufferRenderTarget;
+
     private RhiSampler _sampler;
+
+    private string _currentName = "";
 
     public VulkanGraphicsContext(VulkanDevice device, VulkanGlobalSamplers globalSamplers, int id)
     {
@@ -140,12 +147,16 @@ internal class VulkanGraphicsContext : IRenderContext
         _descriptorPool = new VulkanDescriptorPool(_device);
         _uniformBufferObjectScratchAllocator = new VulkanScratchBlockAllocator(_device, $"UniformBufferScratchAllocator{id}");
 
+        SubmitFence = new VulkanFence(device);
+
     }
 
     public void TransitionTextureUsage(IRenderTexture texture, RhiRenderTextureUsage usage) => CommandBuffer.EnsureState((VulkanTexture)texture, usage);
 
     public void BeginRecording()
     {
+        UOEDebug.Assert(IsRecording == false);
+
         _vertexBuffer = null;
         _indexBuffer = null;
 
@@ -156,13 +167,29 @@ internal class VulkanGraphicsContext : IRenderContext
         _commandBuffer!.BeginRecording();
         _uniformBufferObjectScratchAllocator.Reset();
         _descriptorPool.Reset();
+
+        IsRecording = true;
+    }
+    public void EndRecording()
+    {
+        UOEDebug.Assert(IsInRenderPass == false);
+        UOEDebug.Assert(IsRecording);
+
+        _device.Api.vkEndCommandBuffer(CommandBuffer.Handle).CheckResult();
+
+        IsRecording = false;
     }
 
     public unsafe void BeginRenderPass(in RenderPassInfo renderPassInfo)
     {
         UOEDebug.Assert(IsInRenderPass == false, "Can not begin renderpass when already in one.");
 
-        VulkanTexture texture = (VulkanTexture)renderPassInfo.RenderTarget.Texture;
+        VulkanTexture texture = _defaultBackbufferRenderTarget!;
+
+        if (renderPassInfo.RenderTarget != null)
+        {
+            texture = (VulkanTexture)renderPassInfo.RenderTarget.Texture;
+        }
 
         CommandBuffer.EnsureState(texture, RhiRenderTextureUsage.ColourTarget);
 
@@ -205,13 +232,6 @@ internal class VulkanGraphicsContext : IRenderContext
         _device.Api.vkCmdDrawIndexed(commandBuffer, numIndices, numInstances, firstIndex, (int)vertexOffset, firstInstance);
     }
 
-    public void EndRecording()
-    {
-        UOEDebug.Assert(IsInRenderPass == false);
-
-        _device.Api.vkEndCommandBuffer(CommandBuffer.Handle).CheckResult();
-    }
-
     public void EndRenderPass()
     {
         UOEDebug.Assert(IsInRenderPass, "Can not end renderpass when not in one.");
@@ -238,6 +258,16 @@ internal class VulkanGraphicsContext : IRenderContext
     public void WaitForGpuIdle()
     {
         _device.WaitForGpuIdle();
+    }
+
+    internal void Prepare(VulkanTexture defaultRenderTarget, string name)
+    {
+        _defaultBackbufferRenderTarget = defaultRenderTarget;
+        _currentName = name;
+
+        //UOEDebug.Assert(SubmitFence.IsSignaled);
+
+        //SubmitFence.Reset();
     }
 
     private unsafe void BindShaderParameters(bool forceRebind)

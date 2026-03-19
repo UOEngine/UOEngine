@@ -123,7 +123,8 @@ internal class VulkanSwapchain: IDisposable
                 Width = Extent.width,
                 Height = Extent.height,
                 Format = surfaceFormat.format,
-                Usage = VkImageUsageFlags.ColorAttachment
+                Usage = VkImageUsageFlags.ColorAttachment,
+                Name = $"Backbuffer{i}"
             }, swapChainImages[i]);
 
             _backbuffer[i] = texture;

@@ -4,6 +4,6 @@ namespace UOEngine.Runtime.RHI;
 
 public struct RenderPassInfo
 {
-    public required RhiRenderTarget RenderTarget;
+    public required RhiRenderTarget? RenderTarget;
     public string Name;
 }

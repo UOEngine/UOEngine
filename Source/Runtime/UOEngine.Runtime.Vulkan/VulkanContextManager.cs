@@ -6,15 +6,18 @@ internal class VulkanContextManager
 {
     private List<VulkanGraphicsContext> _graphicsContexts = [];
     private List<VulkanGraphicsContext> _freeGraphicsContexts = [];
+    internal  List<VulkanGraphicsContext> _inUseGraphicsContexts = [];
 
     private readonly VulkanDevice _device;
+    private VulkanTexture? _currentBackbuffer;
 
-    private VulkanGlobalSamplers _globalSamplers = null!;
+    private readonly VulkanGlobalSamplers _globalSamplers;
 
 
-    internal VulkanContextManager(VulkanDevice device)
+    internal VulkanContextManager(VulkanDevice device, VulkanGlobalSamplers globalSamplers)
     {
         _device = device;
+        _globalSamplers = globalSamplers;
     }
 
     internal VulkanGraphicsContext AllocateGraphicsContext(string name)
@@ -28,6 +31,8 @@ internal class VulkanContextManager
             if (_freeGraphicsContexts[i]!.SubmitFence!.IsSignaled)
             {
                 context = _freeGraphicsContexts[i];
+                context.SubmitFence.Reset();
+
                 _freeGraphicsContexts.RemoveAt(i);
 
                 break;
@@ -40,6 +45,11 @@ internal class VulkanContextManager
             _graphicsContexts.Add(context);
         }
 
+        context.Prepare(_currentBackbuffer!, name);
+        context.BeginRecording();
+
+        _inUseGraphicsContexts.Add(context);
+
         return context;
     }
 
@@ -48,6 +58,11 @@ internal class VulkanContextManager
     internal void Release(VulkanGraphicsContext context)
     {
         _freeGraphicsContexts.Add(context);
+    }
+
+    internal void OnFrameBegin(VulkanTexture backbuffer)
+    {
+        _currentBackbuffer = backbuffer;
     }
 
 }
