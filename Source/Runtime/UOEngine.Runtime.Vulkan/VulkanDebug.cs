@@ -25,6 +25,7 @@ internal static class VulkanDebug
 
     internal static void SetDebugName(VkQueue queue, string name) => vkSetDebugUtilsObjectNameEXT((ulong)queue.Handle, name, VkObjectType.Queue);
 
+    internal static void SetDebugName(VkFence fence, string name) => vkSetDebugUtilsObjectNameEXT((ulong)fence, name, VkObjectType.Fence);
 
     private static unsafe void vkSetDebugUtilsObjectNameEXT(ulong objectHandle, string name, VkObjectType objectType)
     {

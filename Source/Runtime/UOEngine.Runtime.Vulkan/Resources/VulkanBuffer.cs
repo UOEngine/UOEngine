@@ -56,6 +56,8 @@ internal class VulkanBuffer: IRhiBuffer, IDisposable
 
     private VulkanStagingBufferLock _pendingStagingBuffer;
 
+    //private VulkanFence _fence;
+
     public void SetData<T>(ReadOnlySpan<T> data) where T : unmanaged
     {
         var dataBytes = MemoryMarshal.Cast<T, byte>(data);
@@ -95,6 +97,8 @@ internal class VulkanBuffer: IRhiBuffer, IDisposable
         AllocateMemory(out var allocation);
 
         _allocation = allocation;
+
+        //_fence = new VulkanFence(_device);
     }
 
     public Span<byte> Lock() => Lock(Description.Size, 0);
@@ -146,7 +150,7 @@ internal class VulkanBuffer: IRhiBuffer, IDisposable
 
         if(_lockStatus == LockStatus.Locked)
         {
-            var commandBuffer = _device.GraphicsQueue.CreateCommandBuffer();
+            var commandBuffer = _device.GraphicsQueue.UploadContext.GetCommandBuffer();
 
             VkBufferCopy bufferCopy = new()
             {
@@ -161,8 +165,10 @@ internal class VulkanBuffer: IRhiBuffer, IDisposable
 
             commandBuffer.EndRecording();
 
-            _device.GraphicsQueue.Submit(commandBuffer);
-            _device.WaitForGpuIdle();
+
+            _device.GraphicsQueue.UploadContext.Submit();
+            _device.GraphicsQueue.UploadContext.WaitForUpload();
+
 
             _device.StagingBuffer.ReleaseBuffer(_pendingStagingBuffer);
         }

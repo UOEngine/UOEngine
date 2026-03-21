@@ -1,5 +1,7 @@
 ﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
+using System.Diagnostics;
+
 using Vortice.Vulkan;
 using static Vortice.Vulkan.Vulkan;
 
@@ -7,7 +9,6 @@ using UOEngine.Runtime.Core;
 using UOEngine.Runtime.Platform;
 using UOEngine.Runtime.Plugin;
 using UOEngine.Runtime.RHI;
-using System.Diagnostics;
 
 namespace UOEngine.Runtime.Vulkan;
 
@@ -38,7 +39,6 @@ public class VulkanRenderer : IRenderer
     private struct PerFrameData
     {
         public VulkanFence SubmitFence;
-        public uint FenceSignalCount;
         public VkSemaphore SwapchainAcquireSemaphore;
         public VkSemaphore SwapchainReleaseSemaphore;
         //public VulkanScratchBlockAllocator UniformBufferScratchAllocator;
@@ -89,21 +89,20 @@ public class VulkanRenderer : IRenderer
 
         _swapchain.Create(_window.Handle);
 
-        for(int i = 0; i < 2; i++)
-        {
-            ref var frameData = ref _perFrameData[i];
+        _perFrameData = new PerFrameData[_swapchain.BackBufferCount];
 
-            //frameData.SubmitFence = new VulkanFence(_device, true);
-            frameData.SwapchainAcquireSemaphore = _device.CreateSemaphore();
-            frameData.SwapchainReleaseSemaphore = _device.CreateSemaphore();
-            //frameData.UniformBufferScratchAllocator = new VulkanScratchBlockAllocator(_device, $"UniformBufferScratchAllocator{i}");
-            //frameData.DescriptorPool = new VulkanDescriptorPool(_device);
-            //frameData.CommandBuffer = _device.GraphicsQueue.CreateCommandBuffer();
+        for (int i = 0; i < _swapchain.BackBufferCount; i++)
+        {
+            _perFrameData[i] = new PerFrameData
+            {
+                SubmitFence = new VulkanFence(_device, true),
+                SwapchainAcquireSemaphore = _device.CreateSemaphore(),
+                SwapchainReleaseSemaphore = _device.CreateSemaphore()
+            };
         }
 
         _globalSamplers = new VulkanGlobalSamplers(_device);
         _contextManager = new VulkanContextManager(_device, _globalSamplers);
-        //_graphicsContext = new VulkanGraphicsContext(_device, _globalSamplers);
 
     }
 
@@ -116,14 +115,20 @@ public class VulkanRenderer : IRenderer
     {
         _frameIndex++;
 
-        //Debug.WriteLine($"-- Frame {_frameIndex} --");
-
         _device.DeferredDeletionQueue.CurrentFrame = _frameIndex;
-
-        //Debug.WriteLine($"VulkanRenderer.FrameBegin: {_frameIndex}");
 
         ref var frameData = ref GetCurrentFrameData();
 
+        Debug.WriteLine($"-- Frame {_frameIndex}, Wait for {frameData.SubmitFence.Name} --");
+
+        while (frameData.SubmitFence.IsSignaled == false)
+        {
+            frameData.SubmitFence.Refresh();
+        }
+
+        frameData.SubmitFence.Reset();
+
+        //frameData.SubmitFence.WaitForThenReset();
         //_device.WaitForGpuIdle();
         // Is the previous frame finished?
         //if(frameData.FenceSignalCount <= frameData.SubmitFence?.SignalCount)
@@ -132,12 +137,17 @@ public class VulkanRenderer : IRenderer
             //frameData.SubmitFence?.WaitForThenReset();
 
             //Debug.WriteLine($"Waiting on fence {frameData.SubmitFence?.Name}");
-            while(frameData.SubmitFence?.IsSignaled == false)
-            {
-                frameData.SubmitFence?.Refresh();
-            }
+            //while(frameData.SubmitFence?.IsSignaled == false)
+            //{
+            //    _device.FenceManager.RefreshFenceStatus(frameData.SubmitFence);
+            //}
 
-            frameData.SubmitFence?.Reset();
+            //if (frameData.SubmitFence != null)
+            //{
+            //    _device.FenceManager.WaitThenFreeFence(ref frameData.SubmitFence!);
+            //}
+
+
             //frameData.UniformBufferScratchAllocator.Reset();
             //frameData.DescriptorPool.Reset();
         }
@@ -148,17 +158,9 @@ public class VulkanRenderer : IRenderer
 
         var acquireContext = _contextManager.AllocateGraphicsContext("AcquireContext");
 
-        acquireContext.CommandBuffer.EnsureState(_swapchain.BackbufferToRenderInto, RhiRenderTextureUsage.ColourTarget);
+        acquireContext.CommandBuffer.EnsureState(_swapchain.BackbufferToRenderInto, RhiRenderTextureUsage.ColourTarget, true);
         acquireContext.WaitForSemaphores = [frameData.SwapchainAcquireSemaphore];
         acquireContext.WaitStages = [VkPipelineStageFlags.ColorAttachmentOutput];
-
-        //var commandBuffer = frameData.CommandBuffer;// _device.GetQueue(VulkanQueueType.Graphics).CreateCommandBuffer();
-
-        //commandBuffer.BeginRecording();
-
-        //GraphicsContext.BeginRecording(commandBuffer, frameData.UniformBufferScratchAllocator, frameData.DescriptorPool);
-
-        //GraphicsContext.TransitionImageLayout(_swapchain.BackbufferToRenderInto.Image, VkImageLayout.Undefined, VkImageLayout.ColorAttachmentOptimal);
     }
 
     public unsafe void FrameEnd()
@@ -170,45 +172,75 @@ public class VulkanRenderer : IRenderer
         endFrameContext.CommandBuffer.EnsureState(_swapchain.BackbufferToRenderInto, RhiRenderTextureUsage.Present);
         endFrameContext.SignalSemaphores = [frameData.SwapchainReleaseSemaphore];
 
-        Span<VkSubmitInfo> submitInfos = stackalloc VkSubmitInfo[_contextManager._inUseGraphicsContexts.Count];
+        int submitCount = _contextManager._inUseGraphicsContexts.Count;
 
-        for (int i = 0; i < submitInfos.Length; i++)
+        Span<VkCommandBuffer> commandBuffers = stackalloc VkCommandBuffer[submitCount];
+
+        Span<VkSemaphore> waitSemaphores = stackalloc VkSemaphore[submitCount];
+        Span<VkPipelineStageFlags> waitStages = stackalloc VkPipelineStageFlags[submitCount];
+        Span<VkSemaphore> signalSemaphores = stackalloc VkSemaphore[submitCount];
+
+        int waitOffset = 0;
+        int signalOffset = 0;
+
+        for (int i = 0; i < submitCount; i++)
         {
             var context = _contextManager._inUseGraphicsContexts[i];
-             
+
             context.EndRecording();
 
-            ref var submitInfo = ref submitInfos[i];
+            commandBuffers[i] = context.CommandBuffer.Handle;
 
-            ReadOnlySpan<VkSemaphore> waitSemaphores = context.WaitForSemaphores;
-            ReadOnlySpan<VkPipelineStageFlags> waitStages = context.WaitStages;
-            ReadOnlySpan<VkSemaphore> signalSemaphores = context.SignalSemaphores;
+            int waitCount = context.WaitForSemaphores.Length;
+            int signalCount = context.SignalSemaphores.Length;
 
-            fixed (VkSemaphore* pWait = waitSemaphores)
-            fixed (VkPipelineStageFlags* pStages = waitStages)
-            fixed (VkSemaphore* pSignal = signalSemaphores)
-            fixed (VkCommandBuffer* pCommandBuffer = &context.CommandBuffer.Handle)
-            {
-                submitInfo = new()
-                {
-                    commandBufferCount = 1,
-                    pCommandBuffers = pCommandBuffer,
-                    waitSemaphoreCount = (uint)context.WaitForSemaphores.Length,
-                    pWaitSemaphores = pWait,
-                    pWaitDstStageMask = pStages,
-                    signalSemaphoreCount = (uint)context.SignalSemaphores.Length,
-                    pSignalSemaphores = pSignal
-                };
-            }
+            context.WaitForSemaphores.CopyTo(waitSemaphores.Slice(waitOffset, waitCount)); 
+            context.WaitStages.CopyTo(waitStages.Slice(waitOffset, waitCount));
+            context.SignalSemaphores.CopyTo(signalSemaphores.Slice(signalOffset, signalCount));
 
-            context.SubmitFence = endFrameContext.SubmitFence;
+            waitOffset += waitCount;
+            signalOffset += signalCount;
         }
 
-        _device.GraphicsQueue.Submit(_contextManager._inUseGraphicsContexts.ToArray(), submitInfos, endFrameContext.SubmitFence);
+        Span<VkSubmitInfo> submitInfos = stackalloc VkSubmitInfo[submitCount];
 
-        //Debug.WriteLine($"I should be waiting for {endFrameContext.SubmitFence.Name} on frame {_frameIndex + 2}");
+        fixed (VkSubmitInfo* pSubmitInfos = submitInfos)
+        fixed (VkCommandBuffer* pCommandBuffers = commandBuffers)
+        fixed (VkSemaphore* pWaitSemaphores = waitSemaphores)
+        fixed (VkPipelineStageFlags* pWaitStages = waitStages)
+        fixed (VkSemaphore* pSignalSemaphores = signalSemaphores)
+        {
+            waitOffset = 0;
+            signalOffset = 0;
 
-        frameData.SubmitFence = endFrameContext.SubmitFence;
+            for (int i = 0; i < submitCount; i++)
+            {
+                var context = _contextManager._inUseGraphicsContexts[i];
+
+                int waitCount = context.WaitForSemaphores.Length;
+                int signalCount = context.SignalSemaphores.Length;
+
+                pSubmitInfos[i] = new VkSubmitInfo
+                {
+                    commandBufferCount = 1,
+                    pCommandBuffers = pCommandBuffers + i,
+                    waitSemaphoreCount = (uint)waitCount,
+                    pWaitSemaphores = waitCount > 0 ? pWaitSemaphores + waitOffset : null,
+                    pWaitDstStageMask = waitCount > 0 ? pWaitStages + waitOffset : null,
+                    signalSemaphoreCount = (uint)signalCount,
+                    pSignalSemaphores = signalCount > 0 ? pSignalSemaphores + signalOffset : null
+                };
+
+                waitOffset += waitCount;
+                signalOffset += signalCount;
+            }
+
+            frameData.SubmitFence.Reset();
+
+            _device.GraphicsQueue.Submit(submitInfos, frameData.SubmitFence);
+        }
+
+        Debug.WriteLine($"I should be waiting for {frameData.SubmitFence.Name} on frame {_frameIndex + VulkanSwapchain.NumImages}");
 
         _swapchain.Present(frameData.SwapchainReleaseSemaphore);
 
@@ -265,39 +297,4 @@ public class VulkanRenderer : IRenderer
         }
 
     }
-
-    private unsafe void SubmitContext(VulkanGraphicsContext context, ReadOnlySpan<VkSemaphore> waitSemaphores, 
-        ReadOnlySpan<VkPipelineStageFlags> waitStages, ReadOnlySpan<VkSemaphore> signalSemaphores, VulkanFence fence)
-    {
-        UOEDebug.Assert(fence.IsSignaled == false);
-
-        VkCommandBuffer cmd = context.CommandBuffer.Handle;
-
-        fixed (VkSemaphore* pWait = waitSemaphores)
-        fixed (VkPipelineStageFlags* pStages = waitStages)
-        fixed (VkSemaphore* pSignal = signalSemaphores)
-        {
-            VkSubmitInfo submitInfo = new()
-            {
-                commandBufferCount = 1,
-                pCommandBuffers = &cmd,
-                waitSemaphoreCount = (uint)waitSemaphores.Length,
-                pWaitSemaphores = pWait,
-                pWaitDstStageMask = pStages,
-                signalSemaphoreCount = (uint)signalSemaphores.Length,
-                pSignalSemaphores = pSignal
-            };
-
-            _device.GraphicsQueue.Submit(context.CommandBuffer, submitInfo, fence);
-        }
-
-        _contextManager.Release(context);
-    }
-
-    private unsafe void SubmitContexts(ReadOnlySpan<VulkanGraphicsContext> contexts, ReadOnlySpan<VkSemaphore> waitSemaphores,
-        ReadOnlySpan<VkPipelineStageFlags> waitStages, ReadOnlySpan<VkSemaphore> signalSemaphores)
-    {
-
-    }
-
 }

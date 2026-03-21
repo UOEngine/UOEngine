@@ -7,30 +7,29 @@ using Vortice.Vulkan;
 namespace UOEngine.Runtime.Vulkan;
 
 [DebuggerDisplay("{_type.ToString()} Queue")]
-public class VulkanQueue: IDisposable
+internal class VulkanQueue: IDisposable
 {
     public readonly VkQueue Handle;
     public readonly uint FamilyIndex;
+
+    internal readonly VulkanUploadContext UploadContext;
 
     private readonly VulkanQueueType _type;
     private readonly VulkanDevice _device;
 
     private VulkanCommandBuffer? _lastCommandBufferSubmitted;
 
-    //private VulkanFence _submissionFence;
-
-    struct AllocationInfo
-    {
-        public VulkanCommandBufferPool CommandBufferPool;
-        public VulkanCommandBuffer CommandBuffer;
-    }
-
-    private List<AllocationInfo> _freeCommandBufferAllocators = [];
+    private VulkanFence? _submissionFence;
 
     private List<VulkanCommandBufferPool> _commandBufferPools = [];
 
-    private readonly int _maxCommandBufferPools = 8;
+    private List<VulkanCommandBufferPool> _submittedCommandBufferPools = [];
 
+    private VulkanCommandBufferPool ActiveCommandBufferPool => _activeCommandBufferPool ?? throw new InvalidOperationException();
+
+    private VulkanCommandBufferPool? _activeCommandBufferPool;
+
+    private readonly int _maxCommandBufferPools = 8;
 
     public VulkanQueue(VulkanDevice device, VulkanQueueType type, VkQueue queue)
     {
@@ -40,9 +39,11 @@ public class VulkanQueue: IDisposable
         FamilyIndex = (uint)type;
 
         VulkanDebug.SetDebugName(Handle, _type.ToString());
+
+        UploadContext = new VulkanUploadContext(device, FamilyIndex);
     }
 
-    internal unsafe void Submit(VulkanCommandBuffer commandBuffer)
+    internal unsafe void SubmitUpload(VulkanCommandBuffer commandBuffer, VulkanFence fence)
     {
         VkCommandBuffer buffer = commandBuffer.Handle;
 
@@ -52,99 +53,123 @@ public class VulkanQueue: IDisposable
             pCommandBuffers = &buffer
         };
 
-        _device.Api.vkQueueSubmit(Handle, submitInfo, commandBuffer.Fence.Handle);
-
-        AllocationInfo info = new()
-        {
-            CommandBuffer = commandBuffer,
-            CommandBufferPool = commandBuffer.CommandBufferPool
-        };
-
-        _freeCommandBufferAllocators.Add(info);
-
+        _device.Api.vkQueueSubmit(Handle, submitInfo, fence.Handle);
     }
 
-    internal void Submit(VulkanCommandBuffer commandBuffer, in VkSubmitInfo submitInfo, VulkanFence fence)
+    internal unsafe void Submit(VulkanCommandBuffer commandBuffer, VulkanFence fence)
     {
-        AllocationInfo info = new()
+        VkCommandBuffer buffer = commandBuffer.Handle;
+
+        VkSubmitInfo submitInfo = new()
         {
-            CommandBuffer = commandBuffer,
-            CommandBufferPool = commandBuffer.CommandBufferPool
+            commandBufferCount = 1,
+            pCommandBuffers = &buffer
         };
 
-        UOEDebug.Assert(fence.IsSignaled == false);
+        _device.Api.vkQueueSubmit(Handle, submitInfo, fence.Handle);
 
-        Debug.WriteLine($"Submitting {commandBuffer.Name} with fence {fence.Name}");
+        //AllocationInfo info = new()
+        //{
+        //    CommandBuffer = commandBuffer,
+        //    CommandBufferPool = commandBuffer.CommandBufferPool
+        //};
 
-        _device.Api.vkQueueSubmit(Handle, submitInfo, fence.Handle).CheckResult();
+        _submissionFence = fence;
 
-        commandBuffer.MarkSubmitted();
+        ActiveCommandBufferPool.SubmissionFence = fence;
 
-        _lastCommandBufferSubmitted = commandBuffer;
+        _submittedCommandBufferPools.Add(ActiveCommandBufferPool);
 
-        _freeCommandBufferAllocators.Add(info);
+        _activeCommandBufferPool = null;
+
     }
 
-    internal void Submit(ReadOnlySpan<VulkanGraphicsContext> contexts, Span<VkSubmitInfo> submitInfos, VulkanFence fence)
+    //internal void Submit(VulkanCommandBuffer commandBuffer, in VkSubmitInfo submitInfo, VulkanFence fence)
+    //{
+    //    AllocationInfo info = new()
+    //    {
+    //        CommandBuffer = commandBuffer,
+    //        CommandBufferPool = commandBuffer.CommandBufferPool
+    //    };
+
+    //    UOEDebug.Assert(fence.IsSignaled == false);
+
+    //    Debug.WriteLine($"Submitting {commandBuffer.Name} with fence {fence.Name}");
+
+    //    _device.Api.vkQueueSubmit(Handle, submitInfo, fence.Handle).CheckResult();
+
+    //    commandBuffer.MarkSubmitted();
+
+    //    _lastCommandBufferSubmitted = commandBuffer;
+
+    //    _freeCommandBufferAllocators.Add(info);
+    //}
+
+    internal VulkanFence Submit(Span<VkSubmitInfo> submitInfos, VulkanFence fence)
     {
         UOEDebug.Assert(fence.IsSignaled == false);
 
         _device.Api.vkQueueSubmit(Handle, submitInfos, fence.Handle).CheckResult();
 
-        foreach (var context in contexts)
-        {
-            context.CommandBuffer.MarkSubmitted();
+        _submissionFence = fence;
 
-            AllocationInfo info = new()
-            {
-                CommandBuffer = context.CommandBuffer,
-                CommandBufferPool = context.CommandBuffer.CommandBufferPool
-            };
+        ActiveCommandBufferPool.SubmissionFence = fence;
 
-            _freeCommandBufferAllocators.Add(info);
-        }
+        _submittedCommandBufferPools.Add(ActiveCommandBufferPool);
+
+        _activeCommandBufferPool = null;
+
+        return fence;
     }
-
 
     internal VulkanCommandBuffer CreateCommandBuffer()
     {
-        int freeCommandBufferIndex = -1;
-
-        for(int i = 0; i < _freeCommandBufferAllocators.Count; i++)
+        if(_activeCommandBufferPool == null)
         {
-            _freeCommandBufferAllocators[i].CommandBuffer.Fence.Refresh();
-
-            if (_freeCommandBufferAllocators[i].CommandBuffer.Fence.IsSignaled)
+            for (int i = 0; i < _submittedCommandBufferPools.Count; i++)
             {
-                freeCommandBufferIndex = i;
-                break;
+                var pool = _submittedCommandBufferPools[i];
+                var fence = pool.SubmissionFence;
+
+                if (fence == null)
+                {
+                    pool.Reset();
+
+                    _activeCommandBufferPool = pool;
+                    _submittedCommandBufferPools.RemoveAt(i);
+
+                    break;
+                }
+
+                fence.Refresh();
+
+                if (fence.IsSignaled)
+                {
+                    fence.Reset();
+                    pool.Reset();
+
+                    pool.SubmissionFence = null;
+
+                    _activeCommandBufferPool = pool;
+
+                    _submittedCommandBufferPools.RemoveAt(i);
+
+                    break;
+                }
             }
         }
 
-        VulkanCommandBuffer commandBuffer = null!;
-        VulkanCommandBufferPool commandBufferPool = null!;
-
-        if (freeCommandBufferIndex >= 0)
-        {
-            commandBuffer = _freeCommandBufferAllocators[freeCommandBufferIndex].CommandBuffer;
-            commandBufferPool = _freeCommandBufferAllocators[freeCommandBufferIndex].CommandBufferPool;
-
-            //commandBufferPool.Reset(); // ??
-
-            _freeCommandBufferAllocators.RemoveAt(freeCommandBufferIndex);
-        }
-        else
+        if(_activeCommandBufferPool == null)
         {
             UOEDebug.Assert(_commandBufferPools.Count <= _maxCommandBufferPools);
 
-            commandBufferPool = new VulkanCommandBufferPool(_device, FamilyIndex);
+            _activeCommandBufferPool = new VulkanCommandBufferPool(_device, FamilyIndex);
 
-            _commandBufferPools.Add(commandBufferPool);
+            _commandBufferPools.Add(_activeCommandBufferPool);
 
-            commandBuffer = commandBufferPool.Create();
         }
 
-        commandBuffer.Fence.Reset();
+        VulkanCommandBuffer commandBuffer = _activeCommandBufferPool.Create();
 
         commandBuffer.BeginRecording();
 

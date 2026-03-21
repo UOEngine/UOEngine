@@ -11,6 +11,10 @@ internal class VulkanSwapchain: IDisposable
 
     public VulkanTexture BackbufferToRenderInto => _backbuffer[_nextImageToPresent];
 
+    internal int BackBufferCount => _backbuffer.Length;
+
+    internal static uint NumImages = 2;
+
     internal enum PresentStatus
     {
         Okay,
@@ -85,12 +89,10 @@ internal class VulkanSwapchain: IDisposable
         VkPresentModeKHR presentMode = ChooseSwapPresentMode(swapChainSupport.PresentModes);
         VkExtent2D Extent = ChooseSwapExtent(swapChainSupport.Capabilities);
 
-        uint imageCount = 2;
-
         VkSwapchainCreateInfoKHR createInfo = new()
         {
             surface = _surface,
-            minImageCount = imageCount,
+            minImageCount = NumImages,
             imageFormat = surfaceFormat.format,
             imageColorSpace = surfaceFormat.colorSpace,
             imageExtent = Extent,

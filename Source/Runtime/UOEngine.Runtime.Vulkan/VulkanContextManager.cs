@@ -24,20 +24,26 @@ internal class VulkanContextManager
     {
         VulkanGraphicsContext? context = null;
 
-        for (int i = 0; i < _freeGraphicsContexts.Count; i++)
+        if (_freeGraphicsContexts.Count > 0)
         {
-            _freeGraphicsContexts[i].SubmitFence.Refresh();
-
-            if (_freeGraphicsContexts[i]!.SubmitFence.IsSignaled)
-            {
-                context = _freeGraphicsContexts[i];
-                context.SubmitFence.Reset();
-
-                _freeGraphicsContexts.RemoveAt(i);
-
-                break;
-            }
+            context = _freeGraphicsContexts.Last();
+            _freeGraphicsContexts.RemoveAt(_freeGraphicsContexts.Count - 1);
         }
+
+        //for (int i = 0; i < _freeGraphicsContexts.Count; i++)
+        //{
+        //    _freeGraphicsContexts[i].SubmitFence.Refresh();
+
+        //    if (_freeGraphicsContexts[i]!.SubmitFence.IsSignaled)
+        //    {
+        //        context = _freeGraphicsContexts[i];
+        //        context.SubmitFence.Reset();
+
+        //        _freeGraphicsContexts.RemoveAt(i);
+
+        //        break;
+        //    }
+        //}
 
         if (context == null)
         {

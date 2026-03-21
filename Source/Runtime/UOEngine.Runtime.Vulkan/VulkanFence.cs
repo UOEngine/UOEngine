@@ -1,7 +1,7 @@
-﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using System.Diagnostics;
-using UOEngine.Runtime.Core;
+
 using Vortice.Vulkan;
 
 namespace UOEngine.Runtime.Vulkan;
@@ -12,7 +12,7 @@ internal class VulkanFence
     public uint FrameSubmitted;
     public uint SignalCount { get; private set; }
 
-    public bool IsSignaled { get; private set; }
+    public bool IsSignaled { get; set; }
 
     public readonly VkFence Handle;
     private readonly VulkanDevice _device;
@@ -21,7 +21,7 @@ internal class VulkanFence
 
     private static int _count = 0;
 
-    public VulkanFence(VulkanDevice device, bool createSignaled = false)
+    internal VulkanFence(VulkanDevice device, bool createSignaled)
     {
         _device = device;
 
@@ -32,8 +32,10 @@ internal class VulkanFence
         IsSignaled = createSignaled;
 
         Name = $"Fence{_count++}";
+
+        VulkanDebug.SetDebugName(Handle, Name);
     }
-    
+
     public void WaitForThenReset()
     {
         Wait();
@@ -57,12 +59,12 @@ internal class VulkanFence
 
     public void Reset()
     {
-        if(IsSignaled == false)
+        if (IsSignaled == false)
         {
             return;
         }
 
-        _device.Api.vkResetFences(_device.Handle, Handle);
+        _device.Api.vkResetFences(_device.Handle, Handle).CheckResult();
         IsSignaled = false;
     }
 

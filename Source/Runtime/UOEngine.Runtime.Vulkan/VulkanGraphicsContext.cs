@@ -85,7 +85,7 @@ internal class VulkanGraphicsContext : IRenderContext
 
     public bool IsInRenderPass { get; private set; } = false;
 
-    internal VulkanFence SubmitFence = null!;
+    //internal VulkanFence SubmitFence = null!;
 
     internal VkPipelineStageFlags[] WaitStages = [];
     internal VkSemaphore[] WaitForSemaphores = [];
@@ -152,7 +152,7 @@ internal class VulkanGraphicsContext : IRenderContext
         _descriptorPool = new VulkanDescriptorPool(_device);
         _uniformBufferObjectScratchAllocator = new VulkanScratchBlockAllocator(_device, $"UniformBufferScratchAllocator{id}");
 
-        SubmitFence = new VulkanFence(device);
+        //SubmitFence = new VulkanFence(device);
 
     }
 

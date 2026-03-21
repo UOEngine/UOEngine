@@ -4,7 +4,6 @@ using System.Runtime.InteropServices;
 using UOEngine.Runtime.Core;
 using UOEngine.Runtime.RHI;
 using Vortice.Vulkan;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace UOEngine.Runtime.Vulkan;
 
@@ -267,7 +266,9 @@ internal class VulkanTexture: IRenderTexture, IDisposable
             }
         };
 
-        var commandBuffer = _device.GraphicsQueue.CreateCommandBuffer();
+        var commandBuffer = _device.GraphicsQueue.UploadContext.GetCommandBuffer();
+
+        commandBuffer.BeginRecording();
 
         //commandBuffer.TransitionImageLayout(Image, VkImageLayout.Undefined, VkImageLayout.TransferDstOptimal);
         commandBuffer.CmdCopyBufferToImage(bufferLock.vkBuffer, this, bufferImageCopy);
@@ -275,8 +276,10 @@ internal class VulkanTexture: IRenderTexture, IDisposable
         //commandBuffer.TransitionImageLayout(Image, VkImageLayout.TransferDstOptimal, VkImageLayout.ShaderReadOnlyOptimal);
         commandBuffer.EndRecording();
 
-        _device.GraphicsQueue.Submit(commandBuffer);
-        _device.WaitForGpuIdle();
+        _device.GraphicsQueue.UploadContext.Submit();
+        _device.GraphicsQueue.UploadContext.WaitForUpload();
+        //_device.GraphicsQueue.Submit(commandBuffer, uploadContext.Fence);
+        //uploadContext.InFlight = true;
 
         _device.StagingBuffer.ReleaseBuffer(bufferLock);
     }
