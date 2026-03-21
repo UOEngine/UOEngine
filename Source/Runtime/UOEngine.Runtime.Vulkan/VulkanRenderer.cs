@@ -7,6 +7,7 @@ using UOEngine.Runtime.Core;
 using UOEngine.Runtime.Platform;
 using UOEngine.Runtime.Plugin;
 using UOEngine.Runtime.RHI;
+using System.Diagnostics;
 
 namespace UOEngine.Runtime.Vulkan;
 
@@ -78,9 +79,9 @@ public class VulkanRenderer : IRenderer
 
         _device = new VulkanDevice(_instance.GetSuitableDevice());
 
-        _device.InitGpu(_instance.Api);
-
         VulkanDebug.Init(_device, _instance);
+
+        _device.InitGpu(_instance.Api);
 
         _resourceFactory.SetDevice(_device);
 
@@ -92,7 +93,7 @@ public class VulkanRenderer : IRenderer
         {
             ref var frameData = ref _perFrameData[i];
 
-            frameData.SubmitFence = new VulkanFence(_device, true);
+            //frameData.SubmitFence = new VulkanFence(_device, true);
             frameData.SwapchainAcquireSemaphore = _device.CreateSemaphore();
             frameData.SwapchainReleaseSemaphore = _device.CreateSemaphore();
             //frameData.UniformBufferScratchAllocator = new VulkanScratchBlockAllocator(_device, $"UniformBufferScratchAllocator{i}");
@@ -114,6 +115,9 @@ public class VulkanRenderer : IRenderer
     public void FrameBegin()
     {
         _frameIndex++;
+
+        //Debug.WriteLine($"-- Frame {_frameIndex} --");
+
         _device.DeferredDeletionQueue.CurrentFrame = _frameIndex;
 
         //Debug.WriteLine($"VulkanRenderer.FrameBegin: {_frameIndex}");
@@ -124,9 +128,16 @@ public class VulkanRenderer : IRenderer
         // Is the previous frame finished?
         //if(frameData.FenceSignalCount <= frameData.SubmitFence?.SignalCount)
         {
-            frameData.SubmitFence?.Refresh();
-            frameData.SubmitFence?.WaitForThenReset();
+            //frameData.SubmitFence?.Refresh();
+            //frameData.SubmitFence?.WaitForThenReset();
 
+            //Debug.WriteLine($"Waiting on fence {frameData.SubmitFence?.Name}");
+            while(frameData.SubmitFence?.IsSignaled == false)
+            {
+                frameData.SubmitFence?.Refresh();
+            }
+
+            frameData.SubmitFence?.Reset();
             //frameData.UniformBufferScratchAllocator.Reset();
             //frameData.DescriptorPool.Reset();
         }
@@ -135,10 +146,11 @@ public class VulkanRenderer : IRenderer
 
         _contextManager.OnFrameBegin(_swapchain.BackbufferToRenderInto);
 
-        //var startFrameContext = _contextManager.AllocateGraphicsContext("EndFrame");
+        var acquireContext = _contextManager.AllocateGraphicsContext("AcquireContext");
 
-        //startFrameContext.CommandBuffer.EnsureState(_swapchain.BackbufferToRenderInto, RhiRenderTextureUsage.ColourTarget);
-        //startFrameContext.EndRecording();
+        acquireContext.CommandBuffer.EnsureState(_swapchain.BackbufferToRenderInto, RhiRenderTextureUsage.ColourTarget);
+        acquireContext.WaitForSemaphores = [frameData.SwapchainAcquireSemaphore];
+        acquireContext.WaitStages = [VkPipelineStageFlags.ColorAttachmentOutput];
 
         //var commandBuffer = frameData.CommandBuffer;// _device.GetQueue(VulkanQueueType.Graphics).CreateCommandBuffer();
 
@@ -151,55 +163,52 @@ public class VulkanRenderer : IRenderer
 
     public unsafe void FrameEnd()
     {
-        foreach(var context in _contextManager._inUseGraphicsContexts)
-        {
-            context.EndRecording();
-
-            SubmitContext(context, [], [], [], context.SubmitFence!);
-        }
-
         ref var frameData = ref GetCurrentFrameData();
 
         var endFrameContext = _contextManager.AllocateGraphicsContext("PresentContext");
 
-        //var renderTarget = new RhiRenderTarget();
-
-        //renderTarget.Setup(_swapchain.BackbufferToRenderInto);
-
-        //// Tell it to wait on the render pipeline.
-        ////endFrameContext.CommandBuffer.EnsureState(_swapchain.BackbufferToRenderInto, RhiRenderTextureUsage.ColourTarget);
-        //endFrameContext.BeginRenderPass(new RenderPassInfo
-        //{
-        //    RenderTarget = renderTarget,
-        //    Name = "Compose"
-        //});
-        //endFrameContext.EndRenderPass();
         endFrameContext.CommandBuffer.EnsureState(_swapchain.BackbufferToRenderInto, RhiRenderTextureUsage.Present);
-        endFrameContext.EndRecording();
+        endFrameContext.SignalSemaphores = [frameData.SwapchainReleaseSemaphore];
 
-        VkPipelineStageFlags waitStage = VkPipelineStageFlags.ColorAttachmentOutput;
-        VkSemaphore waitSemaphore = frameData.SwapchainAcquireSemaphore;
-        VkSemaphore signalSemaphore = frameData.SwapchainReleaseSemaphore;
+        Span<VkSubmitInfo> submitInfos = stackalloc VkSubmitInfo[_contextManager._inUseGraphicsContexts.Count];
 
-        //VkCommandBuffer commandBuffer = endFrameContext.CommandBuffer.Handle;
+        for (int i = 0; i < submitInfos.Length; i++)
+        {
+            var context = _contextManager._inUseGraphicsContexts[i];
+             
+            context.EndRecording();
 
-        //_device.PresentQueue.Submit(endFrameContext.CommandBuffer, new VkSubmitInfo
-        //{
-        //    commandBufferCount = 1,
-        //    pCommandBuffers = &commandBuffer,
-        //    waitSemaphoreCount = 1u,
-        //    pWaitSemaphores = &waitSemaphore,
-        //    pWaitDstStageMask = &wait_stage,
-        //    signalSemaphoreCount = 1u,
-        //    pSignalSemaphores = &signalSemaphore
-        //}, frameData.SubmitFence);
+            ref var submitInfo = ref submitInfos[i];
 
-        SubmitContext(endFrameContext, [waitSemaphore], [waitStage], [signalSemaphore], endFrameContext.SubmitFence!);
-        //frameData.SubmitFence = GraphicsContext.CommandBuffer.Fence;
-        //frameData.SubmitFence.FrameSubmitted = _frameIndex;
-        //frameData.FenceSignalCount = frameData.SubmitFence.SignalCount;
+            ReadOnlySpan<VkSemaphore> waitSemaphores = context.WaitForSemaphores;
+            ReadOnlySpan<VkPipelineStageFlags> waitStages = context.WaitStages;
+            ReadOnlySpan<VkSemaphore> signalSemaphores = context.SignalSemaphores;
 
-        frameData.SubmitFence = endFrameContext.SubmitFence!;
+            fixed (VkSemaphore* pWait = waitSemaphores)
+            fixed (VkPipelineStageFlags* pStages = waitStages)
+            fixed (VkSemaphore* pSignal = signalSemaphores)
+            fixed (VkCommandBuffer* pCommandBuffer = &context.CommandBuffer.Handle)
+            {
+                submitInfo = new()
+                {
+                    commandBufferCount = 1,
+                    pCommandBuffers = pCommandBuffer,
+                    waitSemaphoreCount = (uint)context.WaitForSemaphores.Length,
+                    pWaitSemaphores = pWait,
+                    pWaitDstStageMask = pStages,
+                    signalSemaphoreCount = (uint)context.SignalSemaphores.Length,
+                    pSignalSemaphores = pSignal
+                };
+            }
+
+            context.SubmitFence = endFrameContext.SubmitFence;
+        }
+
+        _device.GraphicsQueue.Submit(_contextManager._inUseGraphicsContexts.ToArray(), submitInfos, endFrameContext.SubmitFence);
+
+        //Debug.WriteLine($"I should be waiting for {endFrameContext.SubmitFence.Name} on frame {_frameIndex + 2}");
+
+        frameData.SubmitFence = endFrameContext.SubmitFence;
 
         _swapchain.Present(frameData.SwapchainReleaseSemaphore);
 
@@ -260,6 +269,8 @@ public class VulkanRenderer : IRenderer
     private unsafe void SubmitContext(VulkanGraphicsContext context, ReadOnlySpan<VkSemaphore> waitSemaphores, 
         ReadOnlySpan<VkPipelineStageFlags> waitStages, ReadOnlySpan<VkSemaphore> signalSemaphores, VulkanFence fence)
     {
+        UOEDebug.Assert(fence.IsSignaled == false);
+
         VkCommandBuffer cmd = context.CommandBuffer.Handle;
 
         fixed (VkSemaphore* pWait = waitSemaphores)
@@ -281,6 +292,12 @@ public class VulkanRenderer : IRenderer
         }
 
         _contextManager.Release(context);
+    }
+
+    private unsafe void SubmitContexts(ReadOnlySpan<VulkanGraphicsContext> contexts, ReadOnlySpan<VkSemaphore> waitSemaphores,
+        ReadOnlySpan<VkPipelineStageFlags> waitStages, ReadOnlySpan<VkSemaphore> signalSemaphores)
+    {
+
     }
 
 }

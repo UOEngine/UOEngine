@@ -26,9 +26,9 @@ internal class VulkanContextManager
 
         for (int i = 0; i < _freeGraphicsContexts.Count; i++)
         {
-             _freeGraphicsContexts[i]?.SubmitFence?.Refresh();
+            _freeGraphicsContexts[i].SubmitFence.Refresh();
 
-            if (_freeGraphicsContexts[i]!.SubmitFence!.IsSignaled)
+            if (_freeGraphicsContexts[i]!.SubmitFence.IsSignaled)
             {
                 context = _freeGraphicsContexts[i];
                 context.SubmitFence.Reset();

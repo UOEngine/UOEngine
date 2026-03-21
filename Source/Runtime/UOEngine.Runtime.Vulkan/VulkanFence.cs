@@ -47,7 +47,7 @@ internal class VulkanFence
             return;
         }
 
-        //Debug.WriteLine($"VulkanFence.Wait: {Name}");
+        Debug.WriteLine($"VulkanFence.Wait: {Name}");
 
         _device.Api.vkWaitForFences(_device.Handle, Handle, true, ulong.MaxValue);
 

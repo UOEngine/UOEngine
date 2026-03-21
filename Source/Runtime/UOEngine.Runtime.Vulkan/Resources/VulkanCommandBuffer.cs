@@ -25,13 +25,23 @@ internal class VulkanCommandBuffer
 
     public VulkanFence Fence { get; private set; }
 
-    public readonly string Name;
+    public string Name 
+    {
+        get => _name;
+        set
+        {
+            _name = value; 
+            VulkanDebug.SetDebugName(Handle, value);
+        }
+     }
 
     public readonly bool IsUploadOnly;
 
     private readonly VulkanDevice _device;
 
     private static int _count = 0;
+
+    private string _name = "";
 
     internal unsafe VulkanCommandBuffer(VulkanDevice device, VulkanCommandBufferPool commandPool, string? name = null)
     {

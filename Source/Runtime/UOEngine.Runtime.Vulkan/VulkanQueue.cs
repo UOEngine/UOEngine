@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using System.Diagnostics;
 using UOEngine.Runtime.Core;
@@ -29,6 +29,8 @@ public class VulkanQueue: IDisposable
 
     private List<VulkanCommandBufferPool> _commandBufferPools = [];
 
+    private readonly int _maxCommandBufferPools = 8;
+
 
     public VulkanQueue(VulkanDevice device, VulkanQueueType type, VkQueue queue)
     {
@@ -36,6 +38,8 @@ public class VulkanQueue: IDisposable
         Handle = queue;
         _type = type;
         FamilyIndex = (uint)type;
+
+        VulkanDebug.SetDebugName(Handle, _type.ToString());
     }
 
     internal unsafe void Submit(VulkanCommandBuffer commandBuffer)
@@ -70,7 +74,7 @@ public class VulkanQueue: IDisposable
 
         UOEDebug.Assert(fence.IsSignaled == false);
 
-        //Debug.WriteLine($"Submitting {commandBuffer.Name} with fence {fence.Name}");
+        Debug.WriteLine($"Submitting {commandBuffer.Name} with fence {fence.Name}");
 
         _device.Api.vkQueueSubmit(Handle, submitInfo, fence.Handle).CheckResult();
 
@@ -80,6 +84,27 @@ public class VulkanQueue: IDisposable
 
         _freeCommandBufferAllocators.Add(info);
     }
+
+    internal void Submit(ReadOnlySpan<VulkanGraphicsContext> contexts, Span<VkSubmitInfo> submitInfos, VulkanFence fence)
+    {
+        UOEDebug.Assert(fence.IsSignaled == false);
+
+        _device.Api.vkQueueSubmit(Handle, submitInfos, fence.Handle).CheckResult();
+
+        foreach (var context in contexts)
+        {
+            context.CommandBuffer.MarkSubmitted();
+
+            AllocationInfo info = new()
+            {
+                CommandBuffer = context.CommandBuffer,
+                CommandBufferPool = context.CommandBuffer.CommandBufferPool
+            };
+
+            _freeCommandBufferAllocators.Add(info);
+        }
+    }
+
 
     internal VulkanCommandBuffer CreateCommandBuffer()
     {
@@ -110,6 +135,8 @@ public class VulkanQueue: IDisposable
         }
         else
         {
+            UOEDebug.Assert(_commandBufferPools.Count <= _maxCommandBufferPools);
+
             commandBufferPool = new VulkanCommandBufferPool(_device, FamilyIndex);
 
             _commandBufferPools.Add(commandBufferPool);

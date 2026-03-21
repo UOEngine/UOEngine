@@ -21,6 +21,10 @@ internal static class VulkanDebug
     internal static void SetDebugName(VkImage image, string name) => vkSetDebugUtilsObjectNameEXT(image, name, VkObjectType.Image);
     internal static void SetDebugName(VkImageView imageView, string name) => vkSetDebugUtilsObjectNameEXT(imageView, name, VkObjectType.ImageView);
 
+    internal static void SetDebugName(VkCommandBuffer commandBuffer, string name) => vkSetDebugUtilsObjectNameEXT((ulong)commandBuffer.Handle, name, VkObjectType.CommandBuffer);
+
+    internal static void SetDebugName(VkQueue queue, string name) => vkSetDebugUtilsObjectNameEXT((ulong)queue.Handle, name, VkObjectType.Queue);
+
 
     private static unsafe void vkSetDebugUtilsObjectNameEXT(ulong objectHandle, string name, VkObjectType objectType)
     {

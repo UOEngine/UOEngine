@@ -140,6 +140,7 @@ internal class VulkanSwapchain: IDisposable
 
     public void Present(VkSemaphore semaphore)
     {
+        UOEDebug.Assert(_backbuffer[_nextImageToPresent].State.Layout == VkImageLayout.PresentSrcKHR);
         VkResult result = _device.Api.vkQueuePresentKHR(_device.PresentQueue.Handle, semaphore, Handle, _nextImageToPresent);
     }
 

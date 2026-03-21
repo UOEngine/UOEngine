@@ -85,7 +85,12 @@ internal class VulkanGraphicsContext : IRenderContext
 
     public bool IsInRenderPass { get; private set; } = false;
 
-    internal readonly VulkanFence SubmitFence;
+    internal VulkanFence SubmitFence = null!;
+
+    internal VkPipelineStageFlags[] WaitStages = [];
+    internal VkSemaphore[] WaitForSemaphores = [];
+
+    internal VkSemaphore[] SignalSemaphores = [];
 
     internal bool IsRecording { get; private set; } = false;
 
@@ -167,6 +172,10 @@ internal class VulkanGraphicsContext : IRenderContext
         _commandBuffer!.BeginRecording();
         _uniformBufferObjectScratchAllocator.Reset();
         _descriptorPool.Reset();
+
+        SignalSemaphores = [];
+        WaitStages = [];
+        WaitForSemaphores = [];
 
         IsRecording = true;
     }
@@ -264,6 +273,8 @@ internal class VulkanGraphicsContext : IRenderContext
     {
         _defaultBackbufferRenderTarget = defaultRenderTarget;
         _currentName = name;
+
+        CommandBuffer.Name = _currentName;
 
         //UOEDebug.Assert(SubmitFence.IsSignaled);
 
