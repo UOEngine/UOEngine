@@ -159,6 +159,7 @@ internal class VulkanBuffer: IRhiBuffer, IDisposable
                 size = _pendingStagingBuffer.buffer.Length
             };
 
+            commandBuffer.BeginRecording();
             commandBuffer.CmdCopyBuffer(_pendingStagingBuffer.vkBuffer, Handle, bufferCopy);
 
             // Barrier?
@@ -177,7 +178,7 @@ internal class VulkanBuffer: IRhiBuffer, IDisposable
     }
 
     //internal unsafe void Upload(ReadOnlySpan<byte> data)
-    //{
+    
     //    UOEDebug.Assert((Description.Usage | RhiBufferUsageFlags.Dynamic) == 0);
 
     //    var bufferLock = _device.StagingBuffer.AcquireBuffer(Description.Size);

@@ -53,8 +53,16 @@ public class FnaAdapterPlugin: IPlugin
         {
             foreach (var game in _hostedFNAGames)
             {
+                renderContext.BeginRenderPass(new RenderPassInfo
+                {
+                    Name = "FNAPass",
+                    RenderTarget = null
+                });
+
                 game.GraphicsDevice.OnFrameBegin(renderContext);
                 game.Tick2();
+
+                renderContext.EndRenderPass();
             }
         };
     }

@@ -73,6 +73,12 @@ internal class TexturedQuadTest(IServiceProvider serviceProvider) : UOEngineAppl
 
     public void OnFrameBegin(IRenderContext context)
     {
+        context.BeginRenderPass(new RenderPassInfo
+        {
+            Name = "Main",
+            RenderTarget = null
+        });
+
         context.IndexBuffer = _indexBuffer.RhiBuffer;
         context.VertexBuffer = _vertexBuffer.RhiBuffer;
 
@@ -94,6 +100,8 @@ internal class TexturedQuadTest(IServiceProvider serviceProvider) : UOEngineAppl
         });
 
         context.DrawIndexedPrimitives(6, 1, 0, 0, 0);
+
+        context.EndRenderPass();
     }
 
     protected override void Dispose(bool disposing)

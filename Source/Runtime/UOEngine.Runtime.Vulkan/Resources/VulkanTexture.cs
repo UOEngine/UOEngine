@@ -269,17 +269,12 @@ internal class VulkanTexture: IRenderTexture, IDisposable
         var commandBuffer = _device.GraphicsQueue.UploadContext.GetCommandBuffer();
 
         commandBuffer.BeginRecording();
-
-        //commandBuffer.TransitionImageLayout(Image, VkImageLayout.Undefined, VkImageLayout.TransferDstOptimal);
         commandBuffer.CmdCopyBufferToImage(bufferLock.vkBuffer, this, bufferImageCopy);
         commandBuffer.EnsureState(this, RhiRenderTextureUsage.Sampler);
-        //commandBuffer.TransitionImageLayout(Image, VkImageLayout.TransferDstOptimal, VkImageLayout.ShaderReadOnlyOptimal);
         commandBuffer.EndRecording();
 
         _device.GraphicsQueue.UploadContext.Submit();
         _device.GraphicsQueue.UploadContext.WaitForUpload();
-        //_device.GraphicsQueue.Submit(commandBuffer, uploadContext.Fence);
-        //uploadContext.InFlight = true;
 
         _device.StagingBuffer.ReleaseBuffer(bufferLock);
     }

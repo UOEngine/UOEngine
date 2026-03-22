@@ -123,6 +123,13 @@ public sealed class UOEngineAppBuilder
         var stopWatch = Stopwatch.StartNew();
         long lastTicks = stopWatch.ElapsedTicks;
 
+        var process = Process.GetCurrentProcess();
+
+        long OneKb = 1024;
+        long OneMb = OneKb * 1024;
+
+        long totalMemoryLimit = OneMb * 2048;
+
         while (applicationLoop.ExitRequested == false)
         {
             long now = stopWatch.ElapsedTicks;
@@ -143,6 +150,19 @@ public sealed class UOEngineAppBuilder
 
             renderSystem.FrameBegin();
             renderSystem.FrameEnd();
+
+            process.Refresh();
+            if(process.WorkingSet64 >= totalMemoryLimit)
+            {
+                // This is just temp to make sure if I leak memory, I don't crash my computer. 
+                // Had native leaks before due to allocating lots of buffers without freeing, ops.
+                Debug.WriteLine($"{process.WorkingSet64 / (1024 * 1025)} MB in use, max {totalMemoryLimit / (1024 * 1024)}");
+
+                renderSystem.PrintStats();
+
+                throw new OutOfMemoryException("Ran out of memory!");
+            }
+
         }
 
         return 0;
