@@ -6,7 +6,6 @@ public interface IRenderer
 {
     public void FrameBegin();
     public void FrameEnd();
-    public RhiRenderTarget GetViewportRenderTarget();
 
     public IRenderContext CreateRenderContext(string name);
 

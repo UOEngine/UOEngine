@@ -10,8 +10,8 @@ internal class VulkanCommandBufferPool
 {
     internal readonly VkCommandPool Handle;
 
-    internal VulkanFence? SubmissionFence;
-    
+    internal uint SubmissionFrame = uint.MaxValue;
+
     private readonly uint _queueIndex;
     private readonly VulkanDevice _device;
 

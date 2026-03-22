@@ -9,7 +9,7 @@ namespace UOEngine.Runtime.Vulkan;
 [DebuggerDisplay("VulkanFence ({Name})")]
 internal class VulkanFence
 {
-    public uint FrameSubmitted;
+    public uint FrameSubmitted = uint.MaxValue;
     public uint SignalCount { get; private set; }
 
     public bool IsSignaled { get; set; }
@@ -21,7 +21,7 @@ internal class VulkanFence
 
     private static int _count = 0;
 
-    internal VulkanFence(VulkanDevice device, bool createSignaled)
+    internal VulkanFence(VulkanDevice device, bool createSignaled, string? name = null)
     {
         _device = device;
 
@@ -32,6 +32,11 @@ internal class VulkanFence
         IsSignaled = createSignaled;
 
         Name = $"Fence{_count++}";
+
+        if(name != null)
+        {
+            Name = name;
+        }
 
         VulkanDebug.SetDebugName(Handle, Name);
     }
@@ -49,7 +54,7 @@ internal class VulkanFence
             return;
         }
 
-        Debug.WriteLine($"VulkanFence.Wait: {Name}");
+        //Debug.WriteLine($"VulkanFence.Wait: {Name}");
 
         _device.Api.vkWaitForFences(_device.Handle, Handle, true, ulong.MaxValue);
 

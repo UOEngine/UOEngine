@@ -41,9 +41,7 @@ public class VulkanRenderer : IRenderer
         public VulkanFence SubmitFence;
         public VkSemaphore SwapchainAcquireSemaphore;
         public VkSemaphore SwapchainReleaseSemaphore;
-        //public VulkanScratchBlockAllocator UniformBufferScratchAllocator;
-        //public VulkanDescriptorPool DescriptorPool;
-        //public VulkanCommandBuffer CommandBuffer;
+        public List<VulkanGraphicsContext> Contexts;
 
     }
 
@@ -69,7 +67,7 @@ public class VulkanRenderer : IRenderer
         };
     }
 
-    public unsafe void Startup()
+    public void Startup()
     {
         VkResult result = vkInitialize();
 
@@ -95,9 +93,10 @@ public class VulkanRenderer : IRenderer
         {
             _perFrameData[i] = new PerFrameData
             {
-                SubmitFence = new VulkanFence(_device, true),
+                SubmitFence = new VulkanFence(_device, true, $"FrameFence{i}"),
                 SwapchainAcquireSemaphore = _device.CreateSemaphore(),
-                SwapchainReleaseSemaphore = _device.CreateSemaphore()
+                SwapchainReleaseSemaphore = _device.CreateSemaphore(),
+                Contexts = []
             };
         }
 
@@ -119,38 +118,16 @@ public class VulkanRenderer : IRenderer
 
         ref var frameData = ref GetCurrentFrameData();
 
-        Debug.WriteLine($"-- Frame {_frameIndex}, Wait for {frameData.SubmitFence.Name} --");
+        //Debug.WriteLine($"-- Frame {_frameIndex}, Wait for {frameData.SubmitFence.Name} --");
 
-        while (frameData.SubmitFence.IsSignaled == false)
+        frameData.SubmitFence.WaitForThenReset();
+
+        foreach(var context in frameData.Contexts)
         {
-            frameData.SubmitFence.Refresh();
+            _contextManager.Release(context);
         }
 
-        frameData.SubmitFence.Reset();
-
-        //frameData.SubmitFence.WaitForThenReset();
-        //_device.WaitForGpuIdle();
-        // Is the previous frame finished?
-        //if(frameData.FenceSignalCount <= frameData.SubmitFence?.SignalCount)
-        {
-            //frameData.SubmitFence?.Refresh();
-            //frameData.SubmitFence?.WaitForThenReset();
-
-            //Debug.WriteLine($"Waiting on fence {frameData.SubmitFence?.Name}");
-            //while(frameData.SubmitFence?.IsSignaled == false)
-            //{
-            //    _device.FenceManager.RefreshFenceStatus(frameData.SubmitFence);
-            //}
-
-            //if (frameData.SubmitFence != null)
-            //{
-            //    _device.FenceManager.WaitThenFreeFence(ref frameData.SubmitFence!);
-            //}
-
-
-            //frameData.UniformBufferScratchAllocator.Reset();
-            //frameData.DescriptorPool.Reset();
-        }
+        frameData.Contexts.Clear();
 
         AcquireNextImage();
 
@@ -158,7 +135,7 @@ public class VulkanRenderer : IRenderer
 
         var acquireContext = _contextManager.AllocateGraphicsContext("AcquireContext");
 
-        acquireContext.CommandBuffer.EnsureState(_swapchain.BackbufferToRenderInto, RhiRenderTextureUsage.ColourTarget, true);
+        acquireContext.CommandBuffer.EnsureState(_swapchain.BackbufferToRenderInto, RhiRenderTextureUsage.ColourTarget);
         acquireContext.WaitForSemaphores = [frameData.SwapchainAcquireSemaphore];
         acquireContext.WaitStages = [VkPipelineStageFlags.ColorAttachmentOutput];
     }
@@ -235,16 +212,21 @@ public class VulkanRenderer : IRenderer
                 signalOffset += signalCount;
             }
 
-            frameData.SubmitFence.Reset();
+            frameData.SubmitFence.FrameSubmitted = _frameIndex;
 
             _device.GraphicsQueue.Submit(submitInfos, frameData.SubmitFence);
         }
 
-        Debug.WriteLine($"I should be waiting for {frameData.SubmitFence.Name} on frame {_frameIndex + VulkanSwapchain.NumImages}");
+        //Debug.WriteLine($"I should be waiting for {frameData.SubmitFence.Name} on frame {_frameIndex + VulkanSwapchain.NumImages}");
 
         _swapchain.Present(frameData.SwapchainReleaseSemaphore);
 
         _device.DeferredDeletionQueue.ReleaseResources(_frameIndex);
+
+        foreach(var context in _contextManager._inUseGraphicsContexts)
+        {
+            frameData.Contexts.Add(context);
+        }
 
         _contextManager._inUseGraphicsContexts.Clear();
     }

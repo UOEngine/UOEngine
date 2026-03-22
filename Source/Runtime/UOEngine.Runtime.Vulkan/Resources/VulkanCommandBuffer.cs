@@ -102,7 +102,7 @@ internal class VulkanCommandBuffer
         State = VulkanCommandBufferState.Executable;
     }
 
-    internal unsafe void EnsureState(VulkanTexture texture, RhiRenderTextureUsage desiredUsage, bool over = false)
+    internal unsafe void EnsureState(VulkanTexture texture, RhiRenderTextureUsage desiredUsage)
     {
         ref var current = ref texture.State;
         var target = desiredUsage.ToVkTextureState(0);
@@ -133,11 +133,6 @@ internal class VulkanCommandBuffer
         {
             barrier.srcAccessMask = VkAccessFlags2.None;
             barrier.srcStageMask = VkPipelineStageFlags2.None;
-        }
-
-        if(over)
-        {
-            barrier.srcStageMask = VkPipelineStageFlags2.ColorAttachmentOutput;
         }
 
         VkDependencyInfo dependencyInfo = new()

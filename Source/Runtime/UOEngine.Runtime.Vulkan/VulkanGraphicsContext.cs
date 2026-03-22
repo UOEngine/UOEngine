@@ -276,6 +276,8 @@ internal class VulkanGraphicsContext : IRenderContext
 
         CommandBuffer.Name = _currentName;
 
+        _uniformBufferObjectScratchAllocator.Reset();
+
         //UOEDebug.Assert(SubmitFence.IsSignaled);
 
         //SubmitFence.Reset();

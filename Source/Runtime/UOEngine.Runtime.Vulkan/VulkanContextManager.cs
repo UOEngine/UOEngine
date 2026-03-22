@@ -30,21 +30,6 @@ internal class VulkanContextManager
             _freeGraphicsContexts.RemoveAt(_freeGraphicsContexts.Count - 1);
         }
 
-        //for (int i = 0; i < _freeGraphicsContexts.Count; i++)
-        //{
-        //    _freeGraphicsContexts[i].SubmitFence.Refresh();
-
-        //    if (_freeGraphicsContexts[i]!.SubmitFence.IsSignaled)
-        //    {
-        //        context = _freeGraphicsContexts[i];
-        //        context.SubmitFence.Reset();
-
-        //        _freeGraphicsContexts.RemoveAt(i);
-
-        //        break;
-        //    }
-        //}
-
         if (context == null)
         {
             context = new VulkanGraphicsContext(_device, _globalSamplers, _graphicsContexts.Count);

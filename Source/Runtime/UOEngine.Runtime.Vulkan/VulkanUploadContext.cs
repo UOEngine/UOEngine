@@ -34,8 +34,8 @@ internal class VulkanUploadContext
 
     internal void Submit()
     {
-        //_device.GraphicsQueue.SubmitUpload(_commandBuffer, _fence);
-        //InFlight = true;
+        _device.GraphicsQueue.SubmitUpload(_commandBuffer, _fence);
+        InFlight = true;
     }
 
     internal void WaitForUpload()

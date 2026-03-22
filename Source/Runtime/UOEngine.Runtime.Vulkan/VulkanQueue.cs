@@ -17,19 +17,24 @@ internal class VulkanQueue: IDisposable
     private readonly VulkanQueueType _type;
     private readonly VulkanDevice _device;
 
-    private VulkanCommandBuffer? _lastCommandBufferSubmitted;
-
-    private VulkanFence? _submissionFence;
-
     private List<VulkanCommandBufferPool> _commandBufferPools = [];
 
-    private List<VulkanCommandBufferPool> _submittedCommandBufferPools = [];
+    private List<VulkanCommandBufferPool> _freeCommandBufferPools = [];
 
     private VulkanCommandBufferPool ActiveCommandBufferPool => _activeCommandBufferPool ?? throw new InvalidOperationException();
 
     private VulkanCommandBufferPool? _activeCommandBufferPool;
 
-    private readonly int _maxCommandBufferPools = 8;
+    private readonly int _maxCommandBufferPools = 16;
+
+    private struct SubmittedPool
+    {
+        public VulkanCommandBufferPool Pool;
+        public VulkanFence Fence;
+        public uint ExpectedSignalCount;
+    }
+
+    private List<SubmittedPool> _submittedPools = [];
 
     public VulkanQueue(VulkanDevice device, VulkanQueueType type, VkQueue queue)
     {
@@ -68,42 +73,16 @@ internal class VulkanQueue: IDisposable
 
         _device.Api.vkQueueSubmit(Handle, submitInfo, fence.Handle);
 
-        //AllocationInfo info = new()
-        //{
-        //    CommandBuffer = commandBuffer,
-        //    CommandBufferPool = commandBuffer.CommandBufferPool
-        //};
-
-        _submissionFence = fence;
-
-        ActiveCommandBufferPool.SubmissionFence = fence;
-
-        _submittedCommandBufferPools.Add(ActiveCommandBufferPool);
+        _submittedPools.Add(new SubmittedPool
+        {
+            Pool = _activeCommandBufferPool!,
+            Fence = fence,
+            ExpectedSignalCount = fence.SignalCount + 1
+        });
 
         _activeCommandBufferPool = null;
-
     }
 
-    //internal void Submit(VulkanCommandBuffer commandBuffer, in VkSubmitInfo submitInfo, VulkanFence fence)
-    //{
-    //    AllocationInfo info = new()
-    //    {
-    //        CommandBuffer = commandBuffer,
-    //        CommandBufferPool = commandBuffer.CommandBufferPool
-    //    };
-
-    //    UOEDebug.Assert(fence.IsSignaled == false);
-
-    //    Debug.WriteLine($"Submitting {commandBuffer.Name} with fence {fence.Name}");
-
-    //    _device.Api.vkQueueSubmit(Handle, submitInfo, fence.Handle).CheckResult();
-
-    //    commandBuffer.MarkSubmitted();
-
-    //    _lastCommandBufferSubmitted = commandBuffer;
-
-    //    _freeCommandBufferAllocators.Add(info);
-    //}
 
     internal VulkanFence Submit(Span<VkSubmitInfo> submitInfos, VulkanFence fence)
     {
@@ -111,11 +90,12 @@ internal class VulkanQueue: IDisposable
 
         _device.Api.vkQueueSubmit(Handle, submitInfos, fence.Handle).CheckResult();
 
-        _submissionFence = fence;
-
-        ActiveCommandBufferPool.SubmissionFence = fence;
-
-        _submittedCommandBufferPools.Add(ActiveCommandBufferPool);
+        _submittedPools.Add(new SubmittedPool
+        {
+            Pool = _activeCommandBufferPool!,
+            Fence = fence,
+            ExpectedSignalCount = fence.SignalCount + 1
+        });
 
         _activeCommandBufferPool = null;
 
@@ -126,33 +106,17 @@ internal class VulkanQueue: IDisposable
     {
         if(_activeCommandBufferPool == null)
         {
-            for (int i = 0; i < _submittedCommandBufferPools.Count; i++)
+            for (int i = 0; i < _submittedPools.Count; i++)
             {
-                var pool = _submittedCommandBufferPools[i];
-                var fence = pool.SubmissionFence;
+                var submitted = _submittedPools[i];
 
-                if (fence == null)
+                if(submitted.Fence.SignalCount >= submitted.ExpectedSignalCount)
                 {
-                    pool.Reset();
+                    submitted.Pool.Reset();
 
-                    _activeCommandBufferPool = pool;
-                    _submittedCommandBufferPools.RemoveAt(i);
+                    _activeCommandBufferPool = submitted.Pool;
 
-                    break;
-                }
-
-                fence.Refresh();
-
-                if (fence.IsSignaled)
-                {
-                    fence.Reset();
-                    pool.Reset();
-
-                    pool.SubmissionFence = null;
-
-                    _activeCommandBufferPool = pool;
-
-                    _submittedCommandBufferPools.RemoveAt(i);
+                    _submittedPools.RemoveAt(i);
 
                     break;
                 }

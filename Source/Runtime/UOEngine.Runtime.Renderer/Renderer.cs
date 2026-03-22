@@ -25,11 +25,11 @@ public class RenderSystem
     //public RhiRenderTarget GBufferDiffuse => _gBufferDiffuse ?? throw new InvalidOperationException("GBufferDiffuse not set");
     public RhiRenderTarget UIOverlay = new();
 
-    //public IRenderContext CurrentRenderContext => _context ?? throw new InvalidOperationException("Not initialized");
+    public IRenderContext CurrentRenderContext => _context ?? throw new InvalidOperationException("Not initialized");
 
     public IRenderTexture GetDefaultTexture(DefaultTextureType type) => _defaultTextures[(int)type];
 
-    //private IRenderContext? _context;
+    private IRenderContext? _context;
     private readonly IRenderer _rhiRenderer;
     private readonly IRenderResourceFactory _resourceFactory;
 
@@ -73,34 +73,23 @@ public class RenderSystem
     {
         _rhiRenderer.FrameBegin();
 
-        var context = _rhiRenderer.CreateRenderContext("MainGraphicsContext");
+        _context = _rhiRenderer.CreateRenderContext("MainGraphicsContext");
 
-        //_gBufferDiffuse = _rhiRenderer.GetViewportRenderTarget();
-
-        //_mainPass = new RenderPassInfo
-        //{
-        //    RenderTarget = GBufferDiffuse,
-        //    Name = "MainPass"
-        //};
-
-        //CurrentRenderContext.BeginRenderPass(_mainPass);
-
-        OnFrameBegin?.Invoke(context);
-
-        //CurrentRenderContext.EndRenderPass();
-
+        OnFrameBegin?.Invoke(_context);
     }
 
     public void FrameEnd()
     {
-       // OnFrameEnd?.Invoke(CurrentRenderContext);
-
-        //CurrentRenderContext.EndRenderPass();
-        //CurrentRenderContext.EndRecording();
+        OnFrameEnd?.Invoke(CurrentRenderContext);
 
         _rhiRenderer.FrameEnd();
 
         _frameNumber++;
+    }
+
+    public void PrintStats()
+    {
+        UOEDebug.NotImplemented();
     }
 
     private void CreateDefaultTexture(DefaultTextureType type, uint width, uint height, in Colour colour, Action<uint, uint, Colour, Span<Colour>> pixelFillFunction, string? name = null)

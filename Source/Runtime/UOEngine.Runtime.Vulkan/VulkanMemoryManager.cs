@@ -58,6 +58,8 @@ internal class VulkanMemoryManager
 
     private ulong _totalAllocated;
 
+    private ulong _maxAllocated = 1024 * 1024 * 512;
+
     private List<VulkanSubresourceAllocator> _freeBufferAllocations = [];
 
     private List<VulkanSubresourceAllocator> _subresourceAllocations = [];
