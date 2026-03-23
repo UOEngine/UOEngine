@@ -266,6 +266,11 @@ public class VulkanRenderer : IRenderer
         };
     }
 
+    public IRenderTexture GetBackbufferTexture() => _swapchain.BackbufferToRenderInto;
+
+    private IRhiBackbufferRenderParticipant? _backbufferRenderParticipant;
+    public void AddBackbufferRenderParticipant(IRhiBackbufferRenderParticipant backbufferRenderParticipant) => _backbufferRenderParticipant = backbufferRenderParticipant;
+
     private void AcquireNextImage()
     {
         ref var frameData = ref GetCurrentFrameData();

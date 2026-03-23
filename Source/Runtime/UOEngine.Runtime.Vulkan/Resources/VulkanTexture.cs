@@ -1,5 +1,6 @@
 ﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using UOEngine.Runtime.Core;
 using UOEngine.Runtime.RHI;
@@ -94,6 +95,7 @@ internal static class RhiTextureDescriptionExtensions
 
 }
 
+[DebuggerDisplay("VulkanTexture {Name}")]
 internal class VulkanTexture: IRenderTexture, IDisposable
 {
     public VkImage Image { get; private set; }
@@ -103,11 +105,10 @@ internal class VulkanTexture: IRenderTexture, IDisposable
 
     public readonly byte[] Texels = [];
 
-    private VkImageView _imageView;
     private bool _disposed;
     private readonly VulkanDevice _device;
 
-    public string Name { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+    public string Name { get => Description.Name!; set => throw new NotImplementedException(); }
 
     public nint Handle => throw new NotImplementedException();
 
@@ -284,16 +285,26 @@ internal class VulkanTexture: IRenderTexture, IDisposable
         Dispose(disposing: true);
         GC.SuppressFinalize(this);
     }
-    public void GetFeature<T>(out T feature) where T : IRhiTextureInterop
+    public void GetFeature<T>(out T? feature) where T : IRhiTextureInterop
     {
-        if(_imageInterop is T typed)
+        if(typeof(T) == typeof(RhiVkImageInterop))
         {
-            feature = typed;
+            var imageInterop = new RhiVkImageInterop()
+            {
+                Handle = (ulong)Image,
+                Format = (uint)Description.Format,
+                SharingMode = (uint)VkSharingMode.Exclusive,
+                ImageUsageFlags = (uint)Description.Usage,
+                ImageTiling = (uint)VkImageTiling.Optimal,
+                ImageLayout = (uint)State.Layout
+            };
+
+            feature = (T)(object)imageInterop;
 
             return;
         }
 
-        throw new InvalidOperationException();
+        throw new InvalidOperationException($"Unsupported texture interop feature: {typeof(T).Name}");
     }
 
     protected virtual void Dispose(bool disposing)

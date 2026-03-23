@@ -5,7 +5,9 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Input.Raw;
 using Avalonia.Platform;
+using Avalonia.Platform.Surfaces;
 using Avalonia.Rendering.Composition;
+using Avalonia.Vulkan;
 
 namespace UOEngine.Runtime.AvaloniaUI;
 
@@ -23,7 +25,7 @@ internal class UOEngineTopLevelImpl : ITopLevelImpl
 
     public double RenderScaling => 1.0f;
 
-    public IEnumerable<object> Surfaces => [GetOrCreateSurface() ];
+    //public IEnumerable<object> Surfaces => [GetOrCreateSurface() ];
 
     public Action<RawInputEventArgs>? Input { get; set; }
     public Action<Rect>? Paint { get; set; }
@@ -51,19 +53,23 @@ internal class UOEngineTopLevelImpl : ITopLevelImpl
 
     public AcrylicPlatformCompensationLevels AcrylicCompensationLevels => throw new NotImplementedException();
 
-    public UOEngineSkiaSurface Surface => _surface ?? throw new InvalidOperationException();
+    //public UOEngineSkiaSurface Surface => _surface ?? throw new InvalidOperationException();
+
+    //IPlatformRenderSurface[] Surfaces => [];
+
+    IPlatformRenderSurface[] ITopLevelImpl.Surfaces => [];
 
     private WindowTransparencyLevel _transparencyLevel = WindowTransparencyLevel.Transparent;
 
     private IInputRoot? _inputRoot;
     private readonly UOEnginePlatformGraphics _platformGraphics;
 
-    private UOEngineSkiaSurface? _surface;
+    //private UOEngineSkiaSurface? _surface;
     private PixelSize _renderSize;
 
-    private UOEngineSkiaSurface GetOrCreateSurface() => _surface ??= CreateSurface();
+    //private UOEngineSkiaSurface GetOrCreateSurface() => _surface ??= CreateSurface();
 
-    private UOEngineSkiaSurface CreateSurface() => _platformGraphics.GetSharedContext().CreateSurface(_renderSize);
+    ////private UOEngineSkiaSurface CreateSurface() => _platformGraphics.GetSharedContext().CreateSurface(_renderSize);
 
     public UOEngineTopLevelImpl(UOEnginePlatformGraphics platformGraphics)
     {
@@ -132,6 +138,6 @@ internal class UOEngineTopLevelImpl : ITopLevelImpl
         ClientSize = renderSize.ToSize(renderScale);
 
         _renderSize = renderSize;
-        _surface = CreateSurface();
+        //_surface = CreateSurface();
     }
 }

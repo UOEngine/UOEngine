@@ -1,7 +1,10 @@
 ﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using Avalonia;
+using Avalonia.Platform;
+using Avalonia.Platform.Surfaces;
 using Avalonia.Skia;
+using Avalonia.Vulkan;
 using SkiaSharp;
 using UOEngine.Runtime.Core;
 using UOEngine.Runtime.RHI;
@@ -11,6 +14,8 @@ namespace UOEngine.Runtime.AvaloniaUI;
 internal class UOEngineSkiaGpu : ISkiaGpu
 {
     public bool IsLost => false;
+
+    public IPlatformGraphicsContext? PlatformGraphicsContext => throw new NotImplementedException();
 
     private GRContext _grContext = null!;
 
@@ -44,58 +49,27 @@ internal class UOEngineSkiaGpu : ISkiaGpu
 
     public IDisposable EnsureCurrent() => EmptyDisposable.Instance;
 
-    public ISkiaGpuRenderTarget? TryCreateRenderTarget(IEnumerable<object> surfaces)
-        => surfaces.OfType<UOEngineSkiaSurface>().FirstOrDefault() is { } surface ? new UOEngineSkiaRenderTarget(surface, _grContext): null;
+    //public ISkiaGpuRenderTarget? TryCreateRenderTarget(IEnumerable<object> surfaces)
+    //    => surfaces.OfType<UOEngineSkiaSurface>().FirstOrDefault() is { } surface ? new UOEngineSkiaRenderTarget(surface, _grContext): null;
 
-    public ISkiaSurface? TryCreateSurface(PixelSize size, ISkiaGpuRenderSession? session)
-    {
-        return CreateSurface(size);
-    }
+    public ISkiaSurface? TryCreateSurface(PixelSize size, ISkiaGpuRenderSession? session) => null;
 
-    public UOEngineSkiaSurface CreateSurface(PixelSize size)
-    {
-        UOEDebug.Assert(size.Width > 0);
-        UOEDebug.Assert(size.Height > 0);
+    //public UOEngineSkiaSurface CreateSurface(PixelSize size)
+    //{
+    //    UOEDebug.Assert(size.Width > 0);
+    //    UOEDebug.Assert(size.Height > 0);
 
-        var texture = _resourceFactory.CreateTexture(new RhiTextureDescription
-        {
-            Width = (uint)size.Width,
-            Height = (uint)size.Height,
-            Name = "AvaloniaUISurface",
-            Usage = RhiRenderTextureUsage.ColourTarget
-        });
+    //    var texture = _resourceFactory.CreateTexture(new RhiTextureDescription
+    //    {
+    //        Width = (uint)size.Width,
+    //        Height = (uint)size.Height,
+    //        Name = "AvaloniaUISurface",
+    //        Usage = RhiRenderTextureUsage.ColourTarget
+    //    });
 
-        texture.GetFeature<RhiVkImageInterop>(out var vkImageInterop);
 
-        var imageInfo = new GRVkImageInfo
-        {
-            CurrentQueueFamily = _interopContext.QueueFamilyIndex,
-            LevelCount = 1,
-            SampleCount = 1,
-            Protected = false,
-            Format = vkImageInterop!.Format,
-            Image = vkImageInterop.Handle,
-            ImageLayout = vkImageInterop.ImageLayout,
-            ImageTiling = vkImageInterop.ImageTiling,
-            ImageUsageFlags = vkImageInterop.ImageUsageFlags,
-            SharingMode = vkImageInterop.SharingMode
-        };
-
-        var renderTarget = new GRBackendRenderTarget(size.Width, size.Height, 1, imageInfo);
-
-        var skSurface = SKSurface.Create(
-            _grContext,
-            renderTarget,
-            GRSurfaceOrigin.TopLeft,
-            SKColorType.Rgba8888,
-            new SKSurfaceProperties(SKPixelGeometry.RgbHorizontal)
-        );
-
-        if (skSurface is null)
-            throw new InvalidOperationException("Failed to create Vulkan-backed SKSurface");
-
-        return new UOEngineSkiaSurface(skSurface, texture);
-    }
+    //    return new UOEngineSkiaSurface(skSurface, texture);
+    //}
 
     public object? TryGetFeature(Type featureType) => null;
 
@@ -103,6 +77,26 @@ internal class UOEngineSkiaGpu : ISkiaGpu
     {
         throw new NotImplementedException();
     }
+
+    public ISkiaGpuRenderTarget? TryCreateRenderTarget(IEnumerable<IPlatformRenderSurface> surfaces)
+    {
+        var texture = _resourceFactory.CreateTexture(new RhiTextureDescription
+        {
+            Height = 1080,
+            Width = 1920,
+            Name = "AvaloniaUITexture",
+            Usage = RhiRenderTextureUsage.ColourTarget
+        });
+
+        return new UOEngineSkiaRenderTarget(texture, _grContext, _interopContext.QueueFamilyIndex);
+    }
+
+    public bool IsReadyToCreateRenderTarget(IEnumerable<IPlatformRenderSurface> surfaces)
+    {
+        return true;
+    }
+
+    public IScopedResource<GRContext> TryGetGrContext() => ScopedResource<GRContext>.Create(_grContext, EnsureCurrent().Dispose);
 
     /// <summary>
     /// Represents a disposable that does nothing on disposal.

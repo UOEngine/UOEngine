@@ -26,7 +26,8 @@ internal class UOEnginePlatform
 
         AvaloniaLocator.CurrentMutable
             .Bind<IRenderTimer>().ToConstant(renderTimer)
-            .Bind<IPlatformGraphics>().ToConstant(platformGraphics);
+            .Bind<IPlatformGraphics>().ToConstant(platformGraphics)
+            .Bind<IRenderLoop>().ToConstant(RenderLoop.FromTimer(renderTimer));
 
 
         _compositor = new Compositor(platformGraphics);

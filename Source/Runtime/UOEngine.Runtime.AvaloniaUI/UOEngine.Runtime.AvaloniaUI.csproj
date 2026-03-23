@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\ThirdParty\Avalonia\src\Avalonia.Controls\Avalonia.Controls.csproj" />
+    <ProjectReference Include="..\..\..\ThirdParty\Avalonia\src\HarfBuzz\Avalonia.HarfBuzz\Avalonia.HarfBuzz.csproj" />
     <ProjectReference Include="..\..\..\ThirdParty\Avalonia\src\Skia\Avalonia.Skia\Avalonia.Skia.csproj" />
     <ProjectReference Include="..\UOEngine.Runtime.Plugin\UOEngine.Runtime.Plugin.csproj" />
     <ProjectReference Include="..\UOEngine.Runtime.Renderer\UOEngine.Runtime.Renderer.csproj" />

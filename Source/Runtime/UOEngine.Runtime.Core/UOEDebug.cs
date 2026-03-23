@@ -75,6 +75,11 @@ public class UOEDebug
 
     }
 
+    public static void ToDo(string message)
+    {
+        Debug.WriteLine($"ToDo: {message}");
+    }
+
 }
 
 public class AssertionFailedException: Exception

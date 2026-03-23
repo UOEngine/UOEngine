@@ -107,12 +107,20 @@
     <Project Path="ThirdParty/Avalonia/src/tools/DevAnalyzers/DevAnalyzers.csproj" />
     <Project Path="ThirdParty/Avalonia/src/tools/DevGenerators/DevGenerators.csproj" />
   </Folder>
+  <Folder Name="/ThirdParty/Avalonia/HarfBuzz/">
+    <Project Path="ThirdParty/Avalonia/src/HarfBuzz/Avalonia.HarfBuzz/Avalonia.HarfBuzz.csproj" />
+  </Folder>
   <Folder Name="/ThirdParty/Avalonia/Markup/">
     <Project Path="ThirdParty/Avalonia/src/Markup/Avalonia.Markup.Xaml/Avalonia.Markup.Xaml.csproj" />
     <Project Path="ThirdParty/Avalonia/src/Markup/Avalonia.Markup/Avalonia.Markup.csproj" />
   </Folder>
   <Folder Name="/ThirdParty/Avalonia/Packages/">
     <Project Path="ThirdParty/Avalonia/packages/Avalonia/Avalonia.csproj" />
+  </Folder>
+  <Folder Name="/ThirdParty/Avalonia/Tools/">
+    <Project Path="ThirdParty/Avalonia/src/tools/Avalonia.Analyzers.CodeFixes.CSharp/Avalonia.Analyzers.CodeFixes.CSharp.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/tools/Avalonia.Analyzers.CSharp/Avalonia.Analyzers.CSharp.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/tools/Avalonia.Analyzers.VisualBasic/Avalonia.Analyzers.VisualBasic.csproj" />
   </Folder>
   <Folder Name="/ThirdParty/CentrEDSharp/">
     <Project Path="ThirdParty/centredsharp/CentrED/CentrED.csproj" />

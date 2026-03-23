@@ -21,9 +21,11 @@ public class AvaloniaUIPlugin: IPlugin
         _renderer = renderer;
         _resourceFactory = resourceFactory;
 
-        renderSystem.OnFrameEnd += (renderContext) =>
+        renderSystem.OnFrameEnd += (mainRenderContext) =>
         {
-            _rootControl!.Draw(renderContext);
+            //var avaloniaContext = renderer.CreateRenderContext("AvaloniaUI");
+
+            _rootControl!.Draw(mainRenderContext);
         };
     }
 
@@ -44,6 +46,7 @@ public static class AppBuilderExtensions
     public static AppBuilder UseUOEngine(this AppBuilder builder, IRenderer renderer, IRenderResourceFactory resourceFactory)
         => builder
             .UseStandardRuntimePlatformSubsystem()
+            .UseHarfBuzz()
             .UseSkia()
             .UseWindowingSubsystem(() => UOEnginePlatform.Initialise(renderer, resourceFactory));
 }
