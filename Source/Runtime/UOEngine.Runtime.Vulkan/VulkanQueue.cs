@@ -21,20 +21,7 @@ internal class VulkanQueue: IDisposable
 
     private List<VulkanCommandBufferPool> _freeCommandBufferPools = [];
 
-    private VulkanCommandBufferPool ActiveCommandBufferPool => _activeCommandBufferPool ?? throw new InvalidOperationException();
-
-    private VulkanCommandBufferPool? _activeCommandBufferPool;
-
     private readonly int _maxCommandBufferPools = 16;
-
-    private struct SubmittedPool
-    {
-        public VulkanCommandBufferPool Pool;
-        public VulkanFence Fence;
-        public uint ExpectedSignalCount;
-    }
-
-    private List<SubmittedPool> _submittedPools = [];
 
     public VulkanQueue(VulkanDevice device, VulkanQueueType type, VkQueue queue)
     {
@@ -61,7 +48,7 @@ internal class VulkanQueue: IDisposable
         _device.Api.vkQueueSubmit(Handle, submitInfo, fence.Handle);
     }
 
-    internal unsafe void Submit(VulkanCommandBuffer commandBuffer, VulkanFence fence)
+    internal unsafe void Submit(VulkanCommandBuffer commandBuffer, VulkanFence? fence)
     {
         VkCommandBuffer buffer = commandBuffer.Handle;
 
@@ -71,18 +58,9 @@ internal class VulkanQueue: IDisposable
             pCommandBuffers = &buffer
         };
 
-        _device.Api.vkQueueSubmit(Handle, submitInfo, fence.Handle);
-
-        _submittedPools.Add(new SubmittedPool
-        {
-            Pool = _activeCommandBufferPool!,
-            Fence = fence,
-            ExpectedSignalCount = fence.SignalCount + 1
-        });
-
-        _activeCommandBufferPool = null;
+        var vkFence = fence?.Handle ?? VkFence.Null;
+        _device.Api.vkQueueSubmit(Handle, submitInfo, vkFence);
     }
-
 
     internal VulkanFence Submit(Span<VkSubmitInfo> submitInfos, VulkanFence fence)
     {
@@ -90,55 +68,16 @@ internal class VulkanQueue: IDisposable
 
         _device.Api.vkQueueSubmit(Handle, submitInfos, fence.Handle).CheckResult();
 
-        _submittedPools.Add(new SubmittedPool
-        {
-            Pool = _activeCommandBufferPool!,
-            Fence = fence,
-            ExpectedSignalCount = fence.SignalCount + 1
-        });
-
-        _activeCommandBufferPool = null;
-
         return fence;
     }
 
-    internal VulkanCommandBuffer CreateCommandBuffer()
+    internal VulkanCommandBufferPool AllocatePool()
     {
-        if(_activeCommandBufferPool == null)
-        {
-            for (int i = 0; i < _submittedPools.Count; i++)
-            {
-                var submitted = _submittedPools[i];
+        var pool = new VulkanCommandBufferPool(_device, FamilyIndex);
 
-                if(submitted.Fence.SignalCount >= submitted.ExpectedSignalCount)
-                {
-                    submitted.Pool.Reset();
+        _commandBufferPools.Add(pool);
 
-                    _activeCommandBufferPool = submitted.Pool;
-
-                    _submittedPools.RemoveAt(i);
-
-                    break;
-                }
-            }
-        }
-
-        if(_activeCommandBufferPool == null)
-        {
-            UOEDebug.Assert(_commandBufferPools.Count <= _maxCommandBufferPools);
-
-            _activeCommandBufferPool = new VulkanCommandBufferPool(_device, FamilyIndex);
-
-            _commandBufferPools.Add(_activeCommandBufferPool);
-
-        }
-
-        VulkanCommandBuffer commandBuffer = _activeCommandBufferPool.Create();
-
-        commandBuffer.BeginRecording();
-
-        return commandBuffer;
-
+        return pool;
     }
 
     public void Dispose()

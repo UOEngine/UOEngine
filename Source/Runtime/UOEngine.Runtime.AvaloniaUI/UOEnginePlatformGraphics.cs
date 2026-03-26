@@ -2,6 +2,8 @@
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using Avalonia.Platform;
 using Avalonia.Vulkan;
+
+using UOEngine.Runtime.Renderer;
 using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Runtime.AvaloniaUI;
@@ -12,13 +14,12 @@ internal class UOEnginePlatformGraphics : IPlatformGraphics
 
     private UOEngineSkiaGpu? _context;
     private readonly IRenderer _renderer;
-    private readonly IRenderResourceFactory _resourceFactory;
+    private readonly RenderSystem _renderSystem;
 
-
-    public UOEnginePlatformGraphics(IRenderer renderer, IRenderResourceFactory resourceFactory)
+    public UOEnginePlatformGraphics(IRenderer renderer, RenderSystem renderSystem)
     {
         _renderer = renderer;
-        _resourceFactory = resourceFactory;
+        _renderSystem = renderSystem;
     }
 
     public IPlatformGraphicsContext CreateContext() => throw new NotImplementedException();
@@ -29,7 +30,7 @@ internal class UOEnginePlatformGraphics : IPlatformGraphics
         {
             _context?.Dispose();
 
-            _context = new UOEngineSkiaGpu(_renderer, _resourceFactory);
+            _context = new UOEngineSkiaGpu(_renderer, _renderSystem);
         }
 
         return _context;

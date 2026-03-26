@@ -14,12 +14,12 @@ public class AvaloniaUIPlugin: IPlugin
 {
     private AvaloniaControl? _rootControl;
     private readonly IRenderer _renderer;
-    private readonly IRenderResourceFactory _resourceFactory;
+    private readonly RenderSystem _renderSystem;
 
-    public AvaloniaUIPlugin(RenderSystem renderSystem, IRenderer renderer, IRenderResourceFactory resourceFactory)
+    public AvaloniaUIPlugin(RenderSystem renderSystem, IRenderer renderer)
     {
         _renderer = renderer;
-        _resourceFactory = resourceFactory;
+        _renderSystem = renderSystem;
 
         renderSystem.OnFrameEnd += (mainRenderContext) =>
         {
@@ -32,7 +32,7 @@ public class AvaloniaUIPlugin: IPlugin
     public void PostStartup()
     {
         AppBuilder.Configure<AvaloniaApp>()
-            .UseUOEngine(_renderer, _resourceFactory)
+            .UseUOEngine(_renderer, _renderSystem)
             .SetupWithoutStarting();
 
         _rootControl = new AvaloniaControl();
@@ -43,10 +43,10 @@ public class AvaloniaUIPlugin: IPlugin
 
 public static class AppBuilderExtensions
 {
-    public static AppBuilder UseUOEngine(this AppBuilder builder, IRenderer renderer, IRenderResourceFactory resourceFactory)
+    public static AppBuilder UseUOEngine(this AppBuilder builder, IRenderer renderer, RenderSystem renderSystem)
         => builder
             .UseStandardRuntimePlatformSubsystem()
             .UseHarfBuzz()
             .UseSkia()
-            .UseWindowingSubsystem(() => UOEnginePlatform.Initialise(renderer, resourceFactory));
+            .UseWindowingSubsystem(() => UOEnginePlatform.Initialise(renderer, renderSystem));
 }

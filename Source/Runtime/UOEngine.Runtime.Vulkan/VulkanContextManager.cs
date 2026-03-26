@@ -13,11 +13,12 @@ internal class VulkanContextManager
 
     private readonly VulkanGlobalSamplers _globalSamplers;
 
-
-    internal VulkanContextManager(VulkanDevice device, VulkanGlobalSamplers globalSamplers)
+    private readonly VulkanRenderer _renderer;
+    internal VulkanContextManager(VulkanRenderer renderer, VulkanDevice device, VulkanGlobalSamplers globalSamplers)
     {
         _device = device;
         _globalSamplers = globalSamplers;
+        _renderer = renderer;
     }
 
     internal VulkanGraphicsContext AllocateGraphicsContext(string name)
@@ -32,7 +33,13 @@ internal class VulkanContextManager
 
         if (context == null)
         {
-            context = new VulkanGraphicsContext(_device, _globalSamplers, _graphicsContexts.Count);
+            context = new VulkanGraphicsContext(new VulkanGraphicsContextInit
+            {
+                Device = _device,
+                GlobalSamplers = _globalSamplers,
+                Id = _graphicsContexts.Count,
+                Renderer = _renderer
+            });
             _graphicsContexts.Add(context);
         }
 

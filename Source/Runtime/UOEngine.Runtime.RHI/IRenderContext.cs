@@ -38,4 +38,6 @@ public interface IRenderContext
 
     public void TransitionTextureUsage(IRenderTexture texture, RhiRenderTextureUsage usage);
 
+    public void Flush();
+
 }

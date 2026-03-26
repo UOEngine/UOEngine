@@ -6,6 +6,7 @@ using Avalonia.Rendering;
 using Avalonia.Rendering.Composition;
 using Avalonia.Threading;
 
+using UOEngine.Runtime.Renderer;
 using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Runtime.AvaloniaUI;
@@ -17,12 +18,12 @@ internal class UOEnginePlatform
 
     private static Compositor? _compositor;
 
-    public static void Initialise(RHI.IRenderer renderer, IRenderResourceFactory resourceFactory)
+    public static void Initialise(RHI.IRenderer renderer, RenderSystem renderSystem)
     {
         AvaloniaSynchronizationContext.AutoInstall = false;
 
         var renderTimer = new ManualRenderTimer();
-        var platformGraphics = new UOEnginePlatformGraphics(renderer, resourceFactory);
+        var platformGraphics = new UOEnginePlatformGraphics(renderer, renderSystem);
 
         AvaloniaLocator.CurrentMutable
             .Bind<IRenderTimer>().ToConstant(renderTimer)

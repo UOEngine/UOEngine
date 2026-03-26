@@ -45,7 +45,7 @@ public class VulkanRenderer : IRenderer
 
     }
 
-    private PerFrameData[] _perFrameData = [new(), new()];
+    private PerFrameData[] _perFrameData = [];
 
     private ref PerFrameData GetCurrentFrameData() => ref _perFrameData[_frameIndex & 0x1];
 
@@ -101,7 +101,7 @@ public class VulkanRenderer : IRenderer
         }
 
         _globalSamplers = new VulkanGlobalSamplers(_device);
-        _contextManager = new VulkanContextManager(_device, _globalSamplers);
+        _contextManager = new VulkanContextManager(this, _device, _globalSamplers);
 
     }
 
@@ -268,8 +268,18 @@ public class VulkanRenderer : IRenderer
 
     public IRenderTexture GetBackbufferTexture() => _swapchain.BackbufferToRenderInto;
 
-    private IRhiBackbufferRenderParticipant? _backbufferRenderParticipant;
-    public void AddBackbufferRenderParticipant(IRhiBackbufferRenderParticipant backbufferRenderParticipant) => _backbufferRenderParticipant = backbufferRenderParticipant;
+    internal void SubmitImmediate(VulkanGraphicsContext context)
+    {
+        ref var frameData = ref GetCurrentFrameData();
+
+        context.EndRecording();
+
+        _device.GraphicsQueue.Submit(context.CommandBuffer, null);
+
+        frameData.Contexts.Add(context);
+
+        _contextManager._inUseGraphicsContexts.Remove(context);
+    }
 
     private void AcquireNextImage()
     {

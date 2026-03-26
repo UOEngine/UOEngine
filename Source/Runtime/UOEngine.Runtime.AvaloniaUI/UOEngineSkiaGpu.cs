@@ -6,7 +6,9 @@ using Avalonia.Platform.Surfaces;
 using Avalonia.Skia;
 using Avalonia.Vulkan;
 using SkiaSharp;
+
 using UOEngine.Runtime.Core;
+using UOEngine.Runtime.Renderer;
 using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Runtime.AvaloniaUI;
@@ -20,13 +22,14 @@ internal class UOEngineSkiaGpu : ISkiaGpu
     private GRContext _grContext = null!;
 
     private readonly RhiInteropContext _interopContext;
-    private readonly IRenderResourceFactory _resourceFactory;
+    private readonly RenderSystem _renderSystem;
     private readonly RHI.IRenderer _renderer;
 
-    public UOEngineSkiaGpu(RHI.IRenderer renderer, IRenderResourceFactory resourceFactory)
+    public UOEngineSkiaGpu(RHI.IRenderer renderer, RenderSystem renderSystem)
     {
         _renderer = renderer;
-        _resourceFactory = resourceFactory;
+        _renderSystem = renderSystem;
+
         renderer.GetInteropContext(out var interopContext);
 
         _interopContext = interopContext;
@@ -49,27 +52,7 @@ internal class UOEngineSkiaGpu : ISkiaGpu
 
     public IDisposable EnsureCurrent() => EmptyDisposable.Instance;
 
-    //public ISkiaGpuRenderTarget? TryCreateRenderTarget(IEnumerable<object> surfaces)
-    //    => surfaces.OfType<UOEngineSkiaSurface>().FirstOrDefault() is { } surface ? new UOEngineSkiaRenderTarget(surface, _grContext): null;
-
     public ISkiaSurface? TryCreateSurface(PixelSize size, ISkiaGpuRenderSession? session) => null;
-
-    //public UOEngineSkiaSurface CreateSurface(PixelSize size)
-    //{
-    //    UOEDebug.Assert(size.Width > 0);
-    //    UOEDebug.Assert(size.Height > 0);
-
-    //    var texture = _resourceFactory.CreateTexture(new RhiTextureDescription
-    //    {
-    //        Width = (uint)size.Width,
-    //        Height = (uint)size.Height,
-    //        Name = "AvaloniaUISurface",
-    //        Usage = RhiRenderTextureUsage.ColourTarget
-    //    });
-
-
-    //    return new UOEngineSkiaSurface(skSurface, texture);
-    //}
 
     public object? TryGetFeature(Type featureType) => null;
 
@@ -80,13 +63,7 @@ internal class UOEngineSkiaGpu : ISkiaGpu
 
     public ISkiaGpuRenderTarget? TryCreateRenderTarget(IEnumerable<IPlatformRenderSurface> surfaces)
     {
-        var texture = _resourceFactory.CreateTexture(new RhiTextureDescription
-        {
-            Height = 1080,
-            Width = 1920,
-            Name = "AvaloniaUITexture",
-            Usage = RhiRenderTextureUsage.ColourTarget
-        });
+        var texture = _renderSystem.UIOverlay.Texture;
 
         return new UOEngineSkiaRenderTarget(texture, _grContext, _interopContext.QueueFamilyIndex);
     }
