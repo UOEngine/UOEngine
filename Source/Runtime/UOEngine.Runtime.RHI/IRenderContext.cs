@@ -18,7 +18,7 @@ public interface IRenderContext
 
     public IRhiBuffer IndexBuffer { set; }
 
-    public IRhiBuffer VertexBuffer { get; set; }
+    public IRhiBuffer? VertexBuffer { get; set; }
 
     public RhiSampler Sampler { get; set; }
 

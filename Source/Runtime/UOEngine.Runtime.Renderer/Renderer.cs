@@ -72,7 +72,7 @@ public class RenderSystem
     {
         OnFrameEnd?.Invoke(CurrentRenderContext);
 
-        //CurrentRenderContext.TransitionTextureUsage(UIOverlay.Texture, RhiRenderTextureUsage.Sampler);
+        FullscreenPassUtils.BlitTexture(CurrentRenderContext, UIOverlay.Texture, null);
 
         _rhiRenderer.FrameEnd();
 
