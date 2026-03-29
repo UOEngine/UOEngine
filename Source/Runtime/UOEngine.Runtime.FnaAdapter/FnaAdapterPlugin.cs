@@ -56,7 +56,8 @@ public class FnaAdapterPlugin: IPlugin
                 renderContext.BeginRenderPass(new RenderPassInfo
                 {
                     Name = "FNAPass",
-                    RenderTarget = null
+                    RenderTarget = null,
+                    LoadAction = RhiRenderTargetLoadAction.DontCare
                 });
 
                 game.GraphicsDevice.OnFrameBegin(renderContext);

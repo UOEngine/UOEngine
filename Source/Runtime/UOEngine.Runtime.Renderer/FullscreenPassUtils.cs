@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+
 using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Runtime.Renderer;
@@ -15,13 +16,21 @@ public class FullscreenPassUtils
     {
         context.TransitionTextureUsage(texture, RhiRenderTextureUsage.Sampler);
 
+        context.BeginRenderPass(new RenderPassInfo
+        {
+            Name = "BlitTexture",
+            RenderTarget = target,
+            LoadAction = RhiRenderTargetLoadAction.Load
+        });
+
         context.IndexBuffer = _globalResources.ScreenTriangleIndexBuffer.RhiBuffer;
-        context.VertexBuffer = null;
+
+        _globalResources.BlitTextureShaderInstance.Texture = texture;
 
         context.SetGraphicsPipeline(new RhiGraphicsPipelineDescription
         {
-            BlendState = RhiBlendState.Opaque,
-            Shader = _globalResources.BlitTextureShaderInstance,
+            BlendState = RhiBlendState.AlphaBlend,
+            Shader = _globalResources.BlitTextureShaderInstance.ShaderInstance,
             DepthStencilState = RhiDepthStencilState.None,
             Rasteriser = RhiRasteriserState.CullCounterClockwise,
             PrimitiveType = RhiPrimitiveType.TriangleList,
@@ -29,6 +38,8 @@ public class FullscreenPassUtils
         });
 
         context.DrawIndexedPrimitives(3, 1, 0, 0, 0);
+
+        context.EndRenderPass();
 
     }
 

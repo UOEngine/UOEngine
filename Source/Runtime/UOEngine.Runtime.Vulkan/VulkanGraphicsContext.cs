@@ -60,7 +60,7 @@ internal class VulkanGraphicsContext : IRenderContext
         }
     }
 
-    public IRhiBuffer VertexBuffer
+    public IRhiBuffer? VertexBuffer
     {
         get => _vertexBuffer ?? throw new InvalidOperationException("VertexBuffer is not set");
         set
@@ -228,9 +228,10 @@ internal class VulkanGraphicsContext : IRenderContext
             imageView = texture.ImageView,
             imageLayout = VkImageLayout.ColorAttachmentOptimal,
             resolveMode = VkResolveModeFlags.None,
-            loadOp = VkAttachmentLoadOp.Clear,
+            loadOp = renderPassInfo.LoadAction.ToVkLoadOp(),
             storeOp = VkAttachmentStoreOp.Store,
-            clearValue = new(0.0f, 0.0f, 0.0f)  // Red to debug
+            clearValue = new VkClearValue(new VkClearColorValue(renderPassInfo.ClearColour.R, renderPassInfo.ClearColour.G,
+            renderPassInfo.ClearColour.B, renderPassInfo.ClearColour.A))
         };
 
         VkRenderingInfo renderingInfo = new()

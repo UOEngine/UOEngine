@@ -78,4 +78,13 @@ internal static class RhiTypesToVulkanTypes
         _ => throw new NotImplementedException(),
     };
 
+    internal static VkAttachmentLoadOp ToVkLoadOp(this RhiRenderTargetLoadAction loadAction) => loadAction switch
+    {
+        RhiRenderTargetLoadAction.NoAction => VkAttachmentLoadOp.None,
+        RhiRenderTargetLoadAction.Load => VkAttachmentLoadOp.Load,
+        RhiRenderTargetLoadAction.Clear => VkAttachmentLoadOp.Clear,
+        RhiRenderTargetLoadAction.DontCare => VkAttachmentLoadOp.DontCare,
+        _ => throw new NotImplementedException(),
+    };
+
 }

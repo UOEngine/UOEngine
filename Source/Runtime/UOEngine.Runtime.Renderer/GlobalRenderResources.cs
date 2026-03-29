@@ -23,13 +23,15 @@ public class GlobalRenderResources
 {
     public IRenderTexture GetDefaultTexture(DefaultTextureType type) => _defaultTextures[(int)type];
 
-    public ShaderInstance BlitTextureShaderInstance { get; private set; } = null!;
+    internal BlitTextureShaderInstance BlitTextureShaderInstance { get; private set; } = null!;
 
     public ScreenTriangleIndexBuffer ScreenTriangleIndexBuffer { get; private set; } = null!;
 
     private IRenderTexture[] _defaultTextures = new IRenderTexture[(int)DefaultTextureType.Count];
 
     private readonly IRenderResourceFactory _resourceFactory;
+
+    private RhiShaderResource _blitTextureShaderResource = null!;
 
     internal GlobalRenderResources(IRenderResourceFactory resourceFactory)
     {
@@ -41,6 +43,18 @@ public class GlobalRenderResources
         uint defaultTextureSize = 128;
 
         ScreenTriangleIndexBuffer = new(_resourceFactory);
+
+        _blitTextureShaderResource = _resourceFactory.NewShaderResource(new RhiShaderResourceCreateParameters
+        {
+            Name = "BlitTexture",
+        });
+
+        string vertexShader = Path.Combine(UOEPaths.ShadersDir, "FullscreenTriangleVS.hlsl");
+        string pixelShader = Path.Combine(UOEPaths.ShadersDir, "FullscreenTrianglePS.hlsl");
+
+        _blitTextureShaderResource.Load(vertexShader, pixelShader);
+
+        BlitTextureShaderInstance = new(_resourceFactory.NewShaderInstance(_blitTextureShaderResource));
 
         CreateDefaultTexture(DefaultTextureType.Red, defaultTextureSize, defaultTextureSize, Colour.Red, FillWithSolidColour, "DefaultRedTexture");
         CreateDefaultTexture(DefaultTextureType.Green, defaultTextureSize, defaultTextureSize, Colour.Green, FillWithSolidColour, "DefaultGreenTexture");

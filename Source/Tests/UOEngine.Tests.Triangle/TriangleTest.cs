@@ -68,7 +68,8 @@ internal class TriangleTest(IServiceProvider serviceProvider) : UOEngineApplicat
         context.BeginRenderPass(new RenderPassInfo
         {
             Name = "Main",
-            RenderTarget = null
+            RenderTarget = null,
+            LoadAction = RhiRenderTargetLoadAction.DontCare
         });
 
         context.IndexBuffer = _indexBuffer.RhiBuffer;

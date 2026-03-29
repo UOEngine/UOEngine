@@ -29,6 +29,6 @@ public class ScreenTriangleIndexBuffer: IndexBuffer
     public ScreenTriangleIndexBuffer(IRenderResourceFactory factory)
         : base(factory, 3)
     {
-        SetData([0, 1, 3]);
+        SetData([0, 1, 2]);
     }
 }

@@ -18,6 +18,7 @@ public class RenderSystem
     public IRenderContext CurrentRenderContext => _context ?? throw new InvalidOperationException("Not initialized");
 
     public readonly GlobalRenderResources GlobalRenderResources;
+    public readonly FullscreenPassUtils FullscreenPassUtils;
 
     private IRenderContext? _context;
     private readonly IRenderer _rhiRenderer;
@@ -34,6 +35,7 @@ public class RenderSystem
         _rhiRenderer = rhiRenderer;
         _resourceFactory = resourceFactory;
         GlobalRenderResources = new GlobalRenderResources(resourceFactory);
+        FullscreenPassUtils = new FullscreenPassUtils(GlobalRenderResources);
     }
 
     public void Startup()
@@ -47,7 +49,7 @@ public class RenderSystem
             Width = 1920,
             Height = 1080,
             Usage = RhiRenderTextureUsage.ColourTarget,
-            Name = "UIOverlay"
+            Name = "UIOverlay",
         });
 
         UIOverlay.Setup(uiTexture);
@@ -59,11 +61,26 @@ public class RenderSystem
 
         var overlaySetupContext = _rhiRenderer.CreateRenderContext("OverlaySetupContext");
 
-        overlaySetupContext.TransitionTextureUsage(UIOverlay.Texture, RhiRenderTextureUsage.ColourTarget);
+        overlaySetupContext.BeginRenderPass(new RenderPassInfo
+        {
+            Name = "Clear UI overlay",
+            LoadAction = RhiRenderTargetLoadAction.Clear,
+            RenderTarget = UIOverlay,
+            ClearColour = new(0, 0, 0, 0)
+        });
 
         overlaySetupContext.Flush();
 
         _context = _rhiRenderer.CreateRenderContext("MainGraphicsContext");
+
+        _context.BeginRenderPass(new RenderPassInfo
+        {
+            Name = "Clear backbuffer",
+            LoadAction = RhiRenderTargetLoadAction.Clear,
+            RenderTarget = null
+        });
+
+        _context.EndRenderPass();
 
         OnFrameBegin?.Invoke(_context);
     }
