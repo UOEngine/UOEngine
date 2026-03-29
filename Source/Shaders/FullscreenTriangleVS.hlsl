@@ -13,12 +13,11 @@ static const float4 cQuadVertsNDC[3] =
     {  3.0f, -1.0f,  0.0, 1.0},
 };
 
-static const float2 cQuadUVs[4] =
+static const float2 cQuadUVs[3] =
 {
     { 0.0,  0.0 },
-    { 0.0,  1.0 },
-    { 1.0,  1.0 },
-    { 0.0,  1.0 },
+    { 0.0,  2.0 },
+    { 2.0,  0.0 },
 };
 
 VsToPs main(uint vid : SV_VertexID, uint instance_id : SV_InstanceID)

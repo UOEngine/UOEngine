@@ -100,6 +100,7 @@
     <Project Path="ThirdParty/Avalonia/src/Avalonia.MicroCom/Avalonia.MicroCom.csproj" />
     <Project Path="ThirdParty/Avalonia/src/Avalonia.OpenGL/Avalonia.OpenGL.csproj" />
     <Project Path="ThirdParty/Avalonia/src/Avalonia.Remote.Protocol/Avalonia.Remote.Protocol.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/Avalonia.Themes.Fluent/Avalonia.Themes.Fluent.csproj" />
     <Project Path="ThirdParty/Avalonia/src/Avalonia.Vulkan/Avalonia.Vulkan.csproj" />
     <Project Path="ThirdParty/Avalonia/src/Skia/Avalonia.Skia/Avalonia.Skia.csproj" />
     <Project Path="ThirdParty/Avalonia/src/tools/Avalonia.Analyzers/Avalonia.Analyzers.csproj" />

@@ -1,6 +1,7 @@
 ﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Platform;
 using UOEngine.Runtime.RHI;
 
@@ -9,6 +10,8 @@ namespace UOEngine.Runtime.AvaloniaUI;
 internal class AvaloniaControl
 {
     private UOEngineTopLevel? _topLevel;
+
+    private RootControl? _rootControl;
 
     public void Initialise()
     {
@@ -25,7 +28,14 @@ internal class AvaloniaControl
 
         topLevelImpl.SetRenderSize(new PixelSize(1920, 1080));
 
-        _topLevel = new UOEngineTopLevel(topLevelImpl);
+        _rootControl = new RootControl();
+
+        _topLevel = new UOEngineTopLevel(topLevelImpl)
+        {
+            Background = null,
+            Content = _rootControl,
+            TransparencyLevelHint = [WindowTransparencyLevel.Transparent, WindowTransparencyLevel.None]
+        };
 
         _topLevel.Prepare();
         _topLevel.StartRendering();

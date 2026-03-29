@@ -26,6 +26,7 @@ internal class UOEnginePlatform
         var platformGraphics = new UOEnginePlatformGraphics(renderer, renderSystem);
 
         AvaloniaLocator.CurrentMutable
+            .Bind<ICursorFactory>().ToConstant(new UOEngineCursorFactory())
             .Bind<IRenderTimer>().ToConstant(renderTimer)
             .Bind<IPlatformGraphics>().ToConstant(platformGraphics)
             .Bind<IRenderLoop>().ToConstant(RenderLoop.FromTimer(renderTimer));
