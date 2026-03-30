@@ -49,6 +49,8 @@ public class VulkanRenderer : IRenderer
 
     private ref PerFrameData GetCurrentFrameData() => ref _perFrameData[_frameIndex & 0x1];
 
+    private bool _isInFrame = false;
+
     public VulkanRenderer(IWindow window, IRenderResourceFactory resourceFactory)
     {
         _window = window;
@@ -138,6 +140,8 @@ public class VulkanRenderer : IRenderer
         acquireContext.CommandBuffer.EnsureState(_swapchain.BackbufferToRenderInto, RhiRenderTextureUsage.ColourTarget);
         acquireContext.WaitForSemaphores = [frameData.SwapchainAcquireSemaphore];
         acquireContext.WaitStages = [VkPipelineStageFlags.ColorAttachmentOutput];
+
+        _isInFrame = true;
     }
 
     public unsafe void FrameEnd()
@@ -229,6 +233,8 @@ public class VulkanRenderer : IRenderer
         }
 
         _contextManager._inUseGraphicsContexts.Clear();
+
+        _isInFrame = false;
     }
 
     public IRenderContext CreateRenderContext(string name) => _contextManager.AllocateGraphicsContext(name);

@@ -128,7 +128,29 @@ public sealed class UOEngineAppBuilder
         long OneKb = 1024;
         long OneMb = OneKb * 1024;
 
-        long totalMemoryLimit = OneMb * 2048;
+        long totalMemoryLimit = OneMb * 4096;
+
+        using var cts = new CancellationTokenSource();
+
+        long latestWorkingSet = process.WorkingSet64;
+
+        var memoryTask = Task.Run(async () =>
+        {
+            while (!cts.Token.IsCancellationRequested)
+            {
+                process.Refresh();
+                Interlocked.Exchange(ref latestWorkingSet, process.WorkingSet64);
+
+                try
+                {
+                    await Task.Delay(500, cts.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+            }
+        });
 
         while (applicationLoop.ExitRequested == false)
         {
@@ -151,18 +173,27 @@ public sealed class UOEngineAppBuilder
             renderSystem.FrameBegin();
             renderSystem.FrameEnd();
 
-            process.Refresh();
-            if(process.WorkingSet64 >= totalMemoryLimit)
+            if(latestWorkingSet >= totalMemoryLimit)
             {
                 // This is just temp to make sure if I leak memory, I don't crash my computer. 
                 // Had native leaks before due to allocating lots of buffers without freeing, ops.
-                Debug.WriteLine($"{process.WorkingSet64 / (1024 * 1025)} MB in use, max {totalMemoryLimit / (1024 * 1024)}");
+                Debug.WriteLine($"{latestWorkingSet / (1024 * 1025)} MB in use, max {totalMemoryLimit / (1024 * 1024)}");
 
                 renderSystem.PrintStats();
 
                 throw new OutOfMemoryException("Ran out of memory!");
             }
 
+        }
+
+        cts.Cancel();
+
+        try
+        {
+            memoryTask.Wait();
+        }
+        catch (AggregateException ex) when (ex.InnerException is OperationCanceledException)
+        {
         }
 
         return 0;

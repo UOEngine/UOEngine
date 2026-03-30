@@ -66,7 +66,15 @@ internal class VulkanQueue: IDisposable
     {
         UOEDebug.Assert(fence.IsSignaled == false);
 
-        _device.Api.vkQueueSubmit(Handle, submitInfos, fence.Handle).CheckResult();
+        try
+        {
+            _device.Api.vkQueueSubmit(Handle, submitInfos, fence.Handle).CheckResult();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            UOEDebug.Assert(false);
+        }
 
         return fence;
     }

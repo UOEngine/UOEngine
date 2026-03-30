@@ -47,6 +47,8 @@ internal unsafe class VulkanStagingBuffer: IDisposable
 
     private VulkanMemoryAllocation _allocation;
 
+    private int _threadId;
+
     private struct AllocationInfo
     {
 
@@ -56,6 +58,8 @@ internal unsafe class VulkanStagingBuffer: IDisposable
     {
         _device = device;
         _mappedBufferSize = 1024 * 1024 * 8; // 8MB
+        _threadId = Thread.CurrentThread.ManagedThreadId;
+
     }
 
     internal unsafe void Init()

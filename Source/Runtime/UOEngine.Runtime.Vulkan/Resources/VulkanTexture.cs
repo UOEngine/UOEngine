@@ -216,68 +216,72 @@ internal class VulkanTexture: IRenderTexture, IDisposable
 
     public void Upload(uint x = 0, uint y = 0, uint w = 0, uint h = 0)
     {
-        // Assuming RGBA for now.
-        const uint bytesPerTexel = 4;
-
-        uint size = w * h * bytesPerTexel;
-
-        var bufferLock = _device.StagingBuffer.AcquireBuffer(size);
-
-        var src = new ReadOnlySpan<byte>(Texels);
-
-        int srcRowBytes = (int)(w * bytesPerTexel);
-        uint srcRowPitch = Width * bytesPerTexel;
-
-        unsafe
+        // Lazy bad lock!
+        lock (_device.ImmediateUploadLock)
         {
-            var dst = bufferLock.buffer.GetSpan();
+            // Assuming RGBA for now.
+            const uint bytesPerTexel = 4;
 
-            for (uint row = 0; row < h; row++)
+            uint size = w * h * bytesPerTexel;
+
+            var bufferLock = _device.StagingBuffer.AcquireBuffer(size);
+
+            var src = new ReadOnlySpan<byte>(Texels);
+
+            int srcRowBytes = (int)(w * bytesPerTexel);
+            uint srcRowPitch = Width * bytesPerTexel;
+
+            unsafe
             {
-                var srcRow = src.Slice((int)((y + row) * srcRowPitch + x * bytesPerTexel), srcRowBytes);
-                var dstRow = dst.Slice((int)(row * srcRowBytes), srcRowBytes);
+                var dst = bufferLock.buffer.GetSpan();
 
-                srcRow.CopyTo(dstRow);
+                for (uint row = 0; row < h; row++)
+                {
+                    var srcRow = src.Slice((int)((y + row) * srcRowPitch + x * bytesPerTexel), srcRowBytes);
+                    var dstRow = dst.Slice((int)(row * srcRowBytes), srcRowBytes);
+
+                    srcRow.CopyTo(dstRow);
+                }
             }
+
+            VkBufferImageCopy bufferImageCopy = new()
+            {
+                bufferOffset = bufferLock.Offset,
+                bufferRowLength = 0,
+                bufferImageHeight = 0,
+                imageSubresource = new()
+                {
+                    aspectMask = VkImageAspectFlags.Color,
+                    mipLevel = 0,
+                    baseArrayLayer = 0,
+                    layerCount = 1
+                },
+                imageOffset = new()
+                {
+                    x = (int)x,
+                    y = (int)y,
+                    z = 0
+                },
+                imageExtent = new()
+                {
+                    width = w,
+                    height = h,
+                    depth = 1
+                }
+            };
+
+            var commandBuffer = _device.GraphicsQueue.UploadContext.GetCommandBuffer();
+
+            commandBuffer.BeginRecording();
+            commandBuffer.CmdCopyBufferToImage(bufferLock.vkBuffer, this, bufferImageCopy);
+            commandBuffer.EnsureState(this, RhiRenderTextureUsage.Sampler);
+            commandBuffer.EndRecording();
+
+            _device.GraphicsQueue.UploadContext.Submit();
+            _device.GraphicsQueue.UploadContext.WaitForUpload();
+
+            _device.StagingBuffer.ReleaseBuffer(bufferLock);
         }
-
-        VkBufferImageCopy bufferImageCopy = new()
-        {
-            bufferOffset = bufferLock.Offset,
-            bufferRowLength = 0,
-            bufferImageHeight = 0,
-            imageSubresource = new()
-            {
-                aspectMask = VkImageAspectFlags.Color,
-                mipLevel = 0,
-                baseArrayLayer = 0,
-                layerCount = 1
-            },
-            imageOffset = new()
-            {
-                x = (int)x,
-                y = (int)y,
-                z = 0
-            },
-            imageExtent = new()
-            {
-                width = w,
-                height = h,
-                depth = 1
-            }
-        };
-
-        var commandBuffer = _device.GraphicsQueue.UploadContext.GetCommandBuffer();
-
-        commandBuffer.BeginRecording();
-        commandBuffer.CmdCopyBufferToImage(bufferLock.vkBuffer, this, bufferImageCopy);
-        commandBuffer.EnsureState(this, RhiRenderTextureUsage.Sampler);
-        commandBuffer.EndRecording();
-
-        _device.GraphicsQueue.UploadContext.Submit();
-        _device.GraphicsQueue.UploadContext.WaitForUpload();
-
-        _device.StagingBuffer.ReleaseBuffer(bufferLock);
     }
 
     public void Dispose()

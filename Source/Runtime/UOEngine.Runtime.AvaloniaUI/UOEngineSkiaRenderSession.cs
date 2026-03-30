@@ -1,5 +1,7 @@
 ﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
+using System.Diagnostics;
+
 using Avalonia.Skia;
 using SkiaSharp;
 
@@ -25,6 +27,8 @@ internal class UOEngineSkiaRenderSession : ISkiaGpuRenderSession
 
     public void Dispose()
     {
-        SkSurface.Flush(true);
+        SkSurface.Canvas.Flush();
+        SkSurface.Dispose();
+        GrContext.Flush();
     }
 }

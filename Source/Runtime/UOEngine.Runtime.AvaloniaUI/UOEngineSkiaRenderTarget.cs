@@ -3,6 +3,7 @@
 using Avalonia.Platform;
 using Avalonia.Skia;
 using SkiaSharp;
+
 using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Runtime.AvaloniaUI;
@@ -27,6 +28,8 @@ internal class UOEngineSkiaRenderTarget : ISkiaGpuRenderTarget
 
         _texture.GetFeature<RhiVkImageInterop>(out var vkImageInterop);
 
+        _grContext.ResetContext();
+
         var imageInfo = new GRVkImageInfo
         {
             CurrentQueueFamily = _queueFamilyIndex,
@@ -41,7 +44,7 @@ internal class UOEngineSkiaRenderTarget : ISkiaGpuRenderTarget
             SharingMode = vkImageInterop.SharingMode
         };
 
-        var renderTarget = new GRBackendRenderTarget((int)_texture.Width, (int)_texture.Height, imageInfo);
+        using var renderTarget = new GRBackendRenderTarget((int)_texture.Width, (int)_texture.Height, imageInfo);
 
         var skSurface = SKSurface.Create(
             _grContext,

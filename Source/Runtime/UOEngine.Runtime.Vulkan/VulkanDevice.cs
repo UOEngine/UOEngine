@@ -29,7 +29,7 @@ public enum VulkanQueueType
 }
 
 //[Service(UOEServiceLifetime.Singleton)]
-public class VulkanDevice : IDisposable
+internal class VulkanDevice : IDisposable
 {
     internal readonly VulkanDeviceInfo DeviceInfo;
     internal VkPhysicalDevice PhysicalDeviceHandle => DeviceInfo.PhysicalDevice;
@@ -49,6 +49,9 @@ public class VulkanDevice : IDisposable
 
     internal VulkanGraphicsContext GraphicsContext = null!;
 
+    // This is temp as Centred will set texture data in a task.
+    internal readonly Lock ImmediateUploadLock = new();
+
     internal VkPhysicalDeviceProperties DeviceProperties { get; private set; }
     internal VkPhysicalDeviceLimits Limits => DeviceProperties.limits;
 
@@ -57,7 +60,7 @@ public class VulkanDevice : IDisposable
 
     private VulkanQueue[] _queues = new VulkanQueue[(int)VulkanQueueType.Count];
 
-    public VulkanDevice(in VulkanDeviceInfo deviceInfo)
+    internal VulkanDevice(in VulkanDeviceInfo deviceInfo)
     {
         DeviceInfo = deviceInfo;
         MemoryManager = new(this);
