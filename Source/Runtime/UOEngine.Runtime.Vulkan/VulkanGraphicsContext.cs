@@ -254,6 +254,11 @@ internal class VulkanGraphicsContext : IRenderContext
 
     public void DrawIndexedPrimitives(uint numIndices, uint numInstances, uint firstIndex, uint vertexOffset, uint firstInstance)
     {
+        if(AreBoundTexturesReady() == false)
+        {
+            return;
+        }
+
         VkCommandBuffer commandBuffer = _commandBuffer!.Handle;
 
         FlushIfNeeded();
@@ -408,9 +413,12 @@ internal class VulkanGraphicsContext : IRenderContext
 
                             descriptorWrite.descriptorType = VkDescriptorType.SampledImage;
 
-                            UOEDebug.Assert(((VulkanTexture)entry.GetTexture()).ImageView.IsNotNull);
+                            var texture = (VulkanTexture)entry.GetTexture();
 
-                            imageInfo.imageView = ((VulkanTexture)entry.GetTexture()).ImageView;
+                            UOEDebug.Assert(texture.UploadState == UploadState.Uploaded);
+                            UOEDebug.Assert(texture.ImageView.IsNotNull);
+
+                            imageInfo.imageView = texture.ImageView;
                             imageInfo.imageLayout = VkImageLayout.ShaderReadOnlyOptimal;
 
                             descriptorWrite.pImageInfo = &imageInfos[numImages];
@@ -510,4 +518,39 @@ internal class VulkanGraphicsContext : IRenderContext
     private bool IsStateDirty(DirtyState flags) => (_dirtyState & flags) != 0;
 
     private void ClearDirtyState(DirtyState flags) => _dirtyState &= ~flags;
+
+    private bool AreBoundTexturesReady()
+    {
+        if (_shaderInstance == null)
+        {
+            return true;
+        }
+
+        for (int i = 0; i < (int)ShaderProgramType.Count; i++)
+        {
+            var bindings = _shaderInstance.BindingData[i].Bindings;
+
+            if (bindings == null)
+            {
+                continue;
+            }
+
+            foreach (var entry in bindings)
+            {
+                if (entry.InputType != RhiShaderInputType.Texture)
+                {
+                    continue;
+                }
+
+                var texture = (VulkanTexture)entry.GetTexture();
+
+                if (texture.UploadState != UploadState.Uploaded)
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
 }

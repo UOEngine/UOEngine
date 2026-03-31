@@ -69,6 +69,7 @@ public class RenderSystem
             ClearColour = new(0, 0, 0, 0)
         });
 
+        overlaySetupContext.EndRenderPass();
         overlaySetupContext.Flush();
 
         _context = _rhiRenderer.CreateRenderContext("MainGraphicsContext");

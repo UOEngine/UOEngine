@@ -87,6 +87,8 @@ public sealed class UOEngineAppBuilder
 
     public int Start(string[] args)
     {
+        UOEThread.Init();
+
         _pluginRegistry.Build(_services);
 
         var provider = _services.BuildServiceProvider();

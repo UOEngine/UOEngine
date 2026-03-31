@@ -56,8 +56,6 @@ internal class VulkanBuffer: IRhiBuffer, IDisposable
 
     private VulkanStagingBufferLock _pendingStagingBuffer;
 
-    //private VulkanFence _fence;
-
     public void SetData<T>(ReadOnlySpan<T> data) where T : unmanaged
     {
         var dataBytes = MemoryMarshal.Cast<T, byte>(data);
@@ -107,107 +105,76 @@ internal class VulkanBuffer: IRhiBuffer, IDisposable
     {
         UOEDebug.Assert(_lockStatus == LockStatus.Unlocked);
 
-        // Lazy bad lock!
-        lock (_device.ImmediateUploadLock)
+        Span<byte> data = null;
+        
+        bool firstLock = _lockCount == 0;
+        _lockCount++;
+        
+        if (IsDynamic && firstLock)
         {
-            Span<byte> data = null;
-
-            bool firstLock = _lockCount == 0;
-            _lockCount++;
-
-            if (IsDynamic && firstLock)
-            {
-                data = GetAllocation().Map(_device);
-
-                _lockStatus = LockStatus.PersistentMapping;
-
-            }
-            else if (IsStatic)
-            {
-                _pendingStagingBuffer = _device.StagingBuffer.AcquireBuffer(size);
-
-                data = _pendingStagingBuffer.buffer.GetSpan();
-
-                _lockStatus = LockStatus.Locked;
-            }
-            else
-            {
-                AllocateMemory(out var allocation);
-
-                _device.MemoryManager.Free(GetAllocation(), true);
-
-                _allocation = allocation;
-
-                data = GetAllocation().Map(_device);
-
-                _lockStatus = LockStatus.PersistentMapping;
-
-            }
-
-            return data;
+            data = GetAllocation().Map(_device);
+        
+            _lockStatus = LockStatus.PersistentMapping;
+        
         }
+        else if (IsStatic)
+        {
+            _pendingStagingBuffer = _device.StagingBuffer.AcquireBuffer(size);
+        
+            data = _pendingStagingBuffer.buffer.GetSpan();
+        
+            _lockStatus = LockStatus.Locked;
+        }
+        else
+        {
+            AllocateMemory(out var allocation);
+        
+            _device.MemoryManager.Free(GetAllocation(), true);
+        
+            _allocation = allocation;
+        
+            data = GetAllocation().Map(_device);
+        
+            _lockStatus = LockStatus.PersistentMapping;
+        
+        }
+        
+        return data;
     }
 
     public void Unlock()
     {
         UOEDebug.Assert(_lockStatus != LockStatus.Unlocked);
-        // Lazy bad lock!
-        lock (_device.ImmediateUploadLock)
+
+        if (_lockStatus == LockStatus.Locked)
         {
-            if (_lockStatus == LockStatus.Locked)
+
+            VkBufferCopy bufferCopy = new()
             {
-                var commandBuffer = _device.GraphicsQueue.UploadContext.GetCommandBuffer();
+                srcOffset = _pendingStagingBuffer.Offset,
+                dstOffset = GetAllocation().Offset,
+                size = _pendingStagingBuffer.buffer.Length
+            };
 
-                VkBufferCopy bufferCopy = new()
-                {
-                    srcOffset = _pendingStagingBuffer.Offset,
-                    dstOffset = GetAllocation().Offset,
-                    size = _pendingStagingBuffer.buffer.Length
-                };
+             _device.GraphicsQueue.UploadContext.QueueBufferUpload(_pendingStagingBuffer.vkBuffer, bufferCopy, Handle);
 
-                commandBuffer.BeginRecording();
-                commandBuffer.CmdCopyBuffer(_pendingStagingBuffer.vkBuffer, Handle, bufferCopy);
+            //commandBuffer.BeginRecording();
+            //commandBuffer.CmdCopyBuffer(_pendingStagingBuffer.vkBuffer, Handle, bufferCopy);
 
-                // Barrier?
+            //// Barrier?
 
-                commandBuffer.EndRecording();
+            //commandBuffer.EndRecording();
 
 
-                _device.GraphicsQueue.UploadContext.Submit();
-                _device.GraphicsQueue.UploadContext.WaitForUpload();
+            //_device.GraphicsQueue.UploadContext.Submit();
+            //_device.GraphicsQueue.UploadContext.WaitForUpload();
 
 
-                _device.StagingBuffer.ReleaseBuffer(_pendingStagingBuffer);
-            }
-
-            _lockStatus = LockStatus.Unlocked;
+            //_device.StagingBuffer.ReleaseBuffer(_pendingStagingBuffer);
         }
+
+        _lockStatus = LockStatus.Unlocked;
     }
-
-    //internal unsafe void Upload(ReadOnlySpan<byte> data)
-    
-    //    UOEDebug.Assert((Description.Usage | RhiBufferUsageFlags.Dynamic) == 0);
-
-    //    var bufferLock = _device.StagingBuffer.AcquireBuffer(Description.Size);
-
-    //    data.CopyTo(bufferLock.buffer);
-
-    //    var commandBuffer = _device.GraphicsQueue.CreateCommandBuffer();
-
-    //    VkBufferCopy bufferCopy = new()
-    //    {
-    //        dstOffset = 0,
-    //        size = Description.Size,
-    //        srcOffset = 0
-    //    };
-
-    //    commandBuffer.CmdCopyBuffer(bufferLock.vkBuffer, Handle, bufferCopy);
-
-    //    _device.GraphicsQueue.Submit(commandBuffer);
-    //    _device.WaitForGpuIdle();
-
-    //    _device.StagingBuffer.ReleaseBuffer(bufferLock);
-    //}
 
     protected virtual void Dispose(bool disposing)
     {
@@ -248,7 +215,5 @@ internal class VulkanBuffer: IRhiBuffer, IDisposable
         }
 
         _device.MemoryManager.AllocateBuffer(Description.Size, usageFlags, memoryPropertyFlags, out allocation);
-
-
     }
 }

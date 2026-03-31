@@ -95,6 +95,13 @@ internal static class RhiTextureDescriptionExtensions
 
 }
 
+internal enum UploadState
+{
+    NotUploaded,
+    Uploading,
+    Uploaded
+}
+
 [DebuggerDisplay("VulkanTexture {Name}")]
 internal class VulkanTexture: IRenderTexture, IDisposable
 {
@@ -125,6 +132,8 @@ internal class VulkanTexture: IRenderTexture, IDisposable
     private RhiVkImageInterop _imageInterop;
 
     private static uint _debugTextureCount = uint.MaxValue;
+
+    internal UploadState UploadState { get; private set; } = UploadState.NotUploaded;
 
     internal unsafe VulkanTexture(VulkanDevice device, in VulkanTextureDescription textureDescription, VkImage existingImage = default)
     {
@@ -216,72 +225,63 @@ internal class VulkanTexture: IRenderTexture, IDisposable
 
     public void Upload(uint x = 0, uint y = 0, uint w = 0, uint h = 0)
     {
-        // Lazy bad lock!
-        lock (_device.ImmediateUploadLock)
+        if(Name == "Texture13")
         {
-            // Assuming RGBA for now.
-            const uint bytesPerTexel = 4;
-
-            uint size = w * h * bytesPerTexel;
-
-            var bufferLock = _device.StagingBuffer.AcquireBuffer(size);
-
-            var src = new ReadOnlySpan<byte>(Texels);
-
-            int srcRowBytes = (int)(w * bytesPerTexel);
-            uint srcRowPitch = Width * bytesPerTexel;
-
-            unsafe
-            {
-                var dst = bufferLock.buffer.GetSpan();
-
-                for (uint row = 0; row < h; row++)
-                {
-                    var srcRow = src.Slice((int)((y + row) * srcRowPitch + x * bytesPerTexel), srcRowBytes);
-                    var dstRow = dst.Slice((int)(row * srcRowBytes), srcRowBytes);
-
-                    srcRow.CopyTo(dstRow);
-                }
-            }
-
-            VkBufferImageCopy bufferImageCopy = new()
-            {
-                bufferOffset = bufferLock.Offset,
-                bufferRowLength = 0,
-                bufferImageHeight = 0,
-                imageSubresource = new()
-                {
-                    aspectMask = VkImageAspectFlags.Color,
-                    mipLevel = 0,
-                    baseArrayLayer = 0,
-                    layerCount = 1
-                },
-                imageOffset = new()
-                {
-                    x = (int)x,
-                    y = (int)y,
-                    z = 0
-                },
-                imageExtent = new()
-                {
-                    width = w,
-                    height = h,
-                    depth = 1
-                }
-            };
-
-            var commandBuffer = _device.GraphicsQueue.UploadContext.GetCommandBuffer();
-
-            commandBuffer.BeginRecording();
-            commandBuffer.CmdCopyBufferToImage(bufferLock.vkBuffer, this, bufferImageCopy);
-            commandBuffer.EnsureState(this, RhiRenderTextureUsage.Sampler);
-            commandBuffer.EndRecording();
-
-            _device.GraphicsQueue.UploadContext.Submit();
-            _device.GraphicsQueue.UploadContext.WaitForUpload();
-
-            _device.StagingBuffer.ReleaseBuffer(bufferLock);
+            ;
         }
+        // Assuming RGBA for now.
+        const uint bytesPerTexel = 4;
+
+        uint size = w * h * bytesPerTexel;
+
+        var bufferLock = _device.StagingBuffer.AcquireBuffer(size);
+
+        var src = new ReadOnlySpan<byte>(Texels);
+
+        int srcRowBytes = (int)(w * bytesPerTexel);
+        uint srcRowPitch = Width * bytesPerTexel;
+
+        unsafe
+        {
+            var dst = bufferLock.buffer.GetSpan();
+
+            for (uint row = 0; row < h; row++)
+            {
+                var srcRow = src.Slice((int)((y + row) * srcRowPitch + x * bytesPerTexel), srcRowBytes);
+                var dstRow = dst.Slice((int)(row * srcRowBytes), srcRowBytes);
+
+                srcRow.CopyTo(dstRow);
+            }
+        }
+
+        VkBufferImageCopy bufferImageCopy = new()
+        {
+            bufferOffset = bufferLock.Offset,
+            bufferRowLength = 0,
+            bufferImageHeight = 0,
+            imageSubresource = new()
+            {
+                aspectMask = VkImageAspectFlags.Color,
+                mipLevel = 0,
+                baseArrayLayer = 0,
+                layerCount = 1
+            },
+            imageOffset = new()
+            {
+                x = (int)x,
+                y = (int)y,
+                z = 0
+            },
+            imageExtent = new()
+            {
+                width = w,
+                height = h,
+                depth = 1
+            }
+        };
+
+        UploadState = UploadState.Uploading;
+        _device.GraphicsQueue.UploadContext.QueueUpload(this, bufferImageCopy, bufferLock.vkBuffer);
     }
 
     public void Dispose()
@@ -331,6 +331,11 @@ internal class VulkanTexture: IRenderTexture, IDisposable
          ImageView = VkImageView.Null;
 
          _disposed = true;
+    }
+
+    internal void Ready()
+    {
+        UploadState = UploadState.Uploaded;
     }
 
     ~VulkanTexture()

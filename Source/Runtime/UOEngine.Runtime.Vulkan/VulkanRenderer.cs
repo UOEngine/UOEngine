@@ -116,6 +116,8 @@ public class VulkanRenderer : IRenderer
     {
         _frameIndex++;
 
+        _device.GraphicsQueue.UploadContext.FlushQueuedUploads();
+
         _device.DeferredDeletionQueue.CurrentFrame = _frameIndex;
 
         ref var frameData = ref GetCurrentFrameData();
@@ -233,6 +235,7 @@ public class VulkanRenderer : IRenderer
         }
 
         _contextManager._inUseGraphicsContexts.Clear();
+
 
         _isInFrame = false;
     }

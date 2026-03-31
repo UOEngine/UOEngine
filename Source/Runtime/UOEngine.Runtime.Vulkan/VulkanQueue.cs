@@ -35,21 +35,10 @@ internal class VulkanQueue: IDisposable
         UploadContext = new VulkanUploadContext(device, FamilyIndex);
     }
 
-    internal unsafe void SubmitUpload(VulkanCommandBuffer commandBuffer, VulkanFence fence)
-    {
-        VkCommandBuffer buffer = commandBuffer.Handle;
-
-        VkSubmitInfo submitInfo = new()
-        {
-            commandBufferCount = 1,
-            pCommandBuffers = &buffer
-        };
-
-        _device.Api.vkQueueSubmit(Handle, submitInfo, fence.Handle);
-    }
-
     internal unsafe void Submit(VulkanCommandBuffer commandBuffer, VulkanFence? fence)
     {
+        UOEDebug.Assert(UOEThread.IsMainThread);
+
         VkCommandBuffer buffer = commandBuffer.Handle;
 
         VkSubmitInfo submitInfo = new()
@@ -59,24 +48,24 @@ internal class VulkanQueue: IDisposable
         };
 
         var vkFence = fence?.Handle ?? VkFence.Null;
+
         _device.Api.vkQueueSubmit(Handle, submitInfo, vkFence);
     }
 
     internal VulkanFence Submit(Span<VkSubmitInfo> submitInfos, VulkanFence fence)
     {
-        UOEDebug.Assert(fence.IsSignaled == false);
+        UOEDebug.Assert(UOEThread.IsMainThread);
 
-        try
-        {
-            _device.Api.vkQueueSubmit(Handle, submitInfos, fence.Handle).CheckResult();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.Message);
-            UOEDebug.Assert(false);
-        }
+       _device.Api.vkQueueSubmit(Handle, submitInfos, fence.Handle).CheckResult();
 
         return fence;
+    }
+
+    internal VkResult Present(VkSemaphore semaphore, VkSwapchainKHR swapchain, uint nextImageIndex)
+    {
+        UOEDebug.Assert(UOEThread.IsMainThread);
+ 
+        return _device.Api.vkQueuePresentKHR(Handle, semaphore, swapchain, nextImageIndex);
     }
 
     internal VulkanCommandBufferPool AllocatePool()

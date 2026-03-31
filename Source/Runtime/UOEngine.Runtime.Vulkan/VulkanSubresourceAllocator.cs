@@ -114,6 +114,8 @@ internal class VulkanSubresourceAllocator
             Size = allocation.Size
         });
 
+        _usedSize -= allocation.Size;
+
         _allocatedBlocks.Clear();
     }
 

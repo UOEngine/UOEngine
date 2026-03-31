@@ -48,10 +48,6 @@ internal class VulkanDevice : IDisposable
     internal readonly VulkanDeferredDeletionQueue DeferredDeletionQueue;
 
     internal VulkanGraphicsContext GraphicsContext = null!;
-
-    // This is temp as Centred will set texture data in a task.
-    internal readonly Lock ImmediateUploadLock = new();
-
     internal VkPhysicalDeviceProperties DeviceProperties { get; private set; }
     internal VkPhysicalDeviceLimits Limits => DeviceProperties.limits;
 
