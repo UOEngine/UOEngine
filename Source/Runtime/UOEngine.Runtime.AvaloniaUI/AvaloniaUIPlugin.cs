@@ -15,16 +15,16 @@ public class AvaloniaUIPlugin: IPlugin
     private AvaloniaControl? _rootControl;
     private readonly IRenderer _renderer;
     private readonly RenderSystem _renderSystem;
+    private readonly IRootContentHost _rootContentHost;
 
-    public AvaloniaUIPlugin(RenderSystem renderSystem, IRenderer renderer)
+    public AvaloniaUIPlugin(RenderSystem renderSystem, IRenderer renderer, IRootContentHost rootContentHost)
     {
         _renderer = renderer;
         _renderSystem = renderSystem;
+        _rootContentHost = rootContentHost;
 
         renderSystem.OnFrameEnd += (mainRenderContext) =>
         {
-            //var avaloniaContext = renderer.CreateRenderContext("AvaloniaUI");
-
             _rootControl!.Draw(mainRenderContext);
         };
     }
@@ -32,13 +32,13 @@ public class AvaloniaUIPlugin: IPlugin
     public void PostStartup()
     {
         AppBuilder.Configure<AvaloniaApp>()
+            .LogToTrace()
             .UseUOEngine(_renderer, _renderSystem)
             .SetupWithoutStarting();
 
-        _rootControl = new AvaloniaControl();
+        _rootControl = new AvaloniaControl(_rootContentHost);
         _rootControl.Initialise();
     }
-
 }
 
 public static class AppBuilderExtensions

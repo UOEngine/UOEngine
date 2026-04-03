@@ -13,6 +13,13 @@ internal class AvaloniaControl
 
     private RootControl? _rootControl;
 
+    private IRootContentHost _rootContentHost;
+
+    internal AvaloniaControl(IRootContentHost rootContentHost)
+    {
+        _rootContentHost = rootContentHost;
+    }
+
     public void Initialise()
     {
         var locator = AvaloniaLocator.Current;
@@ -28,7 +35,10 @@ internal class AvaloniaControl
 
         topLevelImpl.SetRenderSize(new PixelSize(1920, 1080));
 
-        _rootControl = new RootControl();
+        _rootControl = new RootControl
+        {
+            DataContext = _rootContentHost
+        };
 
         _topLevel = new UOEngineTopLevel(topLevelImpl)
         {

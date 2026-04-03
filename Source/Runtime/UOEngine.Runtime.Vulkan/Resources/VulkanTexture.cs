@@ -209,6 +209,11 @@ internal class VulkanTexture: IRenderTexture, IDisposable
 
         FinaliseCommonSetup();
 
+        if(Description.Usage.HasFlag(VkImageUsageFlags.ColorAttachment))
+        {
+            UploadState = UploadState.Uploaded;
+        }
+
     }
 
     internal VulkanTexture(VulkanDevice device, in RhiTextureDescription description)
@@ -225,10 +230,6 @@ internal class VulkanTexture: IRenderTexture, IDisposable
 
     public void Upload(uint x = 0, uint y = 0, uint w = 0, uint h = 0)
     {
-        if(Name == "Texture13")
-        {
-            ;
-        }
         // Assuming RGBA for now.
         const uint bytesPerTexel = 4;
 

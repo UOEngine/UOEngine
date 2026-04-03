@@ -15,6 +15,9 @@
     <Project Path="Source/Editor/UOEngine.Editor.CentredSharp/UOEngine.Editor.CentredSharp.csproj" Id="d5831f99-a0c3-40ce-baf0-7d80ed6ee7f8">
       <Platform Project="x64" />
     </Project>
+    <Project Path="Source/Editor/UOEngine.Editor.UI/UOEngine.Editor.UI.csproj" Id="0688e9b1-0e11-45d4-8f85-0bd4d82dcd36">
+      <Platform Project="x64" />
+    </Project>
     <Project Path="Source/Editor/UOEngine.Editor/UOEngine.Editor.csproj">
       <Platform Project="x64" />
     </Project>

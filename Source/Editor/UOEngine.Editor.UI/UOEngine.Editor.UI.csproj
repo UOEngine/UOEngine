@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Runtime\UOEngine.Runtime.AvaloniaUI\UOEngine.Runtime.AvaloniaUI.csproj" />
+    <ProjectReference Include="..\..\Runtime\UOEngine.Runtime.Plugin\UOEngine.Runtime.Plugin.csproj" />
+  </ItemGroup>
+
+	<Import Project="..\..\..\ThirdParty\Avalonia\build\BuildTargets.targets" />
+
+</Project>

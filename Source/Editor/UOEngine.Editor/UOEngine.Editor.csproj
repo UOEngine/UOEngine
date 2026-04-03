@@ -24,6 +24,7 @@
     <ProjectReference Include="..\..\Runtime\UOEngine.Runtime.UI\UOEngine.Runtime.UI.csproj" />
     <ProjectReference Include="..\..\Ultima\UOEngine.Ultima.Assets\UOEngine.Ultima.UOAssets.csproj" />
     <ProjectReference Include="..\UOEngine.Editor.CentredSharp\UOEngine.Editor.CentredSharp.csproj" />
+    <ProjectReference Include="..\UOEngine.Editor.UI\UOEngine.Editor.UI.csproj" />
   </ItemGroup>
 
 	<PropertyGroup>
