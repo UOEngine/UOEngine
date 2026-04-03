@@ -25,7 +25,7 @@ internal class UOEngineDxcCompiler
     {
         if(File.Exists(shaderFile) == false)
         {
-            throw new Exception($"Could not find file {shaderFile}");
+            throw new FileNotFoundException($"Could not find file {shaderFile}");
         }
 
         var source = File.ReadAllText(shaderFile);
@@ -59,7 +59,7 @@ internal class UOEngineDxcCompiler
 
         if (result.GetStatus().Failure)
         {
-            throw new Exception("Compilation failed:\n" + result.GetErrors());
+            throw new Exception($"Compilation failed for {shaderFile}:\n" + result.GetErrors());
         }
 
         var blob = result.GetResult();
@@ -167,24 +167,34 @@ internal class UOEngineDxcCompiler
 
         outShaderBindings = shaderParameters.ToArray();
 
-        outStreamBindings = new ShaderStreamBinding[(int)module.input_variable_count];
+
+        var streamBindings = new ShaderStreamBinding[(int)module.input_variable_count];
+
+        int inputVariableCount = 0;
 
         for (int i = 0; i < module.input_variable_count; i++)
         {
             ref var inputVariable = ref module.input_variables[0][i];
-            //var param = reflection.InputParameters[i];
-            //if (param.SystemValueType != SystemValueType.Undefined)
-            //{
-            //    // SV_InstanceID, SV_VertexID, etc.
-            //    continue;
-            //}
 
-            outStreamBindings[i] = new ShaderStreamBinding
+            if(inputVariable.built_in != -1)
+            {
+                // Ignore built in variables
+                continue;
+            }
+
+            streamBindings[inputVariableCount++] = new ShaderStreamBinding
             {
                 SemanticName = inputVariable.Name,
                 SemanticIndex = inputVariable.location,
                 Format = ToRhiVertexFormat(inputVariable.format)
             };
+        }
+
+        outStreamBindings = new ShaderStreamBinding[inputVariableCount];
+
+        if(inputVariableCount > 0)
+        {
+            Array.Copy(streamBindings, outStreamBindings, inputVariableCount);
         }
     }
 

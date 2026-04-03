@@ -26,7 +26,7 @@ internal class VulkanDescriptorPool
         _device = device;
 
         const uint numDescriptorsAvailable = 1024;
-        const uint maxSets = 256;
+        const uint maxSets = 512;
 
         VkDescriptorPoolSize* descriptorPoolSizes = stackalloc VkDescriptorPoolSize[_typesForAllocation.Length];
 

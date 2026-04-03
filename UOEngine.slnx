@@ -15,6 +15,9 @@
     <Project Path="Source/Editor/UOEngine.Editor.CentredSharp/UOEngine.Editor.CentredSharp.csproj" Id="d5831f99-a0c3-40ce-baf0-7d80ed6ee7f8">
       <Platform Project="x64" />
     </Project>
+    <Project Path="Source/Editor/UOEngine.Editor.UI/UOEngine.Editor.UI.csproj" Id="0688e9b1-0e11-45d4-8f85-0bd4d82dcd36">
+      <Platform Project="x64" />
+    </Project>
     <Project Path="Source/Editor/UOEngine.Editor/UOEngine.Editor.csproj">
       <Platform Project="x64" />
     </Project>
@@ -29,6 +32,9 @@
   </Folder>
   <Folder Name="/Runtime/">
     <Project Path="Source/Runtime/UOEngine.Runtime.Application/UOEngine.Runtime.Application.csproj" Id="3e3597c3-e24d-44da-a605-d5183402aec7">
+      <Platform Project="x64" />
+    </Project>
+    <Project Path="Source/Runtime/UOEngine.Runtime.AvaloniaUI/UOEngine.Runtime.AvaloniaUI.csproj" Id="1801bf53-9ebc-43a9-b749-a6259e9a4ad6">
       <Platform Project="x64" />
     </Project>
     <Project Path="Source/Runtime/UOEngine.Runtime.Core/UOEngine.Runtime.Core.csproj" Id="cf99cafa-d9ec-4dcf-a635-947b2299e8df">
@@ -86,6 +92,39 @@
     <Project Path="ThirdParty/Theorafile/csharp/Theorafile-CS.Core.csproj">
       <Platform Project="x64" />
     </Project>
+  </Folder>
+  <Folder Name="/ThirdParty/Avalonia/">
+    <Project Path="ThirdParty/Avalonia/src/Avalonia.Base/Avalonia.Base.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/Avalonia.Build.Tasks/Avalonia.Build.Tasks.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/Avalonia.Controls/Avalonia.Controls.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/Avalonia.DesignerSupport/Avalonia.DesignerSupport.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/Avalonia.Dialogs/Avalonia.Dialogs.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/Avalonia.Metal/Avalonia.Metal.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/Avalonia.MicroCom/Avalonia.MicroCom.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/Avalonia.OpenGL/Avalonia.OpenGL.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/Avalonia.Remote.Protocol/Avalonia.Remote.Protocol.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/Avalonia.Themes.Fluent/Avalonia.Themes.Fluent.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/Avalonia.Vulkan/Avalonia.Vulkan.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/Skia/Avalonia.Skia/Avalonia.Skia.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/tools/Avalonia.Analyzers/Avalonia.Analyzers.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/tools/Avalonia.Generators/Avalonia.Generators.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/tools/DevAnalyzers/DevAnalyzers.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/tools/DevGenerators/DevGenerators.csproj" />
+  </Folder>
+  <Folder Name="/ThirdParty/Avalonia/HarfBuzz/">
+    <Project Path="ThirdParty/Avalonia/src/HarfBuzz/Avalonia.HarfBuzz/Avalonia.HarfBuzz.csproj" />
+  </Folder>
+  <Folder Name="/ThirdParty/Avalonia/Markup/">
+    <Project Path="ThirdParty/Avalonia/src/Markup/Avalonia.Markup.Xaml/Avalonia.Markup.Xaml.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/Markup/Avalonia.Markup/Avalonia.Markup.csproj" />
+  </Folder>
+  <Folder Name="/ThirdParty/Avalonia/Packages/">
+    <Project Path="ThirdParty/Avalonia/packages/Avalonia/Avalonia.csproj" />
+  </Folder>
+  <Folder Name="/ThirdParty/Avalonia/Tools/">
+    <Project Path="ThirdParty/Avalonia/src/tools/Avalonia.Analyzers.CodeFixes.CSharp/Avalonia.Analyzers.CodeFixes.CSharp.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/tools/Avalonia.Analyzers.CSharp/Avalonia.Analyzers.CSharp.csproj" />
+    <Project Path="ThirdParty/Avalonia/src/tools/Avalonia.Analyzers.VisualBasic/Avalonia.Analyzers.VisualBasic.csproj" />
   </Folder>
   <Folder Name="/ThirdParty/CentrEDSharp/">
     <Project Path="ThirdParty/centredsharp/CentrED/CentrED.csproj" />

@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\ThirdParty\Avalonia\src\Avalonia.Controls\Avalonia.Controls.csproj" />
+    <ProjectReference Include="..\..\..\ThirdParty\Avalonia\src\Avalonia.Themes.Fluent\Avalonia.Themes.Fluent.csproj" />
+    <ProjectReference Include="..\..\..\ThirdParty\Avalonia\src\HarfBuzz\Avalonia.HarfBuzz\Avalonia.HarfBuzz.csproj" />
+    <ProjectReference Include="..\..\..\ThirdParty\Avalonia\src\Skia\Avalonia.Skia\Avalonia.Skia.csproj" />
+    <ProjectReference Include="..\UOEngine.Runtime.Plugin\UOEngine.Runtime.Plugin.csproj" />
+    <ProjectReference Include="..\UOEngine.Runtime.Renderer\UOEngine.Runtime.Renderer.csproj" />
+    <ProjectReference Include="..\UOEngine.Runtime.RHI\UOEngine.Runtime.RHI.csproj" />
+  </ItemGroup>
+
+	<Import Project="..\..\..\ThirdParty\Avalonia\build\BuildTargets.targets" />
+
+	<PropertyGroup>
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+	</PropertyGroup>
+
+
+</Project>

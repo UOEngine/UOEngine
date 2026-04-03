@@ -35,7 +35,7 @@ internal unsafe class VulkanMappedMemoryManager : MemoryManager<byte>
     protected override void Dispose(bool disposing){}
 }
 
-internal unsafe class VulkanStagingBuffer: IDisposable
+internal unsafe class VulkanStagingBuffer : IDisposable
 {
     private uint _used = 0;
 
@@ -44,18 +44,23 @@ internal unsafe class VulkanStagingBuffer: IDisposable
     private readonly uint _mappedBufferSize;
 
     private List<AllocationInfo> _freeAllocations = [];
+    private List<AllocationInfo> _usedAllocations = [];
 
     private VulkanMemoryAllocation _allocation;
 
+    private Lock _acquireLock = new();
+
     private struct AllocationInfo
     {
-
+        internal uint Offset;
+        internal uint Size;
     }
 
     internal VulkanStagingBuffer(VulkanDevice device)
     {
         _device = device;
         _mappedBufferSize = 1024 * 1024 * 8; // 8MB
+
     }
 
     internal unsafe void Init()
@@ -65,36 +70,54 @@ internal unsafe class VulkanStagingBuffer: IDisposable
 
     internal VulkanStagingBufferLock AcquireBuffer(uint size)
     {
-        uint bytesLeft = _allocation.Size - _used;
-
-        if(bytesLeft < size)
+        lock (_acquireLock)
         {
-            UOEDebug.NotImplemented();
+            uint bytesLeft = _allocation.Size - _used;
+
+            if (bytesLeft < size)
+            {
+                UOEDebug.NotImplemented();
+            }
+
+            if (_used + size > _allocation.Size)
+            {
+                UOEDebug.NotImplemented();
+            }
+
+            nint offset = _allocation.GetMappedPointer(_device) + (nint)_used;
+
+            var bufferLock = new VulkanStagingBufferLock
+            {
+                buffer = new VulkanMappedMemoryManager((void*)offset, size),
+                Offset = _used,
+                vkBuffer = _allocation.Buffer
+            };
+
+            _usedAllocations.Add(new AllocationInfo
+            {
+                Offset = _used,
+                Size = size
+            });
+
+            _used += size;
+
+            return bufferLock;
         }
-
-        if (_used + size > _allocation.Size)
-        {
-            UOEDebug.NotImplemented();
-        }
-
-        nint offset = _allocation.GetMappedPointer(_device) + (nint)_used;
-
-        var bufferLock = new VulkanStagingBufferLock
-        {
-            buffer = new VulkanMappedMemoryManager((void*)offset, size),
-            Offset = _used,
-            vkBuffer = _allocation.Buffer
-        };
-
-        _used += size;
-
-        return bufferLock;
     }
 
     internal void ReleaseBuffer(in VulkanStagingBufferLock bufferLock)
     {
         // ToDo: temp as currently do immediate uploads so the buffer never becomes full.
         _used = 0;
+    }
+
+    internal void HackBufferFree()
+    {
+        lock (_acquireLock) 
+        { 
+            _usedAllocations.Clear();
+            _used = 0; 
+        }// Quick as we wait for now..
     }
 
     public void Dispose()

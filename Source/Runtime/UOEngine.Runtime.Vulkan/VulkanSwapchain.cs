@@ -11,6 +11,10 @@ internal class VulkanSwapchain: IDisposable
 
     public VulkanTexture BackbufferToRenderInto => _backbuffer[_nextImageToPresent];
 
+    internal int BackBufferCount => _backbuffer.Length;
+
+    internal static uint NumImages = 2;
+
     internal enum PresentStatus
     {
         Okay,
@@ -85,12 +89,10 @@ internal class VulkanSwapchain: IDisposable
         VkPresentModeKHR presentMode = ChooseSwapPresentMode(swapChainSupport.PresentModes);
         VkExtent2D Extent = ChooseSwapExtent(swapChainSupport.Capabilities);
 
-        uint imageCount = 2;
-
         VkSwapchainCreateInfoKHR createInfo = new()
         {
             surface = _surface,
-            minImageCount = imageCount,
+            minImageCount = NumImages,
             imageFormat = surfaceFormat.format,
             imageColorSpace = surfaceFormat.colorSpace,
             imageExtent = Extent,
@@ -122,10 +124,10 @@ internal class VulkanSwapchain: IDisposable
             {
                 Width = Extent.width,
                 Height = Extent.height,
-                Format = surfaceFormat.format
-            });
-
-            texture.InitFromExistingResource(swapChainImages[i]);
+                Format = surfaceFormat.format,
+                Usage = VkImageUsageFlags.ColorAttachment,
+                Name = $"Backbuffer{i}"
+            }, swapChainImages[i]);
 
             _backbuffer[i] = texture;
         }
@@ -140,7 +142,9 @@ internal class VulkanSwapchain: IDisposable
 
     public void Present(VkSemaphore semaphore)
     {
-        VkResult result = _device.Api.vkQueuePresentKHR(_device.PresentQueue.Handle, semaphore, Handle, _nextImageToPresent);
+        UOEDebug.Assert(_backbuffer[_nextImageToPresent].State.Layout == VkImageLayout.PresentSrcKHR);
+        _device.PresentQueue.Present(semaphore, Handle, _nextImageToPresent);
+        //VkResult result = _device.Api.vkQueuePresentKHR(_device.PresentQueue.Handle, semaphore, Handle, _nextImageToPresent);
     }
 
     public void Resize()

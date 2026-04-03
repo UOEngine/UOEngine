@@ -58,11 +58,16 @@ internal class VulkanMemoryManager
 
     private ulong _totalAllocated;
 
+    private ulong _maxAllocated = 1024 * 1024 * 512;
+
     private List<VulkanSubresourceAllocator> _freeBufferAllocations = [];
 
     private List<VulkanSubresourceAllocator> _subresourceAllocations = [];
 
     private List<VulkanSubresourceAllocator> _textureAllocations = [];
+
+    private Lock _imageMemoryLock = new();
+    private Lock _bufferMemoryLock = new();
 
     internal VulkanMemoryManager(VulkanDevice device)
     {
@@ -76,16 +81,19 @@ internal class VulkanMemoryManager
 
     internal bool AllocateImageMemory(VkMemoryPropertyFlags memoryProperties, VkMemoryRequirements memoryRequirements, out VulkanMemoryAllocation memoryAllocation)
     {
-        uint memoryTypeIndex = _device.GetMemoryTypeIndex(memoryRequirements.memoryTypeBits, memoryProperties);
+        lock(_imageMemoryLock)
+        {
+            uint memoryTypeIndex = _device.GetMemoryTypeIndex(memoryRequirements.memoryTypeBits, memoryProperties);
 
-        var deviceAllocation = _device.DeviceMemoryManager.Allocate(memoryRequirements.size, memoryTypeIndex, memoryProperties);
+            var deviceAllocation = _device.DeviceMemoryManager.Allocate(memoryRequirements.size, memoryTypeIndex, memoryProperties);
 
-        var newTextureAllocation = new VulkanSubresourceAllocator((uint)memoryRequirements.size, memoryProperties, deviceAllocation, _subresourceAllocations.Count);
+            var newTextureAllocation = new VulkanSubresourceAllocator((uint)memoryRequirements.size, memoryProperties, deviceAllocation, _subresourceAllocations.Count);
 
-        _textureAllocations.Add(newTextureAllocation);
-        _subresourceAllocations.Add(newTextureAllocation);
+            _textureAllocations.Add(newTextureAllocation);
+            _subresourceAllocations.Add(newTextureAllocation);
 
-        return newTextureAllocation.TryAllocate((uint)memoryRequirements.size, out memoryAllocation);
+            return newTextureAllocation.TryAllocate((uint)memoryRequirements.size, out memoryAllocation);
+        }
     }
 
     internal void FreeImage(in VulkanMemoryAllocation allocation)
@@ -100,52 +108,55 @@ internal class VulkanMemoryManager
 
     internal unsafe bool AllocateBuffer(uint size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memoryProperties, out VulkanMemoryAllocation memoryAllocation, string? context = null)
     {
-        for (int i = 0; i < _freeBufferAllocations.Count; i++)
+        lock(_bufferMemoryLock)
         {
-            if ((_freeBufferAllocations[i].Usage == usage) && (_freeBufferAllocations[i].MemoryProperties == memoryProperties))
+            for (int i = 0; i < _freeBufferAllocations.Count; i++)
             {
-                if (_freeBufferAllocations[i].TryAllocate(size, out memoryAllocation))
+                if ((_freeBufferAllocations[i].Usage == usage) && (_freeBufferAllocations[i].MemoryProperties == memoryProperties))
                 {
-                    _freeBufferAllocations.RemoveAt(i);
+                    if (_freeBufferAllocations[i].TryAllocate(size, out memoryAllocation))
+                    {
+                        _freeBufferAllocations.RemoveAt(i);
 
-                    return true;
+                        return true;
+                    }
                 }
             }
+
+            uint bufferSize = size;// Math.Max(size, 1024 * 1024);
+
+            VkBufferCreateInfo bufferCreateInfo = new()
+            {
+                size = bufferSize,
+                usage = usage
+            };
+
+            _device.Api.vkCreateBuffer(_device.Handle, &bufferCreateInfo, out var buffer);
+
+            _device.Api.vkGetBufferMemoryRequirements(_device.Handle, buffer, out var memoryRequirements);
+
+            var deviceAllocation = _device.DeviceMemoryManager.Allocate(memoryRequirements.size, _device.GetMemoryTypeIndex(memoryRequirements.memoryTypeBits, memoryProperties), memoryProperties);
+
+            _device.Api.vkBindBufferMemory(_device.Handle, buffer, deviceAllocation.Handle, 0);
+
+            _totalAllocated += bufferSize;
+
+            if (memoryProperties.HasFlag(VkMemoryPropertyFlags.HostVisible))
+            {
+                deviceAllocation.Map();
+            }
+
+            var subresourceAllocation = new VulkanSubresourceAllocator(bufferSize, usage, memoryProperties, buffer, deviceAllocation, _subresourceAllocations.Count, context);
+
+            _subresourceAllocations.Add(subresourceAllocation);
+
+            if (subresourceAllocation.TryAllocate(size, out memoryAllocation))
+            {
+                return true;
+            }
+
+            return false;
         }
-
-        uint bufferSize = size;// Math.Max(size, 1024 * 1024);
-
-        VkBufferCreateInfo bufferCreateInfo = new()
-        {
-            size = bufferSize,
-            usage = usage
-        };
-
-        _device.Api.vkCreateBuffer(_device.Handle, &bufferCreateInfo, out var buffer);
-
-        _device.Api.vkGetBufferMemoryRequirements(_device.Handle, buffer, out var memoryRequirements);
-
-        var deviceAllocation = _device.DeviceMemoryManager.Allocate(memoryRequirements.size, _device.GetMemoryTypeIndex(memoryRequirements.memoryTypeBits, memoryProperties), memoryProperties);
-
-        _device.Api.vkBindBufferMemory(_device.Handle, buffer, deviceAllocation.Handle, 0);
-
-        _totalAllocated += bufferSize;
-
-        if (memoryProperties.HasFlag(VkMemoryPropertyFlags.HostVisible))
-        {
-            deviceAllocation.Map();
-        }
-
-        var subresourceAllocation = new VulkanSubresourceAllocator(bufferSize, usage, memoryProperties, buffer, deviceAllocation, _subresourceAllocations.Count, context);
-
-        _subresourceAllocations.Add(subresourceAllocation);
-
-        if (subresourceAllocation.TryAllocate(size, out memoryAllocation))
-        {
-            return true;
-        }
-
-        return false;
     }
 
     internal void Free(in VulkanMemoryAllocation memoryAllocation, bool defer)

@@ -65,6 +65,13 @@ internal class TriangleTest(IServiceProvider serviceProvider) : UOEngineApplicat
 
     public void OnFrameBegin(IRenderContext context)
     {
+        context.BeginRenderPass(new RenderPassInfo
+        {
+            Name = "Main",
+            RenderTarget = null,
+            LoadAction = RhiRenderTargetLoadAction.DontCare
+        });
+
         context.IndexBuffer = _indexBuffer.RhiBuffer;
         context.VertexBuffer = _vertexBuffer.RhiBuffer;
 
@@ -79,6 +86,8 @@ internal class TriangleTest(IServiceProvider serviceProvider) : UOEngineApplicat
         });
 
         context.DrawIndexedPrimitives(3, 1, 0, 0, 0);
+
+        context.EndRenderPass();
     }
 
     protected override void Dispose(bool disposing)

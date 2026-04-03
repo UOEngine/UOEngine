@@ -3,7 +3,6 @@
 using System.Text;
 
 using Vortice.Vulkan;
-using static Vortice.Vulkan.Vulkan;
 
 namespace UOEngine.Runtime.Vulkan;
 
@@ -18,10 +17,15 @@ internal static class VulkanDebug
         _instance = instance;
     }
 
-    internal static unsafe void SetDebugName(VkBuffer buffer, string name) => vkSetDebugUtilsObjectNameEXT(buffer, name, VkObjectType.Buffer);
-    internal static unsafe void SetDebugName(VkImage image, string name) => vkSetDebugUtilsObjectNameEXT(image, name, VkObjectType.Image);
-    internal static unsafe void SetDebugName(VkImageView imageView, string name) => vkSetDebugUtilsObjectNameEXT(imageView, name, VkObjectType.ImageView);
+    internal static void SetDebugName(VkBuffer buffer, string name) => vkSetDebugUtilsObjectNameEXT(buffer, name, VkObjectType.Buffer);
+    internal static void SetDebugName(VkImage image, string name) => vkSetDebugUtilsObjectNameEXT(image, name, VkObjectType.Image);
+    internal static void SetDebugName(VkImageView imageView, string name) => vkSetDebugUtilsObjectNameEXT(imageView, name, VkObjectType.ImageView);
 
+    internal static void SetDebugName(VkCommandBuffer commandBuffer, string name) => vkSetDebugUtilsObjectNameEXT((ulong)commandBuffer.Handle, name, VkObjectType.CommandBuffer);
+
+    internal static void SetDebugName(VkQueue queue, string name) => vkSetDebugUtilsObjectNameEXT((ulong)queue.Handle, name, VkObjectType.Queue);
+
+    internal static void SetDebugName(VkFence fence, string name) => vkSetDebugUtilsObjectNameEXT((ulong)fence, name, VkObjectType.Fence);
 
     private static unsafe void vkSetDebugUtilsObjectNameEXT(ulong objectHandle, string name, VkObjectType objectType)
     {

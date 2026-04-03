@@ -10,6 +10,15 @@ using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Runtime.Vulkan;
 
+internal struct VulkanGraphicsContextInit
+{
+    internal required VulkanRenderer Renderer;
+    internal required VulkanDevice Device;
+    internal required int Id;
+    internal required VulkanGlobalSamplers GlobalSamplers;
+}
+
+[DebuggerDisplay("VulkanGraphicsContext{_id} {_currentName}")]
 internal class VulkanGraphicsContext : IRenderContext
 {
     public ShaderInstance ShaderInstance
@@ -51,7 +60,7 @@ internal class VulkanGraphicsContext : IRenderContext
         }
     }
 
-    public IRhiBuffer VertexBuffer
+    public IRhiBuffer? VertexBuffer
     {
         get => _vertexBuffer ?? throw new InvalidOperationException("VertexBuffer is not set");
         set
@@ -82,7 +91,16 @@ internal class VulkanGraphicsContext : IRenderContext
 
     internal VulkanCommandBuffer CommandBuffer => _commandBuffer ?? throw new InvalidOperationException("VulkanGraphicsContext: CommandBuffer not initialised");
 
-    public bool IsInRenderPass { get; private set; }
+    public bool IsInRenderPass { get; private set; } = false;
+
+    //internal VulkanFence SubmitFence = null!;
+
+    internal VkPipelineStageFlags[] WaitStages = [];
+    internal VkSemaphore[] WaitForSemaphores = [];
+
+    internal VkSemaphore[] SignalSemaphores = [];
+
+    internal bool IsRecording { get; private set; } = false;
 
     private readonly VulkanDevice _device;
 
@@ -127,16 +145,37 @@ internal class VulkanGraphicsContext : IRenderContext
     private VulkanDescriptorPool _descriptorPool = null!;
     private readonly VulkanGlobalSamplers _globalSamplers;
 
+    private VulkanTexture? _defaultBackbufferRenderTarget;
+
     private RhiSampler _sampler;
 
-    public VulkanGraphicsContext(VulkanDevice device, VulkanGlobalSamplers globalSamplers)
+    private string _currentName = "";
+
+    private VulkanRenderer _renderer;
+
+    private VulkanCommandBufferPool _pool;
+
+    private readonly int _id;
+
+    public VulkanGraphicsContext(in VulkanGraphicsContextInit init)
     {
-        _device = device;
-        _globalSamplers = globalSamplers;
+        _device = init.Device;
+        _globalSamplers = init.GlobalSamplers;
+        _renderer = init.Renderer;
+
+        _pool = _device.GraphicsQueue.AllocatePool();
+
+        _descriptorPool = new VulkanDescriptorPool(_device);
+        _id = init.Id;
+        _uniformBufferObjectScratchAllocator = new VulkanScratchBlockAllocator(_device, $"UniformBufferScratchAllocator{init.Id}");
     }
 
-    public void BeginRecording(VulkanCommandBuffer commandBuffer, VulkanScratchBlockAllocator uniformBufferObjectScratchAllocator, VulkanDescriptorPool descriptorPool)
+    public void TransitionTextureUsage(IRenderTexture texture, RhiRenderTextureUsage usage) => CommandBuffer.EnsureState((VulkanTexture)texture, usage);
+
+    public void BeginRecording()
     {
+        UOEDebug.Assert(IsRecording == false);
+
         _vertexBuffer = null;
         _indexBuffer = null;
 
@@ -144,14 +183,43 @@ internal class VulkanGraphicsContext : IRenderContext
 
         _dirtyState = DirtyState.All;
 
-        _commandBuffer = commandBuffer;
-        _uniformBufferObjectScratchAllocator = uniformBufferObjectScratchAllocator;
-        _descriptorPool = descriptorPool;
+        _commandBuffer!.BeginRecording();
+        _uniformBufferObjectScratchAllocator.Reset();
+        _descriptorPool.Reset();
+
+        SignalSemaphores = [];
+        WaitStages = [];
+        WaitForSemaphores = [];
+
+        IsRecording = true;
+    }
+    public void EndRecording()
+    {
+        if(IsInRenderPass)
+        {
+            EndRenderPass();
+        }
+
+        if(IsRecording)
+        {
+            _device.Api.vkEndCommandBuffer(CommandBuffer.Handle).CheckResult();
+        }
+
+        IsRecording = false;
     }
 
     public unsafe void BeginRenderPass(in RenderPassInfo renderPassInfo)
     {
-        VulkanTexture texture = (VulkanTexture)renderPassInfo.RenderTarget.Texture;
+        UOEDebug.Assert(IsInRenderPass == false, "Can not begin renderpass when already in one.");
+
+        VulkanTexture texture = _defaultBackbufferRenderTarget!;
+
+        if (renderPassInfo.RenderTarget != null)
+        {
+            texture = (VulkanTexture)renderPassInfo.RenderTarget.Texture;
+        }
+
+        CommandBuffer.EnsureState(texture, RhiRenderTextureUsage.ColourTarget);
 
         _renderTarget = texture;
 
@@ -160,9 +228,10 @@ internal class VulkanGraphicsContext : IRenderContext
             imageView = texture.ImageView,
             imageLayout = VkImageLayout.ColorAttachmentOptimal,
             resolveMode = VkResolveModeFlags.None,
-            loadOp = VkAttachmentLoadOp.Clear,
+            loadOp = renderPassInfo.LoadAction.ToVkLoadOp(),
             storeOp = VkAttachmentStoreOp.Store,
-            clearValue = new(0.0f, 0.0f, 0.0f)  // Red to debug
+            clearValue = new VkClearValue(new VkClearColorValue(renderPassInfo.ClearColour.R, renderPassInfo.ClearColour.G,
+            renderPassInfo.ClearColour.B, renderPassInfo.ClearColour.A))
         };
 
         VkRenderingInfo renderingInfo = new()
@@ -185,6 +254,11 @@ internal class VulkanGraphicsContext : IRenderContext
 
     public void DrawIndexedPrimitives(uint numIndices, uint numInstances, uint firstIndex, uint vertexOffset, uint firstInstance)
     {
+        if(AreBoundTexturesReady() == false)
+        {
+            return;
+        }
+
         VkCommandBuffer commandBuffer = _commandBuffer!.Handle;
 
         FlushIfNeeded();
@@ -192,15 +266,10 @@ internal class VulkanGraphicsContext : IRenderContext
         _device.Api.vkCmdDrawIndexed(commandBuffer, numIndices, numInstances, firstIndex, (int)vertexOffset, firstInstance);
     }
 
-    public void EndRecording()
-    {
-        UOEDebug.Assert(IsInRenderPass == false);
-
-        _device.Api.vkEndCommandBuffer(CommandBuffer.Handle).CheckResult();
-    }
-
     public void EndRenderPass()
     {
+        UOEDebug.Assert(IsInRenderPass, "Can not end renderpass when not in one.");
+
         _device.Api.vkCmdEndRendering(CommandBuffer.Handle);
 
         IsInRenderPass = false;
@@ -225,9 +294,27 @@ internal class VulkanGraphicsContext : IRenderContext
         _device.WaitForGpuIdle();
     }
 
-    internal unsafe void TransitionImageLayout(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout)
+    public void Flush()
     {
-        CommandBuffer.TransitionImageLayout(image, oldLayout, newLayout);
+        EndRecording();
+
+        _renderer.SubmitImmediate(this);
+    }
+
+    internal void Prepare(VulkanTexture defaultRenderTarget, string name)
+    {
+        _defaultBackbufferRenderTarget = defaultRenderTarget;
+        _currentName = name;
+
+        _commandBuffer = _pool.Create();
+
+        CommandBuffer.Name = _currentName;
+
+        _uniformBufferObjectScratchAllocator.Reset();
+
+        //UOEDebug.Assert(SubmitFence.IsSignaled);
+
+        //SubmitFence.Reset();
     }
 
     private unsafe void BindShaderParameters(bool forceRebind)
@@ -326,9 +413,12 @@ internal class VulkanGraphicsContext : IRenderContext
 
                             descriptorWrite.descriptorType = VkDescriptorType.SampledImage;
 
-                            UOEDebug.Assert(((VulkanTexture)entry.GetTexture()).ImageView.IsNotNull);
+                            var texture = (VulkanTexture)entry.GetTexture();
 
-                            imageInfo.imageView = ((VulkanTexture)entry.GetTexture()).ImageView;
+                            UOEDebug.Assert(texture.UploadState == UploadState.Uploaded);
+                            UOEDebug.Assert(texture.ImageView.IsNotNull);
+
+                            imageInfo.imageView = texture.ImageView;
                             imageInfo.imageLayout = VkImageLayout.ShaderReadOnlyOptimal;
 
                             descriptorWrite.pImageInfo = &imageInfos[numImages];
@@ -363,6 +453,8 @@ internal class VulkanGraphicsContext : IRenderContext
 
     private void FlushIfNeeded()
     {
+        UOEDebug.Assert(IsInRenderPass, "Must be in renderpass");
+
         VkCommandBuffer commandBuffer = _commandBuffer!.Handle;
 
         if (IsStateDirty(DirtyState.VertexBuffer))
@@ -426,4 +518,39 @@ internal class VulkanGraphicsContext : IRenderContext
     private bool IsStateDirty(DirtyState flags) => (_dirtyState & flags) != 0;
 
     private void ClearDirtyState(DirtyState flags) => _dirtyState &= ~flags;
+
+    private bool AreBoundTexturesReady()
+    {
+        if (_shaderInstance == null)
+        {
+            return true;
+        }
+
+        for (int i = 0; i < (int)ShaderProgramType.Count; i++)
+        {
+            var bindings = _shaderInstance.BindingData[i].Bindings;
+
+            if (bindings == null)
+            {
+                continue;
+            }
+
+            foreach (var entry in bindings)
+            {
+                if (entry.InputType != RhiShaderInputType.Texture)
+                {
+                    continue;
+                }
+
+                var texture = (VulkanTexture)entry.GetTexture();
+
+                if (texture.UploadState != UploadState.Uploaded)
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
 }

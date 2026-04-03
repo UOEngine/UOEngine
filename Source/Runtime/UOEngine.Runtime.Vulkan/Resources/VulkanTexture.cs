@@ -1,19 +1,33 @@
 ﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
+using System.Diagnostics;
 using System.Runtime.InteropServices;
-
-using Vortice.Vulkan;
-
 using UOEngine.Runtime.Core;
 using UOEngine.Runtime.RHI;
+using Vortice.Vulkan;
 
 namespace UOEngine.Runtime.Vulkan;
 
-public struct VulkanTextureDescription
+internal struct VulkanTextureDescription
 {
     public uint Width;
     public uint Height;
     public VkFormat Format;
+    public VkImageUsageFlags Usage;
+    public string? Name;
+}
+
+internal struct VulkanTextureState
+{
+    internal required VkImageLayout Layout = VkImageLayout.Undefined;
+    internal required VkAccessFlags2 AccessMask = VkAccessFlags2.None;
+    internal required VkPipelineStageFlags2 StageMask = VkPipelineStageFlags2.None;
+    internal required uint QueueFamilyIndex = 0;
+
+    public VulkanTextureState()
+    {
+
+    }
 }
 
 internal static class RhiTextureDescriptionExtensions
@@ -24,11 +38,71 @@ internal static class RhiTextureDescriptionExtensions
         {
             Width = rhiTextureDescription.Width,
             Height = rhiTextureDescription.Height,
-            Format = VkFormat.R8G8B8A8Unorm
+            Format = VkFormat.R8G8B8A8Unorm,
+            Usage = rhiTextureDescription.Usage.ToVkImageUsageFlags(),
+            Name = rhiTextureDescription.Name
         };
     }
+
+    internal static VulkanTextureState ToVkTextureState(this RhiRenderTextureUsage rhiRenderTextureUsage, uint queueFamilyIndex)
+    {
+        return rhiRenderTextureUsage switch
+        {
+            RhiRenderTextureUsage.CopyDestination => new VulkanTextureState
+            {
+                Layout = VkImageLayout.TransferDstOptimal,
+                AccessMask = VkAccessFlags2.TransferWrite,
+                StageMask = VkPipelineStageFlags2.Transfer,
+                QueueFamilyIndex = queueFamilyIndex
+            },
+            RhiRenderTextureUsage.CopySource => new VulkanTextureState
+            {
+                Layout = VkImageLayout.TransferSrcOptimal,
+                AccessMask = VkAccessFlags2.TransferRead,
+                StageMask = VkPipelineStageFlags2.Transfer,
+                QueueFamilyIndex = queueFamilyIndex
+            },
+            RhiRenderTextureUsage.Sampler => new VulkanTextureState
+            {
+                Layout = VkImageLayout.ShaderReadOnlyOptimal,
+                AccessMask = VkAccessFlags2.ShaderRead,
+                StageMask = VkPipelineStageFlags2.FragmentShader,
+                QueueFamilyIndex = queueFamilyIndex
+            },
+            RhiRenderTextureUsage.ColourTarget => new VulkanTextureState
+            {
+                Layout = VkImageLayout.ColorAttachmentOptimal,
+                AccessMask = VkAccessFlags2.ColorAttachmentWrite,
+                StageMask = VkPipelineStageFlags2.ColorAttachmentOutput,
+                QueueFamilyIndex = queueFamilyIndex
+            },
+            RhiRenderTextureUsage.Present => new VulkanTextureState
+            {
+                Layout = VkImageLayout.PresentSrcKHR,
+                AccessMask = VkAccessFlags2.None,
+                StageMask = VkPipelineStageFlags2.None,
+                QueueFamilyIndex = queueFamilyIndex
+            },
+            _ => new VulkanTextureState
+            {
+                Layout = VkImageLayout.Undefined,
+                AccessMask = VkAccessFlags2.None,
+                StageMask = VkPipelineStageFlags2.None,
+                QueueFamilyIndex = queueFamilyIndex
+            }
+        };
+    }
+
 }
 
+internal enum UploadState
+{
+    NotUploaded,
+    Uploading,
+    Uploaded
+}
+
+[DebuggerDisplay("VulkanTexture {Name}")]
 internal class VulkanTexture: IRenderTexture, IDisposable
 {
     public VkImage Image { get; private set; }
@@ -38,11 +112,10 @@ internal class VulkanTexture: IRenderTexture, IDisposable
 
     public readonly byte[] Texels = [];
 
-    private VkImageView _imageView;
     private bool _disposed;
     private readonly VulkanDevice _device;
 
-    public string Name { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+    public string Name { get => Description.Name!; set => throw new NotImplementedException(); }
 
     public nint Handle => throw new NotImplementedException();
 
@@ -50,25 +123,52 @@ internal class VulkanTexture: IRenderTexture, IDisposable
 
     public uint Height => Description.Height;
 
+    public VulkanTextureState State;
+
     private VulkanMemoryAllocation _allocation;
 
     private bool _ownsImage = true;
 
-    internal unsafe VulkanTexture(VulkanDevice device, in VulkanTextureDescription textureDescription)
+    private RhiVkImageInterop _imageInterop;
+
+    private static uint _debugTextureCount = uint.MaxValue;
+
+    internal UploadState UploadState { get; private set; } = UploadState.NotUploaded;
+
+    internal unsafe VulkanTexture(VulkanDevice device, in VulkanTextureDescription textureDescription, VkImage existingImage = default)
     {
         _device = device;
         Description = textureDescription;
 
-        Span<uint> sharedQueueFamilyIndices = stackalloc uint[2];
+        uint debugTextureCount = ++_debugTextureCount;
 
-        sharedQueueFamilyIndices[0] = _device.PresentQueue.FamilyIndex;
-        sharedQueueFamilyIndices[1] = _device.CopyQueue.FamilyIndex;
+        Description.Name = textureDescription.Name ?? $"Texture{debugTextureCount}";
+
+        if(existingImage.IsNotNull)
+        {
+            Image = existingImage;
+            _ownsImage = false;
+
+            FinaliseCommonSetup();
+
+            return;
+        }
+
+        Span<uint> sharedQueueFamilyIndices =
+        [
+            _device.PresentQueue.FamilyIndex,
+            _device.CopyQueue.FamilyIndex,
+        ];
 
         VkImage image;
 
+       Description.Usage = VkImageUsageFlags.TransferDst | VkImageUsageFlags.TransferSrc | VkImageUsageFlags.Sampled;
+       Description.Usage |= textureDescription.Usage;
+
+        // TODO: Not all textures are created by us, e.g. swapchain. So this currently results in an extra one that gets
+        // orphaned.
         fixed (uint* ptr = sharedQueueFamilyIndices)
         {
-
             VkImageCreateInfo imageCreateInfo = new()
             {
                 imageType = VkImageType.Image2D,
@@ -83,11 +183,11 @@ internal class VulkanTexture: IRenderTexture, IDisposable
                 format = textureDescription.Format,
                 tiling = VkImageTiling.Optimal,
                 initialLayout = VkImageLayout.Undefined,
-                usage = VkImageUsageFlags.TransferDst | VkImageUsageFlags.Sampled,
+                usage = Description.Usage,
                 samples = VkSampleCountFlags.Count1,
                 sharingMode = VkSharingMode.Concurrent,
                 queueFamilyIndexCount = 2,
-                pQueueFamilyIndices = ptr
+                pQueueFamilyIndices = ptr,
             };
 
             _device.Api.vkCreateImage(_device.Handle, &imageCreateInfo, out image);
@@ -107,22 +207,18 @@ internal class VulkanTexture: IRenderTexture, IDisposable
 
         Texels = new byte[Width * Height * bytesPerTexel];
 
-        CreateImageView();
+        FinaliseCommonSetup();
+
+        if(Description.Usage.HasFlag(VkImageUsageFlags.ColorAttachment))
+        {
+            UploadState = UploadState.Uploaded;
+        }
 
     }
 
     internal VulkanTexture(VulkanDevice device, in RhiTextureDescription description)
         : this(device, description.ToVulkanTextureDescription())
     {
-    }
-
-    internal unsafe void InitFromExistingResource(VkImage image)
-    {
-        _ownsImage = false;
-
-        Image = image;
-
-        CreateImageView();
     }
 
     public Span<T> GetTexelsAs<T>() where T : unmanaged
@@ -185,23 +281,35 @@ internal class VulkanTexture: IRenderTexture, IDisposable
             }
         };
 
-        var commandBuffer = _device.GraphicsQueue.CreateCommandBuffer();
-
-        commandBuffer.TransitionImageLayout(Image, VkImageLayout.Undefined, VkImageLayout.TransferDstOptimal);
-        commandBuffer.CmdCopyBufferToImage(bufferLock.vkBuffer, Image, bufferImageCopy);
-        commandBuffer.TransitionImageLayout(Image, VkImageLayout.TransferDstOptimal, VkImageLayout.ShaderReadOnlyOptimal);
-        commandBuffer.EndRecording();
-
-        _device.GraphicsQueue.Submit(commandBuffer);
-        _device.WaitForGpuIdle();
-
-        _device.StagingBuffer.ReleaseBuffer(bufferLock);
+        UploadState = UploadState.Uploading;
+        _device.GraphicsQueue.UploadContext.QueueUpload(this, bufferImageCopy, bufferLock.vkBuffer);
     }
 
     public void Dispose()
     {
         Dispose(disposing: true);
         GC.SuppressFinalize(this);
+    }
+    public void GetFeature<T>(out T? feature) where T : IRhiTextureInterop
+    {
+        if(typeof(T) == typeof(RhiVkImageInterop))
+        {
+            var imageInterop = new RhiVkImageInterop()
+            {
+                Handle = (ulong)Image,
+                Format = (uint)Description.Format,
+                SharingMode = (uint)VkSharingMode.Exclusive,
+                ImageUsageFlags = (uint)Description.Usage,
+                ImageTiling = (uint)VkImageTiling.Optimal,
+                ImageLayout = (uint)State.Layout
+            };
+
+            feature = (T)(object)imageInterop;
+
+            return;
+        }
+
+        throw new InvalidOperationException($"Unsupported texture interop feature: {typeof(T).Name}");
     }
 
     protected virtual void Dispose(bool disposing)
@@ -226,9 +334,28 @@ internal class VulkanTexture: IRenderTexture, IDisposable
          _disposed = true;
     }
 
+    internal void Ready()
+    {
+        UploadState = UploadState.Uploaded;
+    }
+
     ~VulkanTexture()
     {
         Dispose(disposing: false);
+    }
+
+    private void FinaliseCommonSetup()
+    {
+        CreateImageView();
+
+        _imageInterop.Handle = (ulong)Image;
+        _imageInterop.Format = (uint)Description.Format;
+        _imageInterop.SharingMode = (uint)VkSharingMode.Exclusive;
+        _imageInterop.ImageUsageFlags = (uint)Description.Usage;
+        _imageInterop.ImageTiling = (uint)VkImageTiling.Optimal;
+        _imageInterop.ImageLayout = (uint)VkImageLayout.ColorAttachmentOptimal;
+
+        VulkanDebug.SetDebugName(Image, Description.Name!);
     }
 
     private unsafe void CreateImageView()

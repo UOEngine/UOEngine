@@ -61,10 +61,10 @@ internal class VulkanGraphicsPipeline: IDisposable
         {
             foreach(var shaderParameter in shaderParameters)
             {
-                if(shaderParameter.Space != 0)
-                {
-                    UOEDebug.NotImplemented("Only space/set 0 is currently supported.");
-                }
+                //if(shaderParameter.Space != 0)
+                //{
+                //    UOEDebug.NotImplemented("Only space/set 0 is currently supported.");
+                //}
 
                 ref var descriptorSetLayoutBinding = ref descriptorSetLayoutBindings[descriptorIndex];
 

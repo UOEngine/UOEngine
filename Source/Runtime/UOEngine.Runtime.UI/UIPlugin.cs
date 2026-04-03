@@ -68,7 +68,8 @@ public class UIPlugin : IPlugin
         renderContext.BeginRenderPass(new RenderPassInfo
         {
             Name = "UI",
-            RenderTarget = _rendererSystem.UIOverlay
+            RenderTarget = _rendererSystem.UIOverlay,
+            LoadAction = RhiRenderTargetLoadAction.Load
         });
 
         for(int i = 0; i < drawData.CmdListsCount; i++)

@@ -1,5 +1,7 @@
 ﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
+using System.Diagnostics;
+
 using Vortice.Vulkan;
 using static Vortice.Vulkan.Vulkan;
 
@@ -26,28 +28,28 @@ public class VulkanRenderer : IRenderer
 
     private uint _frameIndex = uint.MaxValue;
 
-    private VulkanGraphicsContext? _graphicsContext;
+    //private VulkanGraphicsContext? _graphicsContext;
 
-    private VulkanGraphicsContext GraphicsContext => _graphicsContext ?? throw new InvalidOperationException("Graphics context not initialised");
+    //private VulkanGraphicsContext GraphicsContext => _graphicsContext ?? throw new InvalidOperationException("Graphics context not initialised");
 
     private VulkanGlobalSamplers _globalSamplers = null!;
+
+    private VulkanContextManager _contextManager = null!;
 
     private struct PerFrameData
     {
         public VulkanFence SubmitFence;
-        public uint FenceSignalCount;
         public VkSemaphore SwapchainAcquireSemaphore;
         public VkSemaphore SwapchainReleaseSemaphore;
-        public VulkanScratchBlockAllocator UniformBufferScratchAllocator;
-        public VulkanDescriptorPool DescriptorPool;
-        public VulkanCommandBuffer CommandBuffer;
+        public List<VulkanGraphicsContext> Contexts;
 
     }
 
-    private PerFrameData[] _perFrameData = [new(), new()];
+    private PerFrameData[] _perFrameData = [];
 
     private ref PerFrameData GetCurrentFrameData() => ref _perFrameData[_frameIndex & 0x1];
 
+    private bool _isInFrame = false;
 
     public VulkanRenderer(IWindow window, IRenderResourceFactory resourceFactory)
     {
@@ -67,7 +69,7 @@ public class VulkanRenderer : IRenderer
         };
     }
 
-    public unsafe void Startup()
+    public void Startup()
     {
         VkResult result = vkInitialize();
 
@@ -77,9 +79,9 @@ public class VulkanRenderer : IRenderer
 
         _device = new VulkanDevice(_instance.GetSuitableDevice());
 
-        _device.InitGpu(_instance.Api);
-
         VulkanDebug.Init(_device, _instance);
+
+        _device.InitGpu(_instance.Api);
 
         _resourceFactory.SetDevice(_device);
 
@@ -87,20 +89,21 @@ public class VulkanRenderer : IRenderer
 
         _swapchain.Create(_window.Handle);
 
-        for(int i = 0; i < 2; i++)
-        {
-            ref var frameData = ref _perFrameData[i];
+        _perFrameData = new PerFrameData[_swapchain.BackBufferCount];
 
-            frameData.SubmitFence = new VulkanFence(_device, true);
-            frameData.SwapchainAcquireSemaphore = _device.CreateSemaphore();
-            frameData.SwapchainReleaseSemaphore = _device.CreateSemaphore();
-            frameData.UniformBufferScratchAllocator = new VulkanScratchBlockAllocator(_device, $"UniformBufferScratchAllocator{i}");
-            frameData.DescriptorPool = new VulkanDescriptorPool(_device);
-            frameData.CommandBuffer = _device.GraphicsQueue.CreateCommandBuffer();
+        for (int i = 0; i < _swapchain.BackBufferCount; i++)
+        {
+            _perFrameData[i] = new PerFrameData
+            {
+                SubmitFence = new VulkanFence(_device, true, $"FrameFence{i}"),
+                SwapchainAcquireSemaphore = _device.CreateSemaphore(),
+                SwapchainReleaseSemaphore = _device.CreateSemaphore(),
+                Contexts = []
+            };
         }
 
         _globalSamplers = new VulkanGlobalSamplers(_device);
-        _graphicsContext = new VulkanGraphicsContext(_device, _globalSamplers);
+        _contextManager = new VulkanContextManager(this, _device, _globalSamplers);
 
     }
 
@@ -112,80 +115,179 @@ public class VulkanRenderer : IRenderer
     public void FrameBegin()
     {
         _frameIndex++;
-        _device.DeferredDeletionQueue.CurrentFrame = _frameIndex;
 
-        //Debug.WriteLine($"VulkanRenderer.FrameBegin: {_frameIndex}");
+        _device.GraphicsQueue.UploadContext.FlushQueuedUploads();
+
+        _device.DeferredDeletionQueue.CurrentFrame = _frameIndex;
 
         ref var frameData = ref GetCurrentFrameData();
 
-        //_device.WaitForGpuIdle();
-        // Is the previous frame finished?
-        //if(frameData.FenceSignalCount <= frameData.SubmitFence?.SignalCount)
-        {
-            frameData.SubmitFence?.Refresh();
-            frameData.SubmitFence?.WaitForThenReset();
+        //Debug.WriteLine($"-- Frame {_frameIndex}, Wait for {frameData.SubmitFence.Name} --");
 
-            frameData.UniformBufferScratchAllocator.Reset();
-            frameData.DescriptorPool.Reset();
+        frameData.SubmitFence.WaitForThenReset();
+
+        foreach(var context in frameData.Contexts)
+        {
+            _contextManager.Release(context);
         }
+
+        frameData.Contexts.Clear();
 
         AcquireNextImage();
 
-        var commandBuffer = frameData.CommandBuffer;// _device.GetQueue(VulkanQueueType.Graphics).CreateCommandBuffer();
+        _contextManager.OnFrameBegin(_swapchain.BackbufferToRenderInto);
 
-        commandBuffer.BeginRecording();
+        var acquireContext = _contextManager.AllocateGraphicsContext("AcquireContext");
 
-        GraphicsContext.BeginRecording(commandBuffer, frameData.UniformBufferScratchAllocator, frameData.DescriptorPool);
+        acquireContext.CommandBuffer.EnsureState(_swapchain.BackbufferToRenderInto, RhiRenderTextureUsage.ColourTarget);
+        acquireContext.WaitForSemaphores = [frameData.SwapchainAcquireSemaphore];
+        acquireContext.WaitStages = [VkPipelineStageFlags.ColorAttachmentOutput];
 
-        GraphicsContext.TransitionImageLayout(_swapchain.BackbufferToRenderInto.Image, VkImageLayout.Undefined, VkImageLayout.ColorAttachmentOptimal);
+        _isInFrame = true;
     }
 
     public unsafe void FrameEnd()
     {
         ref var frameData = ref GetCurrentFrameData();
 
-        GraphicsContext.TransitionImageLayout(_swapchain.BackbufferToRenderInto.Image, VkImageLayout.ColorAttachmentOptimal, VkImageLayout.PresentSrcKHR);
+        var endFrameContext = _contextManager.AllocateGraphicsContext("PresentContext");
 
-        GraphicsContext.EndRecording();
+        endFrameContext.CommandBuffer.EnsureState(_swapchain.BackbufferToRenderInto, RhiRenderTextureUsage.Present);
+        endFrameContext.SignalSemaphores = [frameData.SwapchainReleaseSemaphore];
 
-        VkPipelineStageFlags wait_stage = VkPipelineStageFlags.ColorAttachmentOutput;
-        VkSemaphore waitSemaphore = frameData.SwapchainAcquireSemaphore;
-        VkSemaphore signalSemaphore = frameData.SwapchainReleaseSemaphore;
+        int submitCount = _contextManager._inUseGraphicsContexts.Count;
 
-        VkCommandBuffer commandBuffer = GraphicsContext.CommandBuffer.Handle;
+        Span<VkCommandBuffer> commandBuffers = stackalloc VkCommandBuffer[submitCount];
 
-        _device.PresentQueue.Submit(GraphicsContext.CommandBuffer, new VkSubmitInfo
+        Span<VkSemaphore> waitSemaphores = stackalloc VkSemaphore[submitCount];
+        Span<VkPipelineStageFlags> waitStages = stackalloc VkPipelineStageFlags[submitCount];
+        Span<VkSemaphore> signalSemaphores = stackalloc VkSemaphore[submitCount];
+
+        int waitOffset = 0;
+        int signalOffset = 0;
+
+        for (int i = 0; i < submitCount; i++)
         {
-            commandBufferCount = 1,
-            pCommandBuffers = &commandBuffer,
-            waitSemaphoreCount = 1u,
-            pWaitSemaphores = &waitSemaphore,
-            pWaitDstStageMask = &wait_stage,
-            signalSemaphoreCount = 1u,
-            pSignalSemaphores = &signalSemaphore
-        }, frameData.SubmitFence);
+            var context = _contextManager._inUseGraphicsContexts[i];
 
-        //frameData.SubmitFence = GraphicsContext.CommandBuffer.Fence;
-        //frameData.SubmitFence.FrameSubmitted = _frameIndex;
-        //frameData.FenceSignalCount = frameData.SubmitFence.SignalCount;
+            context.EndRecording();
+
+            commandBuffers[i] = context.CommandBuffer.Handle;
+
+            int waitCount = context.WaitForSemaphores.Length;
+            int signalCount = context.SignalSemaphores.Length;
+
+            context.WaitForSemaphores.CopyTo(waitSemaphores.Slice(waitOffset, waitCount)); 
+            context.WaitStages.CopyTo(waitStages.Slice(waitOffset, waitCount));
+            context.SignalSemaphores.CopyTo(signalSemaphores.Slice(signalOffset, signalCount));
+
+            waitOffset += waitCount;
+            signalOffset += signalCount;
+        }
+
+        Span<VkSubmitInfo> submitInfos = stackalloc VkSubmitInfo[submitCount];
+
+        fixed (VkSubmitInfo* pSubmitInfos = submitInfos)
+        fixed (VkCommandBuffer* pCommandBuffers = commandBuffers)
+        fixed (VkSemaphore* pWaitSemaphores = waitSemaphores)
+        fixed (VkPipelineStageFlags* pWaitStages = waitStages)
+        fixed (VkSemaphore* pSignalSemaphores = signalSemaphores)
+        {
+            waitOffset = 0;
+            signalOffset = 0;
+
+            for (int i = 0; i < submitCount; i++)
+            {
+                var context = _contextManager._inUseGraphicsContexts[i];
+
+                int waitCount = context.WaitForSemaphores.Length;
+                int signalCount = context.SignalSemaphores.Length;
+
+                pSubmitInfos[i] = new VkSubmitInfo
+                {
+                    commandBufferCount = 1,
+                    pCommandBuffers = pCommandBuffers + i,
+                    waitSemaphoreCount = (uint)waitCount,
+                    pWaitSemaphores = waitCount > 0 ? pWaitSemaphores + waitOffset : null,
+                    pWaitDstStageMask = waitCount > 0 ? pWaitStages + waitOffset : null,
+                    signalSemaphoreCount = (uint)signalCount,
+                    pSignalSemaphores = signalCount > 0 ? pSignalSemaphores + signalOffset : null
+                };
+
+                waitOffset += waitCount;
+                signalOffset += signalCount;
+            }
+
+            frameData.SubmitFence.FrameSubmitted = _frameIndex;
+
+            _device.GraphicsQueue.Submit(submitInfos, frameData.SubmitFence);
+        }
+
+        //Debug.WriteLine($"I should be waiting for {frameData.SubmitFence.Name} on frame {_frameIndex + VulkanSwapchain.NumImages}");
 
         _swapchain.Present(frameData.SwapchainReleaseSemaphore);
 
         _device.DeferredDeletionQueue.ReleaseResources(_frameIndex);
+
+        foreach(var context in _contextManager._inUseGraphicsContexts)
+        {
+            frameData.Contexts.Add(context);
+        }
+
+        _contextManager._inUseGraphicsContexts.Clear();
+
+
+        _isInFrame = false;
     }
 
-    public IRenderContext CreateRenderContext()
+    public IRenderContext CreateRenderContext(string name) => _contextManager.AllocateGraphicsContext(name);
+
+    public void GetInteropContext(out RhiInteropContext interopContext)
     {
-        return GraphicsContext;
+        interopContext = new RhiInteropContext
+        {
+            Instance = _instance.Instance,
+            PhysicalDevice = _device.PhysicalDeviceHandle,
+            Device = _device.Handle,
+            GraphicsQueue = _device.GraphicsQueue.Handle,
+            GetProcAddress = (name, instance, device) =>
+            {
+                if (device != 0)
+                {
+                    unsafe
+                    {
+                        return (nint)_instance.Api.vkGetDeviceProcAddr(device, name).Value;
+                    }
+                    //var p = _instance.Api.GetDeviceProcAddress(new((ulong)device), name);
+                    //if (p != 0) return p;
+                }
+
+                //if (instance != 0)
+                {
+                    unsafe
+                    {
+                        return (nint)vkGetInstanceProcAddr(instance, name).Value;
+                    }
+                }
+
+                //return vkGetInstanceProcAddr(default, name);
+            }
+        };
     }
 
-    public RhiRenderTarget GetViewportRenderTarget()
+    public IRenderTexture GetBackbufferTexture() => _swapchain.BackbufferToRenderInto;
+
+    internal void SubmitImmediate(VulkanGraphicsContext context)
     {
-        var renderTarget = new RhiRenderTarget();
+        ref var frameData = ref GetCurrentFrameData();
 
-        renderTarget.Setup(_swapchain.BackbufferToRenderInto);
+        context.EndRecording();
 
-        return renderTarget;
+        _device.GraphicsQueue.Submit(context.CommandBuffer, null);
+
+        frameData.Contexts.Add(context);
+
+        _contextManager._inUseGraphicsContexts.Remove(context);
     }
 
     private void AcquireNextImage()
@@ -201,5 +303,4 @@ public class VulkanRenderer : IRenderer
         }
 
     }
-
 }

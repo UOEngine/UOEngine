@@ -1,6 +1,5 @@
 ﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
-using System.Buffers;
 using Vortice.Vulkan;
 using static Vortice.Vulkan.Vulkan;
 
@@ -30,7 +29,7 @@ public enum VulkanQueueType
 }
 
 //[Service(UOEServiceLifetime.Singleton)]
-public class VulkanDevice : IDisposable
+internal class VulkanDevice : IDisposable
 {
     internal readonly VulkanDeviceInfo DeviceInfo;
     internal VkPhysicalDevice PhysicalDeviceHandle => DeviceInfo.PhysicalDevice;
@@ -49,7 +48,6 @@ public class VulkanDevice : IDisposable
     internal readonly VulkanDeferredDeletionQueue DeferredDeletionQueue;
 
     internal VulkanGraphicsContext GraphicsContext = null!;
-
     internal VkPhysicalDeviceProperties DeviceProperties { get; private set; }
     internal VkPhysicalDeviceLimits Limits => DeviceProperties.limits;
 
@@ -58,7 +56,7 @@ public class VulkanDevice : IDisposable
 
     private VulkanQueue[] _queues = new VulkanQueue[(int)VulkanQueueType.Count];
 
-    public VulkanDevice(in VulkanDeviceInfo deviceInfo)
+    internal VulkanDevice(in VulkanDeviceInfo deviceInfo)
     {
         DeviceInfo = deviceInfo;
         MemoryManager = new(this);
@@ -67,7 +65,7 @@ public class VulkanDevice : IDisposable
         DeferredDeletionQueue = new(this);
     }
 
-    public VulkanQueue GetQueue(VulkanQueueType type) => _queues[(int)type];
+    internal VulkanQueue GetQueue(VulkanQueueType type) => _queues[(int)type];
 
     public void Dispose()
     {

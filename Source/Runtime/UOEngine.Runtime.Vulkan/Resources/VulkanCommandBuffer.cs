@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using System.Diagnostics;
 using UOEngine.Runtime.Core;
+using UOEngine.Runtime.RHI;
 using Vortice.Vulkan;
 using static Vortice.Vulkan.Vulkan;
 
@@ -22,15 +23,25 @@ internal class VulkanCommandBuffer
 
     public VulkanCommandBufferState State { get; private set; }
 
-    public VulkanFence Fence { get; private set; }
+    //public VulkanFence Fence { get; private set; }
 
-    public readonly string Name;
+    public string Name 
+    {
+        get => _name;
+        set
+        {
+            _name = value; 
+            VulkanDebug.SetDebugName(Handle, value);
+        }
+     }
 
     public readonly bool IsUploadOnly;
 
     private readonly VulkanDevice _device;
 
     private static int _count = 0;
+
+    private string _name = "";
 
     internal unsafe VulkanCommandBuffer(VulkanDevice device, VulkanCommandBufferPool commandPool, string? name = null)
     {
@@ -46,18 +57,20 @@ internal class VulkanCommandBuffer
 
         _device.Api.vkAllocateCommandBuffer(_device.Handle, &commandBufferAllocateInfo, out Handle);
 
-        Fence = new VulkanFence(device);
+        //Fence = new VulkanFence(device);
 
         State = VulkanCommandBufferState.Initial;
 
         Name = name ?? $"VulkanCommandBuffer{_count++}";
     }
 
-    internal unsafe void CmdCopyBufferToImage(VkBuffer source, VkImage image, in VkBufferImageCopy bufferImageCopy)
+    internal unsafe void CmdCopyBufferToImage(VkBuffer source, VulkanTexture destinationTexture, in VkBufferImageCopy bufferImageCopy)
     {
+        EnsureState(destinationTexture, RhiRenderTextureUsage.CopyDestination);
+
         var copyInfo = bufferImageCopy;
 
-        _device.Api.vkCmdCopyBufferToImage(Handle, source, image, VkImageLayout.TransferDstOptimal, 1, &copyInfo);
+        _device.Api.vkCmdCopyBufferToImage(Handle, source, destinationTexture.Image, VkImageLayout.TransferDstOptimal, 1, &copyInfo);
     }
 
     internal unsafe void CmdCopyBuffer(VkBuffer sourceBuffer, VkBuffer destinationBuffer, VkBufferCopy bufferCopy)
@@ -89,9 +102,55 @@ internal class VulkanCommandBuffer
         State = VulkanCommandBufferState.Executable;
     }
 
+    internal unsafe void EnsureState(VulkanTexture texture, RhiRenderTextureUsage desiredUsage)
+    {
+        ref var current = ref texture.State;
+        var target = desiredUsage.ToVkTextureState(0);
+
+        if (current.Layout == target.Layout &&
+            current.AccessMask == target.AccessMask &&
+            current.StageMask == target.StageMask &&
+            current.QueueFamilyIndex == target.QueueFamilyIndex)
+        {
+            return;
+        }
+
+        VkImageMemoryBarrier2 barrier = new()
+        {
+            oldLayout = current.Layout,
+            newLayout = target.Layout,
+            srcAccessMask = current.AccessMask,
+            dstAccessMask = target.AccessMask,
+            srcStageMask = current.StageMask,
+            dstStageMask = target.StageMask,
+            srcQueueFamilyIndex = current.QueueFamilyIndex,
+            dstQueueFamilyIndex = target.QueueFamilyIndex,
+            image = texture.Image,
+            subresourceRange = new VkImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1)
+        };
+
+        if (current.Layout == VkImageLayout.Undefined)
+        {
+            barrier.srcAccessMask = VkAccessFlags2.None;
+            barrier.srcStageMask = VkPipelineStageFlags2.None;
+        }
+
+        VkDependencyInfo dependencyInfo = new()
+        {
+            imageMemoryBarrierCount = 1,
+            pImageMemoryBarriers = &barrier
+        };
+
+        _device.Api.vkCmdPipelineBarrier2(Handle, &dependencyInfo);
+
+        current = target;
+    }
+
     internal unsafe void TransitionImageLayout(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout, 
         uint sourceQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED, uint destinationQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED)
     {
+        UOEDebug.Assert(false, "Do not use!");
+
         // Initialize the VkImageMemoryBarrier2 structure
         VkImageMemoryBarrier2 imageBarrier = new VkImageMemoryBarrier2
         {

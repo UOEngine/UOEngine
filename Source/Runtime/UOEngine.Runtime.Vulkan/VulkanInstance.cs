@@ -322,7 +322,7 @@ internal unsafe class VulkanInstance
                 Debug.WriteLine($"[Vulkan]: Validation: {messageSeverity} - {message}");
             }
 
-            Debug.WriteLine($"[Vulkan]: Validation: {messageSeverity} - {message}");
+            //Debug.WriteLine($"[Vulkan]: Validation: {messageSeverity} - {message}");
         }
         else
         {

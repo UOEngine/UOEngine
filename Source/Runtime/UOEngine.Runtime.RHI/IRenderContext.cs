@@ -18,7 +18,7 @@ public interface IRenderContext
 
     public IRhiBuffer IndexBuffer { set; }
 
-    public IRhiBuffer VertexBuffer { get; set; }
+    public IRhiBuffer? VertexBuffer { get; set; }
 
     public RhiSampler Sampler { get; set; }
 
@@ -35,5 +35,9 @@ public interface IRenderContext
     public void SetGraphicsPipeline(in RhiGraphicsPipelineDescription graphicsPipelineDescription);
 
     public void WaitForGpuIdle();
+
+    public void TransitionTextureUsage(IRenderTexture texture, RhiRenderTextureUsage usage);
+
+    public void Flush();
 
 }
