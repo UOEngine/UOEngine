@@ -175,7 +175,7 @@ public sealed class UOEngineAppBuilder
             renderSystem.FrameBegin();
             renderSystem.FrameEnd();
 
-            if(latestWorkingSet >= totalMemoryLimit)
+            if (latestWorkingSet >= totalMemoryLimit)
             {
                 // This is just temp to make sure if I leak memory, I don't crash my computer. 
                 // Had native leaks before due to allocating lots of buffers without freeing, ops.
@@ -183,7 +183,10 @@ public sealed class UOEngineAppBuilder
 
                 renderSystem.PrintStats();
 
-                throw new OutOfMemoryException("Ran out of memory!");
+                if(Debugger.IsAttached == false)
+                {
+                    throw new OutOfMemoryException("Ran out of memory!");
+                }
             }
 
         }

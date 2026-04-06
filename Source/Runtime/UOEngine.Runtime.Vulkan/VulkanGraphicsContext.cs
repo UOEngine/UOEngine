@@ -306,6 +306,8 @@ internal class VulkanGraphicsContext : IRenderContext
         _defaultBackbufferRenderTarget = defaultRenderTarget;
         _currentName = name;
 
+        _pool.Reset();
+
         _commandBuffer = _pool.Create();
 
         CommandBuffer.Name = _currentName;
