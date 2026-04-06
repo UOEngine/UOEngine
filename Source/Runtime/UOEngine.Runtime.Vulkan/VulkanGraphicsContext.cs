@@ -459,10 +459,12 @@ internal class VulkanGraphicsContext : IRenderContext
 
         if (IsStateDirty(DirtyState.VertexBuffer))
         {
-            _device.Api.vkCmdBindVertexBuffer(commandBuffer, 0, _vertexBuffer!.Handle);
+            if(_vertexBuffer != null)
+            {
+                _device.Api.vkCmdBindVertexBuffer(commandBuffer, 0, _vertexBuffer.Handle);
+            }
 
             ClearDirtyState(DirtyState.VertexBuffer);
-
         }
 
         if (IsStateDirty(DirtyState.Pipeline))

@@ -1,0 +1,31 @@
+﻿    <!--Copyright (c) 2026 UOEngine Project, Scotty1234
+Licensed under the MIT License. See LICENSE file in the project root for details.-->
+<Styles xmlns="https://github.com/avaloniaui">
+	
+    <Style Selector="DockPanel.editor-root">
+		<Setter Property="Background" Value="#151515" />
+	</Style>
+
+	<Style Selector="TemplatedControl">
+		<Setter Property="Foreground" Value="#D4D4D4" />
+	</Style>
+
+	<Style Selector="TextBlock">
+		<Setter Property="Foreground" Value="#D4D4D4" />
+	</Style>
+
+	<Style Selector="Menu.editor-menu">
+		<Setter Property="Background" Value="#151515" />
+		<Setter Property="Foreground" Value="#D4D4D4" />
+	</Style>
+
+	<Style Selector="TabControl.editor-workspace">
+		<Setter Property="Background" Value="#242424" />
+		<Setter Property="Foreground" Value="#D6D9DE" />
+	</Style>
+
+	<Style Selector="Panel.editor-panel">
+		<Setter Property="Background" Value="#151515" />
+	</Style>
+	
+</Styles>

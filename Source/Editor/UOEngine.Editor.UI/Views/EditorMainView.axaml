@@ -3,6 +3,39 @@ Licensed under the MIT License. See LICENSE file in the project root for details
 <UserControl
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    x:Class="UOEngine.Editor.UI.EditorMainView">
+	xmlns:vm="using:UOEngine.Editor.UI"
+    x:Class="UOEngine.Editor.UI.EditorMainView"
+	x:DataType="vm:EditorMainViewModel">
+
+	<UserControl.Styles>
+		<StyleInclude Source="avares://UOEngine.Editor.UI/Styles/EditorStyle.axaml"/>
+	</UserControl.Styles>
+	
+	<DockPanel Classes="editor-root">
+		
+		<Menu DockPanel.Dock="Top" Classes="editor-menu">
+			<MenuItem Header="File">
+				<MenuItem Header="Exit"/>
+			</MenuItem>
+			<MenuItem Header="Help">
+				<MenuItem Header="About UO Engine"/>
+				<MenuItem Header="Credits"/>
+			</MenuItem>
+		</Menu>
+		
+		<TabControl Margin="5" ItemsSource="{Binding OpenedTools}" SelectedItem="{Binding SelectedTool}" Classes="editor-workspace">
+			<TabControl.ItemTemplate>
+				<DataTemplate x:DataType="vm:ToolViewModel">
+					<TextBlock Text="{Binding Name}" />
+				</DataTemplate>
+			</TabControl.ItemTemplate>
+			<TabControl.ContentTemplate>
+				<DataTemplate x:DataType="vm:ToolViewModel">
+					<ContentControl Content="{Binding Content}" />
+				</DataTemplate>
+			</TabControl.ContentTemplate>
+		</TabControl>
+
+	</DockPanel>
 
 </UserControl>

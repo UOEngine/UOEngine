@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using Avalonia;
 using Avalonia.Controls.Embedding;
+using Avalonia.Rendering;
 using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Runtime.AvaloniaUI;
@@ -10,6 +11,8 @@ internal class UOEngineTopLevel: EmbeddableControlRoot
 {
     internal UOEngineTopLevelImpl Impl { get; }
 
+    private IRenderTimer? RenderTimer => AvaloniaLocator.Current.GetService<IRenderTimer>();
+
     public UOEngineTopLevel(UOEngineTopLevelImpl topLevelImpl): base(topLevelImpl)
     {
         Impl = topLevelImpl;
@@ -17,23 +20,8 @@ internal class UOEngineTopLevel: EmbeddableControlRoot
 
     public void OnDraw(IRenderContext renderContext, Rect rect)
     {
-        //var renderTarget = new RhiRenderTarget("AvaloniaUI RenderTarget");
-
-        //renderTarget.Setup(Impl.Surface.RhiTexture);
-
-        //renderContext.TransitionTextureUsage(Impl.Surface.RhiTexture, RhiRenderTextureUsage.ColourTarget);
-
-        // Prep vkimage
-        //renderContext.BeginRenderPass(new RenderPassInfo
-        //{
-        //    RenderTarget = renderTarget,
-        //    Name = "AvaloniaUI Renderpass"
-        //});
+        //RenderTimer?.Tick?.Invoke(new TimeSpan(0));
 
         PlatformImpl!.Paint?.Invoke(rect);
-
-        //renderContext.EndRenderPass();
-
-        // Transition vkimage
     }
 }

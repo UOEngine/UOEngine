@@ -3,6 +3,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Platform;
+using Avalonia.Threading;
 using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Runtime.AvaloniaUI;
@@ -53,6 +54,8 @@ internal class AvaloniaControl
 
     public void Draw(IRenderContext renderContext)
     {
+        Dispatcher.UIThread.RunJobs();
+
         _topLevel!.OnDraw(renderContext, new Rect(0, 0, _topLevel.ClientSize.Width, _topLevel.ClientSize.Height));
     }
 }

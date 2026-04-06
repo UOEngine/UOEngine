@@ -1,0 +1,39 @@
+﻿<!--Copyright (c) 2026 UOEngine Project, Scotty1234
+Licensed under the MIT License. See LICENSE file in the project root for details.-->
+<UserControl
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:vm="using:UOEngine.Editor.UI"
+    x:Class="UOEngine.Editor.UI.EditorLandingView"
+	x:DataType="vm:EditorLandingViewModel">
+
+	<Grid
+		  RowSpacing="10"
+		  ColumnDefinitions="*,*" RowDefinitions="*,*"  Margin="4">
+		
+		<Panel Grid.Row="0" Grid.Column="0" Classes="editor-panel"/>
+
+		<ItemsControl ItemsSource="{Binding Tools}" Grid.Row="0" Grid.Column="1">
+			<ItemsControl.ItemsPanel>
+				<ItemsPanelTemplate>
+					<StackPanel Orientation="Horizontal" Spacing="12" />
+				</ItemsPanelTemplate>
+			</ItemsControl.ItemsPanel>
+
+			<ItemsControl.ItemTemplate>
+				<DataTemplate x:DataType="vm:ToolViewModel">
+					<StackPanel Width="96" Spacing="6">
+						<Image Source="{Binding Icon}" Width="64" Height="64" HorizontalAlignment="Center" />
+						<TextBlock Text="{Binding Name}" HorizontalAlignment="Center" TextAlignment="Center" />
+					</StackPanel>
+				</DataTemplate>
+			</ItemsControl.ItemTemplate>
+		</ItemsControl>
+		
+		<Panel Grid.Row="1" Grid.Column="0" Classes="editor-panel" />
+
+		<Panel Grid.Row="1" Grid.Column="1" Classes="editor-panel"/>
+
+	</Grid>
+
+</UserControl>

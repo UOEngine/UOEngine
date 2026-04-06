@@ -12,6 +12,9 @@
     <Project Path="Source/Editor/UOEngine.Client/UOEngine.Client.csproj" Id="1ee3024a-6900-451f-9fb6-22773e28aa00">
       <Platform Project="x64" />
     </Project>
+    <Project Path="Source/Editor/UOEngine.Editor.Abstractions/UOEngine.Editor.Abstractions.csproj" Id="497ecad3-2c18-4429-b8cc-e1e79dbf63b2">
+      <Platform Project="x64" />
+    </Project>
     <Project Path="Source/Editor/UOEngine.Editor.CentredSharp/UOEngine.Editor.CentredSharp.csproj" Id="d5831f99-a0c3-40ce-baf0-7d80ed6ee7f8">
       <Platform Project="x64" />
     </Project>
