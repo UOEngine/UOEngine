@@ -9,6 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Runtime\UOEngine.Runtime.AvaloniaUI\UOEngine.Runtime.AvaloniaUI.csproj" />
     <ProjectReference Include="..\..\Runtime\UOEngine.Runtime.Plugin\UOEngine.Runtime.Plugin.csproj" />
+    <ProjectReference Include="..\UOEngine.Editor.Abstractions\UOEngine.Editor.Abstractions.csproj" />
   </ItemGroup>
 
 	<Import Project="..\..\..\ThirdParty\Avalonia\build\BuildTargets.targets" />

@@ -1,0 +1,82 @@
+﻿<!--Copyright (c) 2026 UOEngine Project, Scotty1234
+Licensed under the MIT License. See LICENSE file in the project root for details.-->
+<Styles xmlns="https://github.com/avaloniaui"
+		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+	<Styles.Resources>
+		<Color x:Key="EditorBackgroundColour">#151515</Color>
+		<Color x:Key="EditorTextColour">#D4D4D4</Color>
+		<Color x:Key="EditorControlBackgroundColour">#242424</Color>
+		<Color x:Key="EditorTabPointerOverColour">#212121</Color>
+	</Styles.Resources>
+
+	<!-- Background colour -->
+
+	<Style Selector="DockPanel.editor-root">
+		<Setter Property="Background" Value="{StaticResource EditorBackgroundColour}" />
+	</Style>
+
+	<!-- Make text always this color -->
+
+	<Style Selector="TemplatedControl">
+		<Setter Property="Foreground" Value="#D4D4D4" />
+	</Style>
+
+	<Style Selector="TextBlock">
+		<Setter Property="Foreground" Value="#D4D4D4" />
+	</Style>
+
+	<!-- Menu item -->
+	
+	<Style Selector="MenuItem">
+		<Setter Property="Background" Value="Transparent" />
+		<Setter Property="Foreground" Value="#D4D4D4" />
+	</Style>
+
+	<Style Selector="MenuItem /template/ Border#PART_LayoutRoot">
+		<Setter Property="Background" Value="#575757" />
+	</Style>
+
+	<Style Selector="MenuItem:selected /template/ Border#PART_LayoutRoot">
+		<Setter Property="Background" Value="#0070e0" />
+	</Style>
+
+	<Style Selector="MenuItem:open /template/ Popup#PART_Popup > Border">
+		<Setter Property="Background" Value="#383838"/>
+		<Setter Property="CornerRadius" Value="0"/>
+	</Style>
+
+	<!-- Available tools on landing page -->
+	<Style Selector="Border.tool-tile">
+		<Setter Property="Background" Value="Transparent" />
+	</Style>
+
+	<Style Selector="Border.tool-tile:pointerover">
+		<Setter Property="Background" Value="#686868" />
+	</Style>
+
+	<!-- Tab control -->
+	
+	<Style Selector="TabItem">
+		<Setter Property="MinWidth" Value="240" />
+	</Style>
+
+	<Style Selector="TabItem:pointerover /template/ Border#PART_LayoutRoot">
+		<Setter Property="Background" Value="{StaticResource EditorTabPointerOverColour}" />
+	</Style>
+
+	<Style Selector="TabItem:selected">
+		<Setter Property="Background" Value="{StaticResource EditorControlBackgroundColour}" />
+		<Setter Property="BorderBrush" Value="{StaticResource EditorControlBackgroundColour}" />
+	</Style>
+
+	<Style Selector="TabItem:selected /template/ Border">
+		<Setter Property="Background" Value="{StaticResource EditorControlBackgroundColour}" />
+		<Setter Property="BorderBrush" Value="{StaticResource EditorControlBackgroundColour}" />
+	</Style>
+
+	<Style Selector="Panel.editor-panel">
+		<Setter Property="Background" Value="#1a1a1a" />
+	</Style>
+	
+</Styles>

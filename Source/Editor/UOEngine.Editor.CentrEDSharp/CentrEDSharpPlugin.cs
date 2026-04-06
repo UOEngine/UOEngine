@@ -1,9 +1,11 @@
-﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using CentrED;
 using CentrED.Client;
 using CentrED.Server;
 using CentrED.Utils;
+using Microsoft.Extensions.DependencyInjection;
+using UOEngine.Editor.Abstractions;
 using UOEngine.Runtime.Core;
 using UOEngine.Runtime.FnaAdapter;
 using UOEngine.Runtime.Plugin;
@@ -35,60 +37,65 @@ public class CentrEdSharpPlugin: IPlugin
         _fnaCompatPlugin = fnaCompatPlugin;
     }
 
+    //public static void ConfigureServices(IServiceCollection services)
+    //{
+    //    services.AddSingleton<IEditorTool, CentredSharpTool>();
+    //}
+
     public void PostStartup() 
     {
-        string mapEffectNew = Path.Combine(UOEPaths.ShadersDir, @"CentrEdSharp\MapEffect.hlsl");
-        string mapEffect = Path.Combine(UOEPaths.ProjectDir, @"ThirdParty\centredsharp\CentrED\Renderer\Shaders\MapEffect.fxc");
+        //string mapEffectNew = Path.Combine(UOEPaths.ShadersDir, @"CentrEdSharp\MapEffect.hlsl");
+        //string mapEffect = Path.Combine(UOEPaths.ProjectDir, @"ThirdParty\centredsharp\CentrED\Renderer\Shaders\MapEffect.fxc");
 
-        var terrainTechnique = new Technique
-        {
-            Name = "Terrain",
-            Programs = [new TechniqueProgramEntry("TileVSMain", "TerrainPSMain")]
-        };
+        //var terrainTechnique = new Technique
+        //{
+        //    Name = "Terrain",
+        //    Programs = [new TechniqueProgramEntry("TileVSMain", "TerrainPSMain")]
+        //};
 
-        var terrainGrid = new Technique
-        {
-            Name = "TerrainGrid",
-            Programs = [new TechniqueProgramEntry("TerrainGridVSMain", "TerrainGridPSMain")]
-        };
+        //var terrainGrid = new Technique
+        //{
+        //    Name = "TerrainGrid",
+        //    Programs = [new TechniqueProgramEntry("TerrainGridVSMain", "TerrainGridPSMain")]
+        //};
 
-        var statics = new Technique
-        {
-            Name = "Statics",
-            Programs = [new TechniqueProgramEntry("TileVSMain", "StaticsPSMain")]
-        };
+        //var statics = new Technique
+        //{
+        //    Name = "Statics",
+        //    Programs = [new TechniqueProgramEntry("TileVSMain", "StaticsPSMain")]
+        //};
 
-        var selection = new Technique
-        {
-            Name = "Selection",
-            Programs = [new TechniqueProgramEntry("TileVSMain", "SelectionPSMain")]
-        };
+        //var selection = new Technique
+        //{
+        //    Name = "Selection",
+        //    Programs = [new TechniqueProgramEntry("TileVSMain", "SelectionPSMain")]
+        //};
 
-        var virtualLayer = new Technique
-        {
-            Name = "VirtualLayer",
-            Programs = [new TechniqueProgramEntry("VirtualLayerVSMain", "VirtualLayerPSMain")]
-        };
+        //var virtualLayer = new Technique
+        //{
+        //    Name = "VirtualLayer",
+        //    Programs = [new TechniqueProgramEntry("VirtualLayerVSMain", "VirtualLayerPSMain")]
+        //};
 
-        _shaderRemapper.RemapTechniques(mapEffect, mapEffectNew,
-        [
-            terrainTechnique,
-            terrainGrid,
-            statics,
-            selection,
-            virtualLayer
-        ], "MapEffect");
+        //_shaderRemapper.RemapTechniques(mapEffect, mapEffectNew,
+        //[
+        //    terrainTechnique,
+        //    terrainGrid,
+        //    statics,
+        //    selection,
+        //    virtualLayer
+        //], "MapEffect");
 
-        Config.Initialize();
+        //Config.Initialize();
 
-        CentrEDGame.PreSetup(_serviceProvider);
+        //CentrEDGame.PreSetup(_serviceProvider);
 
-        CEDGame = new CentrEDGame();
+        //CEDGame = new CentrEDGame();
 
-        CentredApplication.SetFromHosted(CEDGame); 
+        //CentredApplication.SetFromHosted(CEDGame);
 
-        _fnaCompatPlugin.RegisterGame(CEDGame);
-        
+        //_fnaCompatPlugin.RegisterGame(CEDGame);
+
     }
 
     public void Shutdown()
