@@ -13,7 +13,7 @@ Licensed under the MIT License. See LICENSE file in the project root for details
 	
 	<DockPanel Classes="editor-root">
 		
-		<Menu DockPanel.Dock="Top" Classes="editor-menu">
+		<Menu DockPanel.Dock="Top">
 			<MenuItem Header="File">
 				<MenuItem Header="Exit"/>
 			</MenuItem>

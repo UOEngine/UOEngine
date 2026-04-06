@@ -14,7 +14,7 @@ Licensed under the MIT License. See LICENSE file in the project root for details
 		<Setter Property="Foreground" Value="#D4D4D4" />
 	</Style>
 
-	<Style Selector="Menu.editor-menu">
+	<Style Selector="MenuItem">
 		<Setter Property="Background" Value="#151515" />
 		<Setter Property="Foreground" Value="#D4D4D4" />
 	</Style>
