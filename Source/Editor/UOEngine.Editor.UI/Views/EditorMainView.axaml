@@ -23,17 +23,22 @@ Licensed under the MIT License. See LICENSE file in the project root for details
 			</MenuItem>
 		</Menu>
 		
-		<TabControl Margin="5" ItemsSource="{Binding OpenedTools}" SelectedItem="{Binding SelectedTool}" Classes="editor-workspace">
+		<TabControl ItemsSource="{Binding OpenedTools}" SelectedItem="{Binding SelectedTool}" Background="Transparent" Margin="0" Padding="0">
+			
 			<TabControl.ItemTemplate>
 				<DataTemplate x:DataType="vm:ToolViewModel">
-					<TextBlock Text="{Binding Name}" />
+					<TextBlock Text="{Binding Name}"/>
 				</DataTemplate>
 			</TabControl.ItemTemplate>
+			
 			<TabControl.ContentTemplate>
 				<DataTemplate x:DataType="vm:ToolViewModel">
-					<ContentControl Content="{Binding Content}" />
+					<Border Background="{StaticResource EditorControlBackgroundColour}">
+						<ContentControl Content="{Binding Content}" />
+					</Border>
 				</DataTemplate>
 			</TabControl.ContentTemplate>
+			
 		</TabControl>
 
 	</DockPanel>

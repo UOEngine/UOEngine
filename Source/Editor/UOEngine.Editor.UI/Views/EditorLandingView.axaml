@@ -9,11 +9,11 @@ Licensed under the MIT License. See LICENSE file in the project root for details
 
 	<Grid
 		  RowSpacing="10"
-		  ColumnDefinitions="*,*" RowDefinitions="*,*"  Margin="4">
+		  ColumnDefinitions="*,*" RowDefinitions="*,*">
 		
-		<Panel Grid.Row="0" Grid.Column="0" Classes="editor-panel"/>
+		<Panel Grid.Row="0" Grid.Column="0" Classes="editor-panel" Margin="12"/>
 
-		<StackPanel Grid.Row="0" Grid.Column="1" Spacing="8">
+		<StackPanel Grid.Row="0" Grid.Column="1" Spacing="8" Margin="12">
 			<TextBlock Text="Open Tool"
 					   FontSize="24"
 					   FontWeight="Bold" />
@@ -27,18 +27,24 @@ Licensed under the MIT License. See LICENSE file in the project root for details
 
 				<ItemsControl.ItemTemplate>
 					<DataTemplate x:DataType="vm:ToolViewModel">
-						<StackPanel Width="96" Spacing="6">
-							<Image Source="{Binding Icon}" Width="64" Height="64" HorizontalAlignment="Center" />
-							<TextBlock Text="{Binding Name}" HorizontalAlignment="Center" TextAlignment="Center" />
-						</StackPanel>
+
+						<Button Command="{Binding OpenCommand}" Background="Transparent">
+							<Border Classes="tool-tile" Padding="8">
+								<StackPanel Width="96" Spacing="6">
+									<Image Source="{Binding Icon}" Width="64" Height="64" HorizontalAlignment="Center" />
+									<TextBlock Text="{Binding Name}" HorizontalAlignment="Center" TextAlignment="Center" />
+								</StackPanel>
+							</Border>
+						</Button>
+						
 					</DataTemplate>
 				</ItemsControl.ItemTemplate>
 			</ItemsControl>
 		</StackPanel>
 		
-		<Panel Grid.Row="1" Grid.Column="0" Classes="editor-panel" />
+		<Panel Grid.Row="1" Grid.Column="0" Classes="editor-panel" Margin="12"/>
 
-		<Panel Grid.Row="1" Grid.Column="1" Classes="editor-panel"/>
+		<Panel Grid.Row="1" Grid.Column="1" Classes="editor-panel" Margin="12"/>
 
 	</Grid>
 
