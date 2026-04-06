@@ -1,7 +1,9 @@
 ﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using Avalonia;
-
+using Avalonia.Input;
+using UOEngine.Runtime.Core;
+using UOEngine.Runtime.Platform;
 using UOEngine.Runtime.Plugin;
 using UOEngine.Runtime.Renderer;
 using UOEngine.Runtime.RHI;
@@ -16,12 +18,20 @@ public class AvaloniaUIPlugin: IPlugin
     private readonly IRenderer _renderer;
     private readonly RenderSystem _renderSystem;
     private readonly IRootContentHost _rootContentHost;
+    private readonly IWindow _window;
+    private readonly InputManager _inputManager;
 
-    public AvaloniaUIPlugin(RenderSystem renderSystem, IRenderer renderer, IRootContentHost rootContentHost)
+    public AvaloniaUIPlugin(RenderSystem renderSystem, 
+        IRenderer renderer, 
+        IRootContentHost rootContentHost, 
+        IWindow window,
+        InputManager inputManager)
     {
         _renderer = renderer;
         _renderSystem = renderSystem;
         _rootContentHost = rootContentHost;
+        _window = window;
+        _inputManager = inputManager;
 
         renderSystem.OnFrameEnd += (mainRenderContext) =>
         {
@@ -36,7 +46,7 @@ public class AvaloniaUIPlugin: IPlugin
             .UseUOEngine(_renderer, _renderSystem)
             .SetupWithoutStarting();
 
-        _rootControl = new AvaloniaControl(_rootContentHost);
+        _rootControl = new AvaloniaControl(_rootContentHost, _window, _inputManager);
         _rootControl.Initialise();
     }
 }

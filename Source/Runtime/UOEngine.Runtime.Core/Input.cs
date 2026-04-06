@@ -4,6 +4,10 @@ namespace UOEngine.Runtime.Core;
 
 public class InputManager
 {
+    public event Action<int, int>? MouseMoved;
+    public event Action<MouseButton>? MouseButtonDown;
+    public event Action<MouseButton>? MouseButtonUp;
+
     public MouseState Mouse => _mouseState[_currentIndex];
     public KeyboardState Keyboard => _keyboardState[_currentIndex];
 
@@ -46,6 +50,8 @@ public class InputManager
     {
         _mouseState[_currentIndex].X = x;
         _mouseState[_currentIndex].Y = y;
+
+        MouseMoved?.Invoke(x, y);
     }
 
     private void OnMouseWheel(int delta) => _mouseState[_currentIndex].ScrollWheelDelta += delta;
@@ -60,6 +66,8 @@ public class InputManager
             case MouseButton.Middle: mouseState.MiddleButton = ButtonState.Pressed; break;
             case MouseButton.Right: mouseState.RightButton = ButtonState.Pressed; break;
         }
+
+        MouseButtonDown?.Invoke(button);
     }
 
     private void OnMouseButtonUp(MouseButton button)
@@ -72,6 +80,8 @@ public class InputManager
             case MouseButton.Middle: mouseState.MiddleButton = ButtonState.Released; break;
             case MouseButton.Right: mouseState.RightButton = ButtonState.Released; break;
         }
+
+        MouseButtonUp?.Invoke(button);
     }
     private void OnKeyUp(KeyboardKeys key)
     {

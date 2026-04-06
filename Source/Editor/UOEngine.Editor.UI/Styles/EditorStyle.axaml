@@ -14,11 +14,26 @@ Licensed under the MIT License. See LICENSE file in the project root for details
 		<Setter Property="Foreground" Value="#D4D4D4" />
 	</Style>
 
+	<!-- Menu item -->
+	
 	<Style Selector="MenuItem">
-		<Setter Property="Background" Value="#151515" />
+		<Setter Property="Background" Value="Transparent" />
 		<Setter Property="Foreground" Value="#D4D4D4" />
 	</Style>
 
+	<Style Selector="MenuItem /template/ Border#PART_LayoutRoot">
+		<Setter Property="Background" Value="#575757" />
+	</Style>
+
+	<Style Selector="MenuItem:selected /template/ Border#PART_LayoutRoot">
+		<Setter Property="Background" Value="#0070e0" />
+	</Style>
+
+	<Style Selector="MenuItem:open /template/ Popup#PART_Popup > Border">
+		<Setter Property="Background" Value="#383838"/>
+	</Style>
+
+	<!-- Tab control -->
 	<Style Selector="TabControl.editor-workspace">
 		<Setter Property="Background" Value="#242424" />
 		<Setter Property="Foreground" Value="#D6D9DE" />

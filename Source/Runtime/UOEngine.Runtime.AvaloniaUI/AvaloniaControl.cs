@@ -4,6 +4,9 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Platform;
 using Avalonia.Threading;
+
+using UOEngine.Runtime.Core;
+using UOEngine.Runtime.Platform;
 using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Runtime.AvaloniaUI;
@@ -15,10 +18,13 @@ internal class AvaloniaControl
     private RootControl? _rootControl;
 
     private IRootContentHost _rootContentHost;
-
-    internal AvaloniaControl(IRootContentHost rootContentHost)
+    private readonly IWindow _window;
+    private readonly InputManager _inputManager;
+    internal AvaloniaControl(IRootContentHost rootContentHost, IWindow window, InputManager inputManager)
     {
         _rootContentHost = rootContentHost;
+        _window = window;
+        _inputManager = inputManager;
     }
 
     public void Initialise()
@@ -32,7 +38,7 @@ internal class AvaloniaControl
             return;
         }
 
-        var topLevelImpl = new UOEngineTopLevelImpl(graphics);
+        var topLevelImpl = new UOEngineTopLevelImpl(graphics, _window, _inputManager);
 
         topLevelImpl.SetRenderSize(new PixelSize(1920, 1080));
 

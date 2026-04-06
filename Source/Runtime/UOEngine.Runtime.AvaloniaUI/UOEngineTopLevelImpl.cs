@@ -9,6 +9,11 @@ using Avalonia.Platform.Surfaces;
 using Avalonia.Rendering.Composition;
 using Avalonia.Vulkan;
 
+using UOEngine.Runtime.Core;
+using UOEngine.Runtime.Platform;
+
+using UOEngineMouseButton = UOEngine.Runtime.Core.MouseButton;
+
 namespace UOEngine.Runtime.AvaloniaUI;
 
 /// <summary>
@@ -24,8 +29,6 @@ internal class UOEngineTopLevelImpl : ITopLevelImpl
 
 
     public double RenderScaling => 1.0f;
-
-    //public IEnumerable<object> Surfaces => [GetOrCreateSurface() ];
 
     public Action<RawInputEventArgs>? Input { get; set; }
     public Action<Rect>? Paint { get; set; }
@@ -53,32 +56,75 @@ internal class UOEngineTopLevelImpl : ITopLevelImpl
 
     public AcrylicPlatformCompensationLevels AcrylicCompensationLevels => throw new NotImplementedException();
 
-    //public UOEngineSkiaSurface Surface => _surface ?? throw new InvalidOperationException();
-
-    //IPlatformRenderSurface[] Surfaces => [];
-
+    internal IInputRoot Owner => _owner ?? throw new InvalidOperationException($"{nameof(SetInputRoot)} must have been called");
     IPlatformRenderSurface[] ITopLevelImpl.Surfaces => [];
 
     private WindowTransparencyLevel _transparencyLevel = WindowTransparencyLevel.Transparent;
 
-    private IInputRoot? _inputRoot;
+    private IInputRoot? _owner;
     private readonly UOEnginePlatformGraphics _platformGraphics;
 
-    //private UOEngineSkiaSurface? _surface;
     private PixelSize _renderSize;
 
-    //private UOEngineSkiaSurface GetOrCreateSurface() => _surface ??= CreateSurface();
+    private readonly MouseDevice _mouse = new();
 
-    ////private UOEngineSkiaSurface CreateSurface() => _platformGraphics.GetSharedContext().CreateSurface(_renderSize);
+    private readonly IWindow _window;
 
-    public UOEngineTopLevelImpl(UOEnginePlatformGraphics platformGraphics)
+    private Point _lastMousePosition;
+    private RawInputModifiers _mouseModifiers = RawInputModifiers.None;
+
+    public UOEngineTopLevelImpl(UOEnginePlatformGraphics platformGraphics, IWindow window, InputManager inputManager)
     {
         _platformGraphics = platformGraphics;
+        _window = window;
+
+        inputManager.MouseMoved += (x, y) =>
+        {
+            _lastMousePosition = new Point(RenderScaling * x, RenderScaling * y);
+
+            UpdateMouseInput(RawPointerEventType.Move);
+        };
+
+        inputManager.MouseButtonDown += button =>
+        {
+            RawPointerEventType eventType = button switch
+            {
+                UOEngineMouseButton.Invalid => throw new NotImplementedException(),
+                UOEngineMouseButton.Left => RawPointerEventType.LeftButtonDown,
+                UOEngineMouseButton.Middle => throw new NotImplementedException(),
+                UOEngineMouseButton.Right => throw new NotImplementedException(),
+                UOEngineMouseButton.Back => throw new NotImplementedException(),
+                UOEngineMouseButton.Forward => throw new NotImplementedException(),
+                _ => throw new NotImplementedException(),
+            };
+
+            _mouseModifiers |= MouseButtonToInputModifier(button);
+
+            UpdateMouseInput(eventType);
+        };
+
+        inputManager.MouseButtonUp += button =>
+        {
+            RawPointerEventType eventType = button switch
+            {
+                UOEngineMouseButton.Invalid => throw new NotImplementedException(),
+                UOEngineMouseButton.Left => RawPointerEventType.LeftButtonUp,
+                UOEngineMouseButton.Middle => throw new NotImplementedException(),
+                UOEngineMouseButton.Right => throw new NotImplementedException(),
+                UOEngineMouseButton.Back => throw new NotImplementedException(),
+                UOEngineMouseButton.Forward => throw new NotImplementedException(),
+                _ => throw new NotImplementedException(),
+            };
+
+            _mouseModifiers &= ~MouseButtonToInputModifier(button);
+
+            UpdateMouseInput(eventType);
+        };
     }
 
     public IPopupImpl? CreatePopup()
     {
-        throw new NotImplementedException();
+        return null;
     }
 
     public void Dispose()
@@ -88,24 +134,30 @@ internal class UOEngineTopLevelImpl : ITopLevelImpl
 
     public Point PointToClient(PixelPoint point)
     {
-        throw new NotImplementedException();
+        return new Point(point.X, point.Y) / RenderScaling;
     }
 
     public PixelPoint PointToScreen(Point point)
     {
-        throw new NotImplementedException();
+        point *= RenderScaling;
+
+        //_window.
+        //var p = new POINT { X = (int)point.X, Y = (int)point.Y };
+        //ClientToScreen(_hwnd, ref p);
+
+        return new PixelPoint((int)point.X, (int)point.Y);
     }
 
     public void SetCursor(ICursorImpl? cursor)
     {
-        throw new NotImplementedException();
+        //throw new NotImplementedException();
     }
 
     public void SetFrameThemeVariant(PlatformThemeVariant themeVariant)
     {
     }
 
-    public void SetInputRoot(IInputRoot inputRoot) => _inputRoot = inputRoot;
+    public void SetInputRoot(IInputRoot inputRoot) => _owner = inputRoot;
 
     public void SetTransparencyLevelHint(IReadOnlyList<WindowTransparencyLevel> transparencyLevels)
     {
@@ -139,5 +191,32 @@ internal class UOEngineTopLevelImpl : ITopLevelImpl
 
         _renderSize = renderSize;
         //_surface = CreateSurface();
+    }
+
+    //private static RawPointerEventType MouseButtonToEventType(UOEngineMouseButton button) => button switch
+    //{
+    //    UOEngineMouseButton.Invalid => throw new NotImplementedException(),
+    //    UOEngineMouseButton.Left => RawPointerEventType.LeftButtonDown,
+    //    UOEngineMouseButton.Middle => throw new NotImplementedException(),
+    //    UOEngineMouseButton.Right => throw new NotImplementedException(),
+    //    UOEngineMouseButton.Back => throw new NotImplementedException(),
+    //    UOEngineMouseButton.Forward => throw new NotImplementedException(),
+    //    _ => throw new NotImplementedException(),
+    //};
+
+    private static RawInputModifiers MouseButtonToInputModifier(UOEngineMouseButton button) => button switch
+    {
+        UOEngineMouseButton.Invalid => throw new NotImplementedException(),
+        UOEngineMouseButton.Left => RawInputModifiers.LeftMouseButton,
+        UOEngineMouseButton.Middle => throw new NotImplementedException(),
+        UOEngineMouseButton.Right => throw new NotImplementedException(),
+        UOEngineMouseButton.Back => throw new NotImplementedException(),
+        UOEngineMouseButton.Forward => throw new NotImplementedException(),
+        _ => throw new NotImplementedException(),
+    };
+
+    private void UpdateMouseInput(RawPointerEventType eventType)
+    {
+        Input?.Invoke(new RawPointerEventArgs(_mouse, 0, Owner, eventType, _lastMousePosition, _mouseModifiers));
     }
 }
