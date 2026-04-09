@@ -15,5 +15,5 @@ internal class CentredSharpTool : IEditorTool
 
     public string Icon => Path.Combine(UOEPaths.ContentDir, "Editor/CentredSharp/CentredSharpIcon.png");
 
-    public Func<IServiceProvider, UserControl> CreateContent => throw new NotImplementedException();
+    public Func<UserControl> CreateContent => () => new CentredSharpView();
 }

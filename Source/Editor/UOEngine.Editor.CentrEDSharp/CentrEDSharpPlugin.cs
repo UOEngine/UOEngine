@@ -44,57 +44,57 @@ public class CentrEdSharpPlugin: IPlugin
 
     public void PostStartup() 
     {
-        //string mapEffectNew = Path.Combine(UOEPaths.ShadersDir, @"CentrEdSharp\MapEffect.hlsl");
-        //string mapEffect = Path.Combine(UOEPaths.ProjectDir, @"ThirdParty\centredsharp\CentrED\Renderer\Shaders\MapEffect.fxc");
+        string mapEffectNew = Path.Combine(UOEPaths.ShadersDir, @"CentrEdSharp\MapEffect.hlsl");
+        string mapEffect = Path.Combine(UOEPaths.ProjectDir, @"ThirdParty\centredsharp\CentrED\Renderer\Shaders\MapEffect.fxc");
 
-        //var terrainTechnique = new Technique
-        //{
-        //    Name = "Terrain",
-        //    Programs = [new TechniqueProgramEntry("TileVSMain", "TerrainPSMain")]
-        //};
+        var terrainTechnique = new Technique
+        {
+            Name = "Terrain",
+            Programs = [new TechniqueProgramEntry("TileVSMain", "TerrainPSMain")]
+        };
 
-        //var terrainGrid = new Technique
-        //{
-        //    Name = "TerrainGrid",
-        //    Programs = [new TechniqueProgramEntry("TerrainGridVSMain", "TerrainGridPSMain")]
-        //};
+        var terrainGrid = new Technique
+        {
+            Name = "TerrainGrid",
+            Programs = [new TechniqueProgramEntry("TerrainGridVSMain", "TerrainGridPSMain")]
+        };
 
-        //var statics = new Technique
-        //{
-        //    Name = "Statics",
-        //    Programs = [new TechniqueProgramEntry("TileVSMain", "StaticsPSMain")]
-        //};
+        var statics = new Technique
+        {
+            Name = "Statics",
+            Programs = [new TechniqueProgramEntry("TileVSMain", "StaticsPSMain")]
+        };
 
-        //var selection = new Technique
-        //{
-        //    Name = "Selection",
-        //    Programs = [new TechniqueProgramEntry("TileVSMain", "SelectionPSMain")]
-        //};
+        var selection = new Technique
+        {
+            Name = "Selection",
+            Programs = [new TechniqueProgramEntry("TileVSMain", "SelectionPSMain")]
+        };
 
-        //var virtualLayer = new Technique
-        //{
-        //    Name = "VirtualLayer",
-        //    Programs = [new TechniqueProgramEntry("VirtualLayerVSMain", "VirtualLayerPSMain")]
-        //};
+        var virtualLayer = new Technique
+        {
+            Name = "VirtualLayer",
+            Programs = [new TechniqueProgramEntry("VirtualLayerVSMain", "VirtualLayerPSMain")]
+        };
 
-        //_shaderRemapper.RemapTechniques(mapEffect, mapEffectNew,
-        //[
-        //    terrainTechnique,
-        //    terrainGrid,
-        //    statics,
-        //    selection,
-        //    virtualLayer
-        //], "MapEffect");
+        _shaderRemapper.RemapTechniques(mapEffect, mapEffectNew,
+        [
+            terrainTechnique,
+            terrainGrid,
+            statics,
+            selection,
+            virtualLayer
+        ], "MapEffect");
 
-        //Config.Initialize();
+        Config.Initialize();
 
-        //CentrEDGame.PreSetup(_serviceProvider);
+        CentrEDGame.PreSetup(_serviceProvider);
 
-        //CEDGame = new CentrEDGame();
+        CEDGame = new HostedCentrEDGame();
 
-        //CentredApplication.SetFromHosted(CEDGame);
+        CentredApplication.SetFromHosted(CEDGame);
 
-        //_fnaCompatPlugin.RegisterGame(CEDGame);
+        _fnaCompatPlugin.RegisterGame(CEDGame);
 
     }
 

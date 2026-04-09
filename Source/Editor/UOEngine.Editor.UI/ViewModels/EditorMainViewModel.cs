@@ -37,9 +37,8 @@ internal class EditorMainViewModel: UOEngineViewModel
                 Name = tool.Name,
                 CanClose = true,
                 Icon = File.Exists(tool.Icon) ? new Bitmap(tool.Icon) : null,
-                OpenCommand = new DelegateCommand(() => OpenTool(toolViewModel))
-
-                //Content = tool.CreateContent
+                OpenCommand = new DelegateCommand(() => OpenTool(toolViewModel)),
+                CreateContent = tool.CreateContent
             };
 
             tools.Add(toolViewModel);
@@ -50,15 +49,12 @@ internal class EditorMainViewModel: UOEngineViewModel
         Tools[0] = new ToolViewModel
         {
             Name = "Home",
-            Content = new EditorLandingView
+            CreateContent = () => new EditorLandingView
             {
                 DataContext = _editorLandingViewModel
             },
             CanClose = false,
         };
-
-        SelectedTool = Tools[0];
-        OpenedTools.Add(Tools[0]);
 
         int i = 1;
 
@@ -67,6 +63,8 @@ internal class EditorMainViewModel: UOEngineViewModel
             Tools[i] = tool;
             i++;
         }
+
+        OpenTool(Tools[0]);
     }
     private void OpenTool(ToolViewModel tool)
     {
@@ -79,7 +77,7 @@ internal class EditorMainViewModel: UOEngineViewModel
             return;
         }
 
-        //tool.Content ??= tool.CreateContent?.Invoke();
+        tool.Content ??= tool.CreateContent?.Invoke();
 
         OpenedTools.Add(tool);
         SelectedTool = tool;
@@ -90,6 +88,8 @@ internal class EditorMainViewModel: UOEngineViewModel
 internal class ToolViewModel
 {
     internal string? Name { get; set; }
+    internal Func<UserControl>? CreateContent { get; set; }
+
     internal UserControl? Content { get; set; }
 
     internal IImage? Icon { get; set; }

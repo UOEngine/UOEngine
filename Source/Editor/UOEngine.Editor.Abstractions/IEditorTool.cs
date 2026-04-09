@@ -10,5 +10,5 @@ public interface IEditorTool
 
     public string Icon { get; }
 
-    public Func<IServiceProvider, UserControl> CreateContent { get; }
+    public Func<UserControl> CreateContent { get; }
 }

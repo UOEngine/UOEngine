@@ -3,8 +3,9 @@ Licensed under the MIT License. See LICENSE file in the project root for details
 <UserControl
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    >
+	xmlns:uoengine="https://github.com/UOEngine"
+	x:Class="UOEngine.Editor.CentredSharp.CentredSharpView">
 
-	<TextBlock>Centred goes here! :)</TextBlock>
+	<uoengine:DrawingSurfaceControl/>
 	
 </UserControl>

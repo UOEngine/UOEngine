@@ -216,7 +216,6 @@ public class GraphicsDevice
     public void SetRenderTarget(RenderTarget2D? renderTarget)
     {
         _renderTarget = renderTarget;
-
     }
 
     private void BindIndexBufferIfNeeded()
