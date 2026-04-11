@@ -1,22 +1,42 @@
 ﻿// Copyright (c) 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using CentrED;
-
 using Microsoft.Xna.Framework;
+using UOEngine.Runtime.AvaloniaUI;
+using UOEngine.Runtime.FnaAdapter;
+using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Editor.CentredSharp;
 
-internal class HostedCentrEDGame : CentrEDGame
+internal class HostedCentrEDGame : IHostedGame
 {
-    protected override bool BeginDraw()
-    {
-        //GraphicsDevice.SetRenderTarget();
+    public Game Game { get; private set; }
 
-        return base.BeginDraw();
+    public IHostedGameSurface Surface { get; private set; }
+
+    internal HostedCentrEDGame(CentrEDGame game, DrawingSurfaceControl drawingSurfaceControl)
+    {
+        Game = game;
+        Surface = new HostedCentrEDSurface(drawingSurfaceControl);
+    }
+}
+
+internal class HostedCentrEDSurface : IHostedGameSurface
+{
+    public RhiRenderTarget? AcquireRenderTarget()
+    {
+        return _drawingSurfaceControl.RenderTarget;
     }
 
-    protected override void Draw(GameTime gameTime)
+    public void Resize(int width, int height)
     {
-        base.Draw(gameTime);
+        throw new NotImplementedException();
     }
+
+    internal HostedCentrEDSurface(DrawingSurfaceControl drawingSurfaceControl)
+    {
+        _drawingSurfaceControl = drawingSurfaceControl;
+    }
+
+    private DrawingSurfaceControl _drawingSurfaceControl;
 }

@@ -1,12 +1,12 @@
-﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using System.Diagnostics;
-using Microsoft.Xna.Framework;
+
 using Microsoft.Xna.Framework.Graphics;
+
 using UOEngine.Runtime.Core;
 using UOEngine.Runtime.Platform;
 using UOEngine.Runtime.Plugin;
-using UOEngine.Runtime.Renderer;
 using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Runtime.FnaAdapter;
@@ -27,10 +27,7 @@ public class FnaAdapterPlugin: IPlugin
 
     private readonly Remapper _shaderRemapper;
 
-    private readonly List<Game> _hostedFNAGames = [];
-
-    public FnaAdapterPlugin(IWindow window, InputManager inputmanager, IRenderResourceFactory renderResourceFactory,
-                            Remapper remapper, RenderSystem renderSystem, ApplicationLoop _applicationLoop)
+    public FnaAdapterPlugin(IWindow window, InputManager inputmanager, IRenderResourceFactory renderResourceFactory, Remapper remapper)
     {
         Instance = this;
 
@@ -39,33 +36,6 @@ public class FnaAdapterPlugin: IPlugin
         InputManager = inputmanager;
         RenderResourceFactory = renderResourceFactory;
         _shaderRemapper = remapper;
-
-        // Todo - below is dirty.
-        _applicationLoop.OnUpdate += (float deltaTime) =>
-        {
-            foreach(var game in _hostedFNAGames)
-            {
-                game.Tick1();
-            }
-        };
-
-        renderSystem.OnFrameBegin += (IRenderContext renderContext) =>
-        {
-            foreach (var game in _hostedFNAGames)
-            {
-                renderContext.BeginRenderPass(new RenderPassInfo
-                {
-                    Name = "FNAPass",
-                    RenderTarget = null,
-                    LoadAction = RhiRenderTargetLoadAction.DontCare
-                });
-
-                game.GraphicsDevice.OnFrameBegin(renderContext);
-                game.Tick2();
-
-                renderContext.EndRenderPass();
-            }
-        };
     }
 
     public void PostStartup() 
@@ -143,12 +113,5 @@ public class FnaAdapterPlugin: IPlugin
             Name = "BasicEffect",
             Programs = [.. basicEffectPrograms]
         }], "BasicEffect");
-    }
-
-    public void RegisterGame(Game game)
-    {
-        _hostedFNAGames.Add(game);
-
-        game.DoInitialise();
     }
 }

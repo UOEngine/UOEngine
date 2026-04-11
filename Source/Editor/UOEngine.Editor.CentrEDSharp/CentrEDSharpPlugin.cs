@@ -1,10 +1,12 @@
 ﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
+using Microsoft.Extensions.DependencyInjection;
+
 using CentrED;
 using CentrED.Client;
 using CentrED.Server;
 using CentrED.Utils;
-using Microsoft.Extensions.DependencyInjection;
+
 using UOEngine.Editor.Abstractions;
 using UOEngine.Runtime.Core;
 using UOEngine.Runtime.FnaAdapter;
@@ -28,19 +30,12 @@ public class CentrEdSharpPlugin: IPlugin
 
     private readonly IServiceProvider _serviceProvider;
     private readonly Remapper _shaderRemapper;
-    private readonly FnaAdapterPlugin _fnaCompatPlugin;
 
-    public CentrEdSharpPlugin(IServiceProvider serviceProvider, Remapper shaderRemapper, FnaAdapterPlugin fnaCompatPlugin)
+    public CentrEdSharpPlugin(IServiceProvider serviceProvider, Remapper shaderRemapper)
     {
         _serviceProvider = serviceProvider;
         _shaderRemapper = shaderRemapper;
-        _fnaCompatPlugin = fnaCompatPlugin;
     }
-
-    //public static void ConfigureServices(IServiceCollection services)
-    //{
-    //    services.AddSingleton<IEditorTool, CentredSharpTool>();
-    //}
 
     public void PostStartup() 
     {
@@ -90,12 +85,9 @@ public class CentrEdSharpPlugin: IPlugin
 
         CentrEDGame.PreSetup(_serviceProvider);
 
-        CEDGame = new HostedCentrEDGame();
+        CEDGame = new CentrEDGame();
 
         CentredApplication.SetFromHosted(CEDGame);
-
-        _fnaCompatPlugin.RegisterGame(CEDGame);
-
     }
 
     public void Shutdown()
