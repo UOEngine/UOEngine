@@ -125,6 +125,8 @@ internal class VulkanTexture: IRenderTexture, IDisposable
 
     public VulkanTextureState State;
 
+    public ulong MemorySize => _allocation.Size;
+
     private VulkanMemoryAllocation _allocation;
 
     private bool _ownsImage = true;

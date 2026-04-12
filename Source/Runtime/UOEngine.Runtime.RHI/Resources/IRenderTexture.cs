@@ -31,6 +31,8 @@ public interface IRenderTexture
     public uint Width { get; }
     public uint Height { get; }
 
+    public ulong MemorySize { get; }
+
     public Span<T> GetTexelsAs<T>() where T : unmanaged;
 
     public void Upload();

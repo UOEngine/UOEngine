@@ -27,6 +27,8 @@ internal static class VulkanDebug
 
     internal static void SetDebugName(VkFence fence, string name) => vkSetDebugUtilsObjectNameEXT((ulong)fence, name, VkObjectType.Fence);
 
+    internal static void SetDebugName(VkSemaphore semaphore, string name) => vkSetDebugUtilsObjectNameEXT((ulong)semaphore, name, VkObjectType.Semaphore);
+
     private static unsafe void vkSetDebugUtilsObjectNameEXT(ulong objectHandle, string name, VkObjectType objectType)
     {
         VkUtf8ReadOnlyString pName = Encoding.UTF8.GetBytes(name);

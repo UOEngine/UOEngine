@@ -1,5 +1,6 @@
 ﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
+using UOEngine.Runtime.RHI;
 using Vortice.Vulkan;
 using static Vortice.Vulkan.Vulkan;
 
@@ -56,6 +57,8 @@ internal class VulkanDevice : IDisposable
 
     private VulkanQueue[] _queues = new VulkanQueue[(int)VulkanQueueType.Count];
 
+    private List<VulkanSemaphore> _semaphores = [];
+
     internal VulkanDevice(in VulkanDeviceInfo deviceInfo)
     {
         DeviceInfo = deviceInfo;
@@ -74,8 +77,13 @@ internal class VulkanDevice : IDisposable
 
     public unsafe void InitGpu(VkInstanceApi instanceApi)
     {
-
-        List<VkUtf8String> enabledExtensions = [VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_MAINTENANCE_1_EXTENSION_NAME];
+        List<VkUtf8String> enabledExtensions = 
+        [
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME, 
+            VK_KHR_MAINTENANCE_1_EXTENSION_NAME,
+            VK_KHR_EXTERNAL_SEMAPHORE_EXTENSION_NAME,
+            VK_KHR_EXTERNAL_SEMAPHORE_WIN32_EXTENSION_NAME
+        ];
 
         using var deviceExtensionNames = new VkStringArray(enabledExtensions);
 
@@ -170,6 +178,14 @@ internal class VulkanDevice : IDisposable
         Api.vkCreateSemaphore(Handle, out var semaphore).CheckResult();
 
         return semaphore;
+    }
 
+    internal VulkanSemaphore CreateSemaphore(in RhiSemaphoreDescription description)
+    {
+        var semaphore = new VulkanSemaphore(description, this);
+
+        _semaphores.Add(semaphore);
+
+        return semaphore;
     }
 }

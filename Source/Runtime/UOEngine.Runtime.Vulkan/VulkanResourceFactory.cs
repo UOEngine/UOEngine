@@ -26,5 +26,8 @@ internal class VulkanResourceFactory: IRenderResourceFactory
 
     public IRhiBuffer NewBuffer(in RhiBufferDescription bufferDescription) => new VulkanBuffer(Device, bufferDescription);
 
+    public RhiSemaphore NewSemaphore(in RhiSemaphoreDescription semaphoreDescription) => Device.CreateSemaphore(semaphoreDescription);
+
     internal void SetDevice(VulkanDevice device) => _device = device;
+
 }

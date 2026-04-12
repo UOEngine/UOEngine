@@ -19,11 +19,15 @@ internal class UOEngineSkiaGpu : ISkiaGpu
 
     public IPlatformGraphicsContext? PlatformGraphicsContext => throw new NotImplementedException();
 
-    private GRContext _grContext = null!;
+    public GRContext GrContext { get; private set; }
+
+    public readonly uint GraphicsQueueFamilyIndex;
 
     private readonly RhiInteropContext _interopContext;
     private readonly RenderSystem _renderSystem;
     private readonly RHI.IRenderer _renderer;
+
+    private readonly UOEngineExternalObjectsFeature? _externalObjects;
 
     public UOEngineSkiaGpu(RHI.IRenderer renderer, RenderSystem renderSystem)
     {
@@ -34,27 +38,42 @@ internal class UOEngineSkiaGpu : ISkiaGpu
 
         _interopContext = interopContext;
 
+        GraphicsQueueFamilyIndex = interopContext.QueueFamilyIndex;
+
         var vkContext = new GRVkBackendContext
         {
             VkInstance = interopContext.Instance,
             VkPhysicalDevice = interopContext.PhysicalDevice,
             VkDevice = interopContext.Device,
             VkQueue = interopContext.GraphicsQueue,
-            GraphicsQueueIndex = interopContext.QueueFamilyIndex,
+            GraphicsQueueIndex = GraphicsQueueFamilyIndex,
             GetProcedureAddress = (name, instance, device) => interopContext.GetProcAddress(name, instance, device)
         };
 
         if (GRContext.CreateVulkan(vkContext) is not { } grContext)
+        {
             throw new InvalidOperationException("Couldn't create Vulkan context");
-        
-        _grContext = grContext;
+        }
+
+        GrContext = grContext;
+
+        _externalObjects = new UOEngineExternalObjectsFeature(this);
+
     }
 
     public IDisposable EnsureCurrent() => EmptyDisposable.Instance;
 
     public ISkiaSurface? TryCreateSurface(PixelSize size, ISkiaGpuRenderSession? session) => null;
 
-    public object? TryGetFeature(Type featureType) => null;
+    public object? TryGetFeature(Type featureType)
+    {
+        if (featureType == typeof(IExternalObjectsRenderInterfaceContextFeature))
+        {
+            return _externalObjects;
+        }
+
+        return null;
+    }
 
     public void Dispose()
     {
@@ -65,7 +84,7 @@ internal class UOEngineSkiaGpu : ISkiaGpu
     {
         var texture = _renderSystem.UIOverlay.Texture;
 
-        return new UOEngineSkiaRenderTarget(texture, _grContext, _interopContext.QueueFamilyIndex);
+        return new UOEngineSkiaRenderTarget(texture, GrContext, GraphicsQueueFamilyIndex);
     }
 
     public bool IsReadyToCreateRenderTarget(IEnumerable<IPlatformRenderSurface> surfaces)
@@ -73,7 +92,7 @@ internal class UOEngineSkiaGpu : ISkiaGpu
         return true;
     }
 
-    public IScopedResource<GRContext> TryGetGrContext() => ScopedResource<GRContext>.Create(_grContext, EnsureCurrent().Dispose);
+    public IScopedResource<GRContext> TryGetGrContext() => ScopedResource<GRContext>.Create(GrContext, EnsureCurrent().Dispose);
 
     /// <summary>
     /// Represents a disposable that does nothing on disposal.

@@ -12,4 +12,6 @@ public interface IRenderResourceFactory
     public IRhiGraphicsPipeline CreateGraphicsPipeline(in RhiGraphicsPipelineDescription graphicsPipelineDescription);
 
     public IRhiBuffer NewBuffer(in RhiBufferDescription bufferDescription);
+
+    public RhiSemaphore NewSemaphore(in RhiSemaphoreDescription semaphoreDescription);
 }
