@@ -82,7 +82,8 @@ internal class VulkanDevice : IDisposable
             VK_KHR_SWAPCHAIN_EXTENSION_NAME, 
             VK_KHR_MAINTENANCE_1_EXTENSION_NAME,
             VK_KHR_EXTERNAL_SEMAPHORE_EXTENSION_NAME,
-            VK_KHR_EXTERNAL_SEMAPHORE_WIN32_EXTENSION_NAME
+            VK_KHR_EXTERNAL_SEMAPHORE_WIN32_EXTENSION_NAME,
+            VK_EXT_DEBUG_MARKER_EXTENSION_NAME
         ];
 
         using var deviceExtensionNames = new VkStringArray(enabledExtensions);

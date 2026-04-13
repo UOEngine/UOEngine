@@ -1,7 +1,8 @@
-﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
+﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using System.Numerics;
 using System.Runtime.InteropServices;
+using UOEngine.Runtime.Core;
 
 namespace UOEngine.Runtime.RHI;
 
@@ -39,5 +40,10 @@ public interface IRenderContext
     public void TransitionTextureUsage(IRenderTexture texture, RhiRenderTextureUsage usage);
 
     public void Flush();
+
+    public void BeginLabel(string name, in Colour colour);
+    public void EndLabel();
+
+    public void InsertMarker(string name, in Colour colour);
 
 }

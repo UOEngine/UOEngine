@@ -52,6 +52,10 @@ internal unsafe class VulkanInstance
             {
                 instanceExtensions.Add(VK_EXT_SWAPCHAIN_COLOR_SPACE_EXTENSION_NAME);
             }
+            else if (availableExtension == VK_EXT_DEBUG_REPORT_EXTENSION_NAME)
+            {
+                instanceExtensions.Add(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+            }
         }
 
         VkUtf8ReadOnlyString pApplicationName = Encoding.UTF8.GetBytes(applicationName);

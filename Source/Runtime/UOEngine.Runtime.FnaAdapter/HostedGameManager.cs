@@ -19,7 +19,9 @@ internal class HostedGameManager : IHostedGameManager
 {
     private readonly List<HostedGameSession> _hostedGameSessions = [];
 
-    public HostedGameManager(RenderSystem renderSystem, ApplicationLoop _applicationLoop)
+    internal IReadOnlyList<HostedGameSession> HostedGameSessions => _hostedGameSessions;
+
+    public HostedGameManager(ApplicationLoop _applicationLoop)
     {
         _applicationLoop.OnUpdate += (float deltaTime) =>
         {
@@ -31,31 +33,6 @@ internal class HostedGameManager : IHostedGameManager
                 }
 
                 session.HostedGame.Game.Tick1();
-            }
-        };
-
-        renderSystem.OnFrameBegin += (IRenderContext renderContext) =>
-        {
-            foreach (var session in _hostedGameSessions)
-            {
-                if(session.IsSuspended)
-                {
-                    continue;
-                }
-
-                var target = session.HostedGame.Surface.AcquireRenderTarget();
-
-                renderContext.BeginRenderPass(new RenderPassInfo
-                {
-                    Name = "FNAPass",
-                    RenderTarget = target,
-                    LoadAction = RhiRenderTargetLoadAction.DontCare
-                });
-
-                session.HostedGame.Game.GraphicsDevice.OnFrameBegin(renderContext);
-                session.HostedGame.Game.Tick2();
-
-                renderContext.EndRenderPass();
             }
         };
     }

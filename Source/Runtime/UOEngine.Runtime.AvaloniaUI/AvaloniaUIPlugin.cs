@@ -14,29 +14,24 @@ namespace UOEngine.Runtime.AvaloniaUI;
 [PluginLoadingPhase(PluginLoadingPhase.Runtime)]
 public class AvaloniaUIPlugin: IPlugin
 {
-    private AvaloniaControl? _rootControl;
     private readonly IRenderer _renderer;
     private readonly RenderSystem _renderSystem;
     private readonly IRootContentHost _rootContentHost;
     private readonly IWindow _window;
-    private readonly InputManager _inputManager;
+    private readonly AvaloniaControl _rootControl;
 
     public AvaloniaUIPlugin(RenderSystem renderSystem, 
         IRenderer renderer, 
         IRootContentHost rootContentHost, 
         IWindow window,
-        InputManager inputManager)
+        AvaloniaControl rootControl)
     {
         _renderer = renderer;
         _renderSystem = renderSystem;
         _rootContentHost = rootContentHost;
         _window = window;
-        _inputManager = inputManager;
+        _rootControl = rootControl;
 
-        renderSystem.OnFrameEnd += (mainRenderContext) =>
-        {
-            _rootControl!.Draw(mainRenderContext);
-        };
     }
 
     public void PostStartup()
@@ -46,7 +41,6 @@ public class AvaloniaUIPlugin: IPlugin
             .UseUOEngine(_renderer, _renderSystem)
             .SetupWithoutStarting();
 
-        _rootControl = new AvaloniaControl(_rootContentHost, _window, _inputManager);
         _rootControl.Initialise();
     }
 }

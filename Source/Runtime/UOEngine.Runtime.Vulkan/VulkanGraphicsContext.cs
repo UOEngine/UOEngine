@@ -1,12 +1,12 @@
 ﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using System.Diagnostics;
-
-using Vortice.Vulkan;
-using static Vortice.Vulkan.Vulkan;
-
+using System.Reflection.Metadata;
+using System.Text;
 using UOEngine.Runtime.Core;
 using UOEngine.Runtime.RHI;
+using Vortice.Vulkan;
+using static Vortice.Vulkan.Vulkan;
 
 namespace UOEngine.Runtime.Vulkan;
 
@@ -208,9 +208,62 @@ internal class VulkanGraphicsContext : IRenderContext
         IsRecording = false;
     }
 
+    uint _labelDepthCount = 0; 
+
+    public unsafe void BeginLabel(string name, in Colour colour)
+    {
+        VkUtf8ReadOnlyString labelName = Encoding.UTF8.GetBytes(name);
+
+        VkDebugMarkerMarkerInfoEXT label = new()
+        {
+            pMarkerName = labelName,
+        };
+
+        var normalisedColour = colour.ToNormalised();
+
+        label.color[0] = normalisedColour.X;
+        label.color[1] = normalisedColour.Y;
+        label.color[2] = normalisedColour.Z;
+        label.color[3] = normalisedColour.W;
+
+        _device.Api.vkCmdDebugMarkerBeginEXT(CommandBuffer.Handle, &label);
+        
+        _labelDepthCount++;
+    }
+
+    public void EndLabel()
+    {
+        if(_labelDepthCount > 0)
+        {
+            _device.Api.vkCmdDebugMarkerEndEXT(CommandBuffer.Handle);
+            _labelDepthCount--;
+        }
+    }
+
+    public unsafe void InsertMarker(string name, in Colour colour)
+    {
+        VkUtf8ReadOnlyString labelName = Encoding.UTF8.GetBytes(name);
+
+        VkDebugMarkerMarkerInfoEXT label = new()
+        {
+            pMarkerName = labelName,
+        };
+
+        var normalisedColour = colour.ToNormalised();
+
+        label.color[0] = normalisedColour.X;
+        label.color[1] = normalisedColour.Y;
+        label.color[2] = normalisedColour.Z;
+        label.color[3] = normalisedColour.W;
+
+        _device.Api.vkCmdDebugMarkerInsertEXT(CommandBuffer.Handle, &label);
+    }
+
     public unsafe void BeginRenderPass(in RenderPassInfo renderPassInfo)
     {
         UOEDebug.Assert(IsInRenderPass == false, "Can not begin renderpass when already in one.");
+
+        BeginLabel(renderPassInfo.Name, Colour.Black);
 
         VulkanTexture texture = _defaultBackbufferRenderTarget!;
 
@@ -273,6 +326,8 @@ internal class VulkanGraphicsContext : IRenderContext
         _device.Api.vkCmdEndRendering(CommandBuffer.Handle);
 
         IsInRenderPass = false;
+
+        EndLabel();
     }
 
     public void SetGraphicsPipeline(in RhiGraphicsPipelineDescription graphicsPipelineDescription)

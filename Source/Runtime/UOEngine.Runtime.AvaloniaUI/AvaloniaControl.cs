@@ -7,11 +7,13 @@ using Avalonia.Threading;
 
 using UOEngine.Runtime.Core;
 using UOEngine.Runtime.Platform;
+using UOEngine.Runtime.Plugin;
 using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Runtime.AvaloniaUI;
 
-internal class AvaloniaControl
+[Service(UOEServiceLifetime.Singleton)]
+public sealed class AvaloniaControl
 {
     private UOEngineTopLevel? _topLevel;
 
@@ -20,7 +22,7 @@ internal class AvaloniaControl
     private IRootContentHost _rootContentHost;
     private readonly IWindow _window;
     private readonly InputManager _inputManager;
-    internal AvaloniaControl(IRootContentHost rootContentHost, IWindow window, InputManager inputManager)
+    public AvaloniaControl(IRootContentHost rootContentHost, IWindow window, InputManager inputManager)
     {
         _rootContentHost = rootContentHost;
         _window = window;

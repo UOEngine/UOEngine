@@ -139,9 +139,11 @@ public class VulkanRenderer : IRenderer
 
         var acquireContext = _contextManager.AllocateGraphicsContext("AcquireContext");
 
+        acquireContext.BeginLabel("Acquire", Colour.Black);
         acquireContext.CommandBuffer.EnsureState(_swapchain.BackbufferToRenderInto, RhiRenderTextureUsage.ColourTarget);
         acquireContext.WaitForSemaphores = [frameData.SwapchainAcquireSemaphore];
         acquireContext.WaitStages = [VkPipelineStageFlags.ColorAttachmentOutput];
+        acquireContext.EndLabel();
 
         _isInFrame = true;
     }

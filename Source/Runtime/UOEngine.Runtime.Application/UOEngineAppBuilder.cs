@@ -172,8 +172,7 @@ public sealed class UOEngineAppBuilder
 
             app.Update(deltaSeconds);
 
-            renderSystem.FrameBegin();
-            renderSystem.FrameEnd();
+            renderSystem.Render();
 
             if (latestWorkingSet >= totalMemoryLimit)
             {

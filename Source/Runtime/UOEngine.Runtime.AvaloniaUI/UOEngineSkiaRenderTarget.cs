@@ -25,7 +25,6 @@ internal class UOEngineSkiaRenderTarget : ISkiaGpuRenderTarget
 
     public ISkiaGpuRenderSession BeginRenderingSession(IRenderTarget.RenderTargetSceneInfo sceneInfo)
     {
-
         _texture.GetFeature<RhiVkImageInterop>(out var vkImageInterop);
 
         _grContext.ResetContext();

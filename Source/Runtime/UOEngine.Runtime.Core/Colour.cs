@@ -1,6 +1,7 @@
 ﻿// Copyright (c) 2025 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using System.Diagnostics;
+using System.Numerics;
 
 namespace UOEngine.Runtime.Core;
 
@@ -16,6 +17,7 @@ public struct Colour
     public static Colour Green = new(0, 255, 0);
     public static Colour Blue = new(0, 0, 255);
     public static Colour White = new(255, 255, 255);
+    public static Colour Black = new(0, 0, 0);
 
     public Colour(byte r, byte g, byte b, byte a = 255)
     {
@@ -28,5 +30,10 @@ public struct Colour
     public uint ToUint32()
     {
         return ((uint)A << 24) | ((uint)B << 16) | ((uint)G << 8) | R;
+    }
+
+    public Vector4 ToNormalised()
+    {
+        return new Vector4((float)R / 255.0f, (float)G / 255.0f, (float)B / 255.0f, (float)A / 255.0f);  
     }
 }

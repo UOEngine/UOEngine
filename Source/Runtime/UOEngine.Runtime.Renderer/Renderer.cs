@@ -30,12 +30,16 @@ public class RenderSystem
 
     private uint _frameNumber = 0;
 
-    public RenderSystem(IRenderer rhiRenderer, IRenderResourceFactory resourceFactory)
+    private readonly IRenderPass[] _passes;
+
+    public RenderSystem(IRenderer rhiRenderer, IRenderResourceFactory resourceFactory, IEnumerable<IRenderPass> passes)
     {
         _rhiRenderer = rhiRenderer;
         _resourceFactory = resourceFactory;
         GlobalRenderResources = new GlobalRenderResources(resourceFactory);
         FullscreenPassUtils = new FullscreenPassUtils(GlobalRenderResources);
+
+        _passes = [.. passes.OrderBy(p => (int)p.Stage).ThenBy(p => p.Order)];
     }
 
     public void Startup()
@@ -55,10 +59,49 @@ public class RenderSystem
         UIOverlay.Setup(uiTexture);
     }
 
-    public void FrameBegin()
+    public void Render()
     {
         _rhiRenderer.FrameBegin();
 
+        ClearBackbuffer();
+        ClearOverlay();
+
+        _context = _rhiRenderer.CreateRenderContext("MainGraphicsContext");
+
+        foreach(var pass in _passes)
+        {
+            CurrentRenderContext.BeginLabel(pass.Name, Colour.Black);
+            pass.Execute(CurrentRenderContext, this);
+            CurrentRenderContext.EndLabel();
+        }
+
+        _rhiRenderer.FrameEnd();
+
+        _frameNumber++;
+    }
+
+    public void PrintStats()
+    {
+        UOEDebug.NotImplemented();
+    }
+
+    private void ClearBackbuffer()
+    {
+        var context = _rhiRenderer.CreateRenderContext("BackbufferClearContext");
+
+        context.BeginRenderPass(new RenderPassInfo
+        {
+            Name = "Clear backbuffer",
+            LoadAction = RhiRenderTargetLoadAction.Clear,
+            RenderTarget = null
+        });
+
+        context.EndRenderPass();
+        context.Flush();
+    }
+
+    private void ClearOverlay()
+    {
         var overlaySetupContext = _rhiRenderer.CreateRenderContext("OverlaySetupContext");
 
         overlaySetupContext.BeginRenderPass(new RenderPassInfo
@@ -71,35 +114,5 @@ public class RenderSystem
 
         overlaySetupContext.EndRenderPass();
         overlaySetupContext.Flush();
-
-        _context = _rhiRenderer.CreateRenderContext("MainGraphicsContext");
-
-        _context.BeginRenderPass(new RenderPassInfo
-        {
-            Name = "Clear backbuffer",
-            LoadAction = RhiRenderTargetLoadAction.Clear,
-            RenderTarget = null
-        });
-
-        _context.EndRenderPass();
-
-        OnFrameBegin?.Invoke(_context);
     }
-
-    public void FrameEnd()
-    {
-        OnFrameEnd?.Invoke(CurrentRenderContext);
-
-        FullscreenPassUtils.BlitTexture(CurrentRenderContext, UIOverlay.Texture, null);
-
-        _rhiRenderer.FrameEnd();
-
-        _frameNumber++;
-    }
-
-    public void PrintStats()
-    {
-        UOEDebug.NotImplemented();
-    }
-
 }
