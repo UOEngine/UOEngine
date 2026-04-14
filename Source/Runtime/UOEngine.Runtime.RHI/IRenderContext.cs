@@ -38,7 +38,7 @@ public interface IRenderContext
     public void WaitForGpuIdle();
 
     public void TransitionTextureUsage(IRenderTexture texture, RhiRenderTextureUsage usage);
-
+    public void CopyTexture(IRenderTexture source, IRenderTexture destination);
     public void Flush();
 
     public void BeginLabel(string name, in Colour colour);

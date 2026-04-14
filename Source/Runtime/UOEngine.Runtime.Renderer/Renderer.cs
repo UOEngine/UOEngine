@@ -12,7 +12,6 @@ public class RenderSystem
     public event Action<IRenderContext>? OnFrameBegin;
     public event Action<IRenderContext>? OnFrameEnd;
 
-    //public RhiRenderTarget GBufferDiffuse => _gBufferDiffuse ?? throw new InvalidOperationException("GBufferDiffuse not set");
     public RhiRenderTarget UIOverlay = new();
 
     public IRenderContext CurrentRenderContext => _context ?? throw new InvalidOperationException("Not initialized");
@@ -25,8 +24,6 @@ public class RenderSystem
     private readonly IRenderResourceFactory _resourceFactory;
 
     private RenderPassInfo _mainPass;
-
-    //private RhiRenderTarget? _gBufferDiffuse;
 
     private uint _frameNumber = 0;
 
@@ -63,10 +60,11 @@ public class RenderSystem
     {
         _rhiRenderer.FrameBegin();
 
-        ClearBackbuffer();
         ClearOverlay();
 
         _context = _rhiRenderer.CreateRenderContext("MainGraphicsContext");
+
+        ClearBackbuffer();
 
         foreach(var pass in _passes)
         {
@@ -87,17 +85,14 @@ public class RenderSystem
 
     private void ClearBackbuffer()
     {
-        var context = _rhiRenderer.CreateRenderContext("BackbufferClearContext");
-
-        context.BeginRenderPass(new RenderPassInfo
+        CurrentRenderContext.BeginRenderPass(new RenderPassInfo
         {
             Name = "Clear backbuffer",
             LoadAction = RhiRenderTargetLoadAction.Clear,
             RenderTarget = null
         });
 
-        context.EndRenderPass();
-        context.Flush();
+        CurrentRenderContext.EndRenderPass();
     }
 
     private void ClearOverlay()

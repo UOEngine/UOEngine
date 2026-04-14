@@ -172,6 +172,47 @@ internal class VulkanGraphicsContext : IRenderContext
 
     public void TransitionTextureUsage(IRenderTexture texture, RhiRenderTextureUsage usage) => CommandBuffer.EnsureState((VulkanTexture)texture, usage);
 
+    public unsafe void CopyTexture(IRenderTexture source, IRenderTexture destination)
+    {
+        var vulkanSource = (VulkanTexture)source;
+        var vulkanDestination = (VulkanTexture)destination;
+
+        UOEDebug.Assert(vulkanSource.Width == vulkanDestination.Width);
+        UOEDebug.Assert(vulkanSource.Height == vulkanDestination.Height);
+        UOEDebug.Assert(vulkanSource.Description.Format == vulkanDestination.Description.Format);
+
+        CommandBuffer.EnsureState(vulkanSource, RhiRenderTextureUsage.CopySource);
+        CommandBuffer.EnsureState(vulkanDestination, RhiRenderTextureUsage.CopyDestination);
+
+        var region = new VkImageCopy()
+        {
+            srcOffset = new VkOffset3D(0, 0, 0),
+            dstSubresource = new VkImageSubresourceLayers
+            {
+                aspectMask = VkImageAspectFlags.Color,
+                mipLevel = 0,
+                baseArrayLayer = 0,
+                layerCount = 1
+            },
+            srcSubresource = new VkImageSubresourceLayers
+            {
+                aspectMask = VkImageAspectFlags.Color,
+                mipLevel = 0,
+                baseArrayLayer = 0,
+                layerCount = 1
+            },
+            dstOffset = new VkOffset3D(0, 0, 0),
+            extent = new VkExtent3D
+            {
+                width = vulkanSource.Width,
+                height = vulkanSource.Height,
+                depth = 1,
+            }
+        };
+
+        _device.Api.vkCmdCopyImage(CommandBuffer.Handle, vulkanSource.Image, vulkanSource.State.Layout, vulkanDestination.Image, vulkanDestination.State.Layout, 1, &region);
+    }
+
     public void BeginRecording()
     {
         UOEDebug.Assert(IsRecording == false);
@@ -191,6 +232,8 @@ internal class VulkanGraphicsContext : IRenderContext
         WaitStages = [];
         WaitForSemaphores = [];
 
+        BeginLabel(_currentName, Colour.Black);
+
         IsRecording = true;
     }
     public void EndRecording()
@@ -202,6 +245,8 @@ internal class VulkanGraphicsContext : IRenderContext
 
         if(IsRecording)
         {
+            EndLabel();
+
             _device.Api.vkEndCommandBuffer(CommandBuffer.Handle).CheckResult();
         }
 
