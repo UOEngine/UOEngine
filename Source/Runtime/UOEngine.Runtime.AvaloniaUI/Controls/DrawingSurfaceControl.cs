@@ -4,12 +4,12 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.LogicalTree;
 using Avalonia.Media;
-using Avalonia.Platform;
 using Avalonia.Rendering.Composition;
 using Avalonia.Rendering.SceneGraph;
 using Avalonia.Skia;
 using Avalonia.VisualTree;
 using SkiaSharp;
+
 using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Runtime.AvaloniaUI;
@@ -50,7 +50,7 @@ public class DrawingSurfaceControl : Control
 
         public void Dispose()
         {
-            throw new NotImplementedException();
+            // Nothing, does not own texture.
         }
 
         public bool HitTest(Point p) => false;
@@ -131,7 +131,6 @@ public class DrawingSurfaceControl : Control
         base.OnAttachedToVisualTree(e);
         Initialise();
         UpdateSurfaceVisibility(true);
-        //QueueNextFrame();
     }
 
     protected override void OnDetachedFromLogicalTree(LogicalTreeAttachmentEventArgs e)
@@ -180,8 +179,6 @@ public class DrawingSurfaceControl : Control
         RecreateTexture();
 
         _initialised = true;
-
-        //QueueNextFrame();
     }
 
     private void RecreateTexture()
@@ -223,57 +220,6 @@ public class DrawingSurfaceControl : Control
 
         SurfaceVisibilityChanged?.Invoke(isVisible);
     }
-
-    //private void QueueNextFrame()
-    //{
-    //    if (_initialised && !_updateQueued && _compositor != null)
-    //    {
-    //        _updateQueued = true;
-    //        _compositor?.RequestCompositionUpdate(Update);
-    //    }
-    //}
-
-    //private void Update()
-    //{
-    //    _updateQueued = false;
-
-    //    var source = this.GetPresentationSource();
-    //    if (source == null)
-    //        return;
-
-    //    _visual!.Size = new(Bounds.Width, Bounds.Height);
-    //    var size = PixelSize.FromSize(Bounds.Size, source.RenderScaling);
-
-    //    Present();
-    //    QueueNextFrame();
-    //}
-
-    //private void Present()
-    //{
-    //    if (Surface is null || GpuInterop is null || _texture is null)
-    //    {
-    //        return;
-    //    }
-
-    //    //var imageHandle = new PlatformHandle(_texture.Handle, KnownPlatformGraphicsExternalImageHandleTypes.VulkanOpaqueNtHandle);
-
-    //    //var imageProperties = new PlatformGraphicsExternalImageProperties
-    //    //{
-    //    //    Format = PlatformGraphicsExternalImageFormat.R8G8B8A8UNorm,
-    //    //    Width = (int)_texture.Width,
-    //    //    Height = (int)_texture.Height,
-    //    //    MemorySize = _texture.MemorySize
-    //    //};
-
-    //    var importedImage = GpuInterop.ImportImage(new UOEngineCompositionImportableSharedGpuContextImage(_texture));
-
-    //    //var waitSemaphore = GpuInterop.ImportSemaphore(_exportedWaitSemaphore);
-    //    //var signalSemaphore = GpuInterop.ImportSemaphore(_exportedSignalSemaphore);
-
-    //    //Surface.UpdateAsync(importedImage);
-
-    //    //Surface.UpdateWithSemaphoresAsync(importedImage, waitSemaphore, signalSemaphore);
-    //}
 }
 
 internal class UOEngineCompositionImportableSharedGpuContextImage : ICompositionImportableSharedGpuContextImage
