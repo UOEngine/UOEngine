@@ -27,8 +27,6 @@ internal class UOEngineSkiaGpu : ISkiaGpu
     private readonly RenderSystem _renderSystem;
     private readonly RHI.IRenderer _renderer;
 
-    private readonly UOEngineExternalObjectsFeature? _externalObjects;
-
     public UOEngineSkiaGpu(RHI.IRenderer renderer, RenderSystem renderSystem)
     {
         _renderer = renderer;
@@ -56,9 +54,6 @@ internal class UOEngineSkiaGpu : ISkiaGpu
         }
 
         GrContext = grContext;
-
-        _externalObjects = new UOEngineExternalObjectsFeature(this);
-
     }
 
     public IDisposable EnsureCurrent() => EmptyDisposable.Instance;
@@ -67,11 +62,6 @@ internal class UOEngineSkiaGpu : ISkiaGpu
 
     public object? TryGetFeature(Type featureType)
     {
-        if (featureType == typeof(IExternalObjectsRenderInterfaceContextFeature))
-        {
-            return _externalObjects;
-        }
-
         return null;
     }
 
