@@ -214,9 +214,9 @@ internal class VulkanGraphicsContext : IRenderContext
     {
         VkUtf8ReadOnlyString labelName = Encoding.UTF8.GetBytes(name);
 
-        VkDebugMarkerMarkerInfoEXT label = new()
+        VkDebugUtilsLabelEXT label = new()
         {
-            pMarkerName = labelName,
+            pLabelName = labelName,
         };
 
         var normalisedColour = colour.ToNormalised();
@@ -225,9 +225,8 @@ internal class VulkanGraphicsContext : IRenderContext
         label.color[1] = normalisedColour.Y;
         label.color[2] = normalisedColour.Z;
         label.color[3] = normalisedColour.W;
-
-        _device.Api.vkCmdDebugMarkerBeginEXT(CommandBuffer.Handle, &label);
         
+        VulkanDebug.BeginLabel(CommandBuffer.Handle, label);
         _labelDepthCount++;
     }
 
@@ -235,7 +234,7 @@ internal class VulkanGraphicsContext : IRenderContext
     {
         if(_labelDepthCount > 0)
         {
-            _device.Api.vkCmdDebugMarkerEndEXT(CommandBuffer.Handle);
+            VulkanDebug.EndLabel(CommandBuffer.Handle);
             _labelDepthCount--;
         }
     }
@@ -244,9 +243,9 @@ internal class VulkanGraphicsContext : IRenderContext
     {
         VkUtf8ReadOnlyString labelName = Encoding.UTF8.GetBytes(name);
 
-        VkDebugMarkerMarkerInfoEXT label = new()
+        VkDebugUtilsLabelEXT label = new()
         {
-            pMarkerName = labelName,
+            pLabelName = labelName,
         };
 
         var normalisedColour = colour.ToNormalised();
@@ -256,7 +255,7 @@ internal class VulkanGraphicsContext : IRenderContext
         label.color[2] = normalisedColour.Z;
         label.color[3] = normalisedColour.W;
 
-        _device.Api.vkCmdDebugMarkerInsertEXT(CommandBuffer.Handle, &label);
+        VulkanDebug.InsertMarker(CommandBuffer.Handle, label);
     }
 
     public unsafe void BeginRenderPass(in RenderPassInfo renderPassInfo)

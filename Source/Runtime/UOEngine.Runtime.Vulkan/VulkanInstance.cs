@@ -116,7 +116,7 @@ internal unsafe class VulkanInstance
                 Console.WriteLine($"Instance layer '{layer}'");
             }
         }
-
+       
         foreach (VkUtf8String extension in instanceExtensions)
         {
             Console.WriteLine($"Instance extension '{extension}'");

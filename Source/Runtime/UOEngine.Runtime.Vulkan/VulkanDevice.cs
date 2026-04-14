@@ -1,18 +1,19 @@
 ﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
-using UOEngine.Runtime.RHI;
 using Vortice.Vulkan;
 using static Vortice.Vulkan.Vulkan;
 
+using UOEngine.Runtime.RHI;
+
 namespace UOEngine.Runtime.Vulkan;
 
-public struct VulkanQueueInfo
+internal struct VulkanQueueInfo
 {
     public uint Index;
     public VkQueueFlags Flags;
 }
 
-public struct VulkanDeviceInfo
+internal struct VulkanDeviceInfo
 {
     public VkPhysicalDevice PhysicalDevice;
     public VkPhysicalDeviceProperties DeviceProperties;
@@ -20,7 +21,7 @@ public struct VulkanDeviceInfo
     public VulkanQueueInfo[] Queues;
 }
 
-public enum VulkanQueueType
+internal enum VulkanQueueType
 {
     Graphics,
     Copy,
@@ -29,7 +30,6 @@ public enum VulkanQueueType
     Invalid
 }
 
-//[Service(UOEServiceLifetime.Singleton)]
 internal class VulkanDevice : IDisposable
 {
     internal readonly VulkanDeviceInfo DeviceInfo;
@@ -79,11 +79,8 @@ internal class VulkanDevice : IDisposable
     {
         List<VkUtf8String> enabledExtensions = 
         [
-            VK_KHR_SWAPCHAIN_EXTENSION_NAME, 
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME,
             VK_KHR_MAINTENANCE_1_EXTENSION_NAME,
-            VK_KHR_EXTERNAL_SEMAPHORE_EXTENSION_NAME,
-            VK_KHR_EXTERNAL_SEMAPHORE_WIN32_EXTENSION_NAME,
-            VK_EXT_DEBUG_MARKER_EXTENSION_NAME
         ];
 
         using var deviceExtensionNames = new VkStringArray(enabledExtensions);

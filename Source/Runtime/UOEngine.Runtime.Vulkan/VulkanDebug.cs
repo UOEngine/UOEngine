@@ -29,6 +29,21 @@ internal static class VulkanDebug
 
     internal static void SetDebugName(VkSemaphore semaphore, string name) => vkSetDebugUtilsObjectNameEXT((ulong)semaphore, name, VkObjectType.Semaphore);
 
+    internal static unsafe void BeginLabel(VkCommandBuffer commandBuffer, VkDebugUtilsLabelEXT label)
+    {
+        _instance!.Api.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &label);
+    }
+
+    internal static unsafe void EndLabel(VkCommandBuffer commandBuffer)
+    {
+        _instance!.Api.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
+    }
+
+    internal static unsafe void InsertMarker(VkCommandBuffer commandBuffer, VkDebugUtilsLabelEXT label)
+    {
+        _instance!.Api.vkCmdInsertDebugUtilsLabelEXT(commandBuffer, &label);
+    }
+
     private static unsafe void vkSetDebugUtilsObjectNameEXT(ulong objectHandle, string name, VkObjectType objectType)
     {
         VkUtf8ReadOnlyString pName = Encoding.UTF8.GetBytes(name);
