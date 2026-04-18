@@ -16,8 +16,15 @@ internal class AvaloniaUIRenderPass : IRenderPass
 
     public int Order => 0;
 
+    RenderPassBuilder IRenderPass.Rpb => _rbp;
+
     private readonly AvaloniaControl _rootControl;
     private readonly IRenderer _rhiRenderer;
+
+    private readonly RenderPassBuilder _rbp = new()
+    {
+        RequiresPreviousSubmit = true
+    };
 
     public AvaloniaUIRenderPass(AvaloniaControl rootControl, IRenderer rhiRenderer)
     {

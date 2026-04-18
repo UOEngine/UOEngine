@@ -12,6 +12,8 @@ public sealed class FinalOverlayCompositePass : IRenderPass
     public RenderPassStage Stage => RenderPassStage.BackbufferComposite;
     public int Order => 1;
 
+    RenderPassBuilder IRenderPass.Rpb => new();
+
     public void Execute(IRenderContext context, RenderSystem renderSystem)
     {
         renderSystem.FullscreenPassUtils.BlitTexture(context, renderSystem.UIOverlay.Texture, null);

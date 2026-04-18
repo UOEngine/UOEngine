@@ -15,6 +15,8 @@ internal class HostedGameRenderPass : IRenderPass
 
     public int Order => 0;
 
+    RenderPassBuilder IRenderPass.Rpb => new();
+
     private readonly HostedGameManager _hostedGameManager;
 
     public HostedGameRenderPass(IHostedGameManager hostedGameManager)
@@ -44,6 +46,8 @@ internal class HostedGameRenderPass : IRenderPass
             session.HostedGame.Game.Tick2();
 
             context.EndRenderPass();
+
+            session.HostedGame.Surface.Present(context);
         }
     }
 }

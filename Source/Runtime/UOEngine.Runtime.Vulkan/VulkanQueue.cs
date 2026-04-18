@@ -52,13 +52,11 @@ internal class VulkanQueue: IDisposable
         _device.Api.vkQueueSubmit(Handle, submitInfo, vkFence);
     }
 
-    internal VulkanFence Submit(Span<VkSubmitInfo> submitInfos, VulkanFence fence)
+    internal void Submit(Span<VkSubmitInfo> submitInfos, VulkanFence? fence)
     {
         UOEDebug.Assert(UOEThread.IsMainThread);
 
-       _device.Api.vkQueueSubmit(Handle, submitInfos, fence.Handle).CheckResult();
-
-        return fence;
+       _device.Api.vkQueueSubmit(Handle, submitInfos, fence?.Handle ?? VkFence.Null).CheckResult();
     }
 
     internal VkResult Present(VkSemaphore semaphore, VkSwapchainKHR swapchain, uint nextImageIndex)

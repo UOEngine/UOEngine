@@ -182,6 +182,10 @@ internal class VulkanGraphicsContext : IRenderContext
         UOEDebug.Assert(vulkanSource.Description.Format == vulkanDestination.Description.Format);
 
         CommandBuffer.EnsureState(vulkanSource, RhiRenderTextureUsage.CopySource);
+
+        // Can discard initial contents.
+        vulkanDestination.State.Layout = VkImageLayout.Undefined;
+
         CommandBuffer.EnsureState(vulkanDestination, RhiRenderTextureUsage.CopyDestination);
 
         var region = new VkImageCopy()
@@ -316,6 +320,13 @@ internal class VulkanGraphicsContext : IRenderContext
             texture = (VulkanTexture)renderPassInfo.RenderTarget.Texture;
         }
 
+        bool canDiscard = (renderPassInfo.LoadAction == RhiRenderTargetLoadAction.Clear || renderPassInfo.LoadAction == RhiRenderTargetLoadAction.DontCare);
+
+        if(canDiscard)
+        {
+            texture.State.Layout = VkImageLayout.Undefined;
+        }
+
         CommandBuffer.EnsureState(texture, RhiRenderTextureUsage.ColourTarget);
 
         _renderTarget = texture;
@@ -412,10 +423,6 @@ internal class VulkanGraphicsContext : IRenderContext
         CommandBuffer.Name = _currentName;
 
         _uniformBufferObjectScratchAllocator.Reset();
-
-        //UOEDebug.Assert(SubmitFence.IsSignaled);
-
-        //SubmitFence.Reset();
     }
 
     private unsafe void BindShaderParameters(bool forceRebind)

@@ -62,12 +62,18 @@ public class RenderSystem
 
         ClearOverlay();
 
-        _context = _rhiRenderer.CreateRenderContext("MainGraphicsContext");
+        _context = _rhiRenderer.CreateRenderContext("MainGraphicsContext0");
 
         ClearBackbuffer();
 
         foreach(var pass in _passes)
         {
+            if(pass.Rpb.RequiresPreviousSubmit)
+            {
+                _rhiRenderer.FlushAllPendingSubmits();
+                _context = _rhiRenderer.CreateRenderContext("MainGraphicsContext1");
+            }
+
             CurrentRenderContext.BeginLabel(pass.Name, Colour.Black);
             pass.Execute(CurrentRenderContext, this);
             CurrentRenderContext.EndLabel();

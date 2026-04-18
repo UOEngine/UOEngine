@@ -32,6 +32,7 @@ public class DrawingSurfaceControl : Control
     private readonly IRenderResourceFactory _resourceFactory;
     private RhiRenderTarget _target = new();
     private IRenderTexture? _texture;
+    private IRenderTexture? _presentationTexture;
 
     private bool _initialised = false;
     private bool _updateQueued = false;
@@ -123,7 +124,12 @@ public class DrawingSurfaceControl : Control
 
     public sealed override void Render(DrawingContext context)
     {
-        context.Custom(new TextureDrawOp(_texture!, new Rect(Bounds.Size)));
+        context.Custom(new TextureDrawOp(_presentationTexture!, new Rect(Bounds.Size)));
+    }
+
+    public void Copy(IRenderContext context)
+    {
+        context.CopyTexture(_texture!, _presentationTexture!);
     }
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
@@ -202,6 +208,14 @@ public class DrawingSurfaceControl : Control
             Height = height,
             Usage = RhiRenderTextureUsage.ColourTarget,
             Name = "DrawingSurfaceControlTexture"
+        });
+
+        _presentationTexture = _resourceFactory.CreateTexture(new RhiTextureDescription
+        {
+            Width = width,
+            Height = height,
+            Usage = RhiRenderTextureUsage.ColourTarget,
+            Name = "PresentationTexture"
         });
 
         _target.Setup(_texture);

@@ -12,10 +12,17 @@ public enum RenderPassStage
     Present
 }
 
+public struct RenderPassBuilder
+{
+    public bool RequiresPreviousSubmit;
+}
+
 public interface IRenderPass
 {
     string Name { get; }
     RenderPassStage Stage { get; }
     int Order { get; }   // suborder within stage
+
+    RenderPassBuilder Rpb { get; }
     void Execute(IRenderContext context, RenderSystem renderSystem);
 }

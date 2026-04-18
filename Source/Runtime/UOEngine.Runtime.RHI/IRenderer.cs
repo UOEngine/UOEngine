@@ -13,4 +13,6 @@ public interface IRenderer
 
     public IRenderTexture GetBackbufferTexture();
 
+    public void FlushAllPendingSubmits();
+
 }

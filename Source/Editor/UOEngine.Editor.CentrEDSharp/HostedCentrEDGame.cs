@@ -1,8 +1,10 @@
 ﻿// Copyright (c) 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using CentrED;
+
 using Microsoft.Xna.Framework;
 using UOEngine.Runtime.AvaloniaUI;
+using UOEngine.Runtime.Core;
 using UOEngine.Runtime.FnaAdapter;
 using UOEngine.Runtime.RHI;
 
@@ -30,7 +32,12 @@ internal class HostedCentrEDSurface : IHostedGameSurface
 
     public void Resize(int width, int height)
     {
-        throw new NotImplementedException();
+        UOEDebug.NotImplemented();
+    }
+
+    public void Present(IRenderContext context)
+    {
+        _drawingSurfaceControl.Copy(context);
     }
 
     internal HostedCentrEDSurface(DrawingSurfaceControl drawingSurfaceControl)

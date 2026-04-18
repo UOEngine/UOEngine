@@ -9,6 +9,7 @@ namespace UOEngine.Runtime.FnaAdapter;
 public interface IHostedGameSurface
 {
     RhiRenderTarget? AcquireRenderTarget();
+    void Present(IRenderContext context);
     void Resize(int width, int height);
 }
 
