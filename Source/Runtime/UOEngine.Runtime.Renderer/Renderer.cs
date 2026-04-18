@@ -1,6 +1,7 @@
 ﻿// Copyright (c) 2025 - 2026 UOEngine Project, Scotty1234
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using UOEngine.Runtime.Core;
+using UOEngine.Runtime.Platform;
 using UOEngine.Runtime.Plugin;
 using UOEngine.Runtime.RHI;
 
@@ -29,7 +30,9 @@ public class RenderSystem
 
     private readonly IRenderPass[] _passes;
 
-    public RenderSystem(IRenderer rhiRenderer, IRenderResourceFactory resourceFactory, IEnumerable<IRenderPass> passes)
+    private readonly IWindow _window;
+
+    public RenderSystem(IRenderer rhiRenderer, IRenderResourceFactory resourceFactory, IEnumerable<IRenderPass> passes, IWindow window)
     {
         _rhiRenderer = rhiRenderer;
         _resourceFactory = resourceFactory;
@@ -37,23 +40,22 @@ public class RenderSystem
         FullscreenPassUtils = new FullscreenPassUtils(GlobalRenderResources);
 
         _passes = [.. passes.OrderBy(p => (int)p.Stage).ThenBy(p => p.Order)];
+
+        _window = window;
+
+        window.OnResized += (window) =>
+        {
+            UIOverlay.Texture.Dispose();
+
+            SetupUIOverlay(_window.RenderTargetWidth, _window.RenderTargetHeight);
+        };
     }
 
     public void Startup()
     {
         GlobalRenderResources.Init();
 
-        UIOverlay = new RhiRenderTarget();
-
-        var uiTexture = _resourceFactory.CreateTexture(new RhiTextureDescription
-        {
-            Width = 1920,
-            Height = 1080,
-            Usage = RhiRenderTextureUsage.ColourTarget,
-            Name = "UIOverlay",
-        });
-
-        UIOverlay.Setup(uiTexture);
+        SetupUIOverlay(_window.RenderTargetWidth, _window.RenderTargetHeight);
     }
 
     public void Render()
@@ -115,5 +117,18 @@ public class RenderSystem
 
         overlaySetupContext.EndRenderPass();
         overlaySetupContext.Flush();
+    }
+
+    private void SetupUIOverlay(uint width, uint height)
+    {
+        var uiTexture = _resourceFactory.CreateTexture(new RhiTextureDescription
+        {
+            Width = width,
+            Height = height,
+            Usage = RhiRenderTextureUsage.ColourTarget,
+            Name = "UIOverlay",
+        });
+
+        UIOverlay.Setup(uiTexture);
     }
 }

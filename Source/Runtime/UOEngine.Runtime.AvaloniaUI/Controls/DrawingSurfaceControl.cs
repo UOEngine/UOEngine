@@ -202,6 +202,14 @@ public class DrawingSurfaceControl : Control
             return;
         }
 
+        if(_presentationTexture is not null)
+        {
+            if((width == _presentationTexture.Width) && (height == _presentationTexture.Height))
+            {
+                return;
+            }
+        }
+
         _texture = _resourceFactory.CreateTexture(new RhiTextureDescription
         {
             Width = width,

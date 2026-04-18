@@ -22,7 +22,7 @@ public struct RhiTextureDescription
 
 public interface IRhiTextureInterop { }
 
-public interface IRenderTexture
+public interface IRenderTexture: IDisposable
 {
     public string Name { get; set; }
 

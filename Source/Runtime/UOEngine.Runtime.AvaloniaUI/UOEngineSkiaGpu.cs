@@ -70,9 +70,7 @@ internal class UOEngineSkiaGpu : ISkiaGpu
 
     public ISkiaGpuRenderTarget? TryCreateRenderTarget(IEnumerable<IPlatformRenderSurface> surfaces)
     {
-        var texture = _renderSystem.UIOverlay.Texture;
-
-        return new UOEngineSkiaRenderTarget(texture, GrContext, GraphicsQueueFamilyIndex);
+        return new UOEngineSkiaRenderTarget(_renderSystem.UIOverlay, GrContext, GraphicsQueueFamilyIndex);
     }
 
     public bool IsReadyToCreateRenderTarget(IEnumerable<IPlatformRenderSurface> surfaces)

@@ -78,6 +78,15 @@ internal class UOEngineTopLevelImpl : ITopLevelImpl
         _platformGraphics = platformGraphics;
         _window = window;
 
+        SetRenderSize(new PixelSize((int)_window.RenderTargetWidth, (int)_window.RenderTargetHeight));
+
+        window.OnResized += (window) =>
+        {
+            SetRenderSize(new PixelSize((int)_window.RenderTargetWidth, (int)_window.RenderTargetHeight));
+
+            Resized?.Invoke( new Size(window.RenderTargetWidth, window.RenderTargetHeight), WindowResizeReason.User);
+        };
+
         inputManager.MouseMoved += (x, y) =>
         {
             _lastMousePosition = new Point(RenderScaling * x, RenderScaling * y);
@@ -190,19 +199,7 @@ internal class UOEngineTopLevelImpl : ITopLevelImpl
         ClientSize = renderSize.ToSize(renderScale);
 
         _renderSize = renderSize;
-        //_surface = CreateSurface();
     }
-
-    //private static RawPointerEventType MouseButtonToEventType(UOEngineMouseButton button) => button switch
-    //{
-    //    UOEngineMouseButton.Invalid => throw new NotImplementedException(),
-    //    UOEngineMouseButton.Left => RawPointerEventType.LeftButtonDown,
-    //    UOEngineMouseButton.Middle => throw new NotImplementedException(),
-    //    UOEngineMouseButton.Right => throw new NotImplementedException(),
-    //    UOEngineMouseButton.Back => throw new NotImplementedException(),
-    //    UOEngineMouseButton.Forward => throw new NotImplementedException(),
-    //    _ => throw new NotImplementedException(),
-    //};
 
     private static RawInputModifiers MouseButtonToInputModifier(UOEngineMouseButton button) => button switch
     {

@@ -12,20 +12,22 @@ internal class UOEngineSkiaRenderTarget : ISkiaGpuRenderTarget
 {
     public bool IsCorrupted => false;
 
-    private readonly IRenderTexture _texture;
+    private readonly RhiRenderTarget _renderTarget;
     private readonly GRContext _grContext;
     private readonly uint _queueFamilyIndex;
 
-    public UOEngineSkiaRenderTarget(IRenderTexture texture, GRContext grContext, uint queueFamilyIndex)
+    public UOEngineSkiaRenderTarget(RhiRenderTarget renderTarget, GRContext grContext, uint queueFamilyIndex)
     {
-        _texture = texture;
+        _renderTarget = renderTarget;
         _grContext = grContext;
         _queueFamilyIndex = queueFamilyIndex;
     }
 
     public ISkiaGpuRenderSession BeginRenderingSession(IRenderTarget.RenderTargetSceneInfo sceneInfo)
     {
-        _texture.GetFeature<RhiVkImageInterop>(out var vkImageInterop);
+        var texture = _renderTarget.Texture;
+
+        texture.GetFeature<RhiVkImageInterop>(out var vkImageInterop);
 
         _grContext.ResetContext();
 
@@ -43,7 +45,7 @@ internal class UOEngineSkiaRenderTarget : ISkiaGpuRenderTarget
             SharingMode = vkImageInterop.SharingMode
         };
 
-        using var renderTarget = new GRBackendRenderTarget((int)_texture.Width, (int)_texture.Height, imageInfo);
+        using var renderTarget = new GRBackendRenderTarget((int)texture.Width, (int)texture.Height, imageInfo);
 
         var skSurface = SKSurface.Create(
             _grContext,

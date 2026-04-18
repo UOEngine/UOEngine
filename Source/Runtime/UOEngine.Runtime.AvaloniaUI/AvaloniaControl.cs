@@ -42,8 +42,6 @@ public sealed class AvaloniaControl
 
         var topLevelImpl = new UOEngineTopLevelImpl(graphics, _window, _inputManager);
 
-        topLevelImpl.SetRenderSize(new PixelSize(1920, 1080));
-
         _rootControl = new RootControl
         {
             DataContext = _rootContentHost

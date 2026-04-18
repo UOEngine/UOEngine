@@ -103,7 +103,7 @@ internal enum UploadState
 }
 
 [DebuggerDisplay("VulkanTexture {Name}")]
-internal class VulkanTexture: IRenderTexture, IDisposable
+internal class VulkanTexture: IRenderTexture
 {
     public VkImage Image { get; private set; }
     public VkImageView ImageView { get; private set; }
