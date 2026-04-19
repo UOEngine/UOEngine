@@ -8,6 +8,8 @@ using UOEngine.Runtime.Core;
 using UOEngine.Runtime.FnaAdapter;
 using UOEngine.Runtime.RHI;
 
+using UOERectangle = UOEngine.Runtime.Core.Rectangle;
+
 namespace UOEngine.Editor.CentredSharp;
 
 internal class HostedCentrEDGame : IHostedGame
@@ -46,4 +48,30 @@ internal class HostedCentrEDSurface : IHostedGameSurface
     }
 
     private DrawingSurfaceControl _drawingSurfaceControl;
+}
+
+internal class HostedCentrEDGameHost : IHostedGameHost
+{
+    public nint NativeWindowHandle { get; private set; }
+
+    public Runtime.Core.Rectangle ClientBounds { get; private set; }
+
+    public event Action<UOERectangle>? BoundsChanged;
+
+    public HostedCentrEDGameHost(nint nativeWindowHandle)
+    {
+        NativeWindowHandle = nativeWindowHandle;
+    }
+
+    public void SetBounds(uint width, uint height)
+    {
+        var next = new UOERectangle(0, 0, (int)width, (int)height);
+
+        if (next == ClientBounds)
+            return;
+
+        ClientBounds = next;
+        BoundsChanged?.Invoke(next);
+    }
+
 }

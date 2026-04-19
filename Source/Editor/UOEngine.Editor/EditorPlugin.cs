@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 using UOEngine.Runtime.Application;
 using UOEngine.Runtime.FnaAdapter;
+using UOEngine.Runtime.Platform;
 using UOEngine.Runtime.Plugin;
 using UOEngine.Runtime.RHI;
 using UOEngine.Ultima.UOAssets;
@@ -15,6 +16,12 @@ internal class UOEngineEditor : UOEngineApplication
     public UOEngineEditor(IServiceProvider serviceProvider) : base(serviceProvider)
     {
     }
+
+    protected override void OnInitialisationCompleted() 
+    {
+        GetService<IWindow>().WindowTitle = "UOEngine Editor";
+    }
+
 
     public void OnFrameBegin(IRenderContext context)
     {

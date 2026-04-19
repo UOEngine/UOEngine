@@ -49,6 +49,8 @@ internal class HostedGameManager : IHostedGameManager
             HostedGame = hostedGame
         });
 
+        hostedGame.Game.DoInitialise();
+
         return hostedGameId;
     }
 

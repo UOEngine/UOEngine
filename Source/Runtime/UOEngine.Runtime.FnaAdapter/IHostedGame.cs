@@ -6,6 +6,7 @@ using UOEngine.Runtime.RHI;
 
 namespace UOEngine.Runtime.FnaAdapter;
 
+// The surface we want to draw to.
 public interface IHostedGameSurface
 {
     RhiRenderTarget? AcquireRenderTarget();
@@ -13,6 +14,7 @@ public interface IHostedGameSurface
     void Resize(int width, int height);
 }
 
+// The runtime game.
 public interface IHostedGame
 {
     Game Game { get; }

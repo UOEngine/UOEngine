@@ -19,7 +19,7 @@ public class DrawingSurfaceControl : Control
     public bool IsSurfaceVisible { get; private set; }
 
     public event Action<bool>? SurfaceVisibilityChanged;
-    public event Action? SurfaceRecreated;
+    public event Action<uint, uint>? SurfaceRecreated;
 
     public RhiRenderTarget RenderTarget => _target;
 
@@ -210,6 +210,8 @@ public class DrawingSurfaceControl : Control
             }
         }
 
+        _texture?.Dispose();
+
         _texture = _resourceFactory.CreateTexture(new RhiTextureDescription
         {
             Width = width,
@@ -217,6 +219,8 @@ public class DrawingSurfaceControl : Control
             Usage = RhiRenderTextureUsage.ColourTarget,
             Name = "DrawingSurfaceControlTexture"
         });
+
+        _presentationTexture?.Dispose();
 
         _presentationTexture = _resourceFactory.CreateTexture(new RhiTextureDescription
         {
@@ -228,7 +232,7 @@ public class DrawingSurfaceControl : Control
 
         _target.Setup(_texture);
 
-        SurfaceRecreated?.Invoke();
+        SurfaceRecreated?.Invoke(width, height);
     }
 
     private void UpdateSurfaceVisibility(bool isVisible)

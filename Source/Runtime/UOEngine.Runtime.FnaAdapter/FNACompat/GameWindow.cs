@@ -5,28 +5,22 @@ namespace Microsoft.Xna.Framework;
 
 public class GameWindow
 {
-    public IntPtr Handle => _window.Handle;
+    public IntPtr Handle => _host.NativeWindowHandle;
     public Rectangle ClientBounds => GetWindowBounds();
 
     public event EventHandler<EventArgs>? ClientSizeChanged;
 
-    private readonly IWindow _window;
+    private readonly IHostedGameHost _host;
 
-    public GameWindow(IWindow window)
+    public GameWindow(IHostedGameHost host)
     {
-        _window = window;
+        _host = host;
 
-        _window.OnResized += OnWindowResized;
-
-    }
-
-    private void OnWindowResized(IWindow window)
-    {
-        ClientSizeChanged?.Invoke(this, EventArgs.Empty);
+        _host.BoundsChanged += _ => ClientSizeChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public Rectangle GetWindowBounds()
     {
-        return new Rectangle(0, 0, (int)_window.Width, (int)_window.Height);
+        return new Rectangle(0, 0, _host.ClientBounds.Width, _host.ClientBounds.Height);
     }
 }

@@ -13,6 +13,7 @@ using UOEngine.Runtime.FnaAdapter;
 using UOEngine.Runtime.Plugin;
 
 using CentredApplication = CentrED.Application;
+using UOEngine.Runtime.Platform;
 
 namespace UOEngine.Editor.CentredSharp;
 
@@ -82,12 +83,6 @@ public class CentrEdSharpPlugin: IPlugin
         ], "MapEffect");
 
         Config.Initialize();
-
-        CentrEDGame.PreSetup(_serviceProvider);
-
-        CEDGame = new CentrEDGame();
-
-        CentredApplication.SetFromHosted(CEDGame);
     }
 
     public void Shutdown()

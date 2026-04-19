@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xna.Framework.Graphics;
 
 using UOEngine.Runtime.Core;
+using UOEngine.Runtime.FnaAdapter;
 using UOEngine.Runtime.Platform;
 using UOEngine.Runtime.RHI;
 
@@ -39,12 +40,12 @@ public class Game: IDisposable
     }
 
     public IRenderResourceFactory RenderResourceFactory => _renderResourceFactory;
-    public IServiceProvider ServiceProvider => _serviceProvider;
+    public IServiceProvider ServiceProvider { get; private set; }
 
     public readonly GameServiceContainer Services = new(); 
 
     private static IRenderResourceFactory _renderResourceFactory = null!;
-    private static IServiceProvider _serviceProvider = null!;
+    //private static IServiceProvider _serviceProvider = null!;
 
     private GraphicsDeviceManager? _graphicsDeviceManager;
 
@@ -57,22 +58,13 @@ public class Game: IDisposable
 
     private bool _suppressDraw;
 
-    public static void PreSetup(IServiceProvider serviceProvider)
-    {
-        // Set up with what is required from UOEngine.
-        _serviceProvider = serviceProvider;
-    }
-
     public Game()
     {
-        Window = new GameWindow(GetService<IWindow>());
+        var context = FnaGameContextScope.Current;
 
-        _renderResourceFactory = GetService<IRenderResourceFactory>();
-
-        var inputManager = GetService<InputManager>();
-
-        //GetService<RenderSystem>().OnFrameBegin += DrawInternal;
-
+        Window = new GameWindow(context.Host);
+        ServiceProvider = context.Services;
+        _renderResourceFactory = context.RenderResourceFactory;
     }
 
     public void Exit()
@@ -88,9 +80,16 @@ public class Game: IDisposable
     public void DoInitialise()
     {
 
+        if(_hasInitialized)
+        {
+            return;
+        }
+
         Initialize();
 
         _gameTimer = Stopwatch.StartNew();
+
+        _hasInitialized = true;
     }
 
     public void RunOneFrame()
@@ -98,8 +97,6 @@ public class Game: IDisposable
         if (!_hasInitialized)
         {
             DoInitialize();
-            _gameTimer = Stopwatch.StartNew();
-            _hasInitialized = true;
         }
 
         Tick();
@@ -205,8 +202,6 @@ public class Game: IDisposable
             EndDraw();
         }
     }
-
-    private T GetService<T>() where T: notnull  => _serviceProvider.GetRequiredService<T>();
 
     private TimeSpan AdvanceElapsedTime()
     {
