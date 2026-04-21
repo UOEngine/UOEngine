@@ -4,7 +4,7 @@ using UOEngine.Runtime.Core;
 
 namespace UOEngine.Runtime.FnaAdapter;
 
-// What hosts our game. A window, a surface of a UI element etc. IGameWindowHost?
+// What hosts our game. A window, a surface of a UI element etc. IGameWindowHost? Window behaviour focused.
 public interface IHostedGameHost
 {
     public IntPtr NativeWindowHandle { get; }

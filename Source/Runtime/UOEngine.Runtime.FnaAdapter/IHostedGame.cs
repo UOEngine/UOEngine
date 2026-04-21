@@ -11,10 +11,9 @@ public interface IHostedGameSurface
 {
     RhiRenderTarget? AcquireRenderTarget();
     void Present(IRenderContext context);
-    void Resize(int width, int height);
 }
 
-// The runtime game.
+// The runtime game and the surface it renders into.
 public interface IHostedGame
 {
     Game Game { get; }

@@ -32,11 +32,6 @@ internal class HostedCentrEDSurface : IHostedGameSurface
         return _drawingSurfaceControl.RenderTarget;
     }
 
-    public void Resize(int width, int height)
-    {
-        UOEDebug.NotImplemented();
-    }
-
     public void Present(IRenderContext context)
     {
         _drawingSurfaceControl.Copy(context);

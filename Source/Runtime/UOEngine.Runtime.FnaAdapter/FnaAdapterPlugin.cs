@@ -20,19 +20,17 @@ public class FnaAdapterPlugin: IPlugin
     public static FnaAdapterPlugin Instance { get; private set; } = null!;
 
     // These are all public for the fake FNA classes to use what is required under the hood.
-    public readonly IWindow Window;
     public readonly InputManager InputManager;
 
     public readonly IRenderResourceFactory RenderResourceFactory;
 
     private readonly Remapper _shaderRemapper;
 
-    public FnaAdapterPlugin(IWindow window, InputManager inputmanager, IRenderResourceFactory renderResourceFactory, Remapper remapper)
+    public FnaAdapterPlugin(InputManager inputmanager, IRenderResourceFactory renderResourceFactory, Remapper remapper)
     {
         Instance = this;
 
         // Grab what we need here to set things up throughout fake FNA.
-        Window = window;
         InputManager = inputmanager;
         RenderResourceFactory = renderResourceFactory;
         _shaderRemapper = remapper;

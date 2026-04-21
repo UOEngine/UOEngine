@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file in the project root for details.
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.LogicalTree;
 using Avalonia.Media;
 using Avalonia.Rendering.Composition;
@@ -10,9 +11,21 @@ using Avalonia.Skia;
 using Avalonia.VisualTree;
 using SkiaSharp;
 
+using UOEngine.Runtime.Core;
 using UOEngine.Runtime.RHI;
 
+using AvaloniaPoint = Avalonia.Point;
+using UOEMouseButton = UOEngine.Runtime.Core.MouseButton;
+using UOEPoint = UOEngine.Runtime.Core.Point;
+
 namespace UOEngine.Runtime.AvaloniaUI;
+
+public sealed class SurfaceMouseEventArgs
+{
+    public required UOEPoint Point { get; init; }
+    public required ButtonState State { get; init; }
+    public UOEMouseButton? Button { get; init; }
+}
 
 public class DrawingSurfaceControl : Control
 {
@@ -20,6 +33,8 @@ public class DrawingSurfaceControl : Control
 
     public event Action<bool>? SurfaceVisibilityChanged;
     public event Action<uint, uint>? SurfaceRecreated;
+
+    public event Action<SurfaceMouseEventArgs>? SurfaceMouseEvent;
 
     public RhiRenderTarget RenderTarget => _target;
 
@@ -54,7 +69,7 @@ public class DrawingSurfaceControl : Control
             // Nothing, does not own texture.
         }
 
-        public bool HitTest(Point p) => false;
+        public bool HitTest(AvaloniaPoint p) => Bounds.Contains(p);
         public bool Equals(ICustomDrawOperation? other) => false;
 
         public void Render(ImmediateDrawingContext context)
@@ -144,6 +159,64 @@ public class DrawingSurfaceControl : Control
         base.OnDetachedFromLogicalTree(e);
 
         UpdateSurfaceVisibility(false);
+    }
+
+    protected override void OnPointerMoved(PointerEventArgs e)
+    {
+        base.OnPointerMoved(e);
+
+        var p = e.GetCurrentPoint(this);
+
+        SurfaceMouseEvent?.Invoke(new SurfaceMouseEventArgs
+        {
+            Button = UOEMouseButton.Invalid,
+            Point = new UOEPoint((int)p.Position.X, (int)p.Position.Y),
+            State = ButtonState.None
+        });
+    }
+
+    protected override void OnPointerPressed(PointerPressedEventArgs e)
+    {
+        base.OnPointerPressed(e);
+
+        var p = e.GetCurrentPoint(this);
+
+        UOEMouseButton? buttonPressed = p.Properties.PointerUpdateKind switch
+        {
+            PointerUpdateKind.LeftButtonPressed => UOEMouseButton.Left,
+            PointerUpdateKind.MiddleButtonPressed => UOEMouseButton.Middle,
+            PointerUpdateKind.RightButtonPressed => UOEMouseButton.Right,
+            _ => UOEMouseButton.Invalid
+        };
+
+        SurfaceMouseEvent?.Invoke(new SurfaceMouseEventArgs
+        {
+            Button = buttonPressed,
+            Point = new UOEPoint((int)p.Position.X, (int)p.Position.Y),
+            State = ButtonState.Pressed
+        });
+    }
+
+    protected override void OnPointerReleased(PointerReleasedEventArgs e)
+    {
+        base.OnPointerReleased(e);
+
+        var p = e.GetCurrentPoint(this);
+
+        UOEMouseButton buttonReleased = p.Properties.PointerUpdateKind switch
+        {
+            PointerUpdateKind.LeftButtonReleased => UOEMouseButton.Left,
+            PointerUpdateKind.MiddleButtonReleased => UOEMouseButton.Middle,
+            PointerUpdateKind.RightButtonReleased => UOEMouseButton.Right,
+            _ => UOEMouseButton.Invalid
+        };
+
+        SurfaceMouseEvent?.Invoke(new SurfaceMouseEventArgs
+        {
+            Button = buttonReleased,
+            Point = new UOEPoint((int)p.Position.X, (int)p.Position.Y),
+            State = ButtonState.Released
+        });
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -245,19 +318,5 @@ public class DrawingSurfaceControl : Control
         IsSurfaceVisible = isVisible;
 
         SurfaceVisibilityChanged?.Invoke(isVisible);
-    }
-}
-
-internal class UOEngineCompositionImportableSharedGpuContextImage : ICompositionImportableSharedGpuContextImage
-{
-    internal readonly IRenderTexture Texture; 
-
-    internal UOEngineCompositionImportableSharedGpuContextImage(IRenderTexture texture)
-    {
-        Texture = texture;
-    }
-    public void Dispose()
-    {
-        throw new NotImplementedException();
     }
 }

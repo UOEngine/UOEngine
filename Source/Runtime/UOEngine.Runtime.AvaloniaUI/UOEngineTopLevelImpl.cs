@@ -13,6 +13,7 @@ using UOEngine.Runtime.Core;
 using UOEngine.Runtime.Platform;
 
 using UOEngineMouseButton = UOEngine.Runtime.Core.MouseButton;
+using Point = Avalonia.Point;
 
 namespace UOEngine.Runtime.AvaloniaUI;
 
@@ -26,7 +27,6 @@ internal class UOEngineTopLevelImpl : ITopLevelImpl
     public IPlatformHandle? Handle => throw new NotImplementedException();
 
     public Size ClientSize { get; private set; }
-
 
     public double RenderScaling => 1.0f;
 
@@ -47,7 +47,9 @@ internal class UOEngineTopLevelImpl : ITopLevelImpl
         private set
         {
             if (_transparencyLevel.Equals(value))
+            {
                 return;
+            }
 
             _transparencyLevel = value;
             TransparencyLevelChanged?.Invoke(value);
@@ -100,8 +102,8 @@ internal class UOEngineTopLevelImpl : ITopLevelImpl
             {
                 UOEngineMouseButton.Invalid => throw new NotImplementedException(),
                 UOEngineMouseButton.Left => RawPointerEventType.LeftButtonDown,
-                UOEngineMouseButton.Middle => throw new NotImplementedException(),
-                UOEngineMouseButton.Right => throw new NotImplementedException(),
+                UOEngineMouseButton.Middle => RawPointerEventType.MiddleButtonDown,
+                UOEngineMouseButton.Right => RawPointerEventType.RightButtonDown,
                 UOEngineMouseButton.Back => throw new NotImplementedException(),
                 UOEngineMouseButton.Forward => throw new NotImplementedException(),
                 _ => throw new NotImplementedException(),
@@ -118,8 +120,8 @@ internal class UOEngineTopLevelImpl : ITopLevelImpl
             {
                 UOEngineMouseButton.Invalid => throw new NotImplementedException(),
                 UOEngineMouseButton.Left => RawPointerEventType.LeftButtonUp,
-                UOEngineMouseButton.Middle => throw new NotImplementedException(),
-                UOEngineMouseButton.Right => throw new NotImplementedException(),
+                UOEngineMouseButton.Middle => RawPointerEventType.MiddleButtonUp,
+                UOEngineMouseButton.Right => RawPointerEventType.RightButtonUp,
                 UOEngineMouseButton.Back => throw new NotImplementedException(),
                 UOEngineMouseButton.Forward => throw new NotImplementedException(),
                 _ => throw new NotImplementedException(),

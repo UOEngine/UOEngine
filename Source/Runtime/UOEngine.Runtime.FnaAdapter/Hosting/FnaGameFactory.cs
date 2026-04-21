@@ -12,20 +12,15 @@ namespace UOEngine.Runtime.FnaAdapter;
 internal sealed class FnaGameFactory : IFnaGameFactory
 {
     private readonly IServiceProvider _services;
-    private readonly IWindow _window;
     private readonly IRenderResourceFactory _renderResourceFactory;
-    private readonly InputManager _inputManager;
 
     public FnaGameFactory(
         IServiceProvider services,
-        IWindow window,
         IRenderResourceFactory renderResourceFactory,
         InputManager inputManager)
     {
         _services = services;
-        _window = window;
         _renderResourceFactory = renderResourceFactory;
-        _inputManager = inputManager;
     }
 
     public T Create<T>(IHostedGameHost host) where T : Game, new()
@@ -34,9 +29,7 @@ internal sealed class FnaGameFactory : IFnaGameFactory
         {
             Services = _services,
             Host = host,
-            PlatformWindow = _window,
             RenderResourceFactory = _renderResourceFactory,
-            InputManager = _inputManager
         };
 
         using (FnaGameContextScope.Push(context))

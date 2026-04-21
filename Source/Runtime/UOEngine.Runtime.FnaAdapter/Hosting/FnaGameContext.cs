@@ -10,7 +10,6 @@ internal sealed class FnaGameContext
 {
     public required IServiceProvider Services { get; init; }
     public required IHostedGameHost Host { get; init; }
-    public required IWindow PlatformWindow { get; init; }
     public required IRenderResourceFactory RenderResourceFactory { get; init; }
-    public required InputManager InputManager { get; init; }
+    //public required IHostedGameInputSource Input { get; init; }
 }
